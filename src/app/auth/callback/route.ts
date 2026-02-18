@@ -4,7 +4,7 @@ import { createMasterServerClient } from '@/lib/supabase/server'
 export async function GET(request: Request) {
     const { searchParams, origin } = new URL(request.url)
     const code = searchParams.get('code')
-    const next = searchParams.get('next') ?? '/nexus' // Default to Nexus after login
+    const next = searchParams.get('next') ?? '/veritum' // Default to Veritum after login
 
     if (code) {
         const supabase = await createMasterServerClient()
@@ -15,18 +15,8 @@ export async function GET(request: Request) {
             const { data: { user } } = await supabase.auth.getUser()
 
             if (user) {
-                // 1. Sync User Profile
-                const { error: upsertError } = await supabase
-                    .from('users')
-                    .upsert({
-                        id: user.id,
-                        name: user.user_metadata.full_name || 'Usuário',
-                        username: user.email?.split('@')[0] || 'user',
-                        avatar_url: user.user_metadata.avatar_url,
-                        // active: true (default)
-                    })
-
-                if (upsertError) console.error('Error syncing user:', upsertError)
+                // The profile sync is now handled by a Database Trigger on the Master SB.
+                // We only need to check for BYODB preferences if needed.
 
                 // 2. Check Preferences (BYODB)
                 const { data: prefs } = await supabase
@@ -43,7 +33,24 @@ export async function GET(request: Request) {
                 }
             }
 
-            return NextResponse.redirect(`${origin}${next}`)
+            // Return a script that closes the popup and redirects the main window
+            return new NextResponse(
+                `<html>
+                    <body>
+                        <script>
+                            if (window.opener) {
+                                window.opener.location.href = '${origin}${next}';
+                                window.close();
+                            } else {
+                                window.location.href = '${origin}${next}';
+                            }
+                        </script>
+                    </body>
+                </html>`,
+                {
+                    headers: { 'Content-Type': 'text/html' },
+                }
+            )
         }
     }
 

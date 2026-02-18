@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
     ShieldAlert, GitBranch, FileEdit, DollarSign, BarChart3,
     MessageSquare, Globe, Moon, Sun, ArrowRight, Check,
@@ -22,25 +23,49 @@ interface Suite {
 
 const Logo = () => (
     <div className="bg-indigo-600/10 p-2 rounded-lg flex items-center justify-center text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400">
-        <Scale className="h-5 w-5" />
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M12 3v18"></path><path d="m19 8 3 8a5 5 0 0 1-6 0zV7"></path><path d="M3 7h1a17 17 0 0 0 8-2 17 17 0 0 0 8 2h1"></path><path d="m5 8 3 8a5 5 0 0 1-6 0zV7"></path><path d="M7 21h10"></path></svg>
     </div>
 );
 
 export default function LandingPage() {
     const { theme, setTheme, resolvedTheme } = useTheme()
     const [mounted, setMounted] = useState(false)
+    useEffect(() => {
+        setMounted(true)
+    }, [])
+
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-slate-950 flex items-center justify-center"><div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div></div>}>
+            <LandingPageContent
+                theme={theme}
+                setTheme={setTheme}
+                resolvedTheme={resolvedTheme}
+                mounted={mounted}
+            />
+        </Suspense>
+    )
+}
+
+function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+    const searchParams = useSearchParams();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (searchParams.get('login') === 'true') {
+            setAuthMode('login');
+            setIsAuthModalOpen(true);
+            // Clear the param after opening to avoid re-triggering on manual refresh
+            router.replace('/', { scroll: false });
+        }
+    }, [searchParams, router]);
 
     // State for Legal Modals
     const [legalModal, setLegalModal] = useState<{ isOpen: boolean; type: 'privacy' | 'terms' }>({
         isOpen: false,
         type: 'privacy'
     });
-
-    useEffect(() => {
-        setMounted(true)
-    }, [])
 
     const suites: Suite[] = [
         {

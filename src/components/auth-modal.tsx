@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Mail, Lock, User, Chrome, ArrowRight, Scale } from 'lucide-react';
 import { useTheme } from 'next-themes'
 import { createMasterClient } from '@/lib/supabase/master'
@@ -23,12 +23,63 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
     const { theme } = useTheme()
     const [currentMode, setCurrentMode] = useState(mode);
     const [loading, setLoading] = useState(false);
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [name, setName] = useState('');
+    const [error, setError] = useState<string | null>(null);
 
-    // Sync internal mode with prop change if needed, but usually controlled by internal state once open
-    // React.useEffect(() => { setCurrentMode(mode) }, [mode])
+    // Ensure the modal resets to the requested mode whenever it's opened or changed
+    useEffect(() => {
+        if (isOpen) {
+            setCurrentMode(mode);
+            setError(null);
+            setEmail('');
+            setPassword('');
+            setName('');
+        }
+    }, [isOpen, mode]);
+
+    const handleEmailAuth = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
+
+        try {
+            const supabase = createMasterClient();
+
+            if (currentMode === 'login') {
+                const { error } = await supabase.auth.signInWithPassword({
+                    email,
+                    password,
+                });
+                if (error) throw error;
+                window.location.href = '/veritum';
+            } else {
+                const { error } = await supabase.auth.signUp({
+                    email,
+                    password,
+                    options: {
+                        data: {
+                            full_name: name,
+                        }
+                    }
+                });
+                if (error) throw error;
+                // For sign up, show a message or redirect
+                alert('Cadastro realizado! Por favor, verifique seu e-mail para confirmar a conta.');
+                setCurrentMode('login');
+            }
+        } catch (err: any) {
+            console.error('Auth error:', err);
+            setError(err.message || 'Erro ao processar autenticação');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleGoogleLogin = async () => {
         setLoading(true);
+        setError(null);
         try {
             const supabase = createMasterClient();
             const { data, error } = await supabase.auth.signInWithOAuth({
@@ -37,13 +88,14 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                     redirectTo: `${window.location.origin}/auth/callback`,
                     queryParams: {
                         access_type: 'offline',
-                        prompt: 'consent',
+                        prompt: 'select_account',
                     },
                     skipBrowserRedirect: true
                 },
             });
 
             if (error) throw error;
+
             if (data?.url) {
                 // Use a popup window for the Google login
                 const width = 600;
@@ -65,8 +117,9 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                     }
                 }, 1000);
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Login error:', error);
+            setError(error.message || 'Erro no login Google');
             setLoading(false);
         }
     };
@@ -107,23 +160,53 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                             <div className="relative flex justify-center text-xs uppercase"><span className={`px-4 font-bold tracking-widest ${theme === 'dark' ? 'bg-slate-900 text-slate-500' : 'bg-white text-slate-400'}`}>Ou com e-mail</span></div>
                         </div>
 
-                        <form className="space-y-4" onSubmit={e => { e.preventDefault(); /* Handle email login */ }}>
+                        {error && (
+                            <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-xs font-bold border border-rose-100 dark:border-rose-900/30">
+                                {error}
+                            </div>
+                        )}
+
+                        <form className="space-y-4" onSubmit={handleEmailAuth}>
                             {currentMode === 'register' && (
                                 <div className="relative">
                                     <User className="absolute left-4 top-4 text-slate-400" size={20} />
-                                    <input required placeholder="Nome Completo" className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 dark:text-white" />
+                                    <input
+                                        required
+                                        placeholder="Nome Completo"
+                                        className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 dark:text-white"
+                                        value={name}
+                                        onChange={e => setName(e.target.value)}
+                                    />
                                 </div>
                             )}
                             <div className="relative">
                                 <Mail className="absolute left-4 top-4 text-slate-400" size={20} />
-                                <input required type="email" placeholder="E-mail profissional" className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 dark:text-white" />
+                                <input
+                                    required
+                                    type="email"
+                                    placeholder="E-mail profissional"
+                                    className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 dark:text-white"
+                                    value={email}
+                                    onChange={e => setEmail(e.target.value)}
+                                />
                             </div>
                             <div className="relative">
                                 <Lock className="absolute left-4 top-4 text-slate-400" size={20} />
-                                <input required type="password" placeholder="Sua senha" className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 dark:text-white" />
+                                <input
+                                    required
+                                    type="password"
+                                    placeholder="Sua senha"
+                                    className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 dark:text-white"
+                                    value={password}
+                                    onChange={e => setPassword(e.target.value)}
+                                />
                             </div>
-                            <button className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-2xl shadow-indigo-600/40 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2">
-                                {currentMode === 'login' ? 'Entrar Agora' : 'Finalizar Cadastro'} <ArrowRight size={20} />
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-2xl shadow-indigo-600/40 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                            >
+                                {loading ? 'Aguarde...' : (currentMode === 'login' ? 'Entrar Agora' : 'Finalizar Cadastro')} <ArrowRight size={20} />
                             </button>
                         </form>
 

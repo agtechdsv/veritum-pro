@@ -48,16 +48,18 @@ export async function middleware(request: NextRequest) {
     if (user) {
         // If trying to access Login while logged in, go to Dashboard (or Setup check)
         if (path === '/login') {
-            return NextResponse.redirect(new URL('/nexus', request.url))
+            return NextResponse.redirect(new URL('/veritum', request.url))
         }
 
-        // Check if BYODB keys exist in cookies
+        // Check if BYODB keys exist in cookies (Disabled for now as requested)
+        /*
         const hasByodbKeys = request.cookies.has('sb-project-url') && request.cookies.has('sb-anon-key')
 
         if (!hasByodbKeys && !isSetupPath && !isPublicPath) {
             // Logged in but no BYODB keys -> Setup
             return NextResponse.redirect(new URL('/setup', request.url))
         }
+        */
     }
 
     return response
