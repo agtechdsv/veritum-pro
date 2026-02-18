@@ -21,7 +21,7 @@ export interface User {
     id: string;
     name: string;
     username: string;
-    role: 'Admin' | 'Operador';
+    role: 'Master' | 'Administrador' | 'Operador';
     active: boolean;
     avatar_url?: string;
     cpf_cnpj?: string;

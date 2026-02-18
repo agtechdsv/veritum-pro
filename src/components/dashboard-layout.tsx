@@ -12,6 +12,7 @@ import Vox from './modules/vox';
 import UserSettings from './modules/user-settings';
 import UserManagement from './modules/user-management';
 import { createMasterClient } from '@/lib/supabase/master';
+import { Tooltip } from './ui/tooltip';
 
 import {
     ShieldAlert, GitBranch, FileEdit, DollarSign, BarChart3,
@@ -134,17 +135,18 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                             </div>
                         )}
                         {suiteItems.map((item) => (
-                            <button
-                                key={item.id}
-                                onClick={() => onModuleChange(item.id)}
-                                className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 cursor-pointer ${activeModule === item.id
-                                    ? 'bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-400 font-bold shadow-sm'
-                                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white'
-                                    }`}
-                            >
-                                <item.icon size={20} className={activeModule === item.id ? item.color : 'text-slate-400 dark:text-slate-500'} />
-                                {isSidebarOpen && <span className="text-sm">{item.label}</span>}
-                            </button>
+                            <Tooltip key={item.id} content={item.label} enabled={!isSidebarOpen}>
+                                <button
+                                    onClick={() => onModuleChange(item.id)}
+                                    className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 cursor-pointer ${activeModule === item.id
+                                        ? 'bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-400 font-bold shadow-sm'
+                                        : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white'
+                                        }`}
+                                >
+                                    <item.icon size={20} className={activeModule === item.id ? item.color : 'text-slate-400 dark:text-slate-500'} />
+                                    {isSidebarOpen && <span className="text-sm">{item.label}</span>}
+                                </button>
+                            </Tooltip>
                         ))}
                     </div>
 
@@ -162,29 +164,33 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                             </div>
                         )}
                         {adminItems.map((item) => (
-                            <button
-                                key={item.id}
-                                onClick={() => onModuleChange(item.id)}
-                                className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 cursor-pointer ${activeModule === item.id
-                                    ? 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white font-bold'
-                                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
-                                    }`}
-                            >
-                                <item.icon size={20} className={activeModule === item.id ? 'text-indigo-600' : 'text-slate-400 dark:text-slate-500'} />
-                                {isSidebarOpen && <span className="text-sm">{item.label}</span>}
-                            </button>
+                            <Tooltip key={item.id} content={item.label} enabled={!isSidebarOpen}>
+                                <button
+                                    key={item.id}
+                                    onClick={() => onModuleChange(item.id)}
+                                    className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 cursor-pointer ${activeModule === item.id
+                                        ? 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white font-bold'
+                                        : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                                        }`}
+                                >
+                                    <item.icon size={20} className={activeModule === item.id ? 'text-indigo-600' : 'text-slate-400 dark:text-slate-500'} />
+                                    {isSidebarOpen && <span className="text-sm">{item.label}</span>}
+                                </button>
+                            </Tooltip>
                         ))}
                     </div>
                 </nav>
 
                 <div className="p-4 border-t border-slate-100 dark:border-slate-800">
-                    <button
-                        onClick={onLogout}
-                        className="w-full flex items-center gap-3 p-3 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all cursor-pointer"
-                    >
-                        <LogOut size={20} />
-                        {isSidebarOpen && <span className="text-sm font-semibold">Sair do Ecossistema</span>}
-                    </button>
+                    <Tooltip content="Sair do Ecossistema" enabled={!isSidebarOpen}>
+                        <button
+                            onClick={onLogout}
+                            className="w-full flex items-center gap-3 p-3 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all cursor-pointer"
+                        >
+                            <LogOut size={20} />
+                            {isSidebarOpen && <span className="text-sm font-semibold">Sair do Ecossistema</span>}
+                        </button>
+                    </Tooltip>
                 </div>
             </aside>
 

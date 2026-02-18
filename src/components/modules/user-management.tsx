@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { ShieldCheck, UserPlus, Trash2, Mail, User as UserIcon, Lock, FileEdit, Radio, ShieldAlert } from 'lucide-react';
 import { User } from '@/types';
 import { createMasterClient } from '@/lib/supabase/master';
+import { createUserDirectly, updateUserDirectly, deleteUserDirectly } from '@/app/actions/user-actions';
 
 interface Props {
     currentUser: User;
@@ -20,9 +21,18 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
         email: '',
         username: '',
         password: '',
-        role: 'Operador' as 'Admin' | 'Operador'
+        role: 'Operador' as 'Master' | 'Administrador' | 'Operador'
     });
+    const [filters, setFilters] = useState({
+        search: '',
+        role: 'all',
+        admin: 'all',
+        status: 'all'
+    });
+    const [sortConfig, setSortConfig] = useState<{ key: string, direction: 'asc' | 'desc' } | null>({ key: 'created_at', direction: 'desc' });
     const [msg, setMsg] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
+    const nameRef = React.useRef<HTMLInputElement>(null);
 
     const supabase = createMasterClient();
 
@@ -30,67 +40,95 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
         fetchUsers();
     }, []);
 
+    useEffect(() => {
+        if (showAddModal) {
+            setTimeout(() => {
+                nameRef.current?.focus();
+            }, 100);
+        }
+    }, [showAddModal]);
+
     const fetchUsers = async () => {
         setLoading(true);
-        const { data, error } = await supabase
+        let query = supabase
             .from('users')
-            .select('*')
-            .order('created_at', { ascending: false });
+            .select('*');
+
+        // Hierarchy Filtering
+        if (currentUser.role === 'Administrador') {
+            query = query.or(`id.eq.${currentUser.id},parent_user_id.eq.${currentUser.id}`);
+        } else if (currentUser.role === 'Operador') {
+            if (currentUser.parent_user_id) {
+                query = query.or(`id.eq.${currentUser.id},parent_user_id.eq.${currentUser.parent_user_id}`);
+            } else {
+                query = query.eq('id', currentUser.id);
+            }
+        }
+
+        const { data, error } = await query;
 
         if (!error && data) setUsers(data);
         setLoading(false);
     };
+
+    const handleSort = (key: string) => {
+        let direction: 'asc' | 'desc' = 'asc';
+        if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+            direction = 'desc';
+        }
+        setSortConfig({ key, direction });
+    };
+
+    const sortedUsers = [...users].sort((a, b) => {
+        if (!sortConfig) return 0;
+        const { key, direction } = sortConfig;
+
+        let aVal = a[key as keyof User] as any;
+        let bVal = b[key as keyof User] as any;
+
+        if (aVal < bVal) return direction === 'asc' ? -1 : 1;
+        if (aVal > bVal) return direction === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+    const filteredUsers = sortedUsers.filter(u => {
+        const matchesSearch = u.name.toLowerCase().includes(filters.search.toLowerCase()) ||
+            u.username.toLowerCase().includes(filters.search.toLowerCase());
+        const matchesRole = filters.role === 'all' || u.role === filters.role;
+        const matchesStatus = filters.status === 'all' ||
+            (filters.status === 'active' ? u.active : !u.active);
+        const matchesAdmin = filters.admin === 'all' || u.parent_user_id === filters.admin;
+
+        return matchesSearch && matchesRole && matchesStatus && matchesAdmin;
+    });
+
+    const admins = users.filter(u => u.role === 'Administrador');
 
     const handleSaveUser = async (e: React.FormEvent) => {
         e.preventDefault();
         setMsg(null);
 
         // Security Check (Frontend)
-        if (currentUser.role === 'Operador' && formData.role === 'Admin') {
+        if (currentUser.role === 'Operador' && formData.role === 'Administrador') {
             setMsg({ type: 'error', text: 'Operadores não podem atribuir nível Admin.' });
             return;
         }
 
         try {
             if (editingUser) {
-                // UPDATE USER
-                const { error: updateError } = await supabase
-                    .from('users')
-                    .update({
-                        name: formData.name,
-                        role: formData.role,
-                        username: formData.username
-                    })
-                    .eq('id', editingUser.id);
+                // UPDATE USER DIRECTLY (Supports password change)
+                const result = await updateUserDirectly(editingUser.id, formData);
 
-                if (updateError) throw updateError;
+                if (!result.success) throw new Error(result.error);
                 setMsg({ type: 'success', text: 'Usuário atualizado com sucesso!' });
             } else {
-                // CREATE NEW USER
-                const { data: authData, error: authError } = await supabase.auth.signUp({
-                    email: formData.email,
-                    password: formData.password,
-                    options: {
-                        data: {
-                            full_name: formData.name,
-                        }
-                    }
-                });
+                // CREATE NEW USER DIRECTLY
+                const parentUserId = currentUser.role === 'Administrador' ? currentUser.id : null;
+                const result = await createUserDirectly(formData, parentUserId);
 
-                if (authError) throw authError;
+                if (!result.success) throw new Error(result.error);
 
-                if (authData.user) {
-                    const { error: updateError } = await supabase
-                        .from('users')
-                        .update({
-                            role: formData.role,
-                            username: formData.email // Use full email as username to match trigger
-                        })
-                        .eq('id', authData.user.id);
-
-                    if (updateError) throw updateError;
-                }
-                setMsg({ type: 'success', text: 'Usuário convidado com sucesso! (Email enviado)' });
+                setMsg({ type: 'success', text: 'Usuário cadastrado com sucesso!' });
             }
 
             setShowAddModal(false);
@@ -119,13 +157,14 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
     const handleDeleteUser = async () => {
         if (!userToDelete) return;
         try {
-            const { error } = await supabase.from('users').delete().eq('id', userToDelete.id);
-            if (error) throw error;
+            const result = await deleteUserDirectly(userToDelete.id);
+            if (!result.success) throw new Error(result.error);
+
             fetchUsers();
             setMsg({ type: 'success', text: 'Usuário removido com sucesso.' });
             setUserToDelete(null);
-        } catch (err) {
-            setMsg({ type: 'error', text: 'Erro ao excluir usuário.' });
+        } catch (err: any) {
+            setMsg({ type: 'error', text: err.message || 'Erro ao excluir usuário.' });
         }
     };
 
@@ -136,7 +175,7 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
             email: user.username, // Use real username (which is the email)
             username: user.username,
             password: '',
-            role: user.role as 'Admin' | 'Operador'
+            role: user.role as 'Administrador' | 'Operador'
         });
         setShowAddModal(true);
     };
@@ -153,16 +192,18 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                         </span>
                     </p>
                 </div>
-                <button
-                    onClick={() => {
-                        setEditingUser(null);
-                        setFormData({ name: '', email: '', username: '', password: '', role: 'Operador' });
-                        setShowAddModal(true);
-                    }}
-                    className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold shadow-xl shadow-indigo-600/20 hover:scale-105 transition-all flex items-center gap-2 cursor-pointer"
-                >
-                    <UserPlus size={20} /> Novo Usuário
-                </button>
+                {currentUser.role !== 'Operador' && (
+                    <button
+                        onClick={() => {
+                            setEditingUser(null);
+                            setFormData({ name: '', email: '', username: '', password: '', role: 'Operador' });
+                            setShowAddModal(true);
+                        }}
+                        className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold shadow-xl shadow-indigo-600/20 hover:scale-105 transition-all flex items-center gap-2 cursor-pointer"
+                    >
+                        <UserPlus size={20} /> Novo Usuário
+                    </button>
+                )}
             </div>
 
             {msg && (
@@ -173,18 +214,112 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                 </div>
             )}
 
+            {/* Filters */}
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-wrap gap-4 items-end animate-in slide-in-from-top-4 duration-500">
+                <div className="flex-1 min-w-[200px] space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Buscar Usuário</label>
+                    <div className="relative">
+                        <Mail className="absolute left-4 top-3.5 text-slate-300" size={16} />
+                        <input
+                            placeholder="Nome ou e-mail..."
+                            className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-xl text-sm focus:ring-2 focus:ring-indigo-600 outline-none transition-all"
+                            value={filters.search}
+                            onChange={e => setFilters({ ...filters, search: e.target.value })}
+                        />
+                    </div>
+                </div>
+
+                <div className="w-40 space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Nível</label>
+                    <select
+                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-xl text-sm focus:ring-2 focus:ring-indigo-600 outline-none appearance-none cursor-pointer capitalize"
+                        value={filters.role}
+                        onChange={e => setFilters({ ...filters, role: e.target.value })}
+                    >
+                        <option value="all">Todos</option>
+                        <option value="Master">Master</option>
+                        <option value="Administrador">Administrador</option>
+                        <option value="Operador">Operador</option>
+                    </select>
+                </div>
+
+                {currentUser.role === 'Master' && (
+                    <div className="w-52 space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Admin Responsável</label>
+                        <select
+                            className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-xl text-sm focus:ring-2 focus:ring-indigo-600 outline-none appearance-none cursor-pointer"
+                            value={filters.admin}
+                            onChange={e => setFilters({ ...filters, admin: e.target.value })}
+                        >
+                            <option value="all">Todos os Admins</option>
+                            {admins.map(a => (
+                                <option key={a.id} value={a.id}>{a.name}</option>
+                            ))}
+                        </select>
+                    </div>
+                )}
+
+                <div className="w-40 space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Status</label>
+                    <select
+                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-xl text-sm focus:ring-2 focus:ring-indigo-600 outline-none appearance-none cursor-pointer"
+                        value={filters.status}
+                        onChange={e => setFilters({ ...filters, status: e.target.value })}
+                    >
+                        <option value="all">Status (Todos)</option>
+                        <option value="active">Ativo</option>
+                        <option value="inactive">Inativo</option>
+                    </select>
+                </div>
+            </div>
+
             <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
                 <table className="w-full text-left">
                     <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
                         <tr>
-                            <th className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest">Usuário</th>
-                            <th className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest">Nível</th>
-                            <th className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest">Status</th>
-                            <th className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest">Ações</th>
+                            <th
+                                className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-indigo-600 transition-colors"
+                                onClick={() => handleSort('name')}
+                            >
+                                <div className="flex items-center gap-1">
+                                    Usuário {sortConfig?.key === 'name' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                                </div>
+                            </th>
+                            <th
+                                className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-indigo-600 transition-colors"
+                                onClick={() => handleSort('role')}
+                            >
+                                <div className="flex items-center gap-1">
+                                    Nível {sortConfig?.key === 'role' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                                </div>
+                            </th>
+                            {currentUser.role === 'Master' && (
+                                <th className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest">Admin Responsável</th>
+                            )}
+                            <th
+                                className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-indigo-600 transition-colors"
+                                onClick={() => handleSort('active')}
+                            >
+                                <div className="flex items-center gap-1">
+                                    Status {sortConfig?.key === 'active' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                                </div>
+                            </th>
+                            {(currentUser.role !== 'Operador' || users.some(u => u.id === currentUser.id)) && (
+                                <th className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest text-right">Ações</th>
+                            )}
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                        {users.map(u => (
+                        {filteredUsers.length === 0 ? (
+                            <tr>
+                                <td colSpan={5} className="px-8 py-20 text-center">
+                                    <div className="flex flex-col items-center gap-2 opacity-20">
+                                        <ShieldAlert size={48} />
+                                        <p className="font-bold">Nenhum usuário encontrado com estes filtros.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        ) : filteredUsers.map(u => (
                             <tr key={u.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
                                 <td className="px-8 py-5">
                                     <div className="flex items-center gap-4">
@@ -196,11 +331,29 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                     </div>
                                 </td>
                                 <td className="px-8 py-5">
-                                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${u.role === 'Admin' ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${u.role === 'Master' ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400' :
+                                        u.role === 'Administrador' ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400' :
+                                            'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
                                         }`}>
                                         {u.role}
                                     </span>
                                 </td>
+                                {currentUser.role === 'Master' && (
+                                    <td className="px-8 py-5">
+                                        {u.parent_user_id ? (
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-6 h-6 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-[10px] font-bold text-indigo-600">
+                                                    {users.find(p => p.id === u.parent_user_id)?.name.charAt(0) || 'A'}
+                                                </div>
+                                                <span className="text-sm text-slate-600 dark:text-slate-400 font-medium">
+                                                    {users.find(p => p.id === u.parent_user_id)?.name || 'Administrador'}
+                                                </span>
+                                            </div>
+                                        ) : (
+                                            <span className="text-xs text-slate-400 italic">Sistema (Master)</span>
+                                        )}
+                                    </td>
+                                )}
                                 <td className="px-8 py-5">
                                     <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase inline-flex items-center gap-1.5 ${u.active ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>
                                         <div className={`w-1.5 h-1.5 rounded-full ${u.active ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
@@ -209,27 +362,35 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                 </td>
                                 <td className="px-8 py-5 text-right">
                                     <div className="flex items-center justify-end gap-2">
-                                        <button
-                                            onClick={() => handleToggleStatus(u)}
-                                            className={`p-2 transition-all duration-200 rounded-lg cursor-pointer ${u.active ? 'text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30' : 'text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50'}`}
-                                            title={u.active ? 'Desativar usuário' : 'Ativar usuário'}
-                                        >
-                                            <Radio size={20} />
-                                        </button>
-                                        <button
-                                            onClick={() => openEditModal(u)}
-                                            className="text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 transition-all p-2 rounded-lg cursor-pointer"
-                                            title="Editar dados"
-                                        >
-                                            <FileEdit size={20} />
-                                        </button>
-                                        <button
-                                            onClick={() => setUserToDelete(u)}
-                                            className="text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-all p-2 rounded-lg cursor-pointer"
-                                            title="Remover acesso"
-                                        >
-                                            <Trash2 size={20} />
-                                        </button>
+                                        {currentUser.role !== 'Operador' && (
+                                            <button
+                                                onClick={() => handleToggleStatus(u)}
+                                                className={`p-2 transition-all duration-200 rounded-lg cursor-pointer ${u.active ? 'text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30' : 'text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50'}`}
+                                                title={u.active ? 'Desativar usuário' : 'Ativar usuário'}
+                                            >
+                                                <Radio size={20} />
+                                            </button>
+                                        )}
+
+                                        {(currentUser.role !== 'Operador' || u.id === currentUser.id) && (
+                                            <button
+                                                onClick={() => openEditModal(u)}
+                                                className="text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 transition-all p-2 rounded-lg cursor-pointer"
+                                                title="Editar dados"
+                                            >
+                                                <FileEdit size={20} />
+                                            </button>
+                                        )}
+
+                                        {currentUser.role !== 'Operador' && (
+                                            <button
+                                                onClick={() => setUserToDelete(u)}
+                                                className="text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-all p-2 rounded-lg cursor-pointer"
+                                                title="Remover acesso"
+                                            >
+                                                <Trash2 size={20} />
+                                            </button>
+                                        )}
                                     </div>
                                 </td>
                             </tr>
@@ -251,7 +412,7 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                 <ShieldCheck size={28} />
                             </div>
                             <h2 className="text-2xl font-black text-slate-900 dark:text-white">
-                                {editingUser ? 'Editar Integrante' : 'Convidar Integrante'}
+                                {editingUser ? 'Editar Integrante' : 'Cadastrar Integrante'}
                             </h2>
                             <p className="text-sm text-slate-500 dark:text-slate-400">
                                 {editingUser ? 'Atualize os dados de acesso deste usuário.' : 'Preencha os dados do novo acesso.'}
@@ -262,6 +423,7 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                             <div className="relative">
                                 <UserIcon className="absolute left-4 top-4 text-slate-400" size={18} />
                                 <input
+                                    ref={nameRef}
                                     required
                                     placeholder="Nome Completo"
                                     className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white"
@@ -281,28 +443,26 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                     onChange={e => setFormData({ ...formData, email: e.target.value, username: e.target.value })}
                                 />
                                 {editingUser && (
-                                    <p className="text-[10px] text-slate-400 mt-1 ml-4 italic">O e-mail não pode ser alterado após o convite.</p>
+                                    <p className="text-[10px] text-slate-400 mt-1 ml-4 italic">O e-mail não pode ser alterado após o cadastro.</p>
                                 )}
                             </div>
-                            {!editingUser && (
-                                <div className="relative">
-                                    <Lock className="absolute left-4 top-4 text-slate-400" size={18} />
-                                    <input
-                                        required={!editingUser}
-                                        type="password"
-                                        placeholder="Senha Provisória"
-                                        className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white"
-                                        value={formData.password}
-                                        onChange={e => setFormData({ ...formData, password: e.target.value })}
-                                    />
-                                </div>
-                            )}
+                            <div className="relative">
+                                <Lock className="absolute left-4 top-4 text-slate-400" size={18} />
+                                <input
+                                    required={!editingUser}
+                                    type="password"
+                                    placeholder={editingUser ? "Nova Senha (deixe vazio para manter)" : "Senha Provisória"}
+                                    className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white"
+                                    value={formData.password}
+                                    onChange={e => setFormData({ ...formData, password: e.target.value })}
+                                />
+                            </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className={`grid gap-4 ${currentUser.role === 'Master' ? 'grid-cols-3' : 'grid-cols-2'}`}>
                                 <button
                                     type="button"
                                     onClick={() => setFormData({ ...formData, role: 'Operador' })}
-                                    className={`py-3 rounded-xl font-bold text-xs uppercase tracking-widest border transition-all cursor-pointer ${formData.role === 'Operador' ? 'bg-slate-100 border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-slate-600' : 'bg-transparent border-slate-200 dark:border-slate-800 text-slate-400'
+                                    className={`py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest border transition-all cursor-pointer ${formData.role === 'Operador' ? 'bg-slate-100 border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-slate-600' : 'bg-transparent border-slate-200 dark:border-slate-800 text-slate-400'
                                         }`}
                                 >
                                     Operador
@@ -310,16 +470,26 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                 <button
                                     type="button"
                                     disabled={currentUser.role === 'Operador'}
-                                    onClick={() => setFormData({ ...formData, role: 'Admin' })}
-                                    className={`py-3 rounded-xl font-bold text-xs uppercase tracking-widest border transition-all cursor-pointer ${formData.role === 'Admin' ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg' : 'bg-transparent border-slate-200 dark:border-slate-800 text-slate-400'
+                                    onClick={() => setFormData({ ...formData, role: 'Administrador' })}
+                                    className={`py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest border transition-all cursor-pointer ${formData.role === 'Administrador' ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg' : 'bg-transparent border-slate-200 dark:border-slate-800 text-slate-400'
                                         } disabled:opacity-30 disabled:cursor-not-allowed disabled:cursor-default`}
                                 >
-                                    Admin
+                                    Administrador
                                 </button>
+                                {currentUser.role === 'Master' && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, role: 'Master' })}
+                                        className={`py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest border transition-all cursor-pointer ${formData.role === 'Master' ? 'bg-amber-500 border-amber-500 text-white shadow-lg' : 'bg-transparent border-slate-200 dark:border-slate-800 text-slate-400'
+                                            }`}
+                                    >
+                                        Master
+                                    </button>
+                                )}
                             </div>
 
                             <button className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-2xl shadow-indigo-600/40 hover:-translate-y-1 transition-all mt-6 cursor-pointer">
-                                {editingUser ? 'Salvar Alterações' : 'Confirmar Convite'}
+                                {editingUser ? 'Salvar Alterações' : 'Confirmar Cadastro'}
                             </button>
                         </form>
                     </div>

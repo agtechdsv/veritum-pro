@@ -23,26 +23,31 @@ export default function VeritumPage() {
                 return;
             }
 
-            const { data: profile } = await supabase
+            const { data: profile, error: profileError } = await supabase
                 .from('users')
                 .select('*')
                 .eq('id', authUser.id)
                 .single();
+
+            if (profileError) {
+                console.error("Erro ao buscar perfil na tabela public.users:", profileError);
+            }
+
+            setUser({
+                id: authUser.id,
+                name: profile?.name || authUser.user_metadata.full_name || 'Usuário',
+                username: profile?.username || authUser.email?.split('@')[0] || 'user',
+                role: (profile?.role || authUser.user_metadata.role || 'Operador') as any,
+                active: profile?.active ?? true,
+                avatar_url: profile?.avatar_url || authUser.user_metadata.avatar_url || authUser.user_metadata.picture,
+                parent_user_id: profile?.parent_user_id || authUser.user_metadata.parent_user_id
+            });
 
             const { data: prefs } = await supabase
                 .from('user_preferences')
                 .select('*')
                 .eq('user_id', authUser.id)
                 .single();
-
-            setUser({
-                id: authUser.id,
-                name: profile?.name || authUser.user_metadata.full_name || 'Usuário',
-                username: profile?.username || authUser.email?.split('@')[0] || 'user',
-                role: profile?.role || 'Operador',
-                active: profile?.active ?? true,
-                avatar_url: profile?.avatar_url || authUser.user_metadata.avatar_url || authUser.user_metadata.picture,
-            });
 
             setPreferences({
                 user_id: authUser.id,

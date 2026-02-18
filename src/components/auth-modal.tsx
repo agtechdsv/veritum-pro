@@ -5,7 +5,7 @@ import { X, Mail, Lock, User, Chrome, ArrowRight, Scale } from 'lucide-react';
 import { useTheme } from 'next-themes'
 import { createMasterClient } from '@/lib/supabase/master'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button' // Keeping shadcn button for consistency if needed, but using custom styles from source for fidelity
+import { registerPublicUser } from '@/app/actions/user-actions';
 
 interface Props {
     isOpen: boolean;
@@ -28,6 +28,9 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
     const [name, setName] = useState('');
     const [error, setError] = useState<string | null>(null);
 
+    const emailRef = React.useRef<HTMLInputElement>(null);
+    const nameRef = React.useRef<HTMLInputElement>(null);
+
     // Ensure the modal resets to the requested mode whenever it's opened or changed
     useEffect(() => {
         if (isOpen) {
@@ -36,8 +39,24 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
             setEmail('');
             setPassword('');
             setName('');
+
+            // Focus logic
+            setTimeout(() => {
+                if (mode === 'login') emailRef.current?.focus();
+                else nameRef.current?.focus();
+            }, 100);
         }
     }, [isOpen, mode]);
+
+    // Handle focus when toggling mode manually inside modal
+    useEffect(() => {
+        if (isOpen) {
+            setTimeout(() => {
+                if (currentMode === 'login') emailRef.current?.focus();
+                else nameRef.current?.focus();
+            }, 50);
+        }
+    }, [currentMode, isOpen]);
 
     const handleEmailAuth = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -48,26 +67,47 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
             const supabase = createMasterClient();
 
             if (currentMode === 'login') {
-                const { error } = await supabase.auth.signInWithPassword({
+                const { data: { user }, error: loginError } = await supabase.auth.signInWithPassword({
                     email,
                     password,
                 });
-                if (error) throw error;
+                if (loginError) throw loginError;
+
+                if (user) {
+                    // Check if user is active in public.users
+                    const { data: profile, error: profileError } = await supabase
+                        .from('users')
+                        .select('active')
+                        .eq('id', user.id)
+                        .single();
+
+                    if (profileError || !profile?.active) {
+                        await supabase.auth.signOut();
+                        throw new Error('Esta conta está inativa. Entre em contato com o suporte.');
+                    }
+                }
+
                 window.location.href = '/veritum';
             } else {
-                const { error } = await supabase.auth.signUp({
+                const result = await registerPublicUser({
                     email,
                     password,
-                    options: {
-                        data: {
-                            full_name: name,
-                        }
-                    }
+                    name
                 });
-                if (error) throw error;
-                // For sign up, show a message or redirect
-                alert('Cadastro realizado! Por favor, verifique seu e-mail para confirmar a conta.');
-                setCurrentMode('login');
+
+                if (!result.success) {
+                    throw new Error(result.error);
+                }
+
+                // Auto-login after successful registration
+                const { error: loginError } = await supabase.auth.signInWithPassword({
+                    email,
+                    password,
+                });
+
+                if (loginError) throw loginError;
+
+                window.location.href = '/veritum';
             }
         } catch (err: any) {
             console.error('Auth error:', err);
@@ -171,6 +211,7 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                                 <div className="relative">
                                     <User className="absolute left-4 top-4 text-slate-400" size={20} />
                                     <input
+                                        ref={nameRef}
                                         required
                                         placeholder="Nome Completo"
                                         className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 dark:text-white"
@@ -182,6 +223,7 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                             <div className="relative">
                                 <Mail className="absolute left-4 top-4 text-slate-400" size={20} />
                                 <input
+                                    ref={emailRef}
                                     required
                                     type="email"
                                     placeholder="E-mail profissional"
