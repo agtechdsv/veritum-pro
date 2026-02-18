@@ -35,20 +35,11 @@ export async function GET(request: Request) {
                     .eq('user_id', user.id)
                     .single()
 
-                // If BYODB settings exist, set them in cookies for the Client DB connection
                 if (prefs && prefs.custom_supabase_url && prefs.custom_supabase_key) {
-                    // Note: In a real world scenario, these should be encrypted or HTTP-only
-                    // We use the supabase client's cookie store (which wraps next/headers cookies)
-                    // But we can't access `cookies().set` directly here easily without importing it again
-                    // So we rely on the middleware or client-side logic, OR we import cookies here.
-                    // Let's import cookies to set them explicitly.
                     const { cookies } = await import('next/headers')
                     const cookieStore = await cookies()
                     cookieStore.set('sb-project-url', prefs.custom_supabase_url)
                     cookieStore.set('sb-anon-key', prefs.custom_supabase_key)
-                } else {
-                    // If no BYODB setup found, force redirect to Setup
-                    return NextResponse.redirect(`${origin}/setup`)
                 }
             }
 

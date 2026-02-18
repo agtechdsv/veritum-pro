@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { X, Mail, Lock, User, Chrome, ArrowRight, Scale } from 'lucide-react';
 import { useTheme } from 'next-themes'
-import { loginWithGoogle } from '@/app/login/actions'
+import { createMasterClient } from '@/lib/supabase/master'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button' // Keeping shadcn button for consistency if needed, but using custom styles from source for fidelity
 
@@ -29,8 +29,46 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
 
     const handleGoogleLogin = async () => {
         setLoading(true);
-        await loginWithGoogle()
-        // No need to set loading false as redirect happens
+        try {
+            const supabase = createMasterClient();
+            const { data, error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: `${window.location.origin}/auth/callback`,
+                    queryParams: {
+                        access_type: 'offline',
+                        prompt: 'consent',
+                    },
+                    skipBrowserRedirect: true
+                },
+            });
+
+            if (error) throw error;
+            if (data?.url) {
+                // Use a popup window for the Google login
+                const width = 600;
+                const height = 700;
+                const left = window.screenX + (window.outerWidth - width) / 2;
+                const top = window.screenY + (window.outerHeight - height) / 2;
+
+                const popup = window.open(
+                    data.url,
+                    'google-login',
+                    `width=${width},height=${height},left=${left},top=${top},toolbar=0,scrollbars=1,status=0,resizable=1,location=1,menuBar=0`
+                );
+
+                // Listen for the popup being closed to reset loading state
+                const timer = setInterval(() => {
+                    if (popup?.closed) {
+                        clearInterval(timer);
+                        setLoading(false);
+                    }
+                }, 1000);
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            setLoading(false);
+        }
     };
 
     return (
