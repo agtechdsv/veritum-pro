@@ -1,0 +1,51 @@
+Eu gostaria de ter uma landingpage toda bem trabalhada e moderna. Algo para escritórios de advocacia ficarem boquiabertos.
+Que esta tela tenha um menu para navegar na landingpage.
+Que a landingpage do Veritum PRO apresente as suites que possuimos.
+Apresentar os planos de assinatura.
+Ter um ícone para selecionar o idioma e o tema desejado.
+Que tenha um título bem elaborado, uma logo e um favicon a ver com o assunto.
+
+Que a landingpage tenha uma forma de se Logar e/ou Cadastrar. O login e/ou Cadastro pode ser feito pelo Google também.
+O Veritum PRO terá um banco de dados próprio supabase.
+Quando alguém tentar logar/cadastrar, vai passar pelo supabase do Veritum PRO (tabela auth.users)
+Ao se cadastrar, sempre que registrar um usuário na auth.users tem de cadastrar o mesmo na public.users. Isto deverá ser automático e além dos campos name e username o avatar_url virá da url_google do auth.users (Quando user cadastrado pelo google).
+A public.users terá a seguinte estrutura:
+create table public.users (
+  id uuid not null,
+  name text not null,
+  username text not null,
+  role text null default 'Operador'::text,
+  active boolean null default true,
+  avatar_url text null,
+  cpf_cnpj text null,
+  phone text null,
+  created_at timestamp with time zone null default now(),
+  updated_at timestamp with time zone null default now(),
+  constraint users_pkey primary key (id),
+  constraint users_username_key unique (username),
+  constraint users_id_fkey foreign KEY (id) references auth.users (id) on update CASCADE on delete CASCADE
+) TABLESPACE pg_default;
+
+A landingpage deverá ter o avatar próximo ao ícone desconectar. O avatar irá carregar automaticamente a imagem do usuário quando possuir url do google nesta tabela users.
+O avatar deve possuir uma câmera dentro e permitirá selecionar uma imagem para alterar o avatar. Esta imagem será armazenada como base64 no próprio campo avatar_url (Então este campo ou é a url da imagem google ou um base64).
+
+Devemos também ter a tabela abaixo:
+create table public.user_preferences (
+  user_id uuid not null,
+  language text null default 'pt'::text,
+  theme text null default 'dark'::text,
+  custom_supabase_url text null,
+  custom_supabase_key text null,
+  custom_gemini_key text null,
+  needs_password_reset boolean null default false,
+  updated_at timestamp with time zone null default now(),
+  constraint user_preferences_pkey primary key (user_id),
+  constraint user_preferences_user_id_fkey foreign KEY (user_id) references users (id) on delete CASCADE
+) TABLESPACE pg_default;
+Para esta tabela iremos implementar uma tela de cadastro de configurações do usuário onde o usuário irá informar (BYODB) os custom_supabase_url, custom_supabase_key e custom_gemini_key.
+
+Ou seja em relação ao banco de dados:
+- o usuário loga pela app mas no meu supabase;
+- Em BYODB ele informa os dados necessários;
+- A partir daí é que todos os selects, inserts, updates, deletes realizados dentro das suítes é que serão realizados no banco de dados dele; Mas o login será no meu com a lógica acima. É possível?
+- Ele poderá cadastrar usuários também na tabela users do supabase dele. Mas ele poderá cadastrar apenas usuários com role Operador.  E todo user que ele cadastrar tb deverá ser cadastrado na minha tabela public.users e na auth.users do meu supabase. Mas o user operador dele deverá ter um auto relacionamento com o user_id dele. Ou seja, o user operador dele terá um user_id que apontará para o user_id dele. Assim teremos controle de quem é o user operador dele.
