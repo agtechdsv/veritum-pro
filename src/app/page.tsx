@@ -1,266 +1,284 @@
 'use client'
 
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import React, { useState, useEffect } from 'react';
 import {
-    ShieldCheck,
-    Scale,
-    FileText,
-    BadgeDollarSign,
-    BrainCircuit,
-    Users,
-    CheckCircle2,
-    ArrowRight
-} from 'lucide-react'
-import { motion } from 'framer-motion'
-import { LoginModal } from '@/components/login-modal'
-import { ModeToggle } from '@/components/mode-toggle'
+    ShieldAlert, GitBranch, FileEdit, DollarSign, BarChart3,
+    MessageSquare, Globe, Moon, Sun, ArrowRight, Check,
+    LogIn, UserPlus, ChevronRight, Scale
+} from 'lucide-react';
+import { AuthModal } from '@/components/auth-modal';
+import { LegalModal } from '@/components/legal-modal';
+import { useTheme } from 'next-themes'
+import Link from 'next/link'
 
-const suites = [
-    {
-        title: 'Sentinel Pro',
-        description: 'Vigilância e Monitoramento',
-        icon: ShieldCheck,
-        color: 'text-red-500',
-        details: 'Clipping inteligente e captura antecipada de processos.',
-        gradient: 'from-red-500/20 to-orange-500/5'
-    },
-    {
-        title: 'Nexus Pro',
-        description: 'Gestão de Workflow',
-        icon: Scale,
-        color: 'text-blue-500',
-        details: 'Kanban jurídico e automação de tarefas recorrentes.',
-        gradient: 'from-blue-500/20 to-cyan-500/5'
-    },
-    {
-        title: 'Scriptor Pro',
-        description: 'Inteligência Documental',
-        icon: FileText,
-        color: 'text-amber-500',
-        details: 'Redação assistida por IA e gestão de contratos (CLM).',
-        gradient: 'from-amber-500/20 to-yellow-500/5'
-    },
-    {
-        title: 'Valorem Pro',
-        description: 'Controladoria Financeira',
-        icon: BadgeDollarSign,
-        color: 'text-emerald-500',
-        details: 'Gestão de honorários e cálculos judiciais precisos.',
-        gradient: 'from-emerald-500/20 to-green-500/5'
-    },
-    {
-        title: 'Cognitio Pro',
-        description: 'Jurimetria Avançada',
-        icon: BrainCircuit,
-        color: 'text-purple-500',
-        details: 'Análise preditiva e dashboards para tomada de decisão.',
-        gradient: 'from-purple-500/20 to-pink-500/5'
-    },
-    {
-        title: 'Vox Clientis',
-        description: 'CRM e Portal do Cliente',
-        icon: Users,
-        color: 'text-indigo-500',
-        details: 'Comunicação transparente e tradução de "juridiquês".',
-        gradient: 'from-indigo-500/20 to-violet-500/5'
-    }
-]
+interface Suite {
+    id: string;
+    title: string;
+    sub: string;
+    desc: string;
+    icon: React.ElementType;
+    color: string;
+}
 
-const plans = [
-    {
-        name: 'Starter',
-        price: 'R$ 0',
-        features: ['Nexus Pro (Básico)', 'Até 50 Processos', 'Suporte por Email'],
-        cta: 'Começar Grátis',
-        variant: 'outline' as const
-    },
-    {
-        name: 'Professional',
-        price: 'R$ 299',
-        features: ['Todas as 6 Suítes', 'Processos Ilimitados', 'IA Generativa (Gemini)', 'Suporte Prioritário'],
-        cta: 'Assinar Agora',
-        variant: 'default' as const,
-        popular: true
-    },
-    {
-        name: 'Enterprise',
-        price: 'Sob Consulta',
-        features: ['API Personalizada', 'Gestor de Conta', 'Treinamento In-Company', 'SLA Garantido'],
-        cta: 'Falar com Vendas',
-        variant: 'outline' as const
-    }
-]
+const Logo = () => (
+    <div className="bg-indigo-600/10 p-2 rounded-lg flex items-center justify-center text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400">
+        <Scale className="h-5 w-5" />
+    </div>
+);
 
 export default function LandingPage() {
-    return (
-        <div className="flex flex-col min-h-screen bg-neutral-950 text-neutral-100 selection:bg-primary/30">
+    const { theme, setTheme, resolvedTheme } = useTheme()
+    const [mounted, setMounted] = useState(false)
+    const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+    const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
 
-            {/* Header */}
-            <header className="fixed top-0 z-50 w-full border-b border-white/5 bg-neutral-950/50 backdrop-blur-xl supports-[backdrop-filter]:bg-neutral-950/20">
-                <div className="container flex h-16 items-center justify-between">
-                    <div className="flex items-center gap-2 font-bold text-xl tracking-tighter">
-                        <div className="bg-primary/10 p-2 rounded-lg">
-                            <Scale className="h-5 w-5 text-primary" />
-                        </div>
-                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-neutral-500">VERITUM PRO</span>
+    // State for Legal Modals
+    const [legalModal, setLegalModal] = useState<{ isOpen: boolean; type: 'privacy' | 'terms' }>({
+        isOpen: false,
+        type: 'privacy'
+    });
+
+    useEffect(() => {
+        setMounted(true)
+    }, [])
+
+    const suites: Suite[] = [
+        {
+            id: 'sentinel',
+            title: 'Sentinel Pro',
+            sub: 'Vigilância E Monitoramento',
+            desc: 'Clipping inteligente e captura antecipada de processos.',
+            icon: ShieldAlert,
+            color: 'text-rose-500'
+        },
+        {
+            id: 'nexus',
+            title: 'Nexus Pro',
+            sub: 'Gestão De Workflow',
+            desc: 'Kanban jurídico e automação de tarefas recorrentes.',
+            icon: GitBranch,
+            color: 'text-indigo-500'
+        },
+        {
+            id: 'scriptor',
+            title: 'Scriptor Pro',
+            sub: 'Inteligência Documental',
+            desc: 'Redação assistida por IA e gestão de contratos (CLM).',
+            icon: FileEdit,
+            color: 'text-amber-500'
+        },
+        {
+            id: 'valorem',
+            title: 'Valorem Pro',
+            sub: 'Controladoria Financeira',
+            desc: 'Gestão de honorários e cálculos judiciais precisos.',
+            icon: DollarSign,
+            color: 'text-emerald-500'
+        },
+        {
+            id: 'cognitio',
+            title: 'Cognitio Pro',
+            sub: 'Jurimetria Avançada',
+            desc: 'Análise preditiva e dashboards para tomada de decisão.',
+            icon: BarChart3,
+            color: 'text-cyan-500'
+        },
+        {
+            id: 'vox',
+            title: 'Vox Clientis',
+            sub: 'Crm E Portal Do Cliente',
+            desc: 'Comunicação transparente e tradução de "juridiquês".',
+            icon: MessageSquare,
+            color: 'text-violet-500'
+        },
+    ];
+
+    const plans = [
+        { name: 'Essencial', price: 'R$ 299', features: ['Até 2 usuários', 'Nexus Pro (Básico)', 'Scriptor Pro', 'Suporte via Ticket'] },
+        { name: 'Professional', price: 'R$ 599', features: ['Até 10 usuários', 'Todas as Suítes', 'IA Ilimitada', 'Suporte 24/7'], recommended: true },
+        { name: 'Enterprise', price: 'Sob Consulta', features: ['Usuários Ilimitados', 'API Customizada', 'Treinamento de IA Local', 'Gerente de Contas'] },
+    ];
+
+    const openAuth = (mode: 'login' | 'register') => {
+        setAuthMode(mode);
+        setIsAuthModalOpen(true);
+    };
+
+    const openLegal = (type: 'privacy' | 'terms') => {
+        setLegalModal({ isOpen: true, type });
+    };
+
+    const toggleTheme = () => {
+        // If theme is system, we need to know what the resolved theme is to switch to the opposite
+        if (theme === 'system') {
+            setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')
+        } else {
+            setTheme(theme === 'dark' ? 'light' : 'dark')
+        }
+    }
+
+    // Prevent hydration mismatch
+    if (!mounted) return null
+
+    return (
+        <div className="min-h-screen transition-colors duration-500 bg-white text-slate-900 dark:bg-slate-950 dark:text-white">
+            {/* Navigation */}
+            <nav className="fixed top-0 w-full z-50 glass border-b transition-colors duration-300 backdrop-blur-md bg-white/70 dark:bg-slate-950/70 border-slate-200 dark:border-slate-800">
+                <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <Logo />
+                        <span className="font-extrabold text-2xl tracking-tighter text-slate-900 dark:text-white">VERITUM <span className="text-indigo-600">PRO</span></span>
                     </div>
-                    <nav className="hidden md:flex gap-8 text-sm font-medium">
-                        <Link href="#features" className="text-neutral-400 hover:text-white transition-colors">Suítes</Link>
-                        <Link href="#pricing" className="text-neutral-400 hover:text-white transition-colors">Planos</Link>
-                    </nav>
-                    <div className="flex gap-4 items-center">
-                        <LoginModal />
-                        <Button asChild className="rounded-full px-6 bg-white text-black hover:bg-neutral-200">
-                            <Link href="/setup">Cadastro</Link>
-                        </Button>
-                        <ModeToggle />
+
+                    <div className="hidden md:flex items-center gap-8">
+                        <a href="#suites" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">Suítes</a>
+                        <a href="#pricing" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">Planos</a>
+                        <a href="#about" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">Sobre</a>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                        <button onClick={toggleTheme} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all text-slate-600 dark:text-slate-400">
+                            {resolvedTheme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+                        </button>
+                        <div className="flex items-center gap-1 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full cursor-pointer text-slate-600 dark:text-slate-400">
+                            <Globe size={20} />
+                            <span className="text-xs font-bold">PT</span>
+                        </div>
+                        <button onClick={() => openAuth('login')} className="hidden sm:flex items-center gap-2 font-semibold px-4 py-2 hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">
+                            <LogIn size={18} /> Entrar
+                        </button>
+                        <button onClick={() => openAuth('register')} className="bg-indigo-600 text-white px-6 py-2.5 rounded-full font-bold shadow-xl shadow-indigo-600/20 hover:scale-105 transition-all flex items-center gap-2">
+                            <UserPlus size={18} /> Começar Grátis
+                        </button>
                     </div>
                 </div>
-            </header>
+            </nav>
 
-            <main className="flex-1">
-                {/* Hero Section */}
-                <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden">
+            {/* Hero Section */}
+            <section className="relative pt-44 pb-32 px-6 overflow-hidden bg-white dark:bg-slate-950 transition-colors duration-300">
+                <div className="max-w-7xl mx-auto text-center relative z-10">
+                    <span className="inline-block bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest mb-6">
+                        A Nova Era do Direito Digital
+                    </span>
+                    <h1 className="text-6xl md:text-8xl font-black tracking-tight mb-8 leading-[1.1] text-slate-900 dark:text-white">
+                        O Ecossistema <span className="text-indigo-600">Jurídico</span> <br className="hidden lg:block" />
+                        Modular & Inteligente
+                    </h1>
+                    <p className="text-xl text-slate-500 dark:text-slate-400 max-w-3xl mx-auto mb-12 leading-relaxed">
+                        Uma arquitetura BYODB (Bring Your Own Database) completa para escritórios de alta performance.
+                        Seu dado, sua infraestrutura, nossas suítes inteligentes.
+                    </p>
+                    <div className="flex flex-wrap items-center justify-center gap-6">
+                        <button onClick={() => openAuth('register')} className="bg-indigo-600 text-white px-10 py-5 rounded-2xl font-bold text-lg shadow-2xl shadow-indigo-600/40 hover:-translate-y-1 transition-all flex items-center gap-3">
+                            Ver Planos e Preços <ArrowRight size={22} />
+                        </button>
+                        <button className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-10 py-5 rounded-2xl font-bold text-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-slate-800 dark:text-white">
+                            Agendar Demo
+                        </button>
+                    </div>
+                </div>
 
-                    {/* Spotlight Effect */}
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/20 blur-[120px] -z-10 opacity-50 pointer-events-none rounded-full" />
+                {/* Background blobs */}
+                <div className="absolute top-1/4 left-0 w-96 h-96 bg-indigo-400/20 blur-[120px] rounded-full pointer-events-none"></div>
+                <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-purple-400/10 blur-[150px] rounded-full pointer-events-none"></div>
+            </section>
 
-                    <div className="container px-4 md:px-6 relative z-10">
-                        <div className="flex flex-col items-center text-center space-y-8">
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.7, ease: "easeOut" }}
-                                className="space-y-4 max-w-4xl"
-                            >
-                                <div className="inline-flex items-center rounded-full border border-neutral-800 bg-neutral-900/50 px-3 py-1 text-sm text-neutral-400 backdrop-blur-xl mb-4">
-                                    <span className="flex h-2 w-2 rounded-full bg-emerald-500 mr-2 animate-pulse"></span>
-                                    O Futuro da Advocacia chegou
+            {/* Suites Grid */}
+            <section id="suites" className="py-32 px-6 bg-slate-50 dark:bg-slate-950 transition-colors duration-300 border-y border-slate-100 dark:border-slate-900">
+                <div className="max-w-7xl mx-auto">
+                    <div className="text-center mb-20">
+                        <h2 className="text-4xl font-bold mb-4 text-slate-900 dark:text-white">Suítes Especializadas</h2>
+                        <p className="text-slate-500 dark:text-slate-400">Arquitetura modular projetada para o ciclo de vida jurídico completo.</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {suites.map((suite) => (
+                            <div key={suite.id} className="bg-white dark:bg-slate-900 p-8 rounded-[2rem] border border-slate-200 dark:border-slate-800 hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 group">
+                                <div className={`w-16 h-16 rounded-2xl mb-6 flex items-center justify-center bg-slate-50 dark:bg-slate-800 group-hover:scale-110 transition-transform ${suite.color}`}>
+                                    <suite.icon size={32} />
                                 </div>
-                                <h1 className="text-5xl md:text-7xl font-bold tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-white via-neutral-200 to-neutral-600 pb-2">
-                                    Ecossistema Jurídico <br /> <span className="text-primary/90">Definitivo</span>
-                                </h1>
-                                <p className="text-xl text-neutral-400 md:text-2xl pt-4 max-w-2xl mx-auto leading-relaxed">
-                                    Deixe a burocracia para os robôs. Foque na estratégia.
-                                    Uma plataforma modular com 6 suítes integradas por IA.
+                                <h3 className="text-2xl font-bold mb-1 text-slate-800 dark:text-white">{suite.title}</h3>
+                                <h4 className="text-indigo-600 dark:text-indigo-400 text-sm font-bold versalete mb-4">
+                                    {suite.sub}
+                                </h4>
+                                <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-6">
+                                    {suite.desc}
                                 </p>
-                            </motion.div>
-
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.95 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                transition={{ delay: 0.3, duration: 0.5 }}
-                                className="flex flex-col sm:flex-row gap-4 w-full justify-center pt-8"
-                            >
-                                <Button size="lg" className="h-14 px-8 text-lg rounded-full bg-white text-black hover:bg-neutral-200 shadow-2xl shadow-primary/20 transition-all hover:scale-105" asChild>
-                                    <Link href="/setup">Começar Agora <ArrowRight className="ml-2 h-5 w-5" /></Link>
-                                </Button>
-                                <Button size="lg" variant="outline" className="h-14 px-8 text-lg rounded-full border-neutral-800 hover:bg-neutral-900 text-neutral-300 hover:text-white backdrop-blur-sm">
-                                    Ver Demonstração
-                                </Button>
-                            </motion.div>
-                        </div>
+                                <button className="text-indigo-600 dark:text-indigo-400 font-bold text-sm flex items-center gap-1 group-hover:gap-2 transition-all">
+                                    Conhecer Módulo <ChevronRight size={16} />
+                                </button>
+                            </div>
+                        ))}
                     </div>
-                </section>
+                </div>
+            </section>
 
-                {/* Features Grid */}
-                <section id="features" className="py-24 relative">
-                    <div className="absolute inset-0 bg-neutral-950/50 -z-20" />
-                    <div className="container px-4 md:px-6">
-                        <div className="text-center mb-20 space-y-4">
-                            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-white">Suítes Especializadas</h2>
-                            <p className="text-neutral-400 text-lg max-w-2xl mx-auto">
-                                Módulos poderosos que conversam entre si para automatizar seu escritório.
-                            </p>
-                        </div>
+            {/* Pricing */}
+            <section id="pricing" className="py-32 px-6 bg-white dark:bg-slate-950 transition-colors duration-300">
+                <div className="max-w-7xl mx-auto">
+                    <div className="text-center mb-20">
+                        <h2 className="text-4xl font-bold mb-4 text-slate-900 dark:text-white">Planos que acompanham seu crescimento</h2>
+                        <p className="text-slate-500 dark:text-slate-400">Transparência total, sem letras miúdas.</p>
+                    </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {suites.map((suite, index) => (
-                                <motion.div
-                                    key={suite.title}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    whileInView={{ opacity: 1, y: 0 }}
-                                    viewport={{ once: true }}
-                                    transition={{ delay: index * 0.1 }}
-                                    whileHover={{ y: -5 }}
-                                >
-                                    <div className={`group relative h-full rounded-2xl border border-white/5 bg-neutral-900/40 p-6 backdrop-blur-sm transition-all hover:border-white/10 hover:bg-neutral-900/60 overflow-hidden`}>
-                                        <div className={`absolute inset-0 bg-gradient-to-br ${suite.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
-
-                                        <div className="relative z-10">
-                                            <div className="mb-4 inline-flex items-center justify-center rounded-lg bg-neutral-800/50 p-3 ring-1 ring-white/10">
-                                                <suite.icon className={`h-6 w-6 ${suite.color}`} />
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {plans.map((plan) => (
+                            <div key={plan.name} className={`relative p-10 rounded-[2.5rem] border transition-all duration-300 ${plan.recommended ? 'border-indigo-600 shadow-2xl bg-white dark:bg-slate-900' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900'}`}>
+                                {plan.recommended && (
+                                    <span className="absolute top-0 right-10 -translate-y-1/2 bg-indigo-600 text-white px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest">
+                                        Mais Popular
+                                    </span>
+                                )}
+                                <h3 className="text-2xl font-bold mb-2 text-slate-800 dark:text-white">{plan.name}</h3>
+                                <div className="mb-8">
+                                    <span className="text-4xl font-black text-slate-900 dark:text-white">{plan.price}</span>
+                                    {plan.price !== 'Sob Consulta' && <span className="text-slate-400 dark:text-slate-500 font-medium ml-1">/mês</span>}
+                                </div>
+                                <ul className="space-y-4 mb-10">
+                                    {plan.features.map(f => (
+                                        <li key={f} className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400 font-medium">
+                                            <div className="w-5 h-5 bg-indigo-100 dark:bg-indigo-900/40 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                                                <Check size={12} />
                                             </div>
-                                            <h3 className="text-xl font-semibold text-white mb-2">{suite.title}</h3>
-                                            <p className="text-sm font-medium text-neutral-500 uppercase tracking-wider mb-4">{suite.description}</p>
-                                            <p className="text-neutral-400 leading-relaxed">{suite.details}</p>
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            ))}
-                        </div>
+                                            {f}
+                                        </li>
+                                    ))}
+                                </ul>
+                                <button onClick={() => openAuth('register')} className={`w-full py-4 rounded-2xl font-bold transition-all duration-300 ${plan.recommended ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-600/20 hover:bg-indigo-700' : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-white'}`}>
+                                    Selecionar Plano
+                                </button>
+                            </div>
+                        ))}
                     </div>
-                </section>
+                </div>
+            </section>
 
-                {/* Pricing Section */}
-                <section id="pricing" className="py-24 border-t border-white/5 bg-neutral-950">
-                    <div className="container px-4 md:px-6">
-                        <div className="text-center mb-20 space-y-4">
-                            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">Planos Flexíveis</h2>
-                            <p className="text-neutral-400 text-lg">
-                                Escalabilidade para escritórios de todos os tamanhos.
-                            </p>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-                            {plans.map((plan, index) => (
-                                <Card key={plan.name} className={`relative flex flex-col bg-neutral-900/20 border-white/5 backdrop-blur-sm ${plan.popular ? 'border-primary/50 shadow-2xl shadow-primary/10 scale-105 z-10 bg-neutral-900/40' : 'hover:border-white/10 transition-colors'}`}>
-                                    {plan.popular && (
-                                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-primary to-purple-600 text-white px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest shadow-lg">
-                                            Recomendado
-                                        </div>
-                                    )}
-                                    <CardHeader>
-                                        <CardTitle className="text-xl text-neutral-200">{plan.name}</CardTitle>
-                                        <div className="text-4xl font-bold mt-2 text-white">{plan.price}</div>
-                                        <CardDescription className="text-neutral-500">/mês por usuário</CardDescription>
-                                    </CardHeader>
-                                    <CardContent className="flex-1">
-                                        <ul className="space-y-4">
-                                            {plan.features.map((feature) => (
-                                                <li key={feature} className="flex items-center gap-3 text-sm text-neutral-300">
-                                                    <div className="rounded-full bg-primary/20 p-1">
-                                                        <CheckCircle2 className="h-3 w-3 text-primary shrink-0" />
-                                                    </div>
-                                                    <span>{feature}</span>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </CardContent>
-                                    <div className="p-6 pt-0">
-                                        <Button className={`w-full rounded-full h-12 ${plan.popular ? 'bg-primary hover:bg-primary/90 text-white' : 'bg-white/5 hover:bg-white/10 text-white border-none'}`} variant={plan.variant} asChild>
-                                            <Link href={plan.name === 'Enterprise' ? '#' : '/setup'}>{plan.cta}</Link>
-                                        </Button>
-                                    </div>
-                                </Card>
-                            ))}
-                        </div>
+            {/* Footer */}
+            <footer className="py-20 px-6 border-t border-slate-100 dark:border-slate-900 bg-slate-50 dark:bg-slate-950 transition-colors">
+                <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+                    <div className="flex items-center gap-3">
+                        <Logo />
+                        <span className="font-extrabold text-2xl tracking-tighter text-slate-900 dark:text-white">VERITUM <span className="text-indigo-600">PRO</span></span>
                     </div>
-                </section>
-            </main>
-
-            <footer className="py-8 border-t border-white/5 bg-neutral-950">
-                <div className="container flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-neutral-500">
-                    <p>© 2026 Veritum PRO. Excellence in Legal Tech.</p>
+                    <p className="text-sm text-slate-400 dark:text-slate-500 font-medium">© 2024 Veritum Pro. Todos os direitos reservados.</p>
                     <div className="flex gap-6">
-                        <Link href="#" className="hover:text-white transition-colors">Termos</Link>
-                        <Link href="#" className="hover:text-white transition-colors">Privacidade</Link>
-                        <Link href="#" className="hover:text-white transition-colors">Contato</Link>
+                        <button onClick={() => openLegal('privacy')} className="text-sm text-slate-500 hover:text-indigo-600 transition-colors">Privacidade</button>
+                        <button onClick={() => openLegal('terms')} className="text-sm text-slate-500 hover:text-indigo-600 transition-colors">Termos</button>
                     </div>
                 </div>
             </footer>
+
+            <AuthModal
+                isOpen={isAuthModalOpen}
+                onClose={() => setIsAuthModalOpen(false)}
+                mode={authMode}
+            />
+
+            <LegalModal
+                isOpen={legalModal.isOpen}
+                onClose={() => setLegalModal({ ...legalModal, isOpen: false })}
+                type={legalModal.type}
+            />
         </div>
-    )
+    );
 }
