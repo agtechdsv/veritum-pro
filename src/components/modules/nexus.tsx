@@ -3,7 +3,7 @@ import React from 'react';
 import { Credentials, Lawsuit } from '@/types';
 import { Plus, MoreHorizontal, Calendar, Scale } from 'lucide-react';
 
-const Nexus: React.FC<{ credentials: Credentials }> = ({ credentials }) => {
+const Nexus: React.FC<{ credentials: Credentials; permissions: any }> = ({ credentials, permissions }) => {
     const columns = ['To Do', 'Em Análise', 'Prazos Fatais', 'Concluídos'];
 
     const mockTasks: (Lawsuit & { priority: 'Alta' | 'Normal' })[] = [

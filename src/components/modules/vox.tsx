@@ -4,7 +4,7 @@ import { Credentials } from '@/types';
 import { GeminiService } from '@/services/gemini';
 import { MessageCircle, Phone, Globe, Send, User, Check } from 'lucide-react';
 
-const Vox: React.FC<{ credentials: Credentials }> = ({ credentials }) => {
+const Vox: React.FC<{ credentials: Credentials; permissions: any }> = ({ credentials, permissions }) => {
     const [selectedChat, setSelectedChat] = useState<number>(0);
     const [inputText, setInputText] = useState('');
     const [translating, setTranslating] = useState(false);

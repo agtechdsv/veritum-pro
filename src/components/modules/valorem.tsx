@@ -4,7 +4,7 @@ import { Credentials } from '@/types';
 import { TrendingUp, TrendingDown, Clock, CreditCard, PieChart, Plus } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
-const Valorem: React.FC<{ credentials: Credentials }> = ({ credentials }) => {
+const Valorem: React.FC<{ credentials: Credentials; permissions: any }> = ({ credentials, permissions }) => {
     const data = [
         { name: 'Jan', value: 45000 },
         { name: 'Fev', value: 32000 },

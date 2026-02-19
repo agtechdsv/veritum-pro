@@ -4,7 +4,7 @@ import { Credentials } from '@/types';
 import { GeminiService } from '@/services/gemini';
 import { Search, Plus, AlertCircle, TrendingUp, TrendingDown, Minus, Shield } from 'lucide-react';
 
-const Sentinel: React.FC<{ credentials: Credentials }> = ({ credentials }) => {
+const Sentinel: React.FC<{ credentials: Credentials; permissions: any }> = ({ credentials, permissions }) => {
     const [searchTerm, setSearchTerm] = useState('');
 
     // Static mock data from source

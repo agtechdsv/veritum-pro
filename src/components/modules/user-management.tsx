@@ -1,10 +1,11 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, UserPlus, Trash2, Mail, User as UserIcon, Lock, FileEdit, Radio, ShieldAlert, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, CheckSquare } from 'lucide-react';
+import { ShieldCheck, UserPlus, Trash2, Mail, User as UserIcon, Lock, FileEdit, Radio, ShieldAlert, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, CheckSquare, Package } from 'lucide-react';
 import { User } from '@/types';
 import { createMasterClient } from '@/lib/supabase/master';
 import { createUserDirectly, updateUserDirectly, deleteUserDirectly } from '@/app/actions/user-actions';
+import { toast } from '../ui/toast';
 
 interface Props {
     currentUser: User;
@@ -16,12 +17,14 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
     const [showAddModal, setShowAddModal] = useState(false);
     const [userToDelete, setUserToDelete] = useState<User | null>(null);
     const [editingUser, setEditingUser] = useState<User | null>(null);
+    const [plans, setPlans] = useState<any[]>([]);
     const [formData, setFormData] = useState({
         name: '',
         email: '',
         username: '',
         password: '',
-        role: 'Operador' as 'Master' | 'Administrador' | 'Operador'
+        role: 'Operador' as 'Master' | 'Administrador' | 'Operador',
+        plan_id: ''
     });
     const [filters, setFilters] = useState({
         search: '',
@@ -30,7 +33,6 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
         status: 'all'
     });
     const [sortConfig, setSortConfig] = useState<{ key: string, direction: 'asc' | 'desc' } | null>({ key: 'created_at', direction: 'desc' });
-    const [msg, setMsg] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
     // Pagination & Bulk Actions State
     const [currentPage, setCurrentPage] = useState(1);
@@ -44,7 +46,17 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
 
     useEffect(() => {
         fetchUsers();
+        fetchPlans();
     }, []);
+
+    const fetchPlans = async () => {
+        const { data } = await supabase
+            .from('plans')
+            .select('*')
+            .eq('active', true)
+            .order('sort_order', { ascending: true });
+        if (data) setPlans(data);
+    };
 
     useEffect(() => {
         if (showAddModal) {
@@ -143,11 +155,11 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                 .in('id', selectedUserIds);
 
             if (error) throw error;
-            setMsg({ type: 'success', text: `${selectedUserIds.length} usuários ${active ? 'ativados' : 'desativados'} com sucesso.` });
+            toast.success(`${selectedUserIds.length} usuários ${active ? 'ativados' : 'desativados'} com sucesso.`);
             setSelectedUserIds([]);
             fetchUsers();
         } catch (err: any) {
-            setMsg({ type: 'error', text: 'Erro ao processar ação em massa.' });
+            toast.error('Erro ao processar ação em massa.');
         } finally {
             setBulkLoading(false);
         }
@@ -162,11 +174,11 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
             const deletePromises = selectedUserIds.map(id => deleteUserDirectly(id));
             await Promise.all(deletePromises);
 
-            setMsg({ type: 'success', text: `${selectedUserIds.length} usuários removidos com sucesso.` });
+            toast.success(`${selectedUserIds.length} usuários removidos com sucesso.`);
             setSelectedUserIds([]);
             fetchUsers();
         } catch (err: any) {
-            setMsg({ type: 'error', text: 'Erro ao excluir usuários.' });
+            toast.error('Erro ao excluir usuários.');
         } finally {
             setBulkLoading(false);
         }
@@ -176,10 +188,9 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
 
     const handleSaveUser = async (e: React.FormEvent) => {
         e.preventDefault();
-        setMsg(null);
 
         if (currentUser.role === 'Operador' && formData.role === 'Administrador') {
-            setMsg({ type: 'error', text: 'Operadores não podem atribuir nível Admin.' });
+            toast.error('Operadores não podem atribuir nível Admin.');
             return;
         }
 
@@ -187,20 +198,20 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
             if (editingUser) {
                 const result = await updateUserDirectly(editingUser.id, formData);
                 if (!result.success) throw new Error(result.error);
-                setMsg({ type: 'success', text: 'Usuário atualizado com sucesso!' });
+                toast.success('Usuário atualizado com sucesso!');
             } else {
                 const parentUserId = currentUser.role === 'Administrador' ? currentUser.id : null;
                 const result = await createUserDirectly(formData, parentUserId);
                 if (!result.success) throw new Error(result.error);
-                setMsg({ type: 'success', text: 'Usuário cadastrado com sucesso!' });
+                toast.success('Usuário cadastrado com sucesso!');
             }
 
             setShowAddModal(false);
             setEditingUser(null);
             fetchUsers();
-            setFormData({ name: '', email: '', username: '', password: '', role: 'Operador' });
+            setFormData({ name: '', email: '', username: '', password: '', role: 'Operador', plan_id: '' });
         } catch (err: any) {
-            setMsg({ type: 'error', text: err.message || 'Erro ao processar usuário' });
+            toast.error(err.message || 'Erro ao processar usuário');
         }
     };
 
@@ -212,9 +223,10 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                 .eq('id', user.id);
 
             if (error) throw error;
+            toast.success(`Usuário ${user.active ? 'desativado' : 'ativado'} com sucesso!`);
             fetchUsers();
         } catch (err: any) {
-            setMsg({ type: 'error', text: 'Erro ao alterar status' });
+            toast.error('Erro ao alterar status');
         }
     };
 
@@ -225,10 +237,10 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
             if (!result.success) throw new Error(result.error);
 
             fetchUsers();
-            setMsg({ type: 'success', text: 'Usuário removido com sucesso.' });
+            toast.success('Usuário removido com sucesso.');
             setUserToDelete(null);
         } catch (err: any) {
-            setMsg({ type: 'error', text: err.message || 'Erro ao excluir usuário.' });
+            toast.error(err.message || 'Erro ao excluir usuário.');
         }
     };
 
@@ -239,7 +251,8 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
             email: user.username,
             username: user.username,
             password: '',
-            role: user.role as 'Administrador' | 'Operador'
+            role: user.role as 'Administrador' | 'Operador',
+            plan_id: user.plan_id || ''
         });
         setShowAddModal(true);
     };
@@ -260,7 +273,7 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                     <button
                         onClick={() => {
                             setEditingUser(null);
-                            setFormData({ name: '', email: '', username: '', password: '', role: 'Operador' });
+                            setFormData({ name: '', email: '', username: '', password: '', role: 'Operador', plan_id: '' });
                             setShowAddModal(true);
                         }}
                         className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold shadow-xl shadow-indigo-600/20 hover:scale-105 transition-all flex items-center gap-2 cursor-pointer"
@@ -270,13 +283,6 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                 )}
             </div>
 
-            {msg && (
-                <div className={`p-4 rounded-2xl border font-bold text-sm ${msg.type === 'success' ? 'bg-emerald-50 border-emerald-100 text-emerald-600 dark:bg-emerald-900/20 dark:border-emerald-900/30 dark:text-emerald-400'
-                    : 'bg-rose-50 border-rose-100 text-rose-600 dark:bg-rose-900/20 dark:border-rose-900/30 dark:text-rose-400'
-                    }`}>
-                    {msg.text}
-                </div>
-            )}
 
             {/* Filters */}
             <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-wrap gap-4 items-end animate-in slide-in-from-top-4 duration-500">
@@ -399,7 +405,10 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                 </div>
                             </th>
                             {currentUser.role === 'Master' && (
-                                <th className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest">Admin Responsável</th>
+                                <th className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest text-center">Admin Responsável</th>
+                            )}
+                            {currentUser.role === 'Master' && (
+                                <th className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest text-center">Plano</th>
                             )}
                             <th
                                 className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-indigo-600 transition-colors"
@@ -417,7 +426,7 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                         {paginatedUsers.length === 0 ? (
                             <tr>
-                                <td colSpan={currentUser.role === 'Master' ? 6 : 5} className="px-8 py-20 text-center">
+                                <td colSpan={currentUser.role === 'Master' ? 7 : 5} className="px-8 py-20 text-center">
                                     <div className="flex flex-col items-center gap-2 opacity-20">
                                         <ShieldAlert size={48} />
                                         <p className="font-bold">Nenhum usuário encontrado com estes filtros.</p>
@@ -444,13 +453,31 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                     </div>
                                 </td>
                                 <td className="px-8 py-5">
-                                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${u.role === 'Master' ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400' :
-                                        u.role === 'Administrador' ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400' :
-                                            'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
-                                        }`}>
-                                        {u.role}
-                                    </span>
+                                    <div className="flex flex-col items-center gap-1">
+                                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${u.role === 'Master' ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400' :
+                                            u.role === 'Administrador' ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400' :
+                                                'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                                            }`}>
+                                            {u.role}
+                                        </span>
+                                    </div>
                                 </td>
+                                {currentUser.role === 'Master' && (
+                                    <td className="px-8 py-5">
+                                        <div className="flex justify-center">
+                                            {u.role === 'Administrador' && u.plan_id ? (
+                                                <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 rounded-xl">
+                                                    <Package size={14} className="text-emerald-500" />
+                                                    <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-tight">
+                                                        {plans.find(p => p.id === u.plan_id)?.name || 'Plano Personalizado'}
+                                                    </span>
+                                                </div>
+                                            ) : (
+                                                <span className="text-[10px] text-slate-400 italic">N/A</span>
+                                            )}
+                                        </div>
+                                    </td>
+                                )}
                                 {currentUser.role === 'Master' && (
                                     <td className="px-8 py-5">
                                         {u.parent_user_id ? (
@@ -658,7 +685,7 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                             <div className={`grid gap-4 ${currentUser.role === 'Master' ? 'grid-cols-3' : 'grid-cols-2'}`}>
                                 <button
                                     type="button"
-                                    onClick={() => setFormData({ ...formData, role: 'Operador' })}
+                                    onClick={() => setFormData({ ...formData, role: 'Operador', plan_id: '' })}
                                     className={`py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest border transition-all cursor-pointer ${formData.role === 'Operador' ? 'bg-slate-100 border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-slate-600' : 'bg-transparent border-slate-200 dark:border-slate-800 text-slate-400'
                                         }`}
                                 >
@@ -676,7 +703,7 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                 {currentUser.role === 'Master' && (
                                     <button
                                         type="button"
-                                        onClick={() => setFormData({ ...formData, role: 'Master' })}
+                                        onClick={() => setFormData({ ...formData, role: 'Master', plan_id: '' })}
                                         className={`py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest border transition-all cursor-pointer ${formData.role === 'Master' ? 'bg-amber-500 border-amber-500 text-white shadow-lg' : 'bg-transparent border-slate-200 dark:border-slate-800 text-slate-400'
                                             }`}
                                     >
@@ -684,6 +711,26 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                     </button>
                                 )}
                             </div>
+
+                            {currentUser.role === 'Master' && formData.role === 'Administrador' && (
+                                <div className="space-y-1.5 animate-in slide-in-from-top-2 duration-300">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Vincular a um Plano</label>
+                                    <div className="relative">
+                                        <Package className="absolute left-4 top-4 text-slate-400" size={18} />
+                                        <select
+                                            required
+                                            className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white appearance-none cursor-pointer"
+                                            value={formData.plan_id}
+                                            onChange={e => setFormData({ ...formData, plan_id: e.target.value })}
+                                        >
+                                            <option value="">Selecione um plano...</option>
+                                            {plans.map(p => (
+                                                <option key={p.id} value={p.id}>{p.name} (R$ {p.monthly_price})</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                            )}
 
                             <button className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-2xl shadow-indigo-600/40 hover:-translate-y-1 transition-all mt-6 cursor-pointer">
                                 {editingUser ? 'Salvar Alterações' : 'Confirmar Cadastro'}

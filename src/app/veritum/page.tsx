@@ -31,6 +31,7 @@ function VeritumContent() {
     const [preferences, setPreferences] = useState<UserPreferences | null>(null);
     const [activeModule, setActiveModule] = useState<ModuleId>(ModuleId.NEXUS);
     const [activeSuites, setActiveSuites] = useState<any[]>([]);
+    const [planPermissions, setPlanPermissions] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -62,8 +63,62 @@ function VeritumContent() {
                 role: (profile?.role || authUser.user_metadata.role || 'Operador') as any,
                 active: profile?.active ?? true,
                 avatar_url: profile?.avatar_url || authUser.user_metadata.avatar_url || authUser.user_metadata.picture,
-                parent_user_id: profile?.parent_user_id || authUser.user_metadata.parent_user_id
+                parent_user_id: profile?.parent_user_id || authUser.user_metadata.parent_user_id,
+                plan_id: profile?.plan_id || authUser.user_metadata.plan_id
             });
+
+            // Fetch plan permissions if user has a plan_id
+            if (profile?.plan_id) {
+                const { data: perms } = await supabase
+                    .from('plan_permissions')
+                    .select('feature_id, features(feature_key, suite_id, suites(suite_key))')
+                    .eq('plan_id', profile.plan_id);
+
+                if (perms) {
+                    // Transform to legacy format for DashboardLayout compatibility
+                    const suiteMap = new Map<string, any>();
+                    perms.forEach((p: any) => {
+                        const sKey = p.features?.suites?.suite_key;
+                        const fKey = p.features?.feature_key;
+                        if (sKey && fKey) {
+                            if (!suiteMap.has(sKey)) {
+                                suiteMap.set(sKey, { suite_key: sKey, enabled_features: [] });
+                            }
+                            suiteMap.get(sKey).enabled_features.push(fKey);
+                        }
+                    });
+                    setPlanPermissions(Array.from(suiteMap.values()));
+                }
+            } else if (profile?.parent_user_id) {
+                // If it's an operator, inherit permissions from parent admin
+                const { data: parentProfile } = await supabase
+                    .from('users')
+                    .select('plan_id')
+                    .eq('id', profile.parent_user_id)
+                    .single();
+
+                if (parentProfile?.plan_id) {
+                    const { data: perms } = await supabase
+                        .from('plan_permissions')
+                        .select('feature_id, features(feature_key, suite_id, suites(suite_key))')
+                        .eq('plan_id', parentProfile.plan_id);
+
+                    if (perms) {
+                        const suiteMap = new Map<string, any>();
+                        perms.forEach((p: any) => {
+                            const sKey = p.features?.suites?.suite_key;
+                            const fKey = p.features?.feature_key;
+                            if (sKey && fKey) {
+                                if (!suiteMap.has(sKey)) {
+                                    suiteMap.set(sKey, { suite_key: sKey, enabled_features: [] });
+                                }
+                                suiteMap.get(sKey).enabled_features.push(fKey);
+                            }
+                        });
+                        setPlanPermissions(Array.from(suiteMap.values()));
+                    }
+                }
+            }
 
             const { data: prefs } = await supabase
                 .from('user_preferences')
@@ -175,6 +230,7 @@ function VeritumContent() {
             preferences={preferences!}
             activeModule={activeModule}
             activeSuites={activeSuites}
+            planPermissions={planPermissions}
             onModuleChange={handleModuleChange}
             onLogout={handleLogout}
             onUpdateUser={(u) => setUser(u)}

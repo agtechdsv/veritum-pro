@@ -5,7 +5,7 @@ import { GeminiService } from '@/services/gemini';
 import { Brain, Search, Info, CheckCircle, AlertTriangle } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 
-const Cognitio: React.FC<{ credentials: Credentials }> = ({ credentials }) => {
+const Cognitio: React.FC<{ credentials: Credentials; permissions: any }> = ({ credentials, permissions }) => {
     const [judge, setJudge] = useState('');
     const [loading, setLoading] = useState(false);
     const [prediction, setPrediction] = useState<string | null>(null);

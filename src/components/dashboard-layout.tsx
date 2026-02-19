@@ -11,6 +11,7 @@ import Cognitio from './modules/cognitio';
 import Vox from './modules/vox';
 import UserSettings from './modules/user-settings';
 import UserManagement from './modules/user-management';
+import PlanManagement from './modules/plan-management';
 import { createMasterClient } from '@/lib/supabase/master';
 import { Tooltip } from './ui/tooltip';
 
@@ -22,12 +23,14 @@ import {
 import SuiteManagement from './modules/suite-management';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
+import { ToastContainer } from './ui/toast';
 
 interface Props {
     user: User;
     preferences: UserPreferences;
     activeModule: ModuleId;
     activeSuites?: any[];
+    planPermissions?: any[];
     onModuleChange: (m: ModuleId) => void;
     onLogout: () => void;
     onUpdateUser: (u: User) => void;
@@ -40,7 +43,7 @@ const Logo = () => (
     </div>
 );
 
-export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModule, activeSuites = [], onModuleChange, onLogout, onUpdateUser, onUpdatePrefs }) => {
+export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModule, activeSuites = [], planPermissions = [], onModuleChange, onLogout, onUpdateUser, onUpdatePrefs }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [pendingAvatar, setPendingAvatar] = useState<string | null>(null);
     const { theme, setTheme } = useTheme();
@@ -69,7 +72,15 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
 
     // DEFENSIVE FALLBACK: If syncedSuites is empty but we have activeSuites or general failure,
     // fallback to baseSuiteItems so the menu never disappears.
-    const suiteItems = syncedSuites.length > 0 ? syncedSuites : baseSuiteItems;
+    const fallbackSuites = syncedSuites.length > 0 ? syncedSuites : baseSuiteItems;
+
+    // PLAN PERMISSIONS FILTER: Only for non-Master users
+    const suiteItems = user.role === 'Master'
+        ? fallbackSuites
+        : fallbackSuites.filter(bs => {
+            const normalizedKey = normalize(bs.id);
+            return planPermissions.some(pp => normalize(pp.suite_key) === normalizedKey);
+        });
 
     const adminItems = [
         { id: ModuleId.USERS, label: 'Gestão de Usuários', icon: Users, color: 'text-slate-500' },
@@ -78,6 +89,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
 
     const masterItems = [
         { id: ModuleId.SUITES, label: 'Gestão de Suítes', icon: Crown, color: 'text-amber-500' },
+        { id: ModuleId.PLANS, label: 'Gestão de Planos', icon: DollarSign, color: 'text-indigo-500' },
     ];
 
     const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -122,15 +134,16 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
         const moduleToRender = normalize(activeModule);
 
         switch (moduleToRender) {
-            case 'sentinel': return <Sentinel credentials={creds} />;
-            case 'nexus': return <Nexus credentials={creds} />;
-            case 'scriptor': return <Scriptor credentials={creds} />;
-            case 'valorem': return <Valorem credentials={creds} />;
-            case 'cognitio': return <Cognitio credentials={creds} />;
-            case 'vox': return <Vox credentials={creds} />;
+            case 'sentinel': return <Sentinel credentials={creds} permissions={planPermissions.find(p => normalize(p.suite_key) === 'sentinel')} />;
+            case 'nexus': return <Nexus credentials={creds} permissions={planPermissions.find(p => normalize(p.suite_key) === 'nexus')} />;
+            case 'scriptor': return <Scriptor credentials={creds} permissions={planPermissions.find(p => normalize(p.suite_key) === 'scriptor')} />;
+            case 'valorem': return <Valorem credentials={creds} permissions={planPermissions.find(p => normalize(p.suite_key) === 'valorem')} />;
+            case 'cognitio': return <Cognitio credentials={creds} permissions={planPermissions.find(p => normalize(p.suite_key) === 'cognitio')} />;
+            case 'vox': return <Vox credentials={creds} permissions={planPermissions.find(p => normalize(p.suite_key) === 'vox')} />;
             case 'settings': return <UserSettings user={user} preferences={preferences} onUpdateUser={onUpdateUser} onUpdatePrefs={onUpdatePrefs} />;
             case 'users': return <UserManagement currentUser={user} />;
             case 'suites': return <SuiteManagement credentials={creds} />;
+            case 'plans': return <PlanManagement credentials={creds} />;
             default:
                 return (
                     <div className="flex flex-col items-center justify-center h-full text-slate-400">
@@ -145,6 +158,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
 
     return (
         <div className="flex h-screen w-full bg-slate-50 dark:bg-slate-950 overflow-hidden transition-colors duration-300">
+            <ToastContainer />
             {/* Sidebar */}
             <aside className={`bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transition-all duration-300 flex flex-col z-50 ${isSidebarOpen ? 'w-64' : 'w-20'}`}>
                 <Tooltip content="Voltar ao Início" enabled={true}>

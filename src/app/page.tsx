@@ -50,6 +50,53 @@ export default function LandingPage() {
 import { createMasterClient } from '@/lib/supabase/master';
 import { Suite as DbSuite } from '@/types';
 
+const PlanCard = ({ plan, billingCycle, openAuth }: any) => {
+    const isYearly = billingCycle === 'yearly';
+    const basePrice = isYearly ? plan.yearly_price : plan.monthly_price;
+    const discount = isYearly ? plan.yearly_discount : plan.monthly_discount;
+    const finalPrice = discount > 0 ? basePrice * (1 - discount / 100) : basePrice;
+
+    return (
+        <div className={`relative p-10 rounded-[2.5rem] border transition-all duration-300 transform hover:scale-[1.02] ${plan.recommended ? 'border-indigo-600 shadow-2xl bg-white dark:bg-slate-900 ring-4 ring-indigo-600/5' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900'}`}>
+            {plan.recommended && (
+                <span className="absolute top-0 right-10 -translate-y-1/2 bg-indigo-600 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-600/20">
+                    Mais Popular
+                </span>
+            )}
+            <h3 className="text-2xl font-bold mb-2 text-slate-800 dark:text-white uppercase tracking-tight">{plan.name}</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-8 font-medium italic min-h-[40px]">{plan.short_desc?.pt || ''}</p>
+
+            <div className="mb-8">
+                {discount > 0 && (
+                    <div className="flex items-center gap-2 mb-1">
+                        <span className="text-sm text-slate-400 line-through">R$ {basePrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                        <span className="bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-lg text-[10px] font-black">{discount}% OFF</span>
+                    </div>
+                )}
+                <div className="flex items-baseline gap-1">
+                    <span className="text-4xl font-black text-slate-900 dark:text-white">R$ {finalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                    <span className="text-slate-400 dark:text-slate-500 font-bold ml-1 text-sm">/{isYearly ? 'ano' : 'mês'}</span>
+                </div>
+            </div>
+
+            <ul className="space-y-4 mb-10 min-h-[160px]">
+                {(plan.features?.pt || []).map((f: string) => (
+                    <li key={f} className="flex items-start gap-3 text-sm text-slate-500 dark:text-slate-400 font-medium leading-tight">
+                        <div className="w-5 h-5 mt-0.5 bg-indigo-100 dark:bg-indigo-900/40 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 flex-shrink-0">
+                            <Check size={12} />
+                        </div>
+                        {f}
+                    </li>
+                ))}
+            </ul>
+
+            <button onClick={() => openAuth('register')} className={`w-full py-4 rounded-2xl font-black uppercase tracking-widest transition-all duration-300 text-xs shadow-lg ${plan.recommended ? 'bg-indigo-600 text-white shadow-indigo-600/30 hover:bg-indigo-700' : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-white'}`}>
+                Assinar Agora
+            </button>
+        </div>
+    );
+};
+
 function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
@@ -78,6 +125,10 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
         suite: null
     });
 
+    const [plans, setPlans] = useState<any[]>([]);
+    const [plansLoading, setPlansLoading] = useState(true);
+    const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+
     useEffect(() => {
         const fetchUser = async () => {
             const { data: { user } } = await supabase.auth.getUser();
@@ -85,26 +136,23 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
         };
         fetchUser();
 
-        const fetchSuites = async () => {
-            const { data, error } = await supabase
-                .from('suites')
-                .select('*')
-                .eq('active', true)
-                .order('order_index', { ascending: true });
+        const fetchData = async () => {
+            setSuitesLoading(true);
+            setPlansLoading(true);
 
-            if (!error && data) {
-                setSuites(data);
-            }
+            const [suitesRes, plansRes] = await Promise.all([
+                supabase.from('suites').select('*').eq('active', true).order('order_index', { ascending: true }),
+                supabase.from('plans').select('*').eq('active', true).order('order_index', { ascending: true })
+            ]);
+
+            if (suitesRes.data) setSuites(suitesRes.data);
+            if (plansRes.data) setPlans(plansRes.data);
+
             setSuitesLoading(false);
+            setPlansLoading(false);
         };
-        fetchSuites();
+        fetchData();
     }, [supabase]);
-
-    const plans = [
-        { name: 'Essencial', price: 'R$ 299', features: ['Até 2 usuários', 'Nexus Pro (Básico)', 'Scriptor Pro', 'Suporte via Ticket'] },
-        { name: 'Professional', price: 'R$ 599', features: ['Até 10 usuários', 'Todas as Suítes', 'IA Ilimitada', 'Suporte 24/7'], recommended: true },
-        { name: 'Enterprise', price: 'Sob Consulta', features: ['Usuários Ilimitados', 'API Customizada', 'Treinamento de IA Local', 'Gerente de Contas'] },
-    ];
 
     const openAuth = (mode: 'login' | 'register') => {
         setAuthMode(mode);
@@ -253,7 +301,7 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                                         }}
                                         className="text-indigo-600 dark:text-indigo-400 font-bold text-sm flex items-center gap-1 group-hover:gap-2 transition-all mt-auto cursor-pointer"
                                     >
-                                        {currentUser ? 'Acessar Módulo' : 'Conhecer Módulo'} <ChevronRight size={16} />
+                                        {currentUser ? 'Acessar Módulo' : 'Saiba Mais'} <ChevronRight size={16} />
                                     </button>
                                 </div>
                             ))
@@ -271,40 +319,66 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
             {/* Pricing */}
             <section id="pricing" className="py-32 px-6 bg-white dark:bg-slate-950 transition-colors duration-300">
                 <div className="max-w-7xl mx-auto">
-                    <div className="text-center mb-20">
+                    <div className="text-center mb-12">
                         <h2 className="text-4xl font-bold mb-4 text-slate-900 dark:text-white">Planos que acompanham seu crescimento</h2>
-                        <p className="text-slate-500 dark:text-slate-400">Transparência total, sem letras miúdas.</p>
+                        <p className="text-slate-500 dark:text-slate-400 mb-10">Transparência total, sem letras miúdas.</p>
+
+                        {/* Billing Toggle */}
+                        <div className="flex items-center justify-center gap-4 mb-16">
+                            <span className={`text-sm font-bold ${billingCycle === 'monthly' ? 'text-indigo-600' : 'text-slate-400'}`}>MENSAL</span>
+                            <button
+                                onClick={() => setBillingCycle(billingCycle === 'monthly' ? 'yearly' : 'monthly')}
+                                className="w-16 h-8 bg-slate-100 dark:bg-slate-800 rounded-full relative p-1 transition-all"
+                            >
+                                <div className={`w-6 h-6 bg-indigo-600 rounded-full shadow-lg transition-all transform ${billingCycle === 'yearly' ? 'translate-x-8' : 'translate-x-0'}`} />
+                            </button>
+                            <span className={`text-sm font-bold ${billingCycle === 'yearly' ? 'text-indigo-600' : 'text-slate-400'}`}>ANUAL</span>
+                            {billingCycle === 'yearly' && (
+                                <span className="bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest animate-bounce">
+                                    Economize até 20%
+                                </span>
+                            )}
+                        </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {plans.map((plan) => (
-                            <div key={plan.name} className={`relative p-10 rounded-[2.5rem] border transition-all duration-300 ${plan.recommended ? 'border-indigo-600 shadow-2xl bg-white dark:bg-slate-900' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900'}`}>
-                                {plan.recommended && (
-                                    <span className="absolute top-0 right-10 -translate-y-1/2 bg-indigo-600 text-white px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest">
-                                        Mais Popular
-                                    </span>
-                                )}
-                                <h3 className="text-2xl font-bold mb-2 text-slate-800 dark:text-white">{plan.name}</h3>
-                                <div className="mb-8">
-                                    <span className="text-4xl font-black text-slate-900 dark:text-white">{plan.price}</span>
-                                    {plan.price !== 'Sob Consulta' && <span className="text-slate-400 dark:text-slate-500 font-medium ml-1">/mês</span>}
-                                </div>
-                                <ul className="space-y-4 mb-10">
-                                    {plan.features.map(f => (
-                                        <li key={f} className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400 font-medium">
-                                            <div className="w-5 h-5 bg-indigo-100 dark:bg-indigo-900/40 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-                                                <Check size={12} />
-                                            </div>
-                                            {f}
-                                        </li>
-                                    ))}
-                                </ul>
-                                <button onClick={() => openAuth('register')} className={`w-full py-4 rounded-2xl font-bold transition-all duration-300 ${plan.recommended ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-600/20 hover:bg-indigo-700' : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-white'}`}>
-                                    Selecionar Plano
-                                </button>
+                    {/* Combos Section */}
+                    {plans.some(p => p.is_combo) && (
+                        <div className="mb-20">
+                            <div className="flex items-center gap-4 mb-10">
+                                <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1" />
+                                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-600">Pacotes de Elite (Combos)</h3>
+                                <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1" />
                             </div>
-                        ))}
-                    </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                {plansLoading ? (
+                                    Array.from({ length: 3 }).map((_, i) => (
+                                        <div key={i} className="bg-slate-50 dark:bg-slate-900 h-96 rounded-[2.5rem] animate-pulse" />
+                                    ))
+                                ) : (
+                                    plans.filter(p => p.is_combo).map((plan: any) => (
+                                        <PlanCard key={plan.id} plan={plan} billingCycle={billingCycle} openAuth={openAuth} />
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Individual Modules Section */}
+                    {plans.some(p => !p.is_combo) && (
+                        <div>
+                            <div className="flex items-center gap-4 mb-10">
+                                <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1" />
+                                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Módulos Individuais</h3>
+                                <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1" />
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                {plans.filter(p => !p.is_combo).map((plan: any) => (
+                                    <PlanCard key={plan.id} plan={plan} billingCycle={billingCycle} openAuth={openAuth} />
+                                ))
+                                }
+                            </div>
+                        </div>
+                    )}
                 </div>
             </section>
 

@@ -6,6 +6,7 @@ import {
 import { Suite, Credentials } from '@/types';
 import { createMasterClient } from '@/lib/supabase/master';
 import { GeminiService } from '@/services/gemini';
+import { toast } from '../ui/toast';
 
 interface Props {
     credentials: Credentials;
@@ -21,7 +22,6 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
     const [editingSuite, setEditingSuite] = useState<Suite | null>(null);
     const [suiteToDelete, setSuiteToDelete] = useState<Suite | null>(null);
     const [isTranslating, setIsTranslating] = useState(false);
-    const [msg, setMsg] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
     const initialFormData: Partial<Suite> = {
         suite_key: '',
@@ -56,7 +56,6 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
 
     const handleSave = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
-        setMsg(null);
 
         try {
             if (editingSuite) {
@@ -65,20 +64,20 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
                     .update(formData)
                     .eq('id', editingSuite.id);
                 if (error) throw error;
-                setMsg({ type: 'success', text: 'Suíte atualizada com sucesso!' });
+                toast.success('Suíte atualizada com sucesso!');
             } else {
                 const { error } = await supabase
                     .from('suites')
                     .insert([{ ...formData, order_index: suites.length }]);
                 if (error) throw error;
-                setMsg({ type: 'success', text: 'Suíte criada com sucesso!' });
+                toast.success('Suíte criada com sucesso!');
             }
 
             setEditingSuite(null);
             setFormData(initialFormData);
             fetchSuites();
         } catch (err: any) {
-            setMsg({ type: 'error', text: err.message || 'Erro ao salvar suíte' });
+            toast.error(err.message || 'Erro ao salvar suíte');
         }
     };
 
@@ -124,17 +123,16 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
 
     const handleTranslate = async () => {
         if (!formData.short_desc?.[activeLang]) {
-            setMsg({ type: 'error', text: 'Preencha ao menos a Bio Curta para traduzir.' });
+            toast.error('Preencha ao menos a Bio Curta para traduzir.');
             return;
         }
 
         if (!credentials.geminiKey) {
-            setMsg({ type: 'error', text: 'Chave do Gemini não configurada. Por favor, adicione sua API Key nas Configurações.' });
+            toast.error('Chave do Gemini não configurada. Por favor, adicione sua API Key nas Configurações.');
             return;
         }
 
         setIsTranslating(true);
-        setMsg(null);
 
         try {
             const payload = {
@@ -163,9 +161,9 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
                 features: newFeatures as any
             });
 
-            setMsg({ type: 'success', text: 'Tradução realizada com sucesso para todos os idiomas!' });
+            toast.success('Tradução baseada em IA concluída!');
         } catch (err: any) {
-            setMsg({ type: 'error', text: 'Erro na tradução: ' + err.message });
+            toast.error('Erro na tradução: ' + err.message);
         } finally {
             setIsTranslating(false);
         }
@@ -174,13 +172,11 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
     const openEdit = (suite: Suite) => {
         setEditingSuite(suite);
         setFormData(suite);
-        setMsg(null);
     };
 
     const cancelEdit = () => {
         setEditingSuite(null);
         setFormData(initialFormData);
-        setMsg(null);
     };
 
     if (loading && suites.length === 0) return (
@@ -199,8 +195,77 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
             </div>
 
             <div className="flex flex-col lg:flex-row gap-8 items-start">
-                {/* Form Column - Left */}
-                <div className="w-full lg:w-[40%] sticky top-8">
+                {/* Table Column - Left (Narrower) */}
+                <div className="w-full lg:w-[30%] bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden min-h-[600px] sticky top-8 flex flex-col">
+                    <div className="p-6 border-b border-slate-100 dark:border-slate-800">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Listagem de Módulos</span>
+                    </div>
+                    <table className="w-full text-left">
+                        <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
+                            <tr>
+                                <th className="px-4 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest">Ordem</th>
+                                <th className="px-4 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest">Módulo</th>
+                                <th className="px-4 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                            {suites.map((s, idx) => (
+                                <tr key={s.id} className={`hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors group ${editingSuite?.id === s.id ? 'bg-indigo-50/30 dark:bg-indigo-900/10' : ''}`}>
+                                    <td className="px-4 py-4">
+                                        <div className="flex flex-col items-center gap-0">
+                                            <button onClick={() => handleMove(idx, 'up')} disabled={idx === 0} className="p-0.5 text-slate-300 hover:text-indigo-600 disabled:opacity-10 transition-colors"><ChevronUp size={14} /></button>
+                                            <button onClick={() => handleMove(idx, 'down')} disabled={idx === suites.length - 1} className="p-0.5 text-slate-300 hover:text-indigo-600 disabled:opacity-10 transition-colors"><ChevronDown size={14} /></button>
+                                        </div>
+                                    </td>
+                                    <td className="px-4 py-4">
+                                        <div className="flex items-center gap-3">
+                                            <div
+                                                className="w-10 h-10 shrink-0 rounded-xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center text-indigo-600 shadow-sm transition-transform p-2"
+                                                dangerouslySetInnerHTML={{ __html: s.icon_svg || '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-package"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>' }}
+                                            />
+                                            <div className="min-w-0">
+                                                <span className="font-bold text-slate-800 dark:text-white block leading-tight text-[11px] truncate">{s.name}</span>
+                                                <code className="text-[9px] text-slate-400 uppercase font-bold tracking-widest truncate block">{s.suite_key}</code>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-4 py-4 text-right">
+                                        <div className="flex items-center justify-end gap-1">
+                                            <button
+                                                onClick={() => handleToggleStatus(s)}
+                                                className={`p-1.5 transition-all duration-200 rounded-lg cursor-pointer ${s.active ? 'text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30' : 'text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50'}`}
+                                                title={s.active ? 'Módulo Visível' : 'Módulo Oculto'}
+                                            >
+                                                <Radio size={16} className={s.active ? 'fill-emerald-500/20' : ''} />
+                                            </button>
+                                            <button
+                                                onClick={() => openEdit(s)}
+                                                className={`p-1.5 rounded-lg transition-all ${editingSuite?.id === s.id ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+                                            >
+                                                <FileEdit size={16} />
+                                            </button>
+                                            <button
+                                                onClick={() => setSuiteToDelete(s)}
+                                                className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-all"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                    {suites.length === 0 && (
+                        <div className="flex-1 flex flex-col items-center justify-center p-10 opacity-20">
+                            <Package size={48} />
+                            <p className="font-black uppercase tracking-widest mt-4 text-[10px]">Nenhuma suíte ativa</p>
+                        </div>
+                    )}
+                </div>
+
+                {/* Form Column - Right (Wider) */}
+                <div className="flex-1">
                     <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden flex flex-col">
                         <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/20">
                             <div className="flex items-center gap-4">
@@ -215,7 +280,9 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
                                 </div>
                             </div>
                             {editingSuite && (
-                                <button onClick={cancelEdit} className="p-2 text-slate-400 hover:text-rose-500 transition-colors bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm"><X size={18} /></button>
+                                <button onClick={cancelEdit} className="flex items-center gap-2 px-4 py-2 text-slate-400 hover:text-rose-500 transition-colors bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm font-black uppercase text-[10px] tracking-widest">
+                                    <X size={16} /> Cancelar Seleção
+                                </button>
                             )}
                         </div>
 
@@ -331,82 +398,6 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
                             </button>
                         </form>
                     </div>
-
-                    {msg && (
-                        <div className={`mt-4 p-4 rounded-2xl border-2 font-black text-[10px] uppercase tracking-widest animate-in slide-in-from-top-2 duration-300 ${msg.type === 'success' ? 'bg-emerald-50 border-emerald-100 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400' : 'bg-rose-50 border-rose-100 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400'
-                            }`}>
-                            {msg.text}
-                        </div>
-                    )}
-                </div>
-
-                {/* Table Column - Right */}
-                <div className="flex-1 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden min-h-[600px]">
-                    <table className="w-full text-left">
-                        <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
-                            <tr>
-                                <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Ordem</th>
-                                <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Suíte / Módulo</th>
-                                <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Status</th>
-                                <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                            {suites.map((s, idx) => (
-                                <tr key={s.id} className={`hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors group ${editingSuite?.id === s.id ? 'bg-indigo-50/30 dark:bg-indigo-900/10' : ''}`}>
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-1">
-                                            <button onClick={() => handleMove(idx, 'up')} disabled={idx === 0} className="p-1.5 text-slate-400 hover:text-indigo-600 disabled:opacity-10 transition-colors"><ChevronUp size={16} /></button>
-                                            <button onClick={() => handleMove(idx, 'down')} disabled={idx === suites.length - 1} className="p-1.5 text-slate-400 hover:text-indigo-600 disabled:opacity-10 transition-colors"><ChevronDown size={16} /></button>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-4">
-                                            <div
-                                                className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center text-indigo-600 shadow-sm group-hover:scale-110 transition-transform p-2.5"
-                                                dangerouslySetInnerHTML={{ __html: s.icon_svg || '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-package"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>' }}
-                                            />
-                                            <div>
-                                                <span className="font-bold text-slate-800 dark:text-white block leading-tight">{s.name}</span>
-                                                <code className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">{s.suite_key}</code>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 text-center">
-                                        <button
-                                            onClick={() => handleToggleStatus(s)}
-                                            className={`p-2 transition-all duration-200 rounded-lg cursor-pointer ${s.active ? 'text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30' : 'text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50'}`}
-                                            title={s.active ? 'Módulo Visível' : 'Módulo Oculto'}
-                                        >
-                                            <Radio size={22} className={s.active ? 'fill-emerald-500/20' : ''} />
-                                        </button>
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <div className="flex items-center justify-end gap-1">
-                                            <button
-                                                onClick={() => openEdit(s)}
-                                                className={`p-2 rounded-xl transition-all ${editingSuite?.id === s.id ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
-                                            >
-                                                <FileEdit size={18} />
-                                            </button>
-                                            <button
-                                                onClick={() => setSuiteToDelete(s)}
-                                                className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-xl transition-all"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                    {suites.length === 0 && (
-                        <div className="flex flex-col items-center justify-center p-20 opacity-20">
-                            <Package size={64} />
-                            <p className="font-black uppercase tracking-widest mt-4">Nenhuma suíte ativa</p>
-                        </div>
-                    )}
                 </div>
             </div>
 

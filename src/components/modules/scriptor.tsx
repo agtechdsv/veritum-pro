@@ -4,7 +4,7 @@ import { Credentials } from '@/types';
 import { GeminiService } from '@/services/gemini';
 import { Wand2, Save, FileText, Download, Wand, ChevronDown, Plus } from 'lucide-react';
 
-const Scriptor: React.FC<{ credentials: Credentials }> = ({ credentials }) => {
+const Scriptor: React.FC<{ credentials: Credentials; permissions: any }> = ({ credentials, permissions }) => {
     const [content, setContent] = useState('');
     const [prompt, setPrompt] = useState('');
     const [loading, setLoading] = useState(false);

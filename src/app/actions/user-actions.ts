@@ -14,13 +14,20 @@ export async function createUserDirectly(formData: any, parentUserId: string | n
             full_name: formData.name,
             name: formData.name,
             role: formData.role,
-            parent_user_id: parentUserId
+            parent_user_id: parentUserId,
+            plan_id: formData.plan_id
         }
     })
 
     if (error) {
         return { success: false, error: error.message }
     }
+
+    // 2. Also update public table for consistency (trigger might handle it but let's be sure)
+    const { error: publicError } = await supabase
+        .from('users')
+        .update({ plan_id: formData.plan_id })
+        .eq('id', data.user.id)
 
     revalidatePath('/veritum')
     return { success: true, user: data.user }
@@ -34,7 +41,8 @@ export async function updateUserDirectly(userId: string, formData: any) {
         user_metadata: {
             full_name: formData.name,
             name: formData.name,
-            role: formData.role
+            role: formData.role,
+            plan_id: formData.plan_id
         }
     }
 
@@ -54,7 +62,8 @@ export async function updateUserDirectly(userId: string, formData: any) {
         .update({
             name: formData.name,
             role: formData.role,
-            username: formData.email
+            username: formData.email,
+            plan_id: formData.plan_id
         })
         .eq('id', userId)
 

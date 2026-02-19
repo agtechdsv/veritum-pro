@@ -9,7 +9,49 @@ export enum ModuleId {
     VOX = 'vox',
     SETTINGS = 'settings',
     USERS = 'users',
-    SUITES = 'suites'
+    SUITES = 'suites',
+    PLANS = 'plans'
+}
+
+export interface Plan {
+    id: string;
+    name: string;
+    short_desc: {
+        en: string;
+        es: string;
+        pt: string;
+    };
+    monthly_price: number;
+    monthly_discount: number;
+    yearly_price: number;
+    yearly_discount: number;
+    features: {
+        en: string[];
+        es: string[];
+        pt: string[];
+    };
+    recommended: boolean;
+    active: boolean;
+    order_index: number;
+    created_at?: string;
+    is_combo: boolean;
+    permissions?: PlanPermission[];
+}
+
+export interface Feature {
+    id: string;
+    feature_key: string;
+    suite_id: string;
+    display_name: string;
+    description: string;
+    created_at?: string;
+}
+
+export interface PlanPermission {
+    id: string;
+    plan_id: string;
+    feature_id: string;
+    created_at?: string;
 }
 
 export interface Credentials {
@@ -28,6 +70,7 @@ export interface User {
     cpf_cnpj?: string;
     phone?: string;
     parent_user_id?: string;
+    plan_id?: string;
 }
 
 export interface UserPreferences {
