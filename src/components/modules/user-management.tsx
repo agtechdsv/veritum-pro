@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, UserPlus, Trash2, Mail, User as UserIcon, Lock, FileEdit, Radio, ShieldAlert } from 'lucide-react';
+import { ShieldCheck, UserPlus, Trash2, Mail, User as UserIcon, Lock, FileEdit, Radio, ShieldAlert, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, CheckSquare } from 'lucide-react';
 import { User } from '@/types';
 import { createMasterClient } from '@/lib/supabase/master';
 import { createUserDirectly, updateUserDirectly, deleteUserDirectly } from '@/app/actions/user-actions';
@@ -31,6 +31,12 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
     });
     const [sortConfig, setSortConfig] = useState<{ key: string, direction: 'asc' | 'desc' } | null>({ key: 'created_at', direction: 'desc' });
     const [msg, setMsg] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
+    // Pagination & Bulk Actions State
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
+    const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+    const [bulkLoading, setBulkLoading] = useState(false);
 
     const nameRef = React.useRef<HTMLInputElement>(null);
 
@@ -102,13 +108,76 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
         return matchesSearch && matchesRole && matchesStatus && matchesAdmin;
     });
 
+    // Pagination Logic
+    const totalItems = filteredUsers.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const paginatedUsers = filteredUsers.slice(startIndex, startIndex + itemsPerPage);
+
+    useEffect(() => {
+        setCurrentPage(1); // Reset to first page when filters change
+    }, [filters]);
+
+    // Selection Logic
+    const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.checked) {
+            setSelectedUserIds(paginatedUsers.map(u => u.id));
+        } else {
+            setSelectedUserIds([]);
+        }
+    };
+
+    const handleSelectUser = (userId: string) => {
+        setSelectedUserIds(prev =>
+            prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
+        );
+    };
+
+    const handleBulkStatus = async (active: boolean) => {
+        if (selectedUserIds.length === 0) return;
+        setBulkLoading(true);
+        try {
+            const { error } = await supabase
+                .from('users')
+                .update({ active })
+                .in('id', selectedUserIds);
+
+            if (error) throw error;
+            setMsg({ type: 'success', text: `${selectedUserIds.length} usuários ${active ? 'ativados' : 'desativados'} com sucesso.` });
+            setSelectedUserIds([]);
+            fetchUsers();
+        } catch (err: any) {
+            setMsg({ type: 'error', text: 'Erro ao processar ação em massa.' });
+        } finally {
+            setBulkLoading(false);
+        }
+    };
+
+    const handleBulkDelete = async () => {
+        if (selectedUserIds.length === 0) return;
+        if (!confirm(`Tem certeza que deseja excluir ${selectedUserIds.length} usuários? Esta ação é irreversível.`)) return;
+
+        setBulkLoading(true);
+        try {
+            const deletePromises = selectedUserIds.map(id => deleteUserDirectly(id));
+            await Promise.all(deletePromises);
+
+            setMsg({ type: 'success', text: `${selectedUserIds.length} usuários removidos com sucesso.` });
+            setSelectedUserIds([]);
+            fetchUsers();
+        } catch (err: any) {
+            setMsg({ type: 'error', text: 'Erro ao excluir usuários.' });
+        } finally {
+            setBulkLoading(false);
+        }
+    };
+
     const admins = users.filter(u => u.role === 'Administrador');
 
     const handleSaveUser = async (e: React.FormEvent) => {
         e.preventDefault();
         setMsg(null);
 
-        // Security Check (Frontend)
         if (currentUser.role === 'Operador' && formData.role === 'Administrador') {
             setMsg({ type: 'error', text: 'Operadores não podem atribuir nível Admin.' });
             return;
@@ -116,18 +185,13 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
 
         try {
             if (editingUser) {
-                // UPDATE USER DIRECTLY (Supports password change)
                 const result = await updateUserDirectly(editingUser.id, formData);
-
                 if (!result.success) throw new Error(result.error);
                 setMsg({ type: 'success', text: 'Usuário atualizado com sucesso!' });
             } else {
-                // CREATE NEW USER DIRECTLY
                 const parentUserId = currentUser.role === 'Administrador' ? currentUser.id : null;
                 const result = await createUserDirectly(formData, parentUserId);
-
                 if (!result.success) throw new Error(result.error);
-
                 setMsg({ type: 'success', text: 'Usuário cadastrado com sucesso!' });
             }
 
@@ -172,7 +236,7 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
         setEditingUser(user);
         setFormData({
             name: user.name,
-            email: user.username, // Use real username (which is the email)
+            email: user.username,
             username: user.username,
             password: '',
             role: user.role as 'Administrador' | 'Operador'
@@ -273,12 +337,53 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                 </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+            {/* Bulk Actions Bar */}
+            {selectedUserIds.length > 0 && (
+                <div className="bg-indigo-600 text-white p-4 rounded-2xl flex items-center justify-between shadow-lg animate-in slide-in-from-bottom-4 duration-300">
+                    <div className="flex items-center gap-4 ml-4">
+                        <CheckSquare className="text-indigo-200" size={20} />
+                        <span className="font-bold">{selectedUserIds.length} usuários selecionados</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <button
+                            disabled={bulkLoading}
+                            onClick={() => handleBulkStatus(true)}
+                            className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-xs font-black uppercase transition-all disabled:opacity-50"
+                        >
+                            Ativar Todos
+                        </button>
+                        <button
+                            disabled={bulkLoading}
+                            onClick={() => handleBulkStatus(false)}
+                            className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-xs font-black uppercase transition-all disabled:opacity-50"
+                        >
+                            Desativar Todos
+                        </button>
+                        <button
+                            disabled={bulkLoading}
+                            onClick={handleBulkDelete}
+                            className="px-4 py-2 bg-rose-500 hover:bg-rose-600 rounded-xl text-xs font-black uppercase transition-all flex items-center gap-2 disabled:opacity-50"
+                        >
+                            <Trash2 size={14} /> Excluir Selecionados
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden animate-in fade-in duration-700">
                 <table className="w-full text-left">
                     <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
                         <tr>
+                            <th className="px-8 py-5 w-10">
+                                <input
+                                    type="checkbox"
+                                    className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer"
+                                    checked={selectedUserIds.length === paginatedUsers.length && paginatedUsers.length > 0}
+                                    onChange={handleSelectAll}
+                                />
+                            </th>
                             <th
-                                className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-indigo-600 transition-colors"
+                                className="px-4 py-5 text-xs font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-indigo-600 transition-colors"
                                 onClick={() => handleSort('name')}
                             >
                                 <div className="flex items-center gap-1">
@@ -310,18 +415,26 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                        {filteredUsers.length === 0 ? (
+                        {paginatedUsers.length === 0 ? (
                             <tr>
-                                <td colSpan={5} className="px-8 py-20 text-center">
+                                <td colSpan={currentUser.role === 'Master' ? 6 : 5} className="px-8 py-20 text-center">
                                     <div className="flex flex-col items-center gap-2 opacity-20">
                                         <ShieldAlert size={48} />
                                         <p className="font-bold">Nenhum usuário encontrado com estes filtros.</p>
                                     </div>
                                 </td>
                             </tr>
-                        ) : filteredUsers.map(u => (
-                            <tr key={u.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
-                                <td className="px-8 py-5">
+                        ) : paginatedUsers.map(u => (
+                            <tr key={u.id} className={`hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group ${selectedUserIds.includes(u.id) ? 'bg-indigo-50/50 dark:bg-indigo-900/10' : ''}`}>
+                                <td className="px-8 py-5 w-10">
+                                    <input
+                                        type="checkbox"
+                                        className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer"
+                                        checked={selectedUserIds.includes(u.id)}
+                                        onChange={() => handleSelectUser(u.id)}
+                                    />
+                                </td>
+                                <td className="px-4 py-5">
                                     <div className="flex items-center gap-4">
                                         <img src={u.avatar_url || `https://ui-avatars.com/api/?name=${u.name}&background=6366f1&color=fff`} className="w-10 h-10 rounded-xl" />
                                         <div>
@@ -397,14 +510,98 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                         ))}
                     </tbody>
                 </table>
+
+                {/* Pagination Footer */}
+                <div className="bg-slate-50 dark:bg-slate-800/30 px-8 py-5 flex items-center justify-between border-t border-slate-200 dark:border-slate-800">
+                    <div className="flex items-center gap-4">
+                        <div className="text-xs font-bold text-slate-500">
+                            Mostrando <span className="text-slate-800 dark:text-white">{Math.min(startIndex + 1, totalItems)}</span> a <span className="text-slate-800 dark:text-white">{Math.min(startIndex + itemsPerPage, totalItems)}</span> de <span className="text-slate-800 dark:text-white">{totalItems}</span> registros
+                        </div>
+                        <div className="h-4 w-px bg-slate-200 dark:bg-slate-700" />
+                        <div className="flex items-center gap-2">
+                            <span className="text-[10px] uppercase font-black text-slate-400">Por página:</span>
+                            <select
+                                className="bg-transparent text-xs font-bold text-slate-800 dark:text-white outline-none cursor-pointer"
+                                value={itemsPerPage}
+                                onChange={e => {
+                                    setItemsPerPage(Number(e.target.value));
+                                    setCurrentPage(1);
+                                }}
+                            >
+                                <option value={5}>5</option>
+                                <option value={10}>10</option>
+                                <option value={20}>20</option>
+                                <option value={50}>50</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <button
+                            disabled={currentPage === 1}
+                            onClick={() => setCurrentPage(1)}
+                            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-white dark:hover:bg-slate-800 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                            title="Primeira Página"
+                        >
+                            <ChevronsLeft size={18} />
+                        </button>
+                        <button
+                            disabled={currentPage === 1}
+                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-white dark:hover:bg-slate-800 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                            title="Anterior"
+                        >
+                            <ChevronLeft size={18} />
+                        </button>
+
+                        <div className="flex items-center gap-1 mx-2">
+                            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                let pageNum = currentPage;
+                                if (totalPages <= 5) pageNum = i + 1;
+                                else if (currentPage <= 3) pageNum = i + 1;
+                                else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
+                                else pageNum = currentPage - 2 + i;
+
+                                if (pageNum > totalPages || pageNum < 1) return null;
+
+                                return (
+                                    <button
+                                        key={pageNum}
+                                        onClick={() => setCurrentPage(pageNum)}
+                                        className={`w-8 h-8 rounded-lg text-xs font-black transition-all ${currentPage === pageNum ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' : 'text-slate-400 hover:text-indigo-600 hover:bg-white dark:hover:bg-slate-800'}`}
+                                    >
+                                        {pageNum}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        <button
+                            disabled={currentPage === totalPages || totalPages === 0}
+                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-white dark:hover:bg-slate-800 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                            title="Próxima"
+                        >
+                            <ChevronRight size={18} />
+                        </button>
+                        <button
+                            disabled={currentPage === totalPages || totalPages === 0}
+                            onClick={() => setCurrentPage(totalPages)}
+                            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-white dark:hover:bg-slate-800 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                            title="Última Página"
+                        >
+                            <ChevronsRight size={18} />
+                        </button>
+                    </div>
+                </div>
             </div>
 
-            {/* Add User Modal */}
+            {/* Modal Components */}
             {showAddModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-300">
                     <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-2xl p-10 relative overflow-hidden">
                         <button onClick={() => setShowAddModal(false)} className="absolute top-8 right-8 text-slate-400 hover:text-slate-600 cursor-pointer">
-                            <Lock size={20} />
+                            <Trash2 className="rotate-45" size={20} />
                         </button>
 
                         <div className="mb-8">
@@ -472,7 +669,7 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                     disabled={currentUser.role === 'Operador'}
                                     onClick={() => setFormData({ ...formData, role: 'Administrador' })}
                                     className={`py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest border transition-all cursor-pointer ${formData.role === 'Administrador' ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg' : 'bg-transparent border-slate-200 dark:border-slate-800 text-slate-400'
-                                        } disabled:opacity-30 disabled:cursor-not-allowed disabled:cursor-default`}
+                                        } disabled:opacity-30 disabled:cursor-not-allowed`}
                                 >
                                     Administrador
                                 </button>
@@ -495,7 +692,7 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                     </div>
                 </div>
             )}
-            {/* Delete Confirmation Modal */}
+
             {userToDelete && (
                 <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300">
                     <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-2xl p-10 text-center relative overflow-hidden">
