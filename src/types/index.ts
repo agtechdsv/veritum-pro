@@ -8,7 +8,8 @@ export enum ModuleId {
     COGNITIO = 'cognitio',
     VOX = 'vox',
     SETTINGS = 'settings',
-    USERS = 'users'
+    USERS = 'users',
+    SUITES = 'suites'
 }
 
 export interface Credentials {
@@ -36,6 +37,31 @@ export interface UserPreferences {
     custom_supabase_url?: string;
     custom_supabase_key?: string;
     custom_gemini_key?: string;
+}
+
+export interface Suite {
+    id: string;
+    suite_key: string;
+    name: string;
+    short_desc: {
+        en: string;
+        es: string;
+        pt: string;
+    };
+    detailed_desc: {
+        en: string;
+        es: string;
+        pt: string;
+    };
+    features: {
+        en: string[];
+        es: string[];
+        pt: string[];
+    };
+    icon_svg: string;
+    active: boolean;
+    order_index: number;
+    created_at?: string;
 }
 
 export interface Lawsuit {

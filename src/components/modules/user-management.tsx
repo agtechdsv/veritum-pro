@@ -521,17 +521,17 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                         <div className="flex items-center gap-2">
                             <span className="text-[10px] uppercase font-black text-slate-400">Por página:</span>
                             <select
-                                className="bg-transparent text-xs font-bold text-slate-800 dark:text-white outline-none cursor-pointer"
+                                className="bg-transparent text-xs font-bold text-slate-600 dark:text-slate-400 outline-none cursor-pointer hover:text-indigo-600 transition-colors"
                                 value={itemsPerPage}
                                 onChange={e => {
                                     setItemsPerPage(Number(e.target.value));
                                     setCurrentPage(1);
                                 }}
                             >
-                                <option value={5}>5</option>
-                                <option value={10}>10</option>
-                                <option value={20}>20</option>
-                                <option value={50}>50</option>
+                                <option value={5} className="bg-white dark:bg-slate-900 text-slate-800 dark:text-white">5</option>
+                                <option value={10} className="bg-white dark:bg-slate-900 text-slate-800 dark:text-white">10</option>
+                                <option value={20} className="bg-white dark:bg-slate-900 text-slate-800 dark:text-white">20</option>
+                                <option value={50} className="bg-white dark:bg-slate-900 text-slate-800 dark:text-white">50</option>
                             </select>
                         </div>
                     </div>

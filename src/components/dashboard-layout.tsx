@@ -17,8 +17,9 @@ import { Tooltip } from './ui/tooltip';
 import {
     ShieldAlert, GitBranch, FileEdit, DollarSign, BarChart3,
     MessageSquare, LogOut, Settings, Menu, X, Bell, Search,
-    Camera, Scale, Check, Users
+    Camera, Scale, Check, Users, Crown
 } from 'lucide-react';
+import SuiteManagement from './modules/suite-management';
 import { useTheme } from 'next-themes';
 
 interface Props {
@@ -54,6 +55,10 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
     const adminItems = [
         { id: ModuleId.USERS, label: 'Gestão de Usuários', icon: Users, color: 'text-slate-500' },
         { id: ModuleId.SETTINGS, label: 'Configurações', icon: Settings, color: 'text-slate-500' },
+    ];
+
+    const masterItems = [
+        { id: ModuleId.SUITES, label: 'Gestão de Suítes', icon: Crown, color: 'text-amber-500' },
     ];
 
     const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -92,7 +97,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
         const creds: Credentials = {
             supabaseUrl: preferences.custom_supabase_url || '',
             supabaseAnonKey: preferences.custom_supabase_key || '',
-            geminiKey: preferences.custom_gemini_key || '',
+            geminiKey: preferences.custom_gemini_key || process.env.NEXT_PUBLIC_GEMINI_API_KEY || '',
         };
 
         switch (activeModule) {
@@ -104,6 +109,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
             case ModuleId.VOX: return <Vox credentials={creds} />;
             case ModuleId.SETTINGS: return <UserSettings user={user} preferences={preferences} onUpdateUser={onUpdateUser} onUpdatePrefs={onUpdatePrefs} />;
             case ModuleId.USERS: return <UserManagement currentUser={user} />;
+            case ModuleId.SUITES: return <SuiteManagement credentials={creds} />;
             default:
                 return (
                     <div className="flex flex-col items-center justify-center h-full text-slate-400">
@@ -179,6 +185,37 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                             </Tooltip>
                         ))}
                     </div>
+
+                    {/* Master Group */}
+                    {user.role === 'Master' && (
+                        <>
+                            <div className="mx-2 my-2 transition-all">
+                                <div className="h-px bg-slate-200 dark:bg-slate-800 shadow-[0_1px_0_0_rgba(255,255,255,1)] dark:shadow-[0_1px_0_0_rgba(255,255,255,0.02)]" />
+                            </div>
+                            <div className="space-y-2">
+                                {isSidebarOpen && (
+                                    <div className="flex items-center gap-2 px-3 mb-4">
+                                        <div className="w-1 h-3 bg-amber-500 rounded-full" />
+                                        <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Master</h3>
+                                    </div>
+                                )}
+                                {masterItems.map((item) => (
+                                    <Tooltip key={item.id} content={item.label} enabled={!isSidebarOpen}>
+                                        <button
+                                            onClick={() => onModuleChange(item.id)}
+                                            className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 cursor-pointer ${activeModule === item.id
+                                                ? 'bg-amber-50 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 font-bold shadow-sm'
+                                                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white'
+                                                }`}
+                                        >
+                                            <item.icon size={20} className={activeModule === item.id ? item.color : 'text-slate-400 dark:text-slate-500'} />
+                                            {isSidebarOpen && <span className="text-sm">{item.label}</span>}
+                                        </button>
+                                    </Tooltip>
+                                ))}
+                            </div>
+                        </>
+                    )}
                 </nav>
 
                 <div className="p-4 border-t border-slate-100 dark:border-slate-800">

@@ -46,77 +46,46 @@ export default function LandingPage() {
     )
 }
 
+import { createMasterClient } from '@/lib/supabase/master';
+import { Suite as DbSuite } from '@/types';
+
 function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+    const [suites, setSuites] = useState<DbSuite[]>([]);
+    const [suitesLoading, setSuitesLoading] = useState(true);
     const searchParams = useSearchParams();
     const router = useRouter();
+    const supabase = createMasterClient();
 
     useEffect(() => {
         if (searchParams.get('login') === 'true') {
             setAuthMode('login');
             setIsAuthModalOpen(true);
-            // Clear the param after opening to avoid re-triggering on manual refresh
             router.replace('/', { scroll: false });
         }
     }, [searchParams, router]);
 
-    // State for Legal Modals
     const [legalModal, setLegalModal] = useState<{ isOpen: boolean; type: 'privacy' | 'terms' }>({
         isOpen: false,
         type: 'privacy'
     });
 
-    const suites: Suite[] = [
-        {
-            id: 'sentinel',
-            title: 'Sentinel Pro',
-            sub: 'Vigilância E Monitoramento',
-            desc: 'Clipping inteligente e captura antecipada de processos.',
-            icon: ShieldAlert,
-            color: 'text-rose-500'
-        },
-        {
-            id: 'nexus',
-            title: 'Nexus Pro',
-            sub: 'Gestão De Workflow',
-            desc: 'Kanban jurídico e automação de tarefas recorrentes.',
-            icon: GitBranch,
-            color: 'text-indigo-500'
-        },
-        {
-            id: 'scriptor',
-            title: 'Scriptor Pro',
-            sub: 'Inteligência Documental',
-            desc: 'Redação assistida por IA e gestão de contratos (CLM).',
-            icon: FileEdit,
-            color: 'text-amber-500'
-        },
-        {
-            id: 'valorem',
-            title: 'Valorem Pro',
-            sub: 'Controladoria Financeira',
-            desc: 'Gestão de honorários e cálculos judiciais precisos.',
-            icon: DollarSign,
-            color: 'text-emerald-500'
-        },
-        {
-            id: 'cognitio',
-            title: 'Cognitio Pro',
-            sub: 'Jurimetria Avançada',
-            desc: 'Análise preditiva e dashboards para tomada de decisão.',
-            icon: BarChart3,
-            color: 'text-cyan-500'
-        },
-        {
-            id: 'vox',
-            title: 'Vox Clientis',
-            sub: 'Crm E Portal Do Cliente',
-            desc: 'Comunicação transparente e tradução de "juridiquês".',
-            icon: MessageSquare,
-            color: 'text-violet-500'
-        },
-    ];
+    useEffect(() => {
+        const fetchSuites = async () => {
+            const { data, error } = await supabase
+                .from('suites')
+                .select('*')
+                .eq('active', true)
+                .order('order_index', { ascending: true });
+
+            if (!error && data) {
+                setSuites(data);
+            }
+            setSuitesLoading(false);
+        };
+        fetchSuites();
+    }, [supabase]);
 
     const plans = [
         { name: 'Essencial', price: 'R$ 299', features: ['Até 2 usuários', 'Nexus Pro (Básico)', 'Scriptor Pro', 'Suporte via Ticket'] },
@@ -217,23 +186,42 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {suites.map((suite) => (
-                            <div key={suite.id} className="bg-white dark:bg-slate-900 p-8 rounded-[2rem] border border-slate-200 dark:border-slate-800 hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 group">
-                                <div className={`w-16 h-16 rounded-2xl mb-6 flex items-center justify-center bg-slate-50 dark:bg-slate-800 group-hover:scale-110 transition-transform ${suite.color}`}>
-                                    <suite.icon size={32} />
+                        {suitesLoading ? (
+                            Array.from({ length: 6 }).map((_, i) => (
+                                <div key={i} className="bg-slate-50 dark:bg-slate-900/50 h-64 rounded-[2rem] animate-pulse"></div>
+                            ))
+                        ) : (
+                            suites.map((suite) => (
+                                <div key={suite.id} className="bg-white dark:bg-slate-900 p-8 rounded-[2rem] border border-slate-200 dark:border-slate-800 hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 group">
+                                    <div
+                                        className={`w-16 h-16 rounded-2xl mb-6 flex items-center justify-center bg-slate-50 dark:bg-slate-800 group-hover:scale-110 transition-transform text-indigo-600`}
+                                        dangerouslySetInnerHTML={{ __html: suite.icon_svg }}
+                                    />
+                                    <h3 className="text-2xl font-bold mb-1 text-slate-800 dark:text-white">{suite.name}</h3>
+                                    <h4 className="text-indigo-600 dark:text-indigo-400 text-sm font-bold versalete mb-4">
+                                        {suite.short_desc?.pt || ''}
+                                    </h4>
+                                    <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-6">
+                                        {suite.detailed_desc?.pt || ''}
+                                    </p>
+
+                                    {suite.features?.pt && suite.features.pt.length > 0 && (
+                                        <ul className="mb-8 space-y-2">
+                                            {suite.features.pt.map((f, i) => (
+                                                <li key={i} className="flex items-start gap-2 text-[13px] text-slate-500 dark:text-slate-400">
+                                                    <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0" />
+                                                    {f}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+
+                                    <button className="text-indigo-600 dark:text-indigo-400 font-bold text-sm flex items-center gap-1 group-hover:gap-2 transition-all mt-auto">
+                                        Conhecer Módulo <ChevronRight size={16} />
+                                    </button>
                                 </div>
-                                <h3 className="text-2xl font-bold mb-1 text-slate-800 dark:text-white">{suite.title}</h3>
-                                <h4 className="text-indigo-600 dark:text-indigo-400 text-sm font-bold versalete mb-4">
-                                    {suite.sub}
-                                </h4>
-                                <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-6">
-                                    {suite.desc}
-                                </p>
-                                <button className="text-indigo-600 dark:text-indigo-400 font-bold text-sm flex items-center gap-1 group-hover:gap-2 transition-all">
-                                    Conhecer Módulo <ChevronRight size={16} />
-                                </button>
-                            </div>
-                        ))}
+                            ))
+                        )}
                     </div>
                 </div>
             </section>
