@@ -1,17 +1,39 @@
 'use client'
 
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useEffect, useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { User, UserPreferences, ModuleId } from '@/types';
 import { createMasterClient } from '@/lib/supabase/master';
 
+export const normalizeModuleKey = (key: string): string => {
+    if (!key) return '';
+    return key.toLowerCase().replace('_key', '');
+};
+
 export default function VeritumPage() {
+    return (
+        <Suspense fallback={
+            <div className="h-screen w-full flex items-center justify-center bg-slate-950">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-white font-medium animate-pulse">Iniciando Ecossistema...</p>
+                </div>
+            </div>
+        }>
+            <VeritumContent />
+        </Suspense>
+    );
+}
+
+function VeritumContent() {
     const [user, setUser] = useState<User | null>(null);
     const [preferences, setPreferences] = useState<UserPreferences | null>(null);
     const [activeModule, setActiveModule] = useState<ModuleId>(ModuleId.NEXUS);
+    const [activeSuites, setActiveSuites] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
+    const searchParams = useSearchParams();
     const supabase = createMasterClient();
 
     useEffect(() => {
@@ -58,11 +80,74 @@ export default function VeritumPage() {
                 custom_gemini_key: prefs?.custom_gemini_key,
             });
 
+            // Fetch active suites for sidebar sync
+            const { data: suites } = await supabase
+                .from('suites')
+                .select('*')
+                .eq('active', true)
+                .order('order_index', { ascending: true });
+
+            if (suites) {
+                console.log("Dashboard: Active Suites Sync:", suites.map(s => ({ key: s.suite_key, idx: s.order_index })));
+                setActiveSuites(suites);
+            }
+
+            // Deep link handling (applied BEFORE setting loading to false)
+            const moduleParam = searchParams.get('module');
+            if (moduleParam) {
+                const normalizedParam = normalizeModuleKey(moduleParam);
+
+                // Check if it matches a suite after normalization
+                const foundSuite = suites?.find(s => normalizeModuleKey(s.suite_key) === normalizedParam);
+
+                if (foundSuite) {
+                    // Use the canonical DB suite_key as the active module
+                    setActiveModule(foundSuite.suite_key as ModuleId);
+                } else {
+                    // Fallback to direct match if it happens to be valid ModuleId
+                    const isValidModuleId = Object.values(ModuleId).includes(normalizedParam as ModuleId);
+                    if (isValidModuleId) {
+                        setActiveModule(normalizedParam as ModuleId);
+                    }
+                }
+            }
+
             setLoading(false);
         };
 
         checkUser();
-    }, [router, supabase]);
+
+        // Real-time synchronization for suites table
+        const suitesChannel = supabase
+            .channel('suites-sidebar-sync')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'suites' },
+                async (payload) => {
+                    console.log("Dashboard: Real-time Event Received:", payload.eventType, payload.new);
+
+                    // Re-fetch all active suites on any change to maintain order and presence
+                    const { data: updatedSuites } = await supabase
+                        .from('suites')
+                        .select('*')
+                        .eq('active', true)
+                        .order('order_index', { ascending: true });
+
+                    if (updatedSuites) {
+                        console.log("Dashboard: Sidebar Sincronizado:", updatedSuites.map(s => ({ key: s.suite_key, idx: s.order_index })));
+                        setActiveSuites(updatedSuites);
+                    }
+                }
+            )
+            .subscribe((status, err) => {
+                console.log("Dashboard: Real-time Status:", status);
+                if (err) console.error("Dashboard: Real-time Error:", err);
+            });
+
+        return () => {
+            supabase.removeChannel(suitesChannel);
+        };
+    }, [router, supabase, searchParams]);
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
@@ -70,7 +155,6 @@ export default function VeritumPage() {
     };
 
     const handleModuleChange = (newModule: ModuleId) => {
-        // Instantaneous switch via state
         setActiveModule(newModule);
     };
 
@@ -90,6 +174,7 @@ export default function VeritumPage() {
             user={user!}
             preferences={preferences!}
             activeModule={activeModule}
+            activeSuites={activeSuites}
             onModuleChange={handleModuleChange}
             onLogout={handleLogout}
             onUpdateUser={(u) => setUser(u)}

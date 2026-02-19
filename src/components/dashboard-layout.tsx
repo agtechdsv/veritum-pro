@@ -21,11 +21,13 @@ import {
 } from 'lucide-react';
 import SuiteManagement from './modules/suite-management';
 import { useTheme } from 'next-themes';
+import Link from 'next/link';
 
 interface Props {
     user: User;
     preferences: UserPreferences;
     activeModule: ModuleId;
+    activeSuites?: any[];
     onModuleChange: (m: ModuleId) => void;
     onLogout: () => void;
     onUpdateUser: (u: User) => void;
@@ -38,12 +40,12 @@ const Logo = () => (
     </div>
 );
 
-export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModule, onModuleChange, onLogout, onUpdateUser, onUpdatePrefs }) => {
+export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModule, activeSuites = [], onModuleChange, onLogout, onUpdateUser, onUpdatePrefs }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [pendingAvatar, setPendingAvatar] = useState<string | null>(null);
     const { theme, setTheme } = useTheme();
 
-    const suiteItems = [
+    const baseSuiteItems = [
         { id: ModuleId.NEXUS, label: 'Nexus', icon: GitBranch, color: 'text-indigo-500' },
         { id: ModuleId.SCRIPTOR, label: 'Scriptor', icon: FileEdit, color: 'text-amber-500' },
         { id: ModuleId.VALOREM, label: 'Valorem', icon: DollarSign, color: 'text-emerald-500' },
@@ -51,6 +53,23 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
         { id: ModuleId.VOX, label: 'Vox Clientis', icon: MessageSquare, color: 'text-violet-500' },
         { id: ModuleId.SENTINEL, label: 'Sentinel', icon: ShieldAlert, color: 'text-rose-500' },
     ];
+
+    // Key Normalization for matching DB keys (e.g. SCRIPTOR_KEY) with internal IDs
+    const normalize = (k: string) => k?.toLowerCase().replace('_key', '') || '';
+
+    // Sync order with activeSuites from DB
+    const syncedSuites = activeSuites.length > 0
+        ? activeSuites
+            .map(as => {
+                const normalizedDbKey = normalize(as.suite_key);
+                return baseSuiteItems.find(bs => normalize(bs.id) === normalizedDbKey);
+            })
+            .filter(Boolean) as typeof baseSuiteItems
+        : [];
+
+    // DEFENSIVE FALLBACK: If syncedSuites is empty but we have activeSuites or general failure,
+    // fallback to baseSuiteItems so the menu never disappears.
+    const suiteItems = syncedSuites.length > 0 ? syncedSuites : baseSuiteItems;
 
     const adminItems = [
         { id: ModuleId.USERS, label: 'Gestão de Usuários', icon: Users, color: 'text-slate-500' },
@@ -100,16 +119,18 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
             geminiKey: preferences.custom_gemini_key || process.env.NEXT_PUBLIC_GEMINI_API_KEY || '',
         };
 
-        switch (activeModule) {
-            case ModuleId.SENTINEL: return <Sentinel credentials={creds} />;
-            case ModuleId.NEXUS: return <Nexus credentials={creds} />;
-            case ModuleId.SCRIPTOR: return <Scriptor credentials={creds} />;
-            case ModuleId.VALOREM: return <Valorem credentials={creds} />;
-            case ModuleId.COGNITIO: return <Cognitio credentials={creds} />;
-            case ModuleId.VOX: return <Vox credentials={creds} />;
-            case ModuleId.SETTINGS: return <UserSettings user={user} preferences={preferences} onUpdateUser={onUpdateUser} onUpdatePrefs={onUpdatePrefs} />;
-            case ModuleId.USERS: return <UserManagement currentUser={user} />;
-            case ModuleId.SUITES: return <SuiteManagement credentials={creds} />;
+        const moduleToRender = normalize(activeModule);
+
+        switch (moduleToRender) {
+            case 'sentinel': return <Sentinel credentials={creds} />;
+            case 'nexus': return <Nexus credentials={creds} />;
+            case 'scriptor': return <Scriptor credentials={creds} />;
+            case 'valorem': return <Valorem credentials={creds} />;
+            case 'cognitio': return <Cognitio credentials={creds} />;
+            case 'vox': return <Vox credentials={creds} />;
+            case 'settings': return <UserSettings user={user} preferences={preferences} onUpdateUser={onUpdateUser} onUpdatePrefs={onUpdatePrefs} />;
+            case 'users': return <UserManagement currentUser={user} />;
+            case 'suites': return <SuiteManagement credentials={creds} />;
             default:
                 return (
                     <div className="flex flex-col items-center justify-center h-full text-slate-400">
@@ -126,10 +147,16 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
         <div className="flex h-screen w-full bg-slate-50 dark:bg-slate-950 overflow-hidden transition-colors duration-300">
             {/* Sidebar */}
             <aside className={`bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transition-all duration-300 flex flex-col z-50 ${isSidebarOpen ? 'w-64' : 'w-20'}`}>
-                <div className="p-6 flex items-center gap-3 border-b border-slate-100 dark:border-slate-800">
-                    <Logo />
-                    {isSidebarOpen && <span className="font-extrabold text-xl tracking-tighter dark:text-white text-slate-900">VERITUM <span className="text-indigo-600">PRO</span></span>}
-                </div>
+                <Tooltip content="Voltar ao Início" enabled={true}>
+                    <Link href="/" className="p-6 flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all cursor-pointer">
+                        <Logo />
+                        {isSidebarOpen && (
+                            <span className="font-black text-lg tracking-tighter text-slate-900 dark:text-white uppercase">
+                                Veritum <span className="text-indigo-600">Pro</span>
+                            </span>
+                        )}
+                    </Link>
+                </Tooltip>
 
                 <nav className="flex-1 p-4 space-y-8 overflow-y-auto">
                     {/* Suítes Group */}
@@ -144,12 +171,12 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                             <Tooltip key={item.id} content={item.label} enabled={!isSidebarOpen}>
                                 <button
                                     onClick={() => onModuleChange(item.id)}
-                                    className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 cursor-pointer ${activeModule === item.id
+                                    className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 cursor-pointer ${normalize(activeModule) === normalize(item.id)
                                         ? 'bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-400 font-bold shadow-sm'
                                         : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white'
                                         }`}
                                 >
-                                    <item.icon size={20} className={activeModule === item.id ? item.color : 'text-slate-400 dark:text-slate-500'} />
+                                    <item.icon size={20} className={normalize(activeModule) === normalize(item.id) ? item.color : 'text-slate-400 dark:text-slate-500'} />
                                     {isSidebarOpen && <span className="text-sm">{item.label}</span>}
                                 </button>
                             </Tooltip>

@@ -5,10 +5,11 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import {
     ShieldAlert, GitBranch, FileEdit, DollarSign, BarChart3,
     MessageSquare, Globe, Moon, Sun, ArrowRight, Check,
-    LogIn, UserPlus, ChevronRight, Scale
+    LogIn, UserPlus, ChevronRight, Scale, LogOut, User
 } from 'lucide-react';
 import { AuthModal } from '@/components/auth-modal';
 import { LegalModal } from '@/components/legal-modal';
+import { SuiteDetailModal } from '@/components/suite-detail-modal';
 import { useTheme } from 'next-themes'
 import Link from 'next/link'
 
@@ -54,6 +55,7 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
     const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
     const [suites, setSuites] = useState<DbSuite[]>([]);
     const [suitesLoading, setSuitesLoading] = useState(true);
+    const [currentUser, setCurrentUser] = useState<any>(null);
     const searchParams = useSearchParams();
     const router = useRouter();
     const supabase = createMasterClient();
@@ -71,7 +73,18 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
         type: 'privacy'
     });
 
+    const [detailModal, setDetailModal] = useState<{ isOpen: boolean; suite: DbSuite | null }>({
+        isOpen: false,
+        suite: null
+    });
+
     useEffect(() => {
+        const fetchUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            setCurrentUser(user);
+        };
+        fetchUser();
+
         const fetchSuites = async () => {
             const { data, error } = await supabase
                 .from('suites')
@@ -125,6 +138,7 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                     </div>
 
                     <div className="hidden md:flex items-center gap-8">
+                        <a href="#" className="font-medium hover:text-indigo-600 transition-colors text-slate-800 dark:text-white">Início</a>
                         <a href="#suites" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">Suítes</a>
                         <a href="#pricing" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">Planos</a>
                         <a href="#about" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">Sobre</a>
@@ -134,16 +148,40 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                         <button onClick={toggleTheme} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all text-slate-600 dark:text-slate-400">
                             {resolvedTheme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
                         </button>
-                        <div className="flex items-center gap-1 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full cursor-pointer text-slate-600 dark:text-slate-400">
+                        <div className="flex items-center gap-1 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full cursor-pointer text-slate-600 dark:text-slate-400 transition-all">
                             <Globe size={20} />
                             <span className="text-xs font-bold">PT</span>
                         </div>
-                        <button onClick={() => openAuth('login')} className="hidden sm:flex items-center gap-2 font-semibold px-4 py-2 hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">
-                            <LogIn size={18} /> Entrar
-                        </button>
-                        <button onClick={() => openAuth('register')} className="bg-indigo-600 text-white px-6 py-2.5 rounded-full font-bold shadow-xl shadow-indigo-600/20 hover:scale-105 transition-all flex items-center gap-2">
-                            <UserPlus size={18} /> Começar Grátis
-                        </button>
+
+                        {currentUser ? (
+                            <div className="flex items-center gap-4">
+                                <Link href="/veritum" className="flex items-center gap-2 font-bold text-indigo-600 dark:text-indigo-400 hover:scale-105 transition-all">
+                                    <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center">
+                                        <User size={16} />
+                                    </div>
+                                    <span className="hidden sm:inline">Painel</span>
+                                </Link>
+                                <button
+                                    onClick={async () => {
+                                        await supabase.auth.signOut();
+                                        setCurrentUser(null);
+                                    }}
+                                    className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-full transition-all cursor-pointer"
+                                    title="Sair"
+                                >
+                                    <LogOut size={20} />
+                                </button>
+                            </div>
+                        ) : (
+                            <>
+                                <button onClick={() => openAuth('login')} className="hidden sm:flex items-center gap-2 font-semibold px-4 py-2 hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300 cursor-pointer">
+                                    <LogIn size={18} /> Entrar
+                                </button>
+                                <button onClick={() => openAuth('register')} className="bg-indigo-600 text-white px-6 py-2.5 rounded-full font-bold shadow-xl shadow-indigo-600/20 hover:scale-105 transition-all flex items-center gap-2 cursor-pointer">
+                                    <UserPlus size={18} /> Começar Grátis
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
             </nav>
@@ -162,13 +200,13 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                         Uma arquitetura BYODB (Bring Your Own Database) completa para escritórios de alta performance.
                         Seu dado, sua infraestrutura, nossas suítes inteligentes.
                     </p>
-                    <div className="flex flex-wrap items-center justify-center gap-6">
-                        <button onClick={() => openAuth('register')} className="bg-indigo-600 text-white px-10 py-5 rounded-2xl font-bold text-lg shadow-2xl shadow-indigo-600/40 hover:-translate-y-1 transition-all flex items-center gap-3">
-                            Ver Planos e Preços <ArrowRight size={22} />
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                        <button onClick={() => openAuth('register')} className="w-full sm:w-auto bg-indigo-600 text-white px-10 py-4 rounded-[2rem] font-bold text-lg shadow-2xl shadow-indigo-600/40 hover:scale-105 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 cursor-pointer">
+                            Começar Agora <ArrowRight size={20} />
                         </button>
-                        <button className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-10 py-5 rounded-2xl font-bold text-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-slate-800 dark:text-white">
-                            Agendar Demo
-                        </button>
+                        <a href="#pricing" className="w-full sm:w-auto px-10 py-4 rounded-[2rem] border border-slate-200 dark:border-slate-800 font-bold text-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-center cursor-pointer">
+                            Ver planos e preços
+                        </a>
                     </div>
                 </div>
 
@@ -205,19 +243,17 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                                         {suite.detailed_desc?.pt || ''}
                                     </p>
 
-                                    {suite.features?.pt && suite.features.pt.length > 0 && (
-                                        <ul className="mb-8 space-y-2">
-                                            {suite.features.pt.map((f, i) => (
-                                                <li key={i} className="flex items-start gap-2 text-[13px] text-slate-500 dark:text-slate-400">
-                                                    <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0" />
-                                                    {f}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    )}
-
-                                    <button className="text-indigo-600 dark:text-indigo-400 font-bold text-sm flex items-center gap-1 group-hover:gap-2 transition-all mt-auto">
-                                        Conhecer Módulo <ChevronRight size={16} />
+                                    <button
+                                        onClick={() => {
+                                            if (currentUser) {
+                                                router.push(`/veritum?module=${suite.suite_key}`);
+                                            } else {
+                                                setDetailModal({ isOpen: true, suite });
+                                            }
+                                        }}
+                                        className="text-indigo-600 dark:text-indigo-400 font-bold text-sm flex items-center gap-1 group-hover:gap-2 transition-all mt-auto cursor-pointer"
+                                    >
+                                        {currentUser ? 'Acessar Módulo' : 'Conhecer Módulo'} <ChevronRight size={16} />
                                     </button>
                                 </div>
                             ))
@@ -225,6 +261,12 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                     </div>
                 </div>
             </section>
+
+            <SuiteDetailModal
+                isOpen={detailModal.isOpen}
+                onClose={() => setDetailModal(prev => ({ ...prev, isOpen: false }))}
+                suite={detailModal.suite}
+            />
 
             {/* Pricing */}
             <section id="pricing" className="py-32 px-6 bg-white dark:bg-slate-950 transition-colors duration-300">
