@@ -144,7 +144,7 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Logo />
-                        <span className="font-extrabold text-2xl tracking-tighter text-slate-900 dark:text-white">VERITUM <span className="text-indigo-600">PRO</span></span>
+                        <span className="font-extrabold text-2xl tracking-tighter text-slate-900 dark:text-white">VERITUM <span className="text-branding-gradient">PRO</span></span>
                     </div>
 
                     <div className="hidden md:flex items-center gap-8">
@@ -199,11 +199,8 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
             {/* Hero Section */}
             <section className="relative pt-44 pb-32 px-6 overflow-hidden bg-white dark:bg-slate-950 transition-colors duration-300">
                 <div className="max-w-7xl mx-auto text-center relative z-10">
-                    <span className="inline-block bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest mb-6">
-                        A Nova Era do Direito Digital
-                    </span>
                     <h1 className="text-6xl md:text-8xl font-black tracking-tight mb-8 leading-[1.1] text-slate-900 dark:text-white">
-                        O Ecossistema <span className="text-indigo-600">Jurídico</span> <br className="hidden lg:block" />
+                        O Ecossistema <span className="text-branding-gradient">Jurídico</span> <br className="hidden lg:block" />
                         Modular & Inteligente
                     </h1>
                     <p className="text-xl text-slate-500 dark:text-slate-400 max-w-3xl mx-auto mb-12 leading-relaxed">
@@ -342,7 +339,7 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
                     <div className="flex items-center gap-3">
                         <Logo />
-                        <span className="font-extrabold text-2xl tracking-tighter text-slate-900 dark:text-white">VERITUM <span className="text-indigo-600">PRO</span></span>
+                        <span className="font-extrabold text-2xl tracking-tighter text-slate-900 dark:text-white">VERITUM <span className="text-branding-gradient">PRO</span></span>
                     </div>
                     <p className="text-sm text-slate-400 dark:text-slate-500 font-medium">© 2024 Veritum Pro. Todos os direitos reservados.</p>
                     <div className="flex gap-6">

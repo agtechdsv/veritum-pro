@@ -39,7 +39,7 @@ const RootDashboard: React.FC<Props> = ({ onModuleChange, userRole }) => {
         <div className="space-y-12 animate-in fade-in zoom-in duration-700">
             <div>
                 <h1 className="text-5xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">
-                    Bem-vindo ao <span className="text-indigo-600">Veritum Pro</span>
+                    Bem-vindo ao <span className="text-branding-gradient">Veritum Pro</span>
                 </h1>
                 <p className="text-xl text-slate-500 dark:text-slate-400 font-medium italic mt-4 max-w-2xl">
                     Selecione uma área para começar a explorar o ecossistema jurídico modular.

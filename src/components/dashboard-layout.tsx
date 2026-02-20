@@ -198,7 +198,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                     transition={{ duration: 0.2, delay: 0.1 }}
                                     className="font-black text-lg tracking-tighter text-slate-900 dark:text-white uppercase whitespace-nowrap"
                                 >
-                                    Veritum <span className="text-indigo-600">Pro</span>
+                                    Veritum <span className="text-branding-gradient">Pro</span>
                                 </motion.span>
                             )}
                         </AnimatePresence>

@@ -55,7 +55,7 @@ export function LegalModal({ isOpen, onClose, type, lang = 'pt' }: Props) {
             body: {
                 pt: (
                     <>
-                        <p className="mb-4">Bem-vindo ao <strong>Veritum Pro</strong>, o ecossistema jurídico modular de alta performance.</p>
+                        <p className="mb-4">Bem-vindo ao <strong className="text-branding-gradient">Veritum Pro</strong>, o ecossistema jurídico modular de alta performance.</p>
                         <h3 className="text-lg font-bold mt-6 mb-2 text-slate-800 dark:text-white">1. Aceitação dos Termos</h3>
                         <p className="mb-4">Ao acessar este aplicativo, você concorda em cumprir estes termos de serviço e todas as leis aplicáveis ao exercício da advocacia e proteção de dados (LGPD).</p>
                         <h3 className="text-lg font-bold mt-6 mb-2 text-slate-800 dark:text-white">2. Isenção de Responsabilidade Jurídica</h3>
@@ -66,15 +66,13 @@ export function LegalModal({ isOpen, onClose, type, lang = 'pt' }: Props) {
                 ),
                 en: (
                     <>
-                        <p className="mb-4">Welcome to <strong>Veritum Pro</strong>, the high-performance modular legal ecosystem.</p>
-                        <h3 className="text-lg font-bold mt-6 mb-2 text-slate-800 dark:text-white">1. Acceptance of Terms</h3>
+                        ,ReplacementContent:                        <h3 className="text-lg font-bold mt-6 mb-2 text-slate-800 dark:text-white">1. Acceptance of Terms</h3>
                         <p className="mb-4">By accessing this application, you agree to comply with these terms of service and all applicable data protection laws.</p>
                     </>
                 ),
                 es: (
                     <>
-                        <p className="mb-4">Bienvenido a <strong>Veritum Pro</strong>, el ecosistema jurídico modular de alto rendimiento.</p>
-                        <h3 className="text-lg font-bold mt-6 mb-2 text-slate-800 dark:text-white">1. Aceptación de los Términos</h3>
+                        ,ReplacementContent:                        <h3 className="text-lg font-bold mt-6 mb-2 text-slate-800 dark:text-white">1. Aceptación de los Términos</h3>
                         <p className="mb-4">Al acceder a esta aplicación, usted acepta cumplir con estos términos de servicio y todas las leyes aplicables.</p>
                     </>
                 )
@@ -117,7 +115,7 @@ export function LegalModal({ isOpen, onClose, type, lang = 'pt' }: Props) {
                     <div className="p-8 pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/30">
                         <div className="flex items-center gap-2">
                             <Scale size={16} className="text-indigo-600" />
-                            <span className="text-xs font-bold dark:text-slate-400 text-slate-500">VERITUM PRO SECURITY</span>
+                            <span className="text-xs font-bold dark:text-slate-400 text-slate-500">VERITUM <span className="text-branding-gradient">PRO</span> SECURITY</span>
                         </div>
                         <button
                             onClick={onClose}

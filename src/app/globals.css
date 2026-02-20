@@ -1,5 +1,21 @@
 @import "tailwindcss";
 
+@theme {
+  --animate-gradient: gradient 8s linear infinite;
+
+  @keyframes gradient {
+
+    0%,
+    100% {
+      background-position: 0% 50%;
+    }
+
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+}
+
 @variant dark (&:where(.dark, .dark *));
 
 @layer base {
@@ -96,6 +112,16 @@
 @layer utilities {
   .text-gradient {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-white via-neutral-200 to-neutral-400;
+  }
+
+  .text-branding-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-blue-500 to-blue-600 animate-gradient;
+    background-size: 200% auto;
+  }
+
+  .bg-branding-gradient {
+    @apply bg-gradient-to-r from-emerald-400 via-blue-500 to-blue-600;
+    background-size: 200% auto;
   }
 
   .card-gradient {

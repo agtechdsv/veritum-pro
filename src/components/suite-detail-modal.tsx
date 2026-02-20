@@ -37,7 +37,7 @@ export function SuiteDetailModal({ isOpen, onClose, suite }: Props) {
                                 <h2 className="text-3xl font-black tracking-tight dark:text-white text-slate-900 leading-none mb-2">
                                     {suite.name}
                                 </h2>
-                                <p className="text-sm text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-wider">
+                                <p className="text-sm text-branding-gradient font-bold uppercase tracking-wider">
                                     {suite.short_desc[lang] || ''}
                                 </p>
                             </div>

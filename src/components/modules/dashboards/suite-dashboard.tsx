@@ -14,7 +14,7 @@ const SuiteDashboard: React.FC<Props> = ({ items, onModuleChange }) => {
         <div className="space-y-12 animate-in fade-in duration-700">
             <div>
                 <h1 className="text-4xl font-black text-slate-800 dark:text-white uppercase tracking-tight">
-                    Dashboard de <span className="text-indigo-600">Suítes</span>
+                    Dashboard de <span className="text-branding-gradient">Suítes</span>
                 </h1>
                 <p className="text-slate-500 dark:text-slate-400 font-medium italic mt-2">
                     Acesse as ferramentas do ecossistema Veritum Pro.

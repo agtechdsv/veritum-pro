@@ -14,7 +14,7 @@ const MasterDashboard: React.FC<Props> = ({ items, onModuleChange }) => {
         <div className="space-y-12 animate-in fade-in duration-700">
             <div>
                 <h1 className="text-4xl font-black text-slate-800 dark:text-white uppercase tracking-tight">
-                    Painel <span className="text-indigo-600">Master</span>
+                    Painel <span className="text-branding-gradient">Master</span>
                 </h1>
                 <p className="text-slate-500 dark:text-slate-400 font-medium italic mt-2">
                     Configurações estruturais de suítes e planos comerciais.

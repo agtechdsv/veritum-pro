@@ -14,7 +14,7 @@ const AdminDashboard: React.FC<Props> = ({ items, onModuleChange }) => {
         <div className="space-y-12 animate-in fade-in duration-700">
             <div>
                 <h1 className="text-4xl font-black text-slate-800 dark:text-white uppercase tracking-tight">
-                    Gestão de <span className="text-indigo-600">Administração</span>
+                    Gestão de <span className="text-branding-gradient">Administração</span>
                 </h1>
                 <p className="text-slate-500 dark:text-slate-400 font-medium italic mt-2">
                     Controle de acesso e configurações do ecossistema.

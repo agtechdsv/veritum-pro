@@ -298,7 +298,7 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                                     'Redefinir Senha'}
                         </h2>
                         <p className="text-slate-500 dark:text-slate-400">
-                            {currentMode === 'login' ? 'Acesse seu ecossistema jurídico PRO.' :
+                            {currentMode === 'login' ? <>Acesse seu ecossistema jurídico <span className="text-branding-gradient">PRO</span>.</> :
                                 currentMode === 'register' ? 'Junte-se a centenas de escritórios modernos.' :
                                     'Sua senha provisória expirou. Crie uma nova agora.'}
                         </p>
