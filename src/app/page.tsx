@@ -263,7 +263,7 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                                         }}
                                         className="text-indigo-600 dark:text-indigo-400 font-bold text-sm flex items-center gap-1 group-hover:gap-2 transition-all mt-auto cursor-pointer"
                                     >
-                                        {currentUser ? 'Acessar Módulo' : 'Saiba Mais'} <ChevronRight size={16} />
+                                        {currentUser ? 'Acessar Suíte' : 'Saiba Mais'} <ChevronRight size={16} />
                                     </button>
                                 </div>
                             ))

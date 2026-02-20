@@ -26,7 +26,7 @@ const SuiteDashboard: React.FC<Props> = ({ items, onModuleChange }) => {
                     <DashboardCard
                         key={item.id}
                         title={item.label}
-                        description={`Módulo e funções da suíte ${item.label}.`}
+                        description={item.detailed_desc?.pt || item.short_desc?.pt || `Módulo e funções da suíte ${item.label}.`}
                         icon={item.icon}
                         color={item.color}
                         onClick={() => onModuleChange(item.id)}

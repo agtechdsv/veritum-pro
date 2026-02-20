@@ -82,9 +82,13 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
         ? activeSuites
             .map(as => {
                 const normalizedDbKey = normalize(as.suite_key);
-                return baseSuiteItems.find(bs => normalize(bs.id) === normalizedDbKey);
+                const baseItem = baseSuiteItems.find(bs => normalize(bs.id) === normalizedDbKey);
+                if (baseItem) {
+                    return { ...baseItem, short_desc: as.short_desc, detailed_desc: as.detailed_desc };
+                }
+                return null;
             })
-            .filter(Boolean) as typeof baseSuiteItems
+            .filter(Boolean) as any[]
         : [];
 
     // DEFENSIVE FALLBACK: If syncedSuites is empty but we have activeSuites or general failure,

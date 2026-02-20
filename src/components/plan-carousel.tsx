@@ -45,7 +45,7 @@ const PlanCard = ({ plan, billingCycle, openAuth, isActive, index }: any) => {
             <div className="mb-8 flex flex-col items-baseline gap-1 relative">
                 {discount > 0 ? (
                     <span className="text-[15px] font-bold text-slate-500 line-through decoration-rose-500 decoration-2">
-                        R$ {basePrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        R$ {basePrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
                 ) : (
                     <div className="h-[22.5px]" />
@@ -53,7 +53,7 @@ const PlanCard = ({ plan, billingCycle, openAuth, isActive, index }: any) => {
 
                 <div className="flex flex-col gap-0.5 relative group">
                     <div className="flex items-baseline gap-1">
-                        <span className="text-4xl font-black text-white">R$ {finalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                        <span className="text-4xl font-black text-white">R$ {finalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                         <span className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">
                             {isYearly ? '/ ANO' : '/ MÊS'}
                         </span>
@@ -61,7 +61,7 @@ const PlanCard = ({ plan, billingCycle, openAuth, isActive, index }: any) => {
                     </div>
                     {isYearly && (
                         <p className="text-xs font-black uppercase tracking-widest text-emerald-400 mt-1 animate-in fade-in slide-in-from-left-2 duration-500">
-                            ou 12x de R$ {installmentValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} sem juros
+                            ou 12x de R$ {installmentValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} sem juros
                         </p>
                     )}
                 </div>
@@ -88,8 +88,8 @@ const PlanCard = ({ plan, billingCycle, openAuth, isActive, index }: any) => {
                 <button
                     onClick={() => openAuth('register')}
                     className={`w-full py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all shadow-xl active:scale-95 flex items-center justify-center gap-2 ${plan.recommended
-                            ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20'
-                            : 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/20'
+                        ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20'
+                        : 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/20'
                         }`}
                 >
                     ASSINAR AGORA
