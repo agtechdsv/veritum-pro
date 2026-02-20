@@ -1,4 +1,4 @@
-supabase/
+/supabase/
 README.md
 *.sql
 *.pdf
