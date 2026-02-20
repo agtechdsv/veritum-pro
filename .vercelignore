@@ -1,0 +1,6 @@
+supabase/
+README.md
+*.sql
+*.pdf
+Doc_01.txt
+.env.local
