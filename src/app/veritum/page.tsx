@@ -29,7 +29,7 @@ export default function VeritumPage() {
 function VeritumContent() {
     const [user, setUser] = useState<User | null>(null);
     const [preferences, setPreferences] = useState<UserPreferences | null>(null);
-    const [activeModule, setActiveModule] = useState<ModuleId>(ModuleId.NEXUS);
+    const [activeModule, setActiveModule] = useState<ModuleId>(ModuleId.DASHBOARD_ROOT);
     const [activeSuites, setActiveSuites] = useState<any[]>([]);
     const [planPermissions, setPlanPermissions] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -204,6 +204,29 @@ function VeritumContent() {
         };
     }, [router, supabase, searchParams]);
 
+    const handleUpdatePrefs = async (newPrefs: UserPreferences) => {
+        setPreferences(newPrefs);
+
+        // Save to localStorage for immediate consistency (especially between landing and dashboard)
+        localStorage.setItem('veritum-theme', newPrefs.theme);
+
+        // Save to DB
+        const { error } = await supabase
+            .from('user_preferences')
+            .upsert({
+                user_id: user?.id,
+                theme: newPrefs.theme,
+                language: newPrefs.language,
+                custom_supabase_url: newPrefs.custom_supabase_url,
+                custom_supabase_key: newPrefs.custom_supabase_key,
+                custom_gemini_key: newPrefs.custom_gemini_key
+            }, { onConflict: 'user_id' });
+
+        if (error) {
+            console.error("Erro ao salvar preferências:", error);
+        }
+    };
+
     const handleLogout = async () => {
         await supabase.auth.signOut();
         router.push('/');
@@ -234,7 +257,7 @@ function VeritumContent() {
             onModuleChange={handleModuleChange}
             onLogout={handleLogout}
             onUpdateUser={(u) => setUser(u)}
-            onUpdatePrefs={(p) => setPreferences(p)}
+            onUpdatePrefs={handleUpdatePrefs}
         />
     );
 }

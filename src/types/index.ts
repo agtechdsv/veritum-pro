@@ -10,7 +10,11 @@ export enum ModuleId {
     SETTINGS = 'settings',
     USERS = 'users',
     SUITES = 'suites',
-    PLANS = 'plans'
+    PLANS = 'plans',
+    DASHBOARD_SUITES = 'dashboard_suites',
+    DASHBOARD_ADMIN = 'dashboard_admin',
+    DASHBOARD_MASTER = 'dashboard_master',
+    DASHBOARD_ROOT = 'dashboard_root'
 }
 
 export interface Plan {

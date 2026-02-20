@@ -398,14 +398,31 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
                                 </div>
                             </div>
                         </div>
-                        {editingPlan && (
-                            <button
-                                onClick={() => { setEditingPlan(null); setFormData(initialFormData); setPlanPermissions([]); }}
-                                className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all text-[10px] font-black uppercase tracking-widest shadow-sm"
-                            >
-                                <X size={14} /> Cancelar Seleção
-                            </button>
-                        )}
+                        <div className="flex items-center gap-2">
+                            {editingPlan ? (
+                                <>
+                                    <button
+                                        onClick={handleSave}
+                                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all text-[10px] font-black uppercase tracking-widest shadow-sm shadow-indigo-600/20"
+                                    >
+                                        <ShieldCheck size={14} /> Salvar Alterações
+                                    </button>
+                                    <button
+                                        onClick={() => { setEditingPlan(null); setFormData(initialFormData); setPlanPermissions([]); }}
+                                        className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all text-[10px] font-black uppercase tracking-widest shadow-sm"
+                                    >
+                                        <X size={14} /> Cancelar Seleção
+                                    </button>
+                                </>
+                            ) : (
+                                <button
+                                    onClick={handleSave}
+                                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all text-[10px] font-black uppercase tracking-widest shadow-sm shadow-indigo-600/20"
+                                >
+                                    <Plus size={14} /> Criar Plano
+                                </button>
+                            )}
+                        </div>
                     </div>
 
                     <form onSubmit={handleSave} className="p-8 space-y-8">
@@ -523,7 +540,7 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-3 gap-4">
                                     <div className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-700 hover:border-amber-200 transition-colors shadow-sm">
                                         <label className="relative inline-flex items-center cursor-pointer">
                                             <input type="checkbox" className="sr-only peer" checked={formData.recommended} onChange={e => setFormData({ ...formData, recommended: e.target.checked })} />
@@ -644,12 +661,7 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
                             </div>
                         )}
 
-                        <button
-                            type="submit"
-                            className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-indigo-600/20 hover:scale-[1.01] active:scale-95 transition-all text-sm flex items-center justify-center gap-3 mt-4"
-                        >
-                            <ShieldCheck size={18} /> {editingPlan ? 'Salvar Alterações' : 'Criar Plano no Ecossistema'}
-                        </button>
+                        {/* Submit button removed from bottom - moved to header */}
                     </form>
                 </div>
             </div>

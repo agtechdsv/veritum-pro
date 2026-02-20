@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ModuleId, User, UserPreferences, Credentials } from '@/types';
 // Modules ported
 import Sentinel from './modules/sentinel';
@@ -18,12 +19,17 @@ import { Tooltip } from './ui/tooltip';
 import {
     ShieldAlert, GitBranch, FileEdit, DollarSign, BarChart3,
     MessageSquare, LogOut, Settings, Menu, X, Bell, Search,
-    Camera, Scale, Check, Users, Crown
+    Camera, Scale, Check, Users, Crown, ChevronRight,
+    PanelLeftClose, PanelLeft, PanelLeftOpen, Sun, Moon
 } from 'lucide-react';
 import SuiteManagement from './modules/suite-management';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
 import { ToastContainer } from './ui/toast';
+import SuiteDashboard from './modules/dashboards/suite-dashboard';
+import AdminDashboard from './modules/dashboards/admin-dashboard';
+import MasterDashboard from './modules/dashboards/master-dashboard';
+import RootDashboard from './modules/dashboards/root-dashboard';
 
 interface Props {
     user: User;
@@ -47,6 +53,17 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [pendingAvatar, setPendingAvatar] = useState<string | null>(null);
     const { theme, setTheme } = useTheme();
+    const hasSyncedTheme = React.useRef(false);
+
+    // Sync theme with user preferences on mount (ONLY ONCE)
+    React.useEffect(() => {
+        if (preferences?.theme && !hasSyncedTheme.current) {
+            if (theme !== preferences.theme) {
+                setTheme(preferences.theme);
+            }
+            hasSyncedTheme.current = true;
+        }
+    }, [preferences?.theme, theme, setTheme]);
 
     const baseSuiteItems = [
         { id: ModuleId.NEXUS, label: 'Nexus', icon: GitBranch, color: 'text-indigo-500' },
@@ -144,6 +161,10 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
             case 'users': return <UserManagement currentUser={user} />;
             case 'suites': return <SuiteManagement credentials={creds} />;
             case 'plans': return <PlanManagement credentials={creds} />;
+            case 'dashboard_suites': return <SuiteDashboard items={suiteItems} onModuleChange={onModuleChange} />;
+            case 'dashboard_admin': return <AdminDashboard items={adminItems} onModuleChange={onModuleChange} />;
+            case 'dashboard_master': return <MasterDashboard items={masterItems} onModuleChange={onModuleChange} />;
+            case 'dashboard_root': return <RootDashboard onModuleChange={onModuleChange} userRole={user.role} />;
             default:
                 return (
                     <div className="flex flex-col items-center justify-center h-full text-slate-400">
@@ -164,23 +185,39 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                 <Tooltip content="Voltar ao Início" enabled={true}>
                     <Link href="/" className="p-6 flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all cursor-pointer">
                         <Logo />
-                        {isSidebarOpen && (
-                            <span className="font-black text-lg tracking-tighter text-slate-900 dark:text-white uppercase">
-                                Veritum <span className="text-indigo-600">Pro</span>
-                            </span>
-                        )}
+                        <AnimatePresence>
+                            {isSidebarOpen && (
+                                <motion.span
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -10 }}
+                                    transition={{ duration: 0.2, delay: 0.1 }}
+                                    className="font-black text-lg tracking-tighter text-slate-900 dark:text-white uppercase whitespace-nowrap"
+                                >
+                                    Veritum <span className="text-indigo-600">Pro</span>
+                                </motion.span>
+                            )}
+                        </AnimatePresence>
                     </Link>
                 </Tooltip>
 
                 <nav className="flex-1 p-4 space-y-8 overflow-y-auto">
                     {/* Suítes Group */}
                     <div className="space-y-2">
-                        {isSidebarOpen && (
-                            <div className="flex items-center gap-2 px-3 mb-4">
-                                <div className="w-1 h-3 bg-indigo-600 rounded-full" />
-                                <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Suítes</h3>
-                            </div>
-                        )}
+                        <AnimatePresence>
+                            {isSidebarOpen && (
+                                <motion.button
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    onClick={() => onModuleChange(ModuleId.DASHBOARD_SUITES)}
+                                    className="group flex items-center gap-2 px-3 mb-4 w-full text-left cursor-pointer overflow-hidden"
+                                >
+                                    <div className={`w-1 h-3 rounded-full transition-all ${normalize(activeModule).includes('dashboard_suites') || suiteItems.some(i => normalize(i.id) === normalize(activeModule)) ? 'bg-indigo-600 h-5' : 'bg-slate-300 group-hover:bg-indigo-400'}`} />
+                                    <h3 className={`text-[10px] font-black uppercase tracking-widest transition-colors whitespace-nowrap ${normalize(activeModule).includes('dashboard_suites') || suiteItems.some(i => normalize(i.id) === normalize(activeModule)) ? 'text-indigo-600' : 'text-slate-400 group-hover:text-slate-600'}`}>Suítes</h3>
+                                </motion.button>
+                            )}
+                        </AnimatePresence>
                         {suiteItems.map((item) => (
                             <Tooltip key={item.id} content={item.label} enabled={!isSidebarOpen}>
                                 <button
@@ -191,7 +228,19 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                         }`}
                                 >
                                     <item.icon size={20} className={normalize(activeModule) === normalize(item.id) ? item.color : 'text-slate-400 dark:text-slate-500'} />
-                                    {isSidebarOpen && <span className="text-sm">{item.label}</span>}
+                                    <AnimatePresence>
+                                        {isSidebarOpen && (
+                                            <motion.span
+                                                initial={{ opacity: 0, width: 0 }}
+                                                animate={{ opacity: 1, width: 'auto' }}
+                                                exit={{ opacity: 0, width: 0 }}
+                                                transition={{ duration: 0.2 }}
+                                                className="text-sm whitespace-nowrap overflow-hidden"
+                                            >
+                                                {item.label}
+                                            </motion.span>
+                                        )}
+                                    </AnimatePresence>
                                 </button>
                             </Tooltip>
                         ))}
@@ -204,12 +253,20 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
 
                     {/* Administração Group */}
                     <div className="space-y-2">
-                        {isSidebarOpen && (
-                            <div className="flex items-center gap-2 px-3 mb-4">
-                                <div className="w-1 h-3 bg-slate-400 rounded-full" />
-                                <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Administração</h3>
-                            </div>
-                        )}
+                        <AnimatePresence>
+                            {isSidebarOpen && (
+                                <motion.button
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    onClick={() => onModuleChange(ModuleId.DASHBOARD_ADMIN)}
+                                    className="group flex items-center gap-2 px-3 mb-4 w-full text-left cursor-pointer overflow-hidden"
+                                >
+                                    <div className={`w-1 h-3 rounded-full transition-all ${normalize(activeModule).includes('dashboard_admin') || adminItems.some(i => i.id === activeModule) ? 'bg-indigo-600 h-5' : 'bg-slate-300 group-hover:bg-indigo-400'}`} />
+                                    <h3 className={`text-[10px] font-black uppercase tracking-widest transition-colors whitespace-nowrap ${normalize(activeModule).includes('dashboard_admin') || adminItems.some(i => i.id === activeModule) ? 'text-indigo-600' : 'text-slate-400 group-hover:text-slate-600'}`}>Administração</h3>
+                                </motion.button>
+                            )}
+                        </AnimatePresence>
                         {adminItems.map((item) => (
                             <Tooltip key={item.id} content={item.label} enabled={!isSidebarOpen}>
                                 <button
@@ -221,7 +278,19 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                         }`}
                                 >
                                     <item.icon size={20} className={activeModule === item.id ? 'text-indigo-600' : 'text-slate-400 dark:text-slate-500'} />
-                                    {isSidebarOpen && <span className="text-sm">{item.label}</span>}
+                                    <AnimatePresence>
+                                        {isSidebarOpen && (
+                                            <motion.span
+                                                initial={{ opacity: 0, width: 0 }}
+                                                animate={{ opacity: 1, width: 'auto' }}
+                                                exit={{ opacity: 0, width: 0 }}
+                                                transition={{ duration: 0.2 }}
+                                                className="text-sm whitespace-nowrap overflow-hidden"
+                                            >
+                                                {item.label}
+                                            </motion.span>
+                                        )}
+                                    </AnimatePresence>
                                 </button>
                             </Tooltip>
                         ))}
@@ -234,12 +303,20 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                 <div className="h-px bg-slate-200 dark:bg-slate-800 shadow-[0_1px_0_0_rgba(255,255,255,1)] dark:shadow-[0_1px_0_0_rgba(255,255,255,0.02)]" />
                             </div>
                             <div className="space-y-2">
-                                {isSidebarOpen && (
-                                    <div className="flex items-center gap-2 px-3 mb-4">
-                                        <div className="w-1 h-3 bg-amber-500 rounded-full" />
-                                        <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Master</h3>
-                                    </div>
-                                )}
+                                <AnimatePresence>
+                                    {isSidebarOpen && (
+                                        <motion.button
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            exit={{ opacity: 0 }}
+                                            onClick={() => onModuleChange(ModuleId.DASHBOARD_MASTER)}
+                                            className="group flex items-center gap-2 px-3 mb-4 w-full text-left cursor-pointer overflow-hidden"
+                                        >
+                                            <div className={`w-1 h-3 rounded-full transition-all ${normalize(activeModule).includes('dashboard_master') || masterItems.some(i => i.id === activeModule) ? 'bg-amber-500 h-5' : 'bg-slate-300 group-hover:bg-amber-400'}`} />
+                                            <h3 className={`text-[10px] font-black uppercase tracking-widest transition-colors whitespace-nowrap ${normalize(activeModule).includes('dashboard_master') || masterItems.some(i => i.id === activeModule) ? 'text-amber-600' : 'text-slate-400 group-hover:text-slate-600'}`}>Master</h3>
+                                        </motion.button>
+                                    )}
+                                </AnimatePresence>
                                 {masterItems.map((item) => (
                                     <Tooltip key={item.id} content={item.label} enabled={!isSidebarOpen}>
                                         <button
@@ -250,7 +327,19 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                                 }`}
                                         >
                                             <item.icon size={20} className={activeModule === item.id ? item.color : 'text-slate-400 dark:text-slate-500'} />
-                                            {isSidebarOpen && <span className="text-sm">{item.label}</span>}
+                                            <AnimatePresence>
+                                                {isSidebarOpen && (
+                                                    <motion.span
+                                                        initial={{ opacity: 0, width: 0 }}
+                                                        animate={{ opacity: 1, width: 'auto' }}
+                                                        exit={{ opacity: 0, width: 0 }}
+                                                        transition={{ duration: 0.2 }}
+                                                        className="text-sm whitespace-nowrap overflow-hidden"
+                                                    >
+                                                        {item.label}
+                                                    </motion.span>
+                                                )}
+                                            </AnimatePresence>
                                         </button>
                                     </Tooltip>
                                 ))}
@@ -259,17 +348,6 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                     )}
                 </nav>
 
-                <div className="p-4 border-t border-slate-100 dark:border-slate-800">
-                    <Tooltip content="Sair do Ecossistema" enabled={!isSidebarOpen}>
-                        <button
-                            onClick={onLogout}
-                            className="w-full flex items-center gap-3 p-3 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all cursor-pointer"
-                        >
-                            <LogOut size={20} />
-                            {isSidebarOpen && <span className="text-sm font-semibold">Sair do Ecossistema</span>}
-                        </button>
-                    </Tooltip>
-                </div>
             </aside>
 
             {/* Main Content Area */}
@@ -277,14 +355,74 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                 <header className="h-20 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8 z-40 transition-colors">
                     <div className="flex items-center gap-4">
                         <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all text-slate-500 dark:text-slate-400 cursor-pointer">
-                            {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+                            {isSidebarOpen ? <PanelLeftClose size={20} /> : <PanelLeftOpen size={20} />}
                         </button>
-                        <h2 className="text-lg font-bold text-slate-800 dark:text-white capitalize">
-                            {[...suiteItems, ...adminItems].find(m => m.id === activeModule)?.label || 'Início'}
-                        </h2>
+
+                        {/* Breadcrumbs */}
+                        <div className="flex items-center gap-2 text-sm font-medium">
+                            <button
+                                onClick={() => onModuleChange(ModuleId.DASHBOARD_ROOT)}
+                                className="text-slate-400 hover:text-indigo-600 transition-colors cursor-pointer"
+                            >
+                                Veritum Pro
+                            </button>
+
+                            {normalize(activeModule) !== 'dashboard_root' && (
+                                <>
+                                    <ChevronRight size={14} className="text-slate-300" />
+                                    {suiteItems.some(i => normalize(i.id) === normalize(activeModule)) || normalize(activeModule) === 'dashboard_suites' ? (
+                                        <button
+                                            onClick={() => onModuleChange(ModuleId.DASHBOARD_SUITES)}
+                                            className={`${normalize(activeModule) === 'dashboard_suites' ? 'text-slate-800 dark:text-white font-black' : 'text-slate-400 hover:text-indigo-600'} transition-colors cursor-pointer`}
+                                        >
+                                            Suítes
+                                        </button>
+                                    ) : adminItems.some(i => i.id === activeModule) || normalize(activeModule) === 'dashboard_admin' ? (
+                                        <button
+                                            onClick={() => onModuleChange(ModuleId.DASHBOARD_ADMIN)}
+                                            className={`${normalize(activeModule) === 'dashboard_admin' ? 'text-slate-800 dark:text-white font-black' : 'text-slate-400 hover:text-indigo-600'} transition-colors cursor-pointer`}
+                                        >
+                                            Administração
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => onModuleChange(ModuleId.DASHBOARD_MASTER)}
+                                            className={`${normalize(activeModule) === 'dashboard_master' ? 'text-slate-800 dark:text-white font-black' : 'text-slate-400 hover:text-indigo-600'} transition-colors cursor-pointer`}
+                                        >
+                                            Master
+                                        </button>
+                                    )}
+                                </>
+                            )}
+
+                            {!normalize(activeModule).startsWith('dashboard_') && (
+                                <>
+                                    <ChevronRight size={14} className="text-slate-300" />
+                                    <span className="text-slate-800 dark:text-white font-black tracking-tight cursor-default">
+                                        {(() => {
+                                            const label = [...suiteItems, ...adminItems, ...masterItems].find(m => normalize(m.id) === normalize(activeModule))?.label || activeModule;
+                                            // Enforce Title Case (First letter upper, rest lower)
+                                            return label.charAt(0).toUpperCase() + label.slice(1).toLowerCase();
+                                        })()}
+                                    </span>
+                                </>
+                            )}
+                        </div>
                     </div>
 
                     <div className="flex items-center gap-6">
+                        <button
+                            onClick={() => {
+                                const newTheme = theme === 'dark' ? 'light' : 'dark';
+                                setTheme(newTheme);
+                                onUpdatePrefs({ ...preferences, theme: newTheme });
+                            }}
+                            className="p-2 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all cursor-pointer"
+                            title={theme === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
+                        >
+                            {theme === 'dark' ? <Sun size={22} /> : <Moon size={22} />}
+                        </button>
+
                         <div className="hidden lg:flex relative items-center">
                             <Search className="absolute left-3 text-slate-400 dark:text-slate-500" size={16} />
                             <input
@@ -324,6 +462,16 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                     <input type="file" className="hidden" accept="image/*" onChange={handleAvatarChange} />
                                 </label>
                             </div>
+
+                            <Tooltip content="Sair do Ecossistema">
+                                <button
+                                    onClick={onLogout}
+                                    className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-full transition-all cursor-pointer"
+                                    title="Sair do Ecossistema"
+                                >
+                                    <LogOut size={20} />
+                                </button>
+                            </Tooltip>
                         </div>
                     </div>
                 </header>

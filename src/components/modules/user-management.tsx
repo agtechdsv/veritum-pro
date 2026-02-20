@@ -54,7 +54,7 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
             .from('plans')
             .select('*')
             .eq('active', true)
-            .order('sort_order', { ascending: true });
+            .order('order_index', { ascending: true });
         if (data) setPlans(data);
     };
 
@@ -405,10 +405,10 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                 </div>
                             </th>
                             {currentUser.role === 'Master' && (
-                                <th className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest text-center">Admin Responsável</th>
+                                <th className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest text-center">Plano</th>
                             )}
                             {currentUser.role === 'Master' && (
-                                <th className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest text-center">Plano</th>
+                                <th className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest text-center">Admin Responsável</th>
                             )}
                             <th
                                 className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-indigo-600 transition-colors"

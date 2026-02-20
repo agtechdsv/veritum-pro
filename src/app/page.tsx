@@ -163,13 +163,20 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
         setLegalModal({ isOpen: true, type });
     };
 
-    const toggleTheme = () => {
-        // If theme is system, we need to know what the resolved theme is to switch to the opposite
-        if (theme === 'system') {
-            setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')
-        } else {
-            setTheme(theme === 'dark' ? 'light' : 'dark')
+    useEffect(() => {
+        if (mounted) {
+            const savedTheme = localStorage.getItem('veritum-theme');
+            if (savedTheme) {
+                setTheme(savedTheme);
+            }
         }
+    }, [mounted, setTheme]);
+
+    const toggleTheme = () => {
+        const currentTheme = theme === 'system' ? resolvedTheme : theme;
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        setTheme(newTheme);
+        localStorage.setItem('veritum-theme', newTheme);
     }
 
     // Prevent hydration mismatch

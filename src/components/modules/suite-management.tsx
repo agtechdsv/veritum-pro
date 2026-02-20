@@ -279,11 +279,28 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
                                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Metadata do Ecossistema</p>
                                 </div>
                             </div>
-                            {editingSuite && (
-                                <button onClick={cancelEdit} className="flex items-center gap-2 px-4 py-2 text-slate-400 hover:text-rose-500 transition-colors bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm font-black uppercase text-[10px] tracking-widest">
-                                    <X size={16} /> Cancelar Seleção
-                                </button>
-                            )}
+                            <div className="flex items-center gap-2">
+                                {editingSuite ? (
+                                    <>
+                                        <button
+                                            onClick={handleSave}
+                                            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all text-[10px] font-black uppercase tracking-widest shadow-sm shadow-indigo-600/20"
+                                        >
+                                            <ShieldCheck size={16} /> Salvar Alterações
+                                        </button>
+                                        <button onClick={cancelEdit} className="flex items-center gap-2 px-4 py-2 text-slate-400 hover:text-rose-500 transition-colors bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm font-black uppercase text-[10px] tracking-widest">
+                                            <X size={16} /> Cancelar Seleção
+                                        </button>
+                                    </>
+                                ) : (
+                                    <button
+                                        onClick={handleSave}
+                                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all text-[10px] font-black uppercase tracking-widest shadow-sm shadow-indigo-600/20"
+                                    >
+                                        <Plus size={16} /> Publicar Módulo
+                                    </button>
+                                )}
+                            </div>
                         </div>
 
                         <form onSubmit={handleSave} className="p-8 space-y-6">
@@ -390,12 +407,7 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
                                 </label>
                             </div>
 
-                            <button
-                                type="submit"
-                                className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-indigo-600/20 hover:scale-[1.02] active:scale-95 transition-all text-sm flex items-center justify-center gap-3"
-                            >
-                                <ShieldCheck size={18} /> {editingSuite ? 'Salvar Alterações' : 'Publicar Módulo'}
-                            </button>
+                            {/* Submit button removed from bottom - moved to header */}
                         </form>
                     </div>
                 </div>
