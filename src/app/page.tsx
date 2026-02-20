@@ -5,12 +5,12 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import {
     ShieldAlert, GitBranch, FileEdit, DollarSign, BarChart3,
     MessageSquare, Globe, Moon, Sun, ArrowRight, Check,
-    LogIn, UserPlus, ChevronRight, Scale, LogOut, User
+    LogIn, UserPlus, ChevronRight, Scale, LogOut, User,
+    Briefcase, Zap
 } from 'lucide-react';
 import { AuthModal } from '@/components/auth-modal';
 import { LegalModal } from '@/components/legal-modal';
 import { SuiteDetailModal } from '@/components/suite-detail-modal';
-import { PlanCarousel } from '@/components/plan-carousel';
 import { useTheme } from 'next-themes'
 import Link from 'next/link'
 
@@ -80,9 +80,6 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
         suite: null
     });
 
-    const [plans, setPlans] = useState<any[]>([]);
-    const [plansLoading, setPlansLoading] = useState(true);
-    const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -93,18 +90,13 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
 
         const fetchData = async () => {
             setSuitesLoading(true);
-            setPlansLoading(true);
-
-            const [suitesRes, plansRes] = await Promise.all([
-                supabase.from('suites').select('*').eq('active', true).order('order_index', { ascending: true }),
-                supabase.from('plans').select('*').eq('active', true).order('order_index', { ascending: true })
+            const [suitesRes] = await Promise.all([
+                supabase.from('suites').select('*').eq('active', true).order('order_index', { ascending: true })
             ]);
 
             if (suitesRes.data) setSuites(suitesRes.data);
-            if (plansRes.data) setPlans(plansRes.data);
 
             setSuitesLoading(false);
-            setPlansLoading(false);
         };
         fetchData();
     }, [supabase]);
@@ -149,7 +141,7 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
 
                     <div className="hidden md:flex items-center gap-8">
                         <a href="#" className="font-medium hover:text-indigo-600 transition-colors text-slate-800 dark:text-white">Início</a>
-                        <a href="#suites" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">Suítes</a>
+                        <a href="#modules" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">Módulos</a>
                         <Link href="/pricing" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">Planos</Link>
                         <a href="#about" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">Sobre</a>
                     </div>
@@ -205,7 +197,7 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                     </h1>
                     <p className="text-xl text-slate-500 dark:text-slate-400 max-w-3xl mx-auto mb-12 leading-relaxed">
                         Uma arquitetura BYODB (Bring Your Own Database) completa para escritórios de alta performance.
-                        Seu dado, sua infraestrutura, nossas suítes inteligentes.
+                        Seu dado, sua infraestrutura, nossos módulos inteligentes.
                     </p>
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                         <button onClick={() => openAuth('register')} className="w-full sm:w-auto bg-indigo-600 text-white px-10 py-4 rounded-[2rem] font-bold text-lg shadow-2xl shadow-indigo-600/40 hover:scale-105 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 cursor-pointer">
@@ -222,11 +214,11 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                 <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-purple-400/10 blur-[150px] rounded-full pointer-events-none"></div>
             </section>
 
-            {/* Suites Grid */}
-            <section id="suites" className="py-32 px-6 bg-slate-50 dark:bg-slate-950 transition-colors duration-300 border-y border-slate-100 dark:border-slate-900">
+            {/* Modules Grid */}
+            <section id="modules" className="py-32 px-6 bg-slate-50 dark:bg-slate-950 transition-colors duration-300 border-y border-slate-100 dark:border-slate-900">
                 <div className="max-w-7xl mx-auto">
                     <div className="text-center mb-20">
-                        <h2 className="text-4xl font-bold mb-4 text-slate-900 dark:text-white">Suítes Especializadas</h2>
+                        <h2 className="text-4xl font-bold mb-4 text-slate-900 dark:text-white">Módulos Especializados</h2>
                         <p className="text-slate-500 dark:text-slate-400">Arquitetura modular projetada para o ciclo de vida jurídico completo.</p>
                     </div>
 
@@ -267,7 +259,7 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                                         }}
                                         className="text-indigo-600 dark:text-indigo-400 font-bold text-sm flex items-center gap-1 group-hover:gap-2 transition-all mt-auto cursor-pointer"
                                     >
-                                        {currentUser ? 'Acessar Suíte' : 'Saiba mais'} <ChevronRight size={16} />
+                                        {currentUser ? 'Acessar Módulo' : 'Saiba mais'} <ChevronRight size={16} />
                                     </button>
                                 </div>
                             ))
@@ -285,59 +277,64 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
             {/* Pricing */}
             <section id="pricing" className="py-32 px-6 bg-white dark:bg-slate-950 transition-colors duration-300">
                 <div className="max-w-7xl mx-auto">
-                    <div className="text-center mb-12">
-                        <h2 className="text-4xl font-bold mb-4 text-slate-900 dark:text-white">Planos que acompanham seu crescimento</h2>
-                        <p className="text-slate-500 dark:text-slate-400 mb-10">Transparência total, sem letras miúdas.</p>
-
-                        {/* Billing Toggle */}
-                        <div className="flex items-center justify-center gap-4 mb-16">
-                            <span className={`text-sm font-bold ${billingCycle === 'monthly' ? 'text-indigo-600' : 'text-slate-400'}`}>MENSAL</span>
-                            <button
-                                onClick={() => setBillingCycle(billingCycle === 'monthly' ? 'yearly' : 'monthly')}
-                                className="w-16 h-8 bg-slate-100 dark:bg-slate-800 rounded-full relative p-1 transition-all"
-                            >
-                                <div className={`w-6 h-6 bg-indigo-600 rounded-full shadow-lg transition-all transform ${billingCycle === 'yearly' ? 'translate-x-8' : 'translate-x-0'}`} />
-                            </button>
-                            <span className={`text-sm font-bold ${billingCycle === 'yearly' ? 'text-indigo-600' : 'text-slate-400'}`}>ANUAL</span>
-                            {billingCycle === 'yearly' && (
-                                <span className="bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest animate-bounce">
-                                    Economize até 20%
-                                </span>
-                            )}
-                        </div>
+                    <div className="text-center mb-20 max-w-3xl mx-auto">
+                        <h2 className="text-4xl md:text-5xl font-black mb-6 text-slate-900 dark:text-white uppercase tracking-tighter">
+                            Planos que acompanham o <span className="text-branding-gradient">seu crescimento.</span>
+                        </h2>
+                        <p className="text-xl text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
+                            Nós não vendemos apenas software, entregamos a arquitetura exata para o seu momento na advocacia.
+                        </p>
                     </div>
 
-                    {/* Combos Section */}
-                    {plans.some(p => p.is_combo) && (
-                        <div className="mb-20">
-                            <div className="flex items-center gap-4 mb-10">
-                                <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1" />
-                                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-600">Pacotes de Elite (Combos)</h3>
-                                <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1" />
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
+                        {[
+                            {
+                                title: 'START',
+                                desc: 'Para advogados autônomos e novos escritórios que precisam organizar a casa e parar de perder prazos.',
+                                icon: Briefcase,
+                                color: 'text-blue-500',
+                                badge: null
+                            },
+                            {
+                                title: 'GROWTH',
+                                desc: 'Para escritórios em crescimento que exigem automação de tarefas e Inteligência Artificial para ganhar escala.',
+                                icon: Zap,
+                                color: 'text-indigo-600',
+                                badge: 'Mais Popular'
+                            },
+                            {
+                                title: 'STRATEGY',
+                                desc: 'Para departamentos jurídicos corporativos que tomam decisões baseadas em Jurimetria e dados profundos.',
+                                icon: BarChart3,
+                                color: 'text-emerald-500',
+                                badge: 'Enterprise'
+                            }
+                        ].map((card, i) => (
+                            <div key={i} className="relative p-10 bg-slate-50/50 dark:bg-slate-900/30 rounded-[3rem] border border-slate-100 dark:border-slate-800 hover:bg-white dark:hover:bg-slate-900 transition-all duration-300 group flex flex-col items-center text-center">
+                                {card.badge && (
+                                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-indigo-600 text-white px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">
+                                        {card.badge}
+                                    </div>
+                                )}
+                                <div className={`w-16 h-16 rounded-2xl bg-white dark:bg-slate-800 shadow-xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform ${card.color}`}>
+                                    <card.icon size={32} />
+                                </div>
+                                <h3 className="text-2xl font-black mb-4 text-slate-900 dark:text-white uppercase tracking-tight">{card.title}</h3>
+                                <p className="text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
+                                    {card.desc}
+                                </p>
                             </div>
-                            <PlanCarousel
-                                plans={plans.filter(p => p.is_combo)}
-                                billingCycle={billingCycle}
-                                openAuth={openAuth}
-                            />
-                        </div>
-                    )}
+                        ))}
+                    </div>
 
-                    {/* Individual Modules Section */}
-                    {plans.some(p => !p.is_combo) && (
-                        <div>
-                            <div className="flex items-center gap-4 mb-10">
-                                <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1" />
-                                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Módulos Individuais</h3>
-                                <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1" />
-                            </div>
-                            <PlanCarousel
-                                plans={plans.filter(p => !p.is_combo)}
-                                billingCycle={billingCycle}
-                                openAuth={openAuth}
-                            />
-                        </div>
-                    )}
+                    <div className="text-center">
+                        <Link
+                            href="/pricing"
+                            className="inline-flex items-center gap-3 bg-indigo-600 text-white px-12 py-5 rounded-[2.5rem] font-black text-xl shadow-2xl shadow-indigo-600/40 hover:scale-105 hover:bg-indigo-700 transition-all uppercase tracking-tight"
+                        >
+                            Comparar Planos e Valores <ArrowRight size={24} />
+                        </Link>
+                    </div>
                 </div>
             </section>
 

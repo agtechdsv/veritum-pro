@@ -64,20 +64,20 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
                     .update(formData)
                     .eq('id', editingSuite.id);
                 if (error) throw error;
-                toast.success('Suíte atualizada com sucesso!');
+                toast.success('Módulo atualizado com sucesso!');
             } else {
                 const { error } = await supabase
                     .from('suites')
                     .insert([{ ...formData, order_index: suites.length }]);
                 if (error) throw error;
-                toast.success('Suíte criada com sucesso!');
+                toast.success('Módulo criado com sucesso!');
             }
 
             setEditingSuite(null);
             setFormData(initialFormData);
             fetchSuites();
         } catch (err: any) {
-            toast.error(err.message || 'Erro ao salvar suíte');
+            toast.error(err.message || 'Erro ao salvar módulo');
         }
     };
 
@@ -189,7 +189,7 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
         <div className="space-y-8 animate-in fade-in duration-500">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tight">Gestão de Suítes</h1>
+                    <h1 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tight">Gestão de Módulos</h1>
                     <p className="text-slate-500 dark:text-slate-400 font-medium italic">Configure a vitrine do seu ecossistema jurídico.</p>
                 </div>
             </div>
@@ -259,7 +259,7 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
                     {suites.length === 0 && (
                         <div className="flex-1 flex flex-col items-center justify-center p-10 opacity-20">
                             <Package size={48} />
-                            <p className="font-black uppercase tracking-widest mt-4 text-[10px]">Nenhuma suíte ativa</p>
+                            <p className="font-black uppercase tracking-widest mt-4 text-[10px]">Nenhum módulo ativo</p>
                         </div>
                     )}
                 </div>
@@ -423,7 +423,7 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
                         <div className="space-y-2">
                             <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Confirmar Exclusão</h3>
                             <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
-                                Você está prestes a remover permanentemente a suíte <span className="font-bold text-slate-800 dark:text-slate-200">"{suiteToDelete.name}"</span> do ecossistema. Esta ação não pode ser desfeita.
+                                Você está prestes a remover permanentemente o módulo <span className="font-bold text-slate-800 dark:text-center text-slate-200">"{suiteToDelete.name}"</span> do ecossistema. Esta ação não pode ser desfeita.
                             </p>
                         </div>
                         <div className="flex gap-4 pt-4">

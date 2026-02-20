@@ -6,12 +6,29 @@ import {
     ArrowRight, ChevronRight, Moon, Sun, Scale,
     Shield, BarChart3, MessageSquare, Wallet,
     PenTool, Radar, HelpCircle, Briefcase,
-    Building2, Users2, Sparkles, Send
+    Building2, Users2, Sparkles, Send, Calendar as CalendarIcon,
+    ChevronLeft
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import {
+    format,
+    addMonths,
+    subMonths,
+    startOfMonth,
+    endOfMonth,
+    startOfWeek,
+    endOfWeek,
+    isSameMonth,
+    isSameDay,
+    addDays,
+    isBefore,
+    startOfDay
+} from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { AuthModal } from '@/components/auth-modal';
+import { createMasterClient } from '@/lib/supabase/master';
 
 const Logo = () => (
     <div className="bg-indigo-600/10 p-2 rounded-lg flex items-center justify-center text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400">
@@ -26,9 +43,65 @@ export default function PricingPage() {
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [showComparison, setShowComparison] = useState(false);
 
+    const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
+    const [demoFormStatus, setDemoFormStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
+    const [demoFormData, setDemoFormData] = useState({
+        name: '',
+        email: '',
+        whatsapp: '',
+        teamSize: ''
+    });
+    const [selectedRange, setSelectedRange] = useState<{ start: Date | null, end: Date | null }>({ start: null, end: null });
+    const [currentMonth, setCurrentMonth] = useState(new Date());
+
+    const formatWhatsApp = (value: string) => {
+        const numbers = value.replace(/\D/g, '');
+        if (numbers.length <= 2) return numbers;
+        if (numbers.length <= 7) return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
+        return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
+    };
+
     useEffect(() => {
         setMounted(true);
     }, []);
+
+    const handleDemoSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedRange.start || !selectedRange.end) {
+            alert('Por favor, selecione o período para a demonstração.');
+            return;
+        }
+        setDemoFormStatus('submitting');
+
+        try {
+            const supabase = createMasterClient();
+            const { error } = await supabase.from('demo_requests').insert([
+                {
+                    full_name: demoFormData.name,
+                    email: demoFormData.email,
+                    whatsapp: demoFormData.whatsapp,
+                    team_size: demoFormData.teamSize,
+                    preferred_start: selectedRange.start.toISOString(),
+                    preferred_end: selectedRange.end.toISOString(),
+                    status: 'pending'
+                }
+            ]);
+
+            if (error) throw error;
+
+            setDemoFormStatus('success');
+            setTimeout(() => {
+                setIsDemoModalOpen(false);
+                setDemoFormStatus('idle');
+                setDemoFormData({ name: '', email: '', whatsapp: '', teamSize: '' });
+                setSelectedRange({ start: null, end: null });
+            }, 6000);
+        } catch (err: any) {
+            console.error('Error saving demo request:', err);
+            alert('Erro ao salvar solicitação: ' + err.message);
+            setDemoFormStatus('idle');
+        }
+    };
 
     const toggleTheme = () => {
         setTheme(resolvedTheme === 'light' ? 'dark' : 'light');
@@ -48,7 +121,7 @@ export default function PricingPage() {
                 'Vox Clientis: Portal do Cliente Básico',
                 'Suporte via E-mail e Chat'
             ],
-            cta: 'Começar Testar Grátis',
+            cta: 'Começar Teste Grátis',
             featured: false,
             color: 'border-slate-200 dark:border-slate-800'
         },
@@ -65,7 +138,7 @@ export default function PricingPage() {
                 'Vox Clientis: WhatsApp e IA Tradutora',
                 'Suporte Prioritário'
             ],
-            cta: 'Assinar Plano Growth',
+            cta: 'Começar teste grátis',
             featured: true,
             color: 'border-indigo-500 dark:border-indigo-400 shadow-2xl shadow-indigo-500/20'
         },
@@ -114,6 +187,10 @@ export default function PricingPage() {
                                 VERITUM <span className="text-branding-gradient">PRO</span>
                             </span>
                         </Link>
+                    </div>
+
+                    <div className="hidden md:flex items-center gap-8">
+                        <Link href="/" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">Início</Link>
                     </div>
 
                     <div className="flex items-center gap-4">
@@ -172,8 +249,19 @@ export default function PricingPage() {
                                     ))}
                                 </div>
                                 <button
-                                    onClick={() => setIsAuthModalOpen(true)}
-                                    className={`w-full py-5 rounded-2xl font-black text-lg transition-all ${plan.featured ? 'bg-indigo-600 text-white shadow-2xl shadow-indigo-600/40 hover:bg-indigo-700 hover:scale-[1.02]' : 'bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-800'}`}
+                                    onClick={() => {
+                                        if (plan.name === 'STRATEGY') {
+                                            setIsDemoModalOpen(true);
+                                        } else {
+                                            setIsAuthModalOpen(true);
+                                        }
+                                    }}
+                                    className={`w-full py-5 rounded-2xl font-black text-lg transition-all ${plan.name === 'START'
+                                        ? 'border-2 border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400 bg-transparent hover:bg-indigo-50 dark:hover:bg-indigo-900/10 shadow-none'
+                                        : plan.featured
+                                            ? 'bg-indigo-600 text-white shadow-2xl shadow-indigo-600/40 hover:bg-indigo-700 hover:scale-[1.02]'
+                                            : 'bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-800'
+                                        }`}
                                 >
                                     {plan.cta}
                                 </button>
@@ -232,7 +320,7 @@ export default function PricingPage() {
             </section>
 
             {/* Bundle Justification */}
-            <section className="py-32 px-6 bg-slate-900 dark:bg-slate-900 rounded-[4rem] mx-6 relative overflow-hidden text-white">
+            <section className="py-32 px-6 bg-slate-900 dark:bg-slate-950 rounded-[4rem] mx-6 relative overflow-hidden text-white">
                 <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-20 relative z-10">
                     <div className="flex-1 space-y-10">
                         <h2 className="text-5xl md:text-6xl font-black leading-tight tracking-tighter uppercase">
@@ -240,7 +328,7 @@ export default function PricingPage() {
                             <span className="text-branding-gradient">Ecossistema?</span>
                         </h2>
                         <p className="text-xl text-slate-300 leading-relaxed font-medium">
-                            Ferramentas isoladas geram retrabalho. Desenhamos nossos planos para garantir o <span className="text-white italic">Flow</span> perfeito. Uma suíte alimenta a outra, eliminando 100% da digitação manual de dados.
+                            Ferramentas isoladas geram retrabalho. Desenhamos nossos planos para garantir o <span className="text-white italic">Flow</span> perfeito. Um módulo alimenta o outro, eliminando 100% da digitação manual de dados.
                         </p>
                     </div>
                     <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -304,7 +392,7 @@ export default function PricingPage() {
                     <h2 className="text-5xl font-black mb-20 text-center text-slate-900 dark:text-white uppercase tracking-tighter">Dúvidas Frequentes</h2>
                     <div className="space-y-6">
                         {[
-                            { q: 'Preciso de cartão de crédito para o teste grátis?', a: 'Não. Acreditamos na nossa tecnologia. Você testa os planos Start ou Growth por 7 dias com acesso total, sem burocracia.' },
+                            { q: 'Preciso de cartão de crédito para o teste grátis?', a: 'Não. Acreditamos na nossa tecnologia. Você testa os planos Start ou Growth por 14 dias com acesso total, sem burocracia.' },
                             { q: 'Como funciona o limite de processos?', a: 'O sistema não cobra por "processo arquivado". Nós precificamos baseados nos seus casos ativos, garantindo que você pague apenas pelo que gera esforço real.' },
                             { q: 'Posso mudar de plano depois?', a: 'A qualquer momento. O Veritum PRO tem uma arquitetura modular. Faça upgrade ou downgrade com apenas um clique a partir das suas configurações.' }
                         ].map((faq, i) => (
@@ -343,6 +431,198 @@ export default function PricingPage() {
                     </p>
                 </div>
             </section>
+
+            {/* Demo Modal */}
+            {isDemoModalOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/70 backdrop-blur-md animate-fade-in">
+                    <div className="bg-white dark:bg-slate-900 w-full max-w-xl rounded-[3rem] p-10 shadow-3xl border border-slate-100 dark:border-slate-800 relative overflow-hidden">
+                        {demoFormStatus === 'success' ? (
+                            <div className="text-center py-10 animate-scale-up">
+                                <div className="w-20 h-20 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-8">
+                                    <Sparkles size={40} />
+                                </div>
+                                <h3 className="text-3xl font-black text-slate-900 dark:text-white mb-4 uppercase tracking-tighter">Solicitação Recebida!</h3>
+                                <p className="text-slate-500 dark:text-slate-400 font-medium text-lg leading-relaxed">
+                                    Um de nossos consultores especializados entrará em contato via WhatsApp para confirmar o **melhor horário** na data que você sugeriu.
+                                </p>
+                            </div>
+                        ) : (
+                            <>
+                                <button
+                                    onClick={() => setIsDemoModalOpen(false)}
+                                    className="absolute top-8 right-8 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all text-slate-400"
+                                >
+                                    <ChevronDown className="rotate-180" size={24} />
+                                </button>
+
+                                <div className="mb-10">
+                                    <div className="w-12 h-12 bg-indigo-600/10 text-indigo-600 rounded-xl flex items-center justify-center mb-6">
+                                        <Briefcase size={24} />
+                                    </div>
+                                    <h3 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-2">Demonstração Estratégica</h3>
+                                    <p className="text-slate-500 dark:text-slate-400 font-medium">Preencha os dados abaixo para qualificar seu atendimento.</p>
+                                </div>
+
+                                <form onSubmit={handleDemoSubmit} className="space-y-4">
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Nome Completo</label>
+                                        <input
+                                            required
+                                            type="text"
+                                            placeholder="Ex: Dr. Alexandre Aguiar"
+                                            className="w-full p-4 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none transition-all font-bold"
+                                            value={demoFormData.name}
+                                            onChange={(e) => setDemoFormData({ ...demoFormData, name: e.target.value })}
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">E-mail Corporativo</label>
+                                            <input
+                                                required
+                                                type="email"
+                                                placeholder="nome@escritorio.com"
+                                                className="w-full p-4 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none transition-all font-bold"
+                                                value={demoFormData.email}
+                                                onChange={(e) => setDemoFormData({ ...demoFormData, email: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">WhatsApp</label>
+                                            <input
+                                                required
+                                                type="tel"
+                                                placeholder="(11) 99999-9999"
+                                                className="w-full p-4 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none transition-all font-bold"
+                                                value={demoFormData.whatsapp}
+                                                onChange={(e) => setDemoFormData({ ...demoFormData, whatsapp: formatWhatsApp(e.target.value) })}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-1.5 pb-4">
+                                        <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Tamanho da Equipe / Volume</label>
+                                        <select
+                                            required
+                                            className="w-full p-4 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none transition-all font-bold appearance-none cursor-pointer"
+                                            value={demoFormData.teamSize}
+                                            onChange={(e) => setDemoFormData({ ...demoFormData, teamSize: e.target.value })}
+                                        >
+                                            <option value="">Selecione uma opção...</option>
+                                            <option value="1-5">1 a 5 advogados (Novo Escritório)</option>
+                                            <option value="6-20">6 a 20 advogados (Escritório em Expansão)</option>
+                                            <option value="+20">+20 advogados ou Depto. Jurídico</option>
+                                        </select>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Selecione o intervalo de datas desejado</label>
+
+                                        <div className="bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-3xl p-5">
+                                            {/* Calendar Header */}
+                                            <div className="flex items-center justify-between mb-6 px-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+                                                    disabled={isBefore(startOfMonth(subMonths(currentMonth, 1)), startOfMonth(new Date()))}
+                                                    className="p-2 hover:bg-white dark:hover:bg-slate-900 rounded-xl transition-all text-slate-400 disabled:opacity-20"
+                                                >
+                                                    <ChevronLeft size={20} />
+                                                </button>
+                                                <h4 className="font-black uppercase tracking-widest text-sm text-slate-800 dark:text-white">
+                                                    {format(currentMonth, 'MMMM yyyy', { locale: ptBR })}
+                                                </h4>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+                                                    className="p-2 hover:bg-white dark:hover:bg-slate-900 rounded-xl transition-all text-slate-400"
+                                                >
+                                                    <ChevronRight size={20} />
+                                                </button>
+                                            </div>
+
+                                            {/* Calendar Grid */}
+                                            <div className="grid grid-cols-7 gap-1 text-center">
+                                                {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((day, i) => (
+                                                    <div key={i} className="text-[10px] font-black text-slate-400 pb-2">{day}</div>
+                                                ))}
+                                                {(() => {
+                                                    const days = [];
+                                                    let day = startOfWeek(startOfMonth(currentMonth));
+                                                    const lastDay = endOfWeek(endOfMonth(currentMonth));
+
+                                                    while (day <= lastDay) {
+                                                        const cloneDay = day;
+                                                        const isSelected = (selectedRange.start && isSameDay(cloneDay, selectedRange.start)) ||
+                                                            (selectedRange.end && isSameDay(cloneDay, selectedRange.end));
+                                                        const isInRange = selectedRange.start && selectedRange.end &&
+                                                            cloneDay > selectedRange.start && cloneDay < selectedRange.end;
+                                                        const isToday = isSameDay(cloneDay, new Date());
+                                                        const isDisabled = isBefore(startOfDay(cloneDay), startOfDay(new Date()));
+                                                        const isCurrentMonth = isSameMonth(cloneDay, currentMonth);
+
+                                                        days.push(
+                                                            <button
+                                                                key={day.toString()}
+                                                                type="button"
+                                                                disabled={isDisabled}
+                                                                onClick={() => {
+                                                                    if (!selectedRange.start || (selectedRange.start && selectedRange.end)) {
+                                                                        setSelectedRange({ start: cloneDay, end: null });
+                                                                    } else if (cloneDay < selectedRange.start) {
+                                                                        setSelectedRange({ start: cloneDay, end: selectedRange.start });
+                                                                    } else {
+                                                                        setSelectedRange({ ...selectedRange, end: cloneDay });
+                                                                    }
+                                                                }}
+                                                                className={`
+                                                                    h-10 w-full rounded-xl flex items-center justify-center text-sm font-bold transition-all
+                                                                    ${!isCurrentMonth ? 'text-slate-300 dark:text-slate-700' : 'text-slate-700 dark:text-slate-200'}
+                                                                    ${isSelected ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' : isInRange ? 'bg-indigo-600/10 text-indigo-600 dark:bg-indigo-600/20' : isToday ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10' : 'hover:bg-white dark:hover:bg-slate-900'}
+                                                                    ${isDisabled ? 'opacity-20 cursor-not-allowed hover:bg-transparent' : 'cursor-pointer'}
+                                                                `}
+                                                            >
+                                                                {format(cloneDay, 'd')}
+                                                            </button>
+                                                        );
+                                                        day = addDays(day, 1);
+                                                    }
+                                                    return days;
+                                                })()}
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col gap-1 px-2">
+                                            <p className="text-[10px] font-medium text-slate-400 dark:text-slate-500 flex items-center gap-2">
+                                                <Sparkles size={14} className="text-indigo-500" />
+                                                Clique uma vez para o início e outra para o fim do período desejado.
+                                            </p>
+                                            <p className="text-[10px] font-medium text-slate-400 dark:text-slate-500 flex items-center gap-2">
+                                                <ChevronRight size={14} className="text-indigo-500" />
+                                                Entraremos em contato para confirmar o melhor horário dentro deste intervalo.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        type="submit"
+                                        disabled={demoFormStatus === 'submitting' || !selectedRange.start || !selectedRange.end}
+                                        className="w-full py-5 bg-indigo-600 text-white rounded-[2rem] font-black text-lg hover:bg-indigo-700 hover:scale-[1.02] shadow-xl shadow-indigo-600/30 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:scale-100 disabled:shadow-none mt-4"
+                                    >
+                                        {demoFormStatus === 'submitting' ? (
+                                            <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+                                        ) : (
+                                            <>
+                                                Confirmar Sugestão <Send size={20} />
+                                            </>
+                                        )}
+                                    </button>
+                                </form>
+                            </>
+                        )}
+                    </div>
+                </div>
+            )}
 
             <AuthModal
                 isOpen={isAuthModalOpen}

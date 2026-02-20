@@ -17,7 +17,7 @@ const MasterDashboard: React.FC<Props> = ({ items, onModuleChange }) => {
                     Painel <span className="text-branding-gradient">Master</span>
                 </h1>
                 <p className="text-slate-500 dark:text-slate-400 font-medium italic mt-2">
-                    Configurações estruturais de suítes e planos comerciais.
+                    Configurações estruturais de módulos e planos comerciais.
                 </p>
             </div>
 
@@ -26,7 +26,9 @@ const MasterDashboard: React.FC<Props> = ({ items, onModuleChange }) => {
                     <DashboardCard
                         key={item.id}
                         title={item.label}
-                        description={`Ajustes de alto nível para ${item.label.toLowerCase()}.`}
+                        description={item.id === ModuleId.SCHEDULING
+                            ? "Gerencie solicitações de demonstração e o calendário estratégico."
+                            : `Ajustes de alto nível para ${item.label.toLowerCase()}.`}
                         icon={item.icon}
                         color={item.color}
                         onClick={() => onModuleChange(item.id)}

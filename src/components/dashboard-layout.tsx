@@ -20,7 +20,8 @@ import {
     ShieldAlert, GitBranch, FileEdit, DollarSign, BarChart3,
     MessageSquare, LogOut, Settings, Menu, X, Bell, Search,
     Camera, Scale, Check, Users, Crown, ChevronRight,
-    PanelLeftClose, PanelLeft, PanelLeftOpen, Sun, Moon
+    PanelLeftClose, PanelLeft, PanelLeftOpen, Sun, Moon,
+    Calendar as CalendarIcon
 } from 'lucide-react';
 import SuiteManagement from './modules/suite-management';
 import { useTheme } from 'next-themes';
@@ -30,6 +31,7 @@ import SuiteDashboard from './modules/dashboards/suite-dashboard';
 import AdminDashboard from './modules/dashboards/admin-dashboard';
 import MasterDashboard from './modules/dashboards/master-dashboard';
 import RootDashboard from './modules/dashboards/root-dashboard';
+import SchedulingManagement from './modules/scheduling-management';
 
 interface Props {
     user: User;
@@ -109,8 +111,9 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
     ];
 
     const masterItems = [
-        { id: ModuleId.SUITES, label: 'Gestão de Suítes', icon: Crown, color: 'text-amber-500' },
+        { id: ModuleId.SUITES, label: 'Gestão de Módulos', icon: Crown, color: 'text-amber-500' },
         { id: ModuleId.PLANS, label: 'Gestão de Planos', icon: DollarSign, color: 'text-indigo-500' },
+        { id: ModuleId.SCHEDULING, label: 'Agendamentos', icon: CalendarIcon, color: 'text-rose-500' },
     ];
 
     const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -165,6 +168,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
             case 'users': return <UserManagement currentUser={user} />;
             case 'suites': return <SuiteManagement credentials={creds} />;
             case 'plans': return <PlanManagement credentials={creds} />;
+            case 'scheduling': return <SchedulingManagement />;
             case 'dashboard_suites': return <SuiteDashboard items={suiteItems} onModuleChange={onModuleChange} />;
             case 'dashboard_admin': return <AdminDashboard items={adminItems} onModuleChange={onModuleChange} />;
             case 'dashboard_master': return <MasterDashboard items={masterItems} onModuleChange={onModuleChange} />;
@@ -218,7 +222,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                     className="group flex items-center gap-2 px-3 mb-4 w-full text-left cursor-pointer overflow-hidden"
                                 >
                                     <div className={`w-1 h-3 rounded-full transition-all ${normalize(activeModule).includes('dashboard_suites') || suiteItems.some(i => normalize(i.id) === normalize(activeModule)) ? 'bg-indigo-600 h-5' : 'bg-slate-300 group-hover:bg-indigo-400'}`} />
-                                    <h3 className={`text-[10px] font-black uppercase tracking-widest transition-colors whitespace-nowrap ${normalize(activeModule).includes('dashboard_suites') || suiteItems.some(i => normalize(i.id) === normalize(activeModule)) ? 'text-indigo-600' : 'text-slate-400 group-hover:text-slate-600'}`}>Suítes</h3>
+                                    <h3 className={`text-[10px] font-black uppercase tracking-widest transition-colors whitespace-nowrap ${normalize(activeModule).includes('dashboard_suites') || suiteItems.some(i => normalize(i.id) === normalize(activeModule)) ? 'text-indigo-600' : 'text-slate-400 group-hover:text-slate-600'}`}>Módulos</h3>
                                 </motion.button>
                             )}
                         </AnimatePresence>
@@ -379,7 +383,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                             onClick={() => onModuleChange(ModuleId.DASHBOARD_SUITES)}
                                             className={`${normalize(activeModule) === 'dashboard_suites' ? 'text-slate-800 dark:text-white font-black' : 'text-slate-400 hover:text-indigo-600'} transition-colors cursor-pointer`}
                                         >
-                                            Suítes
+                                            Módulos
                                         </button>
                                     ) : adminItems.some(i => i.id === activeModule) || normalize(activeModule) === 'dashboard_admin' ? (
                                         <button

@@ -14,7 +14,7 @@ const RootDashboard: React.FC<Props> = ({ onModuleChange, userRole }) => {
     const groups = [
         {
             id: ModuleId.DASHBOARD_SUITES,
-            title: 'Suítes',
+            title: 'Módulos',
             description: 'Acesse as ferramentas inteligentes do ecossistema Veritum Pro.',
             icon: Boxes,
             color: 'text-indigo-600'
@@ -29,7 +29,7 @@ const RootDashboard: React.FC<Props> = ({ onModuleChange, userRole }) => {
         ...(userRole === 'Master' ? [{
             id: ModuleId.DASHBOARD_MASTER,
             title: 'Master',
-            description: 'Configurações de infraestrutura, suítes e planos comerciais.',
+            description: 'Configurações de infraestrutura, módulos e planos comerciais.',
             icon: Crown,
             color: 'text-amber-600'
         }] : [])

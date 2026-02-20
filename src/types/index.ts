@@ -14,7 +14,8 @@ export enum ModuleId {
     DASHBOARD_SUITES = 'dashboard_suites',
     DASHBOARD_ADMIN = 'dashboard_admin',
     DASHBOARD_MASTER = 'dashboard_master',
-    DASHBOARD_ROOT = 'dashboard_root'
+    DASHBOARD_ROOT = 'dashboard_root',
+    SCHEDULING = 'scheduling'
 }
 
 export interface Plan {

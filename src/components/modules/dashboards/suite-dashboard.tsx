@@ -14,7 +14,7 @@ const SuiteDashboard: React.FC<Props> = ({ items, onModuleChange }) => {
         <div className="space-y-12 animate-in fade-in duration-700">
             <div>
                 <h1 className="text-4xl font-black text-slate-800 dark:text-white uppercase tracking-tight">
-                    Dashboard de <span className="text-branding-gradient">Suítes</span>
+                    Dashboard de <span className="text-branding-gradient">Módulos</span>
                 </h1>
                 <p className="text-slate-500 dark:text-slate-400 font-medium italic mt-2">
                     Acesse as ferramentas do ecossistema Veritum Pro.
@@ -26,7 +26,7 @@ const SuiteDashboard: React.FC<Props> = ({ items, onModuleChange }) => {
                     <DashboardCard
                         key={item.id}
                         title={item.label}
-                        description={item.detailed_desc?.pt || item.short_desc?.pt || `Módulo e funções da suíte ${item.label}.`}
+                        description={item.detailed_desc?.pt || item.short_desc?.pt || `Funcionalidades do módulo ${item.label}.`}
                         icon={item.icon}
                         color={item.color}
                         onClick={() => onModuleChange(item.id)}
