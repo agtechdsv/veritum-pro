@@ -84,7 +84,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                 const normalizedDbKey = normalize(as.suite_key);
                 const baseItem = baseSuiteItems.find(bs => normalize(bs.id) === normalizedDbKey);
                 if (baseItem) {
-                    return { ...baseItem, short_desc: as.short_desc, detailed_desc: as.detailed_desc };
+                    return { ...baseItem, label: as.name || baseItem.label, short_desc: as.short_desc, detailed_desc: as.detailed_desc };
                 }
                 return null;
             })

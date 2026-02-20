@@ -27,7 +27,11 @@ export const DashboardCard: React.FC<CardProps> = ({ title, description, icon: I
 
                 <div className="flex-1 space-y-2">
                     <h3 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                        {title}
+                        {title.split(/\b(PRO)\b/i).map((part, i) =>
+                            part.toUpperCase() === 'PRO' ? (
+                                <span key={i} className="text-branding-gradient">{part}</span>
+                            ) : part
+                        )}
                     </h3>
                     <p className="text-sm font-medium text-slate-500 dark:text-slate-400 italic line-clamp-2">
                         {description}

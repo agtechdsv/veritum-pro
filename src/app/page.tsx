@@ -150,7 +150,7 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                     <div className="hidden md:flex items-center gap-8">
                         <a href="#" className="font-medium hover:text-indigo-600 transition-colors text-slate-800 dark:text-white">Início</a>
                         <a href="#suites" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">Suítes</a>
-                        <a href="#pricing" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">Planos</a>
+                        <Link href="/pricing" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">Planos</Link>
                         <a href="#about" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">Sobre</a>
                     </div>
 
@@ -211,9 +211,9 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                         <button onClick={() => openAuth('register')} className="w-full sm:w-auto bg-indigo-600 text-white px-10 py-4 rounded-[2rem] font-bold text-lg shadow-2xl shadow-indigo-600/40 hover:scale-105 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 cursor-pointer">
                             Começar Agora <ArrowRight size={20} />
                         </button>
-                        <a href="#pricing" className="w-full sm:w-auto px-10 py-4 rounded-[2rem] border border-slate-200 dark:border-slate-800 font-bold text-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-center cursor-pointer">
+                        <Link href="/pricing" className="w-full sm:w-auto px-10 py-4 rounded-[2rem] border border-slate-200 dark:border-slate-800 font-bold text-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-center cursor-pointer">
                             Ver planos e preços
-                        </a>
+                        </Link>
                     </div>
                 </div>
 
@@ -242,7 +242,13 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                                         className={`w-16 h-16 rounded-2xl mb-6 flex items-center justify-center bg-slate-50 dark:bg-slate-800 group-hover:scale-110 transition-transform text-indigo-600`}
                                         dangerouslySetInnerHTML={{ __html: suite.icon_svg }}
                                     />
-                                    <h3 className="text-2xl font-bold mb-1 text-slate-800 dark:text-white">{suite.name}</h3>
+                                    <h3 className="text-2xl font-bold mb-1 text-slate-800 dark:text-white">
+                                        {suite.name.split(/\b(PRO)\b/i).map((part, i) =>
+                                            part.toUpperCase() === 'PRO' ? (
+                                                <span key={i} className="text-branding-gradient">{part}</span>
+                                            ) : part
+                                        )}
+                                    </h3>
                                     <h4 className="text-indigo-600 dark:text-indigo-400 text-sm font-bold versalete mb-4">
                                         {suite.short_desc?.pt || ''}
                                     </h4>
@@ -255,12 +261,13 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                                             if (currentUser) {
                                                 router.push(`/veritum?module=${suite.suite_key}`);
                                             } else {
-                                                setDetailModal({ isOpen: true, suite });
+                                                const suiteSlug = suite.suite_key.toLowerCase().replace('_key', '');
+                                                router.push(`/${suiteSlug}`);
                                             }
                                         }}
                                         className="text-indigo-600 dark:text-indigo-400 font-bold text-sm flex items-center gap-1 group-hover:gap-2 transition-all mt-auto cursor-pointer"
                                     >
-                                        {currentUser ? 'Acessar Suíte' : 'Saiba Mais'} <ChevronRight size={16} />
+                                        {currentUser ? 'Acessar Suíte' : 'Saiba mais'} <ChevronRight size={16} />
                                     </button>
                                 </div>
                             ))
@@ -341,7 +348,9 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                         <Logo />
                         <span className="font-extrabold text-2xl tracking-tighter text-slate-900 dark:text-white">VERITUM <span className="text-branding-gradient">PRO</span></span>
                     </div>
-                    <p className="text-sm text-slate-400 dark:text-slate-500 font-medium">© 2024 Veritum Pro. Todos os direitos reservados.</p>
+                    <p className="text-sm text-slate-400 dark:text-slate-500 font-medium">
+                        Desenvolvido por AgTech | LegalTech de Alta Performance © 2024 Todos os direitos reservados.
+                    </p>
                     <div className="flex gap-6">
                         <button onClick={() => openLegal('privacy')} className="text-sm text-slate-500 hover:text-indigo-600 transition-colors">Privacidade</button>
                         <button onClick={() => openLegal('terms')} className="text-sm text-slate-500 hover:text-indigo-600 transition-colors">Termos</button>

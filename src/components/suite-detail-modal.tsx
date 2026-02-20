@@ -35,7 +35,11 @@ export function SuiteDetailModal({ isOpen, onClose, suite }: Props) {
                             />
                             <div>
                                 <h2 className="text-3xl font-black tracking-tight dark:text-white text-slate-900 leading-none mb-2">
-                                    {suite.name}
+                                    {suite.name.split(/\b(PRO)\b/i).map((part, i) =>
+                                        part.toUpperCase() === 'PRO' ? (
+                                            <span key={i} className="text-branding-gradient">{part}</span>
+                                        ) : part
+                                    )}
                                 </h2>
                                 <p className="text-sm text-branding-gradient font-bold uppercase tracking-wider">
                                     {suite.short_desc[lang] || ''}

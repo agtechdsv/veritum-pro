@@ -42,9 +42,9 @@ export function LegalModal({ isOpen, onClose, type, lang = 'pt' }: Props) {
                 ),
                 es: (
                     <>
-                        <p className="mb-4"><strong>Veritum Pro</strong> valora su privacidad. Esta política describe cómo manejamos la información recopilada a través de nuestro ecosistema jurídico inteligente.</p>
+                        <p className="mb-4"><strong>Veritum Pro</strong> valora su privacidad. This policy describes how we handle information collected through our intelligent legal ecosystem.</p>
                         <h3 className="text-lg font-bold mt-6 mb-2 text-slate-800 dark:text-white">1. Información que Recopilamos</h3>
-                        <p className="mb-4">Al utilizar el inicio de sesión de Google o sus credenciales BYODB, solo recopilamos datos esenciales para la autenticación e el funcionamiento técnico del sistema.</p>
+                        <p className="mb-4">Al utilizar el inicio de sesión de Google o sus credenciais BYODB, solo recopilamos datos esenciales para a autenticação e o funcionamento técnico do sistema.</p>
                     </>
                 )
             }
@@ -66,14 +66,16 @@ export function LegalModal({ isOpen, onClose, type, lang = 'pt' }: Props) {
                 ),
                 en: (
                     <>
-                        ,ReplacementContent:                        <h3 className="text-lg font-bold mt-6 mb-2 text-slate-800 dark:text-white">1. Acceptance of Terms</h3>
+                        <p className="mb-4">Welcome to <strong className="text-branding-gradient">Veritum Pro</strong>, the high-performance modular legal ecosystem.</p>
+                        <h3 className="text-lg font-bold mt-6 mb-2 text-slate-800 dark:text-white">1. Acceptance of Terms</h3>
                         <p className="mb-4">By accessing this application, you agree to comply with these terms of service and all applicable data protection laws.</p>
                     </>
                 ),
                 es: (
                     <>
-                        ,ReplacementContent:                        <h3 className="text-lg font-bold mt-6 mb-2 text-slate-800 dark:text-white">1. Aceptación de los Términos</h3>
-                        <p className="mb-4">Al acceder a esta aplicación, usted acepta cumplir con estos términos de servicio y todas las leyes aplicables.</p>
+                        <p className="mb-4">Bienvenido a <strong className="text-branding-gradient">Veritum Pro</strong>, el ecosistema jurídico modular de alto rendimiento.</p>
+                        <h3 className="text-lg font-bold mt-6 mb-2 text-slate-800 dark:text-white">1. Aceptación de los Términos</h3>
+                        <p className="mb-4">Al acceder a esta aplicación, usted acepta cumplir con estos términos de servicio e todas as leis aplicáveis.</p>
                     </>
                 )
             }
@@ -84,7 +86,7 @@ export function LegalModal({ isOpen, onClose, type, lang = 'pt' }: Props) {
     const Icon = currentDoc.icon;
 
     return (
-        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <Dialog open={isOpen} onOpenChange={(open: boolean) => !open && onClose()}>
             <DialogContent className="sm:max-w-2xl max-h-[85vh] p-0 bg-transparent border-none shadow-none">
                 <div className={`relative w-full flex flex-col rounded-[2.5rem] shadow-2xl border overflow-hidden transition-all ${theme === 'dark' ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
                     <DialogTitle className="sr-only">{currentDoc.title[lang]}</DialogTitle>
