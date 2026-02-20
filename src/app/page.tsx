@@ -10,6 +10,7 @@ import {
 import { AuthModal } from '@/components/auth-modal';
 import { LegalModal } from '@/components/legal-modal';
 import { SuiteDetailModal } from '@/components/suite-detail-modal';
+import { PlanCarousel } from '@/components/plan-carousel';
 import { useTheme } from 'next-themes'
 import Link from 'next/link'
 
@@ -50,52 +51,6 @@ export default function LandingPage() {
 import { createMasterClient } from '@/lib/supabase/master';
 import { Suite as DbSuite } from '@/types';
 
-const PlanCard = ({ plan, billingCycle, openAuth }: any) => {
-    const isYearly = billingCycle === 'yearly';
-    const basePrice = isYearly ? plan.yearly_price : plan.monthly_price;
-    const discount = isYearly ? plan.yearly_discount : plan.monthly_discount;
-    const finalPrice = discount > 0 ? basePrice * (1 - discount / 100) : basePrice;
-
-    return (
-        <div className={`relative p-10 rounded-[2.5rem] border transition-all duration-300 transform hover:scale-[1.02] ${plan.recommended ? 'border-indigo-600 shadow-2xl bg-white dark:bg-slate-900 ring-4 ring-indigo-600/5' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900'}`}>
-            {plan.recommended && (
-                <span className="absolute top-0 right-10 -translate-y-1/2 bg-indigo-600 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-600/20">
-                    Mais Popular
-                </span>
-            )}
-            <h3 className="text-2xl font-bold mb-2 text-slate-800 dark:text-white uppercase tracking-tight">{plan.name}</h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-8 font-medium italic min-h-[40px]">{plan.short_desc?.pt || ''}</p>
-
-            <div className="mb-8">
-                {discount > 0 && (
-                    <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm text-slate-400 line-through">R$ {basePrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                        <span className="bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-lg text-[10px] font-black">{discount}% OFF</span>
-                    </div>
-                )}
-                <div className="flex items-baseline gap-1">
-                    <span className="text-4xl font-black text-slate-900 dark:text-white">R$ {finalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                    <span className="text-slate-400 dark:text-slate-500 font-bold ml-1 text-sm">/{isYearly ? 'ano' : 'mês'}</span>
-                </div>
-            </div>
-
-            <ul className="space-y-4 mb-10 min-h-[160px]">
-                {(plan.features?.pt || []).map((f: string) => (
-                    <li key={f} className="flex items-start gap-3 text-sm text-slate-500 dark:text-slate-400 font-medium leading-tight">
-                        <div className="w-5 h-5 mt-0.5 bg-indigo-100 dark:bg-indigo-900/40 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 flex-shrink-0">
-                            <Check size={12} />
-                        </div>
-                        {f}
-                    </li>
-                ))}
-            </ul>
-
-            <button onClick={() => openAuth('register')} className={`w-full py-4 rounded-2xl font-black uppercase tracking-widest transition-all duration-300 text-xs shadow-lg ${plan.recommended ? 'bg-indigo-600 text-white shadow-indigo-600/30 hover:bg-indigo-700' : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-white'}`}>
-                Assinar Agora
-            </button>
-        </div>
-    );
-};
 
 function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -356,17 +311,11 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                                 <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-600">Pacotes de Elite (Combos)</h3>
                                 <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1" />
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                {plansLoading ? (
-                                    Array.from({ length: 3 }).map((_, i) => (
-                                        <div key={i} className="bg-slate-50 dark:bg-slate-900 h-96 rounded-[2.5rem] animate-pulse" />
-                                    ))
-                                ) : (
-                                    plans.filter(p => p.is_combo).map((plan: any) => (
-                                        <PlanCard key={plan.id} plan={plan} billingCycle={billingCycle} openAuth={openAuth} />
-                                    ))
-                                )}
-                            </div>
+                            <PlanCarousel
+                                plans={plans.filter(p => p.is_combo)}
+                                billingCycle={billingCycle}
+                                openAuth={openAuth}
+                            />
                         </div>
                     )}
 
@@ -378,12 +327,11 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                                 <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Módulos Individuais</h3>
                                 <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1" />
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                {plans.filter(p => !p.is_combo).map((plan: any) => (
-                                    <PlanCard key={plan.id} plan={plan} billingCycle={billingCycle} openAuth={openAuth} />
-                                ))
-                                }
-                            </div>
+                            <PlanCarousel
+                                plans={plans.filter(p => !p.is_combo)}
+                                billingCycle={billingCycle}
+                                openAuth={openAuth}
+                            />
                         </div>
                     )}
                 </div>
