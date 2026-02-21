@@ -43,6 +43,7 @@ interface Props {
     onLogout: () => void;
     onUpdateUser: (u: User) => void;
     onUpdatePrefs: (p: UserPreferences) => void;
+    children?: React.ReactNode;
 }
 
 const Logo = () => (
@@ -51,7 +52,7 @@ const Logo = () => (
     </div>
 );
 
-export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModule, activeSuites = [], planPermissions = [], onModuleChange, onLogout, onUpdateUser, onUpdatePrefs }) => {
+export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModule, activeSuites = [], planPermissions = [], onModuleChange, onLogout, onUpdateUser, onUpdatePrefs, children }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [pendingAvatar, setPendingAvatar] = useState<string | null>(null);
     const { theme, setTheme } = useTheme();
@@ -228,7 +229,8 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                         </AnimatePresence>
                         {suiteItems.map((item) => (
                             <Tooltip key={item.id} content={item.label} enabled={!isSidebarOpen}>
-                                <button
+                                <Link
+                                    href={`/veritum/${normalize(item.id)}`}
                                     onClick={() => onModuleChange(item.id)}
                                     className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 cursor-pointer ${normalize(activeModule) === normalize(item.id)
                                         ? 'bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-400 font-bold shadow-sm'
@@ -249,7 +251,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                             </motion.span>
                                         )}
                                     </AnimatePresence>
-                                </button>
+                                </Link>
                             </Tooltip>
                         ))}
                     </div>
@@ -277,15 +279,16 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                         </AnimatePresence>
                         {adminItems.map((item) => (
                             <Tooltip key={item.id} content={item.label} enabled={!isSidebarOpen}>
-                                <button
+                                <Link
                                     key={item.id}
+                                    href={`/veritum/${normalize(item.id)}`}
                                     onClick={() => onModuleChange(item.id)}
-                                    className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 cursor-pointer ${activeModule === item.id
+                                    className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 cursor-pointer ${normalize(activeModule) === normalize(item.id)
                                         ? 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white font-bold'
                                         : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
                                         }`}
                                 >
-                                    <item.icon size={20} className={activeModule === item.id ? 'text-indigo-600' : 'text-slate-400 dark:text-slate-500'} />
+                                    <item.icon size={20} className={normalize(activeModule) === normalize(item.id) ? 'text-indigo-600' : 'text-slate-400 dark:text-slate-500'} />
                                     <AnimatePresence>
                                         {isSidebarOpen && (
                                             <motion.span
@@ -299,7 +302,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                             </motion.span>
                                         )}
                                     </AnimatePresence>
-                                </button>
+                                </Link>
                             </Tooltip>
                         ))}
                     </div>
@@ -327,14 +330,15 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                 </AnimatePresence>
                                 {masterItems.map((item) => (
                                     <Tooltip key={item.id} content={item.label} enabled={!isSidebarOpen}>
-                                        <button
+                                        <Link
+                                            href={`/veritum/${normalize(item.id)}`}
                                             onClick={() => onModuleChange(item.id)}
-                                            className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 cursor-pointer ${activeModule === item.id
+                                            className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 cursor-pointer ${normalize(activeModule) === normalize(item.id)
                                                 ? 'bg-amber-50 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 font-bold shadow-sm'
                                                 : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white'
                                                 }`}
                                         >
-                                            <item.icon size={20} className={activeModule === item.id ? item.color : 'text-slate-400 dark:text-slate-500'} />
+                                            <item.icon size={20} className={normalize(activeModule) === normalize(item.id) ? item.color : 'text-slate-400 dark:text-slate-500'} />
                                             <AnimatePresence>
                                                 {isSidebarOpen && (
                                                     <motion.span
@@ -348,7 +352,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                                     </motion.span>
                                                 )}
                                             </AnimatePresence>
-                                        </button>
+                                        </Link>
                                     </Tooltip>
                                 ))}
                             </div>
@@ -486,7 +490,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
 
                 <div className="flex-1 overflow-y-auto p-8 bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
                     <div className="max-w-[1600px] mx-auto h-full text-slate-400">
-                        {renderModule()}
+                        {children}
                     </div>
                 </div>
             </main>

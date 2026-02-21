@@ -4,6 +4,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // You should replace this with your actual production URL
     const baseUrl = 'https://veritumpro.com'
 
+    const modules = [
+        'sentinel',
+        'nexus',
+        'scriptor',
+        'valorem',
+        'vox',
+        'cognitio'
+    ]
+
     return [
         {
             url: baseUrl,
@@ -11,6 +20,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
             changeFrequency: 'monthly',
             priority: 1,
         },
+        ...modules.map(module => ({
+            url: `${baseUrl}/${module}`,
+            lastModified: new Date(),
+            changeFrequency: 'monthly' as const,
+            priority: 0.7,
+        })),
         {
             url: `${baseUrl}/login`,
             lastModified: new Date(),

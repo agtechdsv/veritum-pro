@@ -282,14 +282,14 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="sm:max-w-lg p-0 bg-transparent border-none shadow-none">
-                <div className={`relative w-full p-10 rounded-[2.5rem] shadow-2xl border transition-colors ${theme === 'dark' ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                <div className={`relative w-full p-6 pt-10 rounded-[2.5rem] shadow-2xl border transition-colors ${theme === 'dark' ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
                     <DialogTitle className="sr-only">{currentMode === 'login' ? 'Login' : 'Cadastro'}</DialogTitle>
                     <button onClick={onClose} className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                         <X size={20} />
                     </button>
 
-                    <div className="text-center mb-10">
-                        <div className="inline-flex mb-6">
+                    <div className="text-center mb-6">
+                        <div className="inline-flex mb-4">
                             <Logo />
                         </div>
                         <h2 className="text-3xl font-black tracking-tight mb-2 dark:text-white text-slate-900">
@@ -304,13 +304,13 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                         </p>
                     </div>
 
-                    <div className="space-y-6">
+                    <div className="space-y-4">
                         {currentMode !== 'force-reset' && (
                             <>
                                 <button
                                     onClick={handleGoogleLogin}
                                     disabled={loading}
-                                    className="w-full flex items-center justify-center gap-3 py-3.5 border border-slate-200 dark:border-slate-800 rounded-2xl font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all disabled:opacity-50 dark:text-white bg-transparent"
+                                    className="w-full flex items-center justify-center gap-3 py-3 border border-slate-200 dark:border-slate-800 rounded-2xl font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all disabled:opacity-50 dark:text-white bg-transparent"
                                 >
                                     <svg className="w-5 h-5" viewBox="0 0 24 24">
                                         <path
@@ -349,31 +349,31 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                         {currentMode === 'force-reset' ? (
                             <form className="space-y-4" onSubmit={handleResetPassword}>
                                 <div className="relative">
-                                    <Lock className="absolute left-4 top-4 text-slate-400" size={20} />
+                                    <Lock className="absolute left-4 top-3.5 text-slate-400" size={20} />
                                     <input
                                         required
                                         type={showPassword ? "text" : "password"}
                                         placeholder="Sua nova senha"
-                                        className="w-full pl-12 pr-12 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 dark:text-white"
+                                        className="w-full pl-12 pr-12 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 dark:text-white"
                                         value={password}
                                         onChange={e => setPassword(e.target.value)}
                                     />
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-4 top-4 text-slate-400 hover:text-indigo-600 transition-colors"
+                                        className="absolute right-4 top-3.5 text-slate-400 hover:text-indigo-600 transition-colors"
                                     >
                                         {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                     </button>
                                 </div>
 
                                 <div className="relative">
-                                    <Lock className="absolute left-4 top-4 text-slate-400" size={20} />
+                                    <Lock className="absolute left-4 top-3.5 text-slate-400" size={20} />
                                     <input
                                         required
                                         type={showPassword ? "text" : "password"}
                                         placeholder="Confirmar nova senha"
-                                        className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 dark:text-white"
+                                        className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 dark:text-white"
                                         value={confirmPassword}
                                         onChange={e => setConfirmPassword(e.target.value)}
                                     />
@@ -397,43 +397,43 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                             <form className="space-y-4" onSubmit={handleEmailAuth}>
                                 {currentMode === 'register' && (
                                     <div className="relative">
-                                        <User className="absolute left-4 top-4 text-slate-400" size={20} />
+                                        <User className="absolute left-4 top-3.5 text-slate-400" size={20} />
                                         <input
                                             ref={nameRef}
                                             required
                                             placeholder="Nome Completo"
-                                            className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 dark:text-white"
+                                            className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 dark:text-white"
                                             value={name}
                                             onChange={e => setName(e.target.value)}
                                         />
                                     </div>
                                 )}
                                 <div className="relative">
-                                    <Mail className="absolute left-4 top-4 text-slate-400" size={20} />
+                                    <Mail className="absolute left-4 top-3.5 text-slate-400" size={20} />
                                     <input
                                         ref={emailRef}
                                         required
                                         type="email"
                                         placeholder="E-mail profissional"
-                                        className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 dark:text-white"
+                                        className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 dark:text-white"
                                         value={email}
                                         onChange={e => setEmail(e.target.value)}
                                     />
                                 </div>
                                 <div className="relative">
-                                    <Lock className="absolute left-4 top-4 text-slate-400" size={20} />
+                                    <Lock className="absolute left-4 top-3.5 text-slate-400" size={20} />
                                     <input
                                         required
                                         type={showPassword ? "text" : "password"}
                                         placeholder={currentMode === 'register' ? "Criar senha" : "Sua senha"}
-                                        className="w-full pl-12 pr-12 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 dark:text-white"
+                                        className="w-full pl-12 pr-12 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 dark:text-white"
                                         value={password}
                                         onChange={e => setPassword(e.target.value)}
                                     />
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-4 top-4 text-slate-400 hover:text-indigo-600 transition-colors"
+                                        className="absolute right-4 top-3.5 text-slate-400 hover:text-indigo-600 transition-colors"
                                     >
                                         {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                     </button>
