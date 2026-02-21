@@ -31,7 +31,8 @@ export async function middleware(request: NextRequest) {
 
     // Define paths
     const path = request.nextUrl.pathname
-    const isPublicPath = path === '/' || path === '/login' || path === '/pricing' || path.startsWith('/auth') ||
+    const isPublicPath = path === '/' || path === '/login' || path === '/pricing' ||
+        path === '/privacy' || path === '/terms' || path.startsWith('/auth') ||
         ['/sentinel', '/nexus', '/scriptor', '/valorem', '/cognitio', '/vox'].includes(path)
     const isSetupPath = path === '/setup'
 

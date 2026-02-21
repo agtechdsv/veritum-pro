@@ -349,8 +349,8 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                         Desenvolvido por AgTech | LegalTech de Alta Performance © 2024 Todos os direitos reservados.
                     </p>
                     <div className="flex gap-6">
-                        <button onClick={() => openLegal('privacy')} className="text-sm text-slate-500 hover:text-indigo-600 transition-colors">Privacidade</button>
-                        <button onClick={() => openLegal('terms')} className="text-sm text-slate-500 hover:text-indigo-600 transition-colors">Termos</button>
+                        <button onClick={() => openLegal('privacy')} className="text-sm text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer">Privacidade</button>
+                        <button onClick={() => openLegal('terms')} className="text-sm text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer">Termos</button>
                     </div>
                 </div>
             </footer>
