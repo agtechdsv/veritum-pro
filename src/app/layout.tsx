@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   title: "VERITUM PRO | Ecossistema Jurídico Inteligente",
   description: "A plataforma definitiva para gestão jurídica com IA integrada, BYODB e alta performance.",
   verification: {
-    google: "1VXF9F4iKD92TAndZq4xBSEacvSkJsSHEOCp4Dnt-xw",
+    google: "9HMAIsbuVkMxdSkoKStJ1Bsu4kzHrIfwMJFfjrOf7mc",
   },
 };
 

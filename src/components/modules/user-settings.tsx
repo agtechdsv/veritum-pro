@@ -35,8 +35,21 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdateUser, onUpda
 
     const handleConnectGoogle = () => {
         const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-        const redirectUri = `${window.location.origin}/functions/v1/google-callback`;
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+        // A redirectUri DEVE ser a URL da Edge Function, não do localhost
+        const redirectUri = `${supabaseUrl}/functions/v1/google-callback`;
+
+        console.log('--- Google Auth Debug ---');
+        console.log('Client ID:', clientId);
+        console.log('Redirect URI:', redirectUri);
+
         const scope = 'https://www.googleapis.com/auth/calendar';
+
+        if (!clientId) {
+            console.error('ERRO: NEXT_PUBLIC_GOOGLE_CLIENT_ID não encontrado no ambiente!');
+            return;
+        }
 
         const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}&access_type=offline&prompt=consent&state=${user.id}`;
 
