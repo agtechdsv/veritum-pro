@@ -290,22 +290,22 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                     `width=${width},height=${height},left=${left},top=${top},toolbar=0,scrollbars=1,status=0,resizable=1,location=1,menuBar=0`
                 );
 
-                // 2. Poll for closure SAFELY (COOP might block this)
+                // 2. We no longer poll for popup closure via popup.closed
+                // because COOP prevents access to that property on localhost.
+                // The onAuthStateChange above handles SUCCESS, and the popup
+                // handles its own closure or shows a message if blocked.
                 const timer = setInterval(() => {
-                    let isClosed = false;
-                    try {
-                        isClosed = !popup || popup.closed;
-                    } catch (e) {
-                        // If COOP blocks access, we can't detect closure this way
-                        // The onAuthStateChange above will handle the success case
-                    }
-
-                    if (isClosed) {
-                        clearInterval(timer);
-                        subscription.unsubscribe();
-                        setLoading(false);
-                    }
+                    // Just reset loading state if we somehow lose track, 
+                    // but the redirect in onAuthStateChange is our primary success path.
+                    // This timer is now just a safety net for the loading spinner.
                 }, 1000);
+
+                // Set a timeout to clear the loading state after 60s if nothing happens
+                setTimeout(() => {
+                    clearInterval(timer);
+                    subscription.unsubscribe();
+                    setLoading(false);
+                }, 60000);
             }
         } catch (error: any) {
             console.error('Login error:', error);

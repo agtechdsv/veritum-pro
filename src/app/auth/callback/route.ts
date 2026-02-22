@@ -49,13 +49,37 @@ export async function GET(request: Request) {
                                 console.error('Failed to notify opener:', e);
                             }
                             
-                            // Try to close the popup immediately
-                            window.close();
+                            function closeWindow() {
+                                try {
+                                    // 1. Standard close
+                                    window.close();
+                                    
+                                    // 2. Aggressive self-opener closure
+                                    if (!window.closed) {
+                                        window.open('', '_self', '');
+                                        window.close();
+                                    }
+                                } catch (e) {
+                                    console.error('Closure failed:', e);
+                                }
+                            }
+
+                            closeWindow();
                             
-                            // Fallback: If window.close() failed or was blocked, redirect after a short delay
+                            // Fallback UI if browser absolutely refuses to close
                             setTimeout(() => {
-                                window.location.href = targetUrl;
-                            }, 500);
+                                if (!window.closed) {
+                                    document.body.innerHTML = \`
+                                        <div style="font-family: -apple-system, system-ui, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; text-align: center; background: white;">
+                                            <div style="padding: 40px; border-radius: 24px; background: #f8fafc; border: 1px solid #e2e8f0; max-width: 320px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);">
+                                                <div style="font-size: 40px; margin-bottom: 16px;">✅</div>
+                                                <h1 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 8px 0;">LOGIN CONCLUÍDO!</h1>
+                                                <p style="font-size: 14px; color: #64748b; margin: 0; line-height: 1.5;">O acesso foi autorizado. Você já pode fechar esta janela com segurança.</p>
+                                            </div>
+                                        </div>
+                                    \`;
+                                }
+                            }, 800);
                         </script>
                     </body>
                 </html>`,
