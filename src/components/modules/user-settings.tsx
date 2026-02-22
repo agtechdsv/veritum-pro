@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { User, UserPreferences } from '@/types';
-import { Database, Key, Globe, Layout, Save, User as UserIcon, ShieldCheck } from 'lucide-react';
+import { Database, Key, Globe, Layout, Save, User as UserIcon, ShieldCheck, Calendar, Check, AlertCircle } from 'lucide-react';
 import { createMasterClient } from '@/lib/supabase/master';
 
 interface Props {
@@ -16,6 +16,16 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdateUser, onUpda
     const [formUser, setFormUser] = useState(user);
     const [saving, setSaving] = useState(false);
     const supabase = createMasterClient();
+
+    const handleConnectGoogle = () => {
+        const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+        const redirectUri = `${window.location.origin}/functions/v1/google-callback`;
+        const scope = 'https://www.googleapis.com/auth/calendar';
+
+        const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}&access_type=offline&prompt=consent&state=${user.id}`;
+
+        window.location.href = authUrl;
+    };
 
     const handleSave = async () => {
         setSaving(true);
@@ -148,6 +158,51 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdateUser, onUpda
                                 <option value="en">English (US)</option>
                                 <option value="es">Español</option>
                             </select>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Integrations Section */}
+                <section className="bg-white dark:bg-slate-900 p-8 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
+                    <h3 className="text-xl font-bold mb-6 flex items-center gap-2 dark:text-white text-slate-800">
+                        <Calendar size={20} className="text-rose-500" /> Integrações Externas
+                    </h3>
+                    <div className="space-y-6">
+                        <div className="p-6 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 transition-all">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center shadow-sm border border-slate-100 dark:border-slate-800">
+                                        <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-slate-800 dark:text-white">Google Calendar</p>
+                                        <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest">Automação de Meet</p>
+                                    </div>
+                                </div>
+                                {preferences.google_refresh_token ? (
+                                    <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 text-emerald-500 rounded-full text-[10px] font-black uppercase tracking-widest">
+                                        <Check size={12} /> Conectado
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-200 dark:bg-slate-800 text-slate-500 rounded-full text-[10px] font-black uppercase tracking-widest">
+                                        Pendente
+                                    </div>
+                                )}
+                            </div>
+
+                            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mb-6 leading-relaxed">
+                                Conecte sua agenda para que o Veritum PRO possa gerar links do Google Meet automaticamente nos seus agendamentos.
+                            </p>
+
+                            <button
+                                onClick={handleConnectGoogle}
+                                className={`w-full py-4 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${preferences.google_refresh_token
+                                        ? 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'
+                                        : 'bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 shadow-sm'
+                                    }`}
+                            >
+                                {preferences.google_refresh_token ? 'Alterar Conta Google' : 'Conectar Agora'}
+                            </button>
                         </div>
                     </div>
                 </section>

@@ -15,13 +15,14 @@ import UserManagement from './modules/user-management';
 import PlanManagement from './modules/plan-management';
 import { createMasterClient } from '@/lib/supabase/master';
 import { Tooltip } from './ui/tooltip';
+import { EmailSettingsManager } from './modules/email-config';
 
 import {
     ShieldAlert, GitBranch, FileEdit, DollarSign, BarChart3,
     MessageSquare, LogOut, Settings, Menu, X, Bell, Search,
     Camera, Scale, Check, Users, Crown, ChevronRight,
     PanelLeftClose, PanelLeft, PanelLeftOpen, Sun, Moon,
-    Calendar as CalendarIcon
+    Calendar as CalendarIcon, Mail
 } from 'lucide-react';
 import SuiteManagement from './modules/suite-management';
 import { useTheme } from 'next-themes';
@@ -115,6 +116,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
         { id: ModuleId.SUITES, label: 'Gestão de Módulos', icon: Crown, color: 'text-amber-500' },
         { id: ModuleId.PLANS, label: 'Gestão de Planos', icon: DollarSign, color: 'text-indigo-500' },
         { id: ModuleId.SCHEDULING, label: 'Agendamentos', icon: CalendarIcon, color: 'text-rose-500' },
+        { id: ModuleId.EMAIL_CONFIG, label: 'Gestão de E-mails', icon: Mail, color: 'text-cyan-500' },
     ];
 
     const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {

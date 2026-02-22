@@ -13,6 +13,8 @@ interface ModuleContextType {
     credentials: Credentials;
     onUpdateUser: (u: User) => void;
     onUpdatePrefs: (p: UserPreferences) => void;
+    onModuleChange: (m: ModuleId) => void;
+    activeSuites: any[];
 }
 
 const ModuleContext = React.createContext<ModuleContextType | undefined>(undefined);
@@ -62,6 +64,7 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
                 id: authUser.id,
                 name: profile?.name || authUser.user_metadata.full_name || 'Usuário',
                 username: profile?.username || authUser.email?.split('@')[0] || 'user',
+                email: authUser.email,
                 role: (profile?.role || authUser.user_metadata.role || 'Operador') as any,
                 active: profile?.active ?? true,
                 avatar_url: profile?.avatar_url || authUser.user_metadata.avatar_url || authUser.user_metadata.picture,
@@ -250,7 +253,9 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
             planPermissions,
             credentials: creds,
             onUpdateUser: (u) => setUser(u),
-            onUpdatePrefs: handleUpdatePrefs
+            onUpdatePrefs: handleUpdatePrefs,
+            onModuleChange: handleModuleChange,
+            activeSuites
         }}>
             <DashboardLayout
                 user={user!}

@@ -6,12 +6,13 @@ import { LucideIcon, ChevronRight } from 'lucide-react';
 interface CardProps {
     title: string;
     description: string;
+    subtitle?: string;
     icon: LucideIcon;
     color: string;
     onClick: () => void;
 }
 
-export const DashboardCard: React.FC<CardProps> = ({ title, description, icon: Icon, color, onClick }) => {
+export const DashboardCard: React.FC<CardProps> = ({ title, description, subtitle, icon: Icon, color, onClick }) => {
     return (
         <button
             onClick={onClick}
@@ -33,7 +34,14 @@ export const DashboardCard: React.FC<CardProps> = ({ title, description, icon: I
                             ) : part
                         )}
                     </h3>
-                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400 italic line-clamp-2">
+
+                    {subtitle && (
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500/60 dark:text-indigo-400/40 pb-1">
+                            {subtitle}
+                        </p>
+                    )}
+
+                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400 italic line-clamp-3">
                         {description}
                     </p>
                 </div>

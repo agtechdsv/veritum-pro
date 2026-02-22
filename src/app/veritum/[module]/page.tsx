@@ -17,12 +17,13 @@ import SchedulingManagement from '@/components/modules/scheduling-management';
 import SuiteDashboard from '@/components/modules/dashboards/suite-dashboard';
 import AdminDashboard from '@/components/modules/dashboards/admin-dashboard';
 import MasterDashboard from '@/components/modules/dashboards/master-dashboard';
+import { EmailSettingsManager } from '@/components/modules/email-config';
 import { ModuleId } from '@/types';
-import { GitBranch, FileEdit, DollarSign, BarChart3, MessageSquare, ShieldAlert, Users, Settings, Crown, Calendar as CalendarIcon } from 'lucide-react';
+import { GitBranch, FileEdit, DollarSign, BarChart3, MessageSquare, ShieldAlert, Users, Settings, Crown, Calendar as CalendarIcon, Mail } from 'lucide-react';
 
 export default function DynamicModulePage() {
     const { module } = useParams();
-    const { user, preferences, planPermissions, credentials, onUpdateUser, onUpdatePrefs } = useModule();
+    const { user, preferences, planPermissions, credentials, onUpdateUser, onUpdatePrefs, onModuleChange, activeSuites } = useModule();
 
     if (!user || !preferences) return null;
 
@@ -39,9 +40,28 @@ export default function DynamicModulePage() {
         { id: ModuleId.SENTINEL, label: 'Sentinel', icon: ShieldAlert, color: 'text-rose-500' },
     ];
 
+    // Sync order and texts with activeSuites from DB
+    const syncedSuites = activeSuites.length > 0
+        ? activeSuites
+            .map(as => {
+                const normalizedDbKey = normalize(as.suite_key);
+                const baseItem = baseSuiteItems.find(bs => normalize(bs.id) === normalizedDbKey);
+                if (baseItem) {
+                    return {
+                        ...baseItem,
+                        label: as.name || baseItem.label,
+                        short_desc: as.short_desc,
+                        detailed_desc: as.detailed_desc
+                    };
+                }
+                return null;
+            })
+            .filter(Boolean) as any[]
+        : baseSuiteItems;
+
     const suiteItems = user.role === 'Master'
-        ? baseSuiteItems
-        : baseSuiteItems.filter(bs => planPermissions.some(pp => normalize(pp.suite_key) === normalize(bs.id)));
+        ? syncedSuites
+        : syncedSuites.filter(bs => planPermissions.some(pp => normalize(pp.suite_key) === normalize(bs.id)));
 
     const adminItems = [
         { id: ModuleId.USERS, label: 'Gestão de Usuários', icon: Users, color: 'text-slate-500' },
@@ -52,6 +72,7 @@ export default function DynamicModulePage() {
         { id: ModuleId.SUITES, label: 'Gestão de Módulos', icon: Crown, color: 'text-amber-500' },
         { id: ModuleId.PLANS, label: 'Gestão de Planos', icon: DollarSign, color: 'text-indigo-500' },
         { id: ModuleId.SCHEDULING, label: 'Agendamentos', icon: CalendarIcon, color: 'text-rose-500' },
+        { id: ModuleId.EMAIL_CONFIG, label: 'Gestão de E-mails', icon: Mail, color: 'text-cyan-500' },
     ];
 
     switch (moduleToRender) {
@@ -66,9 +87,10 @@ export default function DynamicModulePage() {
         case 'suites': return <SuiteManagement credentials={credentials} />;
         case 'plans': return <PlanManagement credentials={credentials} />;
         case 'scheduling': return <SchedulingManagement />;
-        case 'dashboard_suites': return <SuiteDashboard items={suiteItems} onModuleChange={() => { }} />;
-        case 'dashboard_admin': return <AdminDashboard items={adminItems} onModuleChange={() => { }} />;
-        case 'dashboard_master': return <MasterDashboard items={masterItems} onModuleChange={() => { }} />;
+        case 'email_config': return <EmailSettingsManager />;
+        case 'dashboard_suites': return <SuiteDashboard items={suiteItems} onModuleChange={onModuleChange} />;
+        case 'dashboard_admin': return <AdminDashboard items={adminItems} onModuleChange={onModuleChange} />;
+        case 'dashboard_master': return <MasterDashboard items={masterItems} onModuleChange={onModuleChange} />;
         default:
             return (
                 <div className="flex flex-col items-center justify-center h-full text-slate-400">

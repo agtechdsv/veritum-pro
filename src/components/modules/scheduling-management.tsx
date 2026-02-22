@@ -15,6 +15,7 @@ import {
     Trash2, Pencil, Mail, Link as LinkIcon
 } from 'lucide-react';
 import { createMasterClient } from '@/lib/supabase/master';
+import { useModule } from '@/app/veritum/layout';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from '@/components/ui/toast';
 
@@ -34,6 +35,7 @@ interface DemoRequest {
 }
 
 export default function SchedulingManagement() {
+    const { user } = useModule();
     const [view, setView] = useState<'month' | 'day'>('month');
     const [currentDate, setCurrentDate] = useState(new Date());
     const [requests, setRequests] = useState<DemoRequest[]>([]);
@@ -77,22 +79,58 @@ export default function SchedulingManagement() {
     };
 
     const handleSchedule = async (requestId: string, date: Date) => {
-        const { error } = await supabase
-            .from('demo_requests')
-            .update({
-                scheduled_at: date.toISOString(),
-                status: 'scheduled'
-            })
-            .eq('id', requestId);
+        const reqToSchedule = requests.find(r => r.id === requestId);
+        if (!reqToSchedule) return;
 
-        if (!error) {
-            setSelectedRequest(null);
-            setIsSchedulingConfirmOpen(false);
-            setSchedulingConfirmData(null);
-            fetchRequests();
-            toast.success('Agendamento confirmado com sucesso!');
-        } else {
-            toast.error('Erro ao confirmar agendamento.');
+        setSendingInvite(true); // Reusa o estado de loading para a geração do meet
+
+        try {
+            // 1. Gerar Link do Google Meet
+            const payload = {
+                calendarId: user?.email || user?.id,
+                summary: `Demonstração Veritum PRO - ${reqToSchedule.full_name}`,
+                description: `Reunião estratégica para apresentação do ecossistema Veritum Pro.\nCliente: ${reqToSchedule.full_name}\nEquipe: ${reqToSchedule.team_size}`,
+                start: date.toISOString(),
+                end: addMinutes(date, 30).toISOString(),
+                attendees: [reqToSchedule.email],
+                userId: user?.id
+            };
+            console.log('Invocando create-meeting com payload:', payload);
+
+            const { data: meetData, error: meetError } = await supabase.functions.invoke('create-meeting', {
+                body: payload
+            });
+
+            const meetingLink = meetData?.meetingLink;
+
+            if (meetError || !meetingLink) {
+                console.warn('Google Meet link generation failed, proceeding with manual link if available:', meetError);
+            }
+
+            // 2. Atualizar no Banco
+            const { error } = await supabase
+                .from('demo_requests')
+                .update({
+                    scheduled_at: date.toISOString(),
+                    status: 'scheduled',
+                    meeting_link: meetingLink || reqToSchedule.meeting_link // Prioriza o gerado
+                })
+                .eq('id', requestId);
+
+            if (!error) {
+                setSelectedRequest(null);
+                setIsSchedulingConfirmOpen(false);
+                setSchedulingConfirmData(null);
+                fetchRequests();
+                toast.success('Agendamento confirmado com Link do Meet gerado!');
+            } else {
+                toast.error('Erro ao confirmar agendamento.');
+            }
+        } catch (err) {
+            console.error('Scheduling error:', err);
+            toast.error('Falha técnica no agendamento.');
+        } finally {
+            setSendingInvite(false);
         }
     };
 
@@ -528,6 +566,7 @@ export default function SchedulingManagement() {
                 <ScheduleConfirmationModal
                     isOpen={isSchedulingConfirmOpen}
                     data={schedulingConfirmData}
+                    sendingInvite={sendingInvite}
                     onClose={() => setIsSchedulingConfirmOpen(false)}
                     onConfirm={() => schedulingConfirmData && handleSchedule(schedulingConfirmData.request.id, schedulingConfirmData.slot)}
                 />
@@ -799,9 +838,10 @@ function DeleteConfirmationModal({ isOpen, request, onClose, onConfirm }: {
     );
 }
 
-function ScheduleConfirmationModal({ isOpen, data, onClose, onConfirm }: {
+function ScheduleConfirmationModal({ isOpen, data, sendingInvite, onClose, onConfirm }: {
     isOpen: boolean,
     data: { request: DemoRequest, slot: Date } | null,
+    sendingInvite: boolean,
     onClose: () => void,
     onConfirm: () => void
 }) {
@@ -849,9 +889,10 @@ function ScheduleConfirmationModal({ isOpen, data, onClose, onConfirm }: {
                             </button>
                             <button
                                 onClick={onConfirm}
-                                className="flex-1 px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white bg-indigo-600 hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-500/30"
+                                disabled={sendingInvite}
+                                className="flex-1 px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white bg-indigo-600 hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-500/30 disabled:opacity-50 disabled:cursor-wait"
                             >
-                                Sim, Confirmar
+                                {sendingInvite ? 'Gerando Meet...' : 'Sim, Confirmar'}
                             </button>
                         </div>
                     </motion.div>

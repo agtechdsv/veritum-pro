@@ -26,7 +26,9 @@ const AdminDashboard: React.FC<Props> = ({ items, onModuleChange }) => {
                     <DashboardCard
                         key={item.id}
                         title={item.label}
-                        description={`Gerencie ${item.label.toLowerCase()} do sistema.`}
+                        description={item.id === ModuleId.USERS
+                            ? "Gerencie a hierarquia de usuários, permissões de acesso e controle de papéis (Master/Admin/Operador)."
+                            : "Ajuste as preferências globais do sistema, integrações e parâmetros de interface."}
                         icon={item.icon}
                         color={item.color}
                         onClick={() => onModuleChange(item.id)}

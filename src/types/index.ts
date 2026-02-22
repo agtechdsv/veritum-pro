@@ -15,7 +15,8 @@ export enum ModuleId {
     DASHBOARD_ADMIN = 'dashboard_admin',
     DASHBOARD_MASTER = 'dashboard_master',
     DASHBOARD_ROOT = 'dashboard_root',
-    SCHEDULING = 'scheduling'
+    SCHEDULING = 'scheduling',
+    EMAIL_CONFIG = 'email_config'
 }
 
 export interface Plan {
@@ -72,6 +73,7 @@ export interface User {
     role: 'Master' | 'Administrador' | 'Operador';
     active: boolean;
     avatar_url?: string;
+    email?: string;
     cpf_cnpj?: string;
     phone?: string;
     parent_user_id?: string;
@@ -85,6 +87,7 @@ export interface UserPreferences {
     custom_supabase_url?: string;
     custom_supabase_key?: string;
     custom_gemini_key?: string;
+    google_refresh_token?: string;
 }
 
 export interface Suite {

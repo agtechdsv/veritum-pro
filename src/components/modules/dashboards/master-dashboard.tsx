@@ -26,9 +26,13 @@ const MasterDashboard: React.FC<Props> = ({ items, onModuleChange }) => {
                     <DashboardCard
                         key={item.id}
                         title={item.label}
-                        description={item.id === ModuleId.SCHEDULING
-                            ? "Gerencie solicitações de demonstração e o calendário estratégico."
-                            : `Ajustes de alto nível para ${item.label.toLowerCase()}.`}
+                        description={
+                            item.id === ModuleId.SUITES ? "Configuração estrutural de módulos, chaves de API e disponibilização no ecossistema." :
+                                item.id === ModuleId.PLANS ? "Criação e edição de planos comerciais, preços, descontos e vinculação de permissões." :
+                                    item.id === ModuleId.SCHEDULING ? "Gestão de leads, agendamentos de demonstrações VIP e calendário de vendas." :
+                                        item.id === ModuleId.EMAIL_CONFIG ? "Configuração de aliases SMTP (FROM) por departamento e localização (JSONB)." :
+                                            `Ajustes estruturais de ${item.label.toLowerCase()}.`
+                        }
                         icon={item.icon}
                         color={item.color}
                         onClick={() => onModuleChange(item.id)}
