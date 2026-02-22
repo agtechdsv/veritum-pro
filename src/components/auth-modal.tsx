@@ -250,6 +250,17 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
         setError(null);
         try {
             const supabase = createMasterClient();
+
+            // 1. Listen for auth state change - reliable across windows on same origin
+            const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+                if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
+                    subscription.unsubscribe();
+                    setLoading(false);
+                    onClose();
+                    window.location.href = '/veritum';
+                }
+            });
+
             const { data, error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
@@ -262,10 +273,12 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                 },
             });
 
-            if (error) throw error;
+            if (error) {
+                subscription.unsubscribe();
+                throw error;
+            }
 
             if (data?.url) {
-                // Use a popup window for the Google login
                 const width = 600;
                 const height = 700;
                 const left = window.screenX + (window.outerWidth - width) / 2;
@@ -277,10 +290,19 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                     `width=${width},height=${height},left=${left},top=${top},toolbar=0,scrollbars=1,status=0,resizable=1,location=1,menuBar=0`
                 );
 
-                // Listen for the popup being closed to reset loading state
+                // 2. Poll for closure SAFELY (COOP might block this)
                 const timer = setInterval(() => {
-                    if (popup?.closed) {
+                    let isClosed = false;
+                    try {
+                        isClosed = !popup || popup.closed;
+                    } catch (e) {
+                        // If COOP blocks access, we can't detect closure this way
+                        // The onAuthStateChange above will handle the success case
+                    }
+
+                    if (isClosed) {
                         clearInterval(timer);
+                        subscription.unsubscribe();
                         setLoading(false);
                     }
                 }, 1000);

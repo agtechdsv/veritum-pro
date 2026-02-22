@@ -33,17 +33,29 @@ export async function GET(request: Request) {
                 }
             }
 
-            // Return a script that sends a message to the opener and closes the popup
+            // Return a script that sends a message and tries to close the popup aggressively
             return new NextResponse(
                 `<html>
                     <body>
                         <script>
-                            if (window.opener) {
-                                window.opener.postMessage({ type: 'AUTH_SUCCESS', url: '${origin}${next}' }, '${origin}');
-                                window.close();
-                            } else {
-                                window.location.href = '${origin}${next}';
+                            const targetOrigin = '${origin}';
+                            const targetUrl = '${origin}${next}';
+                            
+                            try {
+                                if (window.opener) {
+                                    window.opener.postMessage({ type: 'AUTH_SUCCESS', url: targetUrl }, targetOrigin);
+                                }
+                            } catch (e) {
+                                console.error('Failed to notify opener:', e);
                             }
+                            
+                            // Try to close the popup immediately
+                            window.close();
+                            
+                            // Fallback: If window.close() failed or was blocked, redirect after a short delay
+                            setTimeout(() => {
+                                window.location.href = targetUrl;
+                            }, 500);
                         </script>
                     </body>
                 </html>`,
