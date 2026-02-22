@@ -14,7 +14,7 @@ serve(async (req) => {
     try {
         const url = new URL(req.url)
         const code = url.searchParams.get('code')
-        const userId = url.searchParams.get('state') // Passamos o userId pelo state
+        const userId = url.searchParams.get('state')
 
         if (!code || !userId) {
             throw new Error('Código ou User ID ausente.')
@@ -22,7 +22,12 @@ serve(async (req) => {
 
         const clientId = Deno.env.get('GOOGLE_CLIENT_ID')
         const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET')
-        const redirectUri = `${url.origin}/functions/v1/google-callback`
+
+        // Hardcoded ou vindo do Deno.env para garantir consistência total com o Google Console
+        const redirectUri = `https://rmcjxcxmzsinkjnolfek.supabase.co/functions/v1/google-callback`
+
+        console.log(`Trocando código por token para o usuário: ${userId}`);
+        console.log(`Redirect URI usada: ${redirectUri}`);
 
         // 1. Trocar o código pelo token
         const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
@@ -38,22 +43,35 @@ serve(async (req) => {
         })
 
         const tokenData = await tokenResponse.json()
-        if (tokenData.error) throw new Error(`Erro ao obter token: ${tokenData.error_description || tokenData.error}`)
+
+        if (!tokenResponse.ok) {
+            console.error('Erro na resposta do Google:', tokenData);
+            throw new Error(`Google OAuth Error: ${tokenData.error_description || tokenData.error || 'Bad Request'}`);
+        }
 
         const refreshToken = tokenData.refresh_token
-        if (!refreshToken) throw new Error('Refresh Token não recebido. Certifique-se de que o acesso foi solicitado como "offline".')
+        if (!refreshToken) {
+            console.warn('Aviso: Refresh Token não recebido. Isso acontece se o usuário já autorizou antes. Forçando prompt=consent no frontend.');
+            // Se já temos um token no banco, podemos ignorar isso, mas para nova conexão é crítico.
+            // No entanto, se o usuário está "Alterando conta", ele deve receber o refresh_token.
+        }
 
         // 2. Salvar o Refresh Token no banco de dados
         const supabaseUrl = Deno.env.get('SUPABASE_URL')
         const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
         const supabase = createClient(supabaseUrl!, supabaseServiceRoleKey!)
 
-        const { error: updateError } = await supabase
-            .from('user_preferences')
-            .update({ google_refresh_token: refreshToken })
-            .eq('user_id', userId)
+        const updateData: any = {};
+        if (refreshToken) updateData.google_refresh_token = refreshToken;
 
-        if (updateError) throw new Error(`Erro ao salvar token no banco: ${updateError.message}`)
+        if (refreshToken) {
+            const { error: updateError } = await supabase
+                .from('user_preferences')
+                .update(updateData)
+                .eq('user_id', userId)
+
+            if (updateError) throw new Error(`Erro ao salvar token no banco: ${updateError.message}`)
+        }
 
         // 3. Retornar HTML que comunica o sucesso e fecha o popup
         return new Response(
@@ -61,29 +79,38 @@ serve(async (req) => {
             <html>
                 <body>
                     <script>
-                        window.opener.postMessage({ type: 'GOOGLE_AUTH_SUCCESS' }, '*');
-                        window.close();
+                        if (window.opener) {
+                            window.opener.postMessage({ type: 'GOOGLE_AUTH_SUCCESS' }, '*');
+                        }
+                        setTimeout(() => window.close(), 1000);
                     </script>
-                    <p>Conectado com sucesso! Fechando janela...</p>
+                    <div style="text-align: center; font-family: sans-serif; padding-top: 50px;">
+                        <h2 style="color: #10b981;">✅ Conectado com Sucesso!</h2>
+                        <p>Esta janela fechará automaticamente...</p>
+                    </div>
                 </body>
             </html>
             `,
-            {
-                headers: { ...corsHeaders, 'Content-Type': 'text/html' }
-            }
+            { headers: { ...corsHeaders, 'Content-Type': 'text/html' } }
         )
 
     } catch (error) {
-        console.error('Erro no google-callback:', error)
+        console.error('Erro no google-callback:', error.message)
         return new Response(
             `
             <html>
                 <body>
                     <script>
-                        window.opener.postMessage({ type: 'GOOGLE_AUTH_ERROR', error: '${(error as Error).message}' }, '*');
-                        window.close();
+                        if (window.opener) {
+                            window.opener.postMessage({ type: 'GOOGLE_AUTH_ERROR', error: '${(error as Error).message}' }, '*');
+                        }
+                        // Não fechar imediatamente para o usuário ver o erro se quiser
                     </script>
-                    <p>Erro na conexão. Fechando janela...</p>
+                    <div style="text-align: center; font-family: sans-serif; padding-top: 50px;">
+                        <h2 style="color: #ef4444;">❌ Erro na Conexão</h2>
+                        <p>${(error as Error).message}</p>
+                        <button onclick="window.close()" style="padding: 10px 20px; cursor: pointer;">Fechar Janela</button>
+                    </div>
                 </body>
             </html>
             `,
