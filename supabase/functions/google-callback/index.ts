@@ -28,8 +28,10 @@ serve(async (req) => {
             throw new Error('Configuração incompleta (Secrets ausentes no Supabase).');
         }
 
-        // Hardcoded ou vindo do Deno.env para garantir consistência total com o Google Console
-        const redirectUri = `https://rmcjxcxmzsinkjnolfek.supabase.co/functions/v1/google-callback`
+        // Usando a variável de ambiente do Supabase para o Redirect URI
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')
+        if (!supabaseUrl) throw new Error('SUPABASE_URL não encontrada no ambiente.')
+        const redirectUri = `${supabaseUrl}/functions/v1/google-callback`
 
         console.log(`Trocando código por token para o usuário: ${userId}`);
 
@@ -61,7 +63,6 @@ serve(async (req) => {
         }
 
         // 2. Salvar o Refresh Token no banco de dados
-        const supabaseUrl = Deno.env.get('SUPABASE_URL')
         const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
         const supabase = createClient(supabaseUrl!, supabaseServiceRoleKey!)
 
