@@ -55,20 +55,42 @@ serve(async (req) => {
 
         if (updateError) throw new Error(`Erro ao salvar token no banco: ${updateError.message}`)
 
-        // 3. Redirecionar de volta para o app com sucesso
-        return new Response(null, {
-            status: 302,
-            headers: {
-                ...corsHeaders,
-                'Location': `${Deno.env.get('NEXT_PUBLIC_SITE_URL') || 'https://veritumpro.com'}/veritum/settings?status=google_connected`
+        // 3. Retornar HTML que comunica o sucesso e fecha o popup
+        return new Response(
+            `
+            <html>
+                <body>
+                    <script>
+                        window.opener.postMessage({ type: 'GOOGLE_AUTH_SUCCESS' }, '*');
+                        window.close();
+                    </script>
+                    <p>Conectado com sucesso! Fechando janela...</p>
+                </body>
+            </html>
+            `,
+            {
+                headers: { ...corsHeaders, 'Content-Type': 'text/html' }
             }
-        })
+        )
 
     } catch (error) {
         console.error('Erro no google-callback:', error)
         return new Response(
-            JSON.stringify({ error: (error as Error).message }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            `
+            <html>
+                <body>
+                    <script>
+                        window.opener.postMessage({ type: 'GOOGLE_AUTH_ERROR', error: '${(error as Error).message}' }, '*');
+                        window.close();
+                    </script>
+                    <p>Erro na conexão. Fechando janela...</p>
+                </body>
+            </html>
+            `,
+            {
+                status: 400,
+                headers: { ...corsHeaders, 'Content-Type': 'text/html' }
+            }
         )
     }
 })

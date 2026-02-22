@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, UserPreferences } from '@/types';
 import { Database, Key, Globe, Layout, Save, User as UserIcon, ShieldCheck, Calendar, Check, AlertCircle } from 'lucide-react';
 import { createMasterClient } from '@/lib/supabase/master';
@@ -17,6 +17,22 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdateUser, onUpda
     const [saving, setSaving] = useState(false);
     const supabase = createMasterClient();
 
+    useEffect(() => {
+        const handleMessage = (event: MessageEvent) => {
+            if (event.data.type === 'GOOGLE_AUTH_SUCCESS') {
+                // Atualiza o estado local para mostrar como conectado
+                setFormPrefs(prev => ({ ...prev, google_refresh_token: 'connected_placeholder' }));
+                onUpdatePrefs({ ...preferences, google_refresh_token: 'connected_placeholder' });
+            }
+            if (event.data.type === 'GOOGLE_AUTH_ERROR') {
+                console.error('Google Auth Error:', event.data.error);
+            }
+        };
+
+        window.addEventListener('message', handleMessage);
+        return () => window.removeEventListener('message', handleMessage);
+    }, [preferences, onUpdatePrefs]);
+
     const handleConnectGoogle = () => {
         const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
         const redirectUri = `${window.location.origin}/functions/v1/google-callback`;
@@ -24,7 +40,12 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdateUser, onUpda
 
         const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}&access_type=offline&prompt=consent&state=${user.id}`;
 
-        window.location.href = authUrl;
+        const width = 500;
+        const height = 600;
+        const left = window.screenX + (window.outerWidth - width) / 2;
+        const top = window.screenY + (window.outerHeight - height) / 2;
+
+        window.open(authUrl, 'google-auth', `width=${width},height=${height},left=${left},top=${top}`);
     };
 
     const handleSave = async () => {
@@ -197,8 +218,8 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdateUser, onUpda
                             <button
                                 onClick={handleConnectGoogle}
                                 className={`w-full py-4 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${preferences.google_refresh_token
-                                        ? 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'
-                                        : 'bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 shadow-sm'
+                                    ? 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'
+                                    : 'bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 shadow-sm'
                                     }`}
                             >
                                 {preferences.google_refresh_token ? 'Alterar Conta Google' : 'Conectar Agora'}
