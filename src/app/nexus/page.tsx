@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import {
     LayoutDashboard, CheckCircle2, Clock, Users, ArrowRight,
     ChevronRight, Moon, Sun, ShieldCheck, Scale, BarChart3,
-    Kanban, Workflow, Building2, FileText, Zap, MousePointer2
+    Kanban, Workflow, Building2, FileText, Zap, MousePointer2, LogOut
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
@@ -34,7 +34,7 @@ export default function NexusLanding() {
     if (!mounted) return null;
 
     return (
-        <div className="min-h-screen bg-white dark:bg-slate-950 transition-colors duration-300 font-sans selection:bg-indigo-100 selection:text-indigo-900">
+        <div id="top" className="min-h-screen bg-white dark:bg-slate-950 transition-colors duration-300 font-sans selection:bg-indigo-100 selection:text-indigo-900">
             {/* Navbar */}
             <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-900">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
@@ -48,7 +48,8 @@ export default function NexusLanding() {
                     </div>
 
                     <div className="hidden md:flex items-center gap-8">
-                        <Link href="/" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">Início</Link>
+                        <Link href="/" className="text-base font-bold text-branding-gradient hover:opacity-80 transition-all">Portal</Link>
+                        <a href="#top" className="text-sm font-bold text-slate-800 dark:text-white">Início</a>
                         <a href="#vision" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">Visão</a>
                         <a href="#features" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">Funcionalidades</a>
                         <a href="#ux" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">Diferencial</a>
@@ -59,7 +60,7 @@ export default function NexusLanding() {
                             {resolvedTheme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
                         </button>
                         <Link href="/?login=true" className="hidden sm:flex items-center gap-2 font-bold px-4 py-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all">
-                            Entrar
+                            <LogOut size={18} /> Entrar
                         </Link>
                         <button
                             onClick={() => setIsAuthModalOpen(true)}

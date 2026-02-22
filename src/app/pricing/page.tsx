@@ -7,7 +7,7 @@ import {
     Shield, BarChart3, MessageSquare, Wallet,
     PenTool, Radar, HelpCircle, Briefcase,
     Building2, Users2, Sparkles, Send, Calendar as CalendarIcon,
-    ChevronLeft
+    ChevronLeft, LogOut
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
@@ -41,7 +41,7 @@ export default function PricingPage() {
     const router = useRouter();
     const [mounted, setMounted] = useState(false);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-    const [showComparison, setShowComparison] = useState(false);
+    const [showComparison, setShowComparison] = useState(true);
 
     const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
     const [demoFormStatus, setDemoFormStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
@@ -176,7 +176,7 @@ export default function PricingPage() {
     ];
 
     return (
-        <div className="min-h-screen bg-white dark:bg-slate-950 transition-colors duration-300 font-sans selection:bg-indigo-100 selection:text-indigo-900">
+        <div id="top" className="min-h-screen bg-white dark:bg-slate-950 transition-colors duration-300 font-sans selection:bg-indigo-100 selection:text-indigo-900">
             {/* Navbar */}
             <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-900">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
@@ -190,15 +190,19 @@ export default function PricingPage() {
                     </div>
 
                     <div className="hidden md:flex items-center gap-8">
-                        <Link href="/" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">Início</Link>
+                        <Link href="/" className="text-base font-bold text-branding-gradient hover:opacity-80 transition-all">Portal</Link>
+                        <a href="#top" className="text-sm font-bold text-slate-800 dark:text-white">Início</a>
+                        <a href="#comparison" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">Comparativo</a>
+                        <a href="#modules" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">Módulos Avulsos</a>
+                        <a href="#faq" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">Dúvidas</a>
                     </div>
 
                     <div className="flex items-center gap-4">
                         <button onClick={toggleTheme} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all text-slate-600 dark:text-slate-400">
                             {resolvedTheme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
                         </button>
-                        <Link href="/?login=true" className="font-bold px-4 py-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all">
-                            Entrar
+                        <Link href="/?login=true" className="flex items-center gap-2 font-bold px-4 py-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all">
+                            <LogOut size={18} /> Entrar
                         </Link>
                     </div>
                 </div>
@@ -218,7 +222,7 @@ export default function PricingPage() {
             </section>
 
             {/* Pricing Cards */}
-            <section className="pb-32 px-6">
+            <section id="plans" className="pb-32 px-6">
                 <div className="max-w-7xl mx-auto">
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
                         {plans.map((plan, i) => (
@@ -272,7 +276,7 @@ export default function PricingPage() {
             </section>
 
             {/* Comparison Table Toggle */}
-            <section className="pb-32 px-6">
+            <section id="comparison" className="pb-32 px-6">
                 <div className="max-w-4xl mx-auto text-center">
                     <p className="text-slate-400 font-bold uppercase tracking-widest text-sm mb-8">Quer analisar cada detalhe técnico?</p>
                     <button
@@ -348,7 +352,7 @@ export default function PricingPage() {
             </section>
 
             {/* A La Carte Modules */}
-            <section className="py-32 px-6">
+            <section id="modules" className="py-32 px-6">
                 <div className="max-w-7xl mx-auto">
                     <div className="text-center mb-20">
                         <span className="text-indigo-600 dark:text-indigo-400 font-black tracking-[0.2em] uppercase text-sm">Flexibilidade Total</span>
@@ -387,7 +391,7 @@ export default function PricingPage() {
             </section>
 
             {/* FAQ */}
-            <section className="py-32 px-6 bg-slate-50 dark:bg-slate-950 border-t border-slate-100 dark:border-slate-900">
+            <section id="faq" className="py-32 px-6 bg-slate-50 dark:bg-slate-950 border-t border-slate-100 dark:border-slate-900">
                 <div className="max-w-4xl mx-auto">
                     <h2 className="text-5xl font-black mb-20 text-center text-slate-900 dark:text-white uppercase tracking-tighter">Dúvidas Frequentes</h2>
                     <div className="space-y-6">

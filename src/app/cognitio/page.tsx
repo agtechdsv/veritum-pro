@@ -5,7 +5,7 @@ import {
     BarChart3, Brain, Scale, Building2, ArrowRight,
     ChevronRight, Moon, Sun, PieChart, TrendingUp,
     ShieldCheck, Target, Zap, MousePointer2,
-    FileText, Presentation, LayoutDashboard, Search
+    FileText, Presentation, LayoutDashboard, Search, LogOut
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
@@ -35,7 +35,7 @@ export default function CognitioLanding() {
     if (!mounted) return null;
 
     return (
-        <div className="min-h-screen bg-white dark:bg-slate-950 transition-colors duration-300 font-sans selection:bg-blue-100 selection:text-blue-900">
+        <div id="top" className="min-h-screen bg-white dark:bg-slate-950 transition-colors duration-300 font-sans selection:bg-blue-100 selection:text-blue-900">
             {/* Navbar */}
             <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-900">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
@@ -49,7 +49,8 @@ export default function CognitioLanding() {
                     </div>
 
                     <div className="hidden md:flex items-center gap-8">
-                        <Link href="/" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-blue-600 transition-colors">Início</Link>
+                        <Link href="/" className="text-base font-bold text-branding-gradient hover:opacity-80 transition-all">Portal</Link>
+                        <a href="#top" className="text-sm font-bold text-slate-800 dark:text-white">Início</a>
                         <a href="#vision" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-blue-600 transition-colors">Visão</a>
                         <a href="#features" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-blue-600 transition-colors">Funcionalidades</a>
                         <a href="#ux" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-blue-600 transition-colors">Diferencial</a>
@@ -60,7 +61,7 @@ export default function CognitioLanding() {
                             {resolvedTheme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
                         </button>
                         <Link href="/?login=true" className="hidden sm:flex items-center gap-2 font-bold px-4 py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all">
-                            Entrar
+                            <LogOut size={18} /> Entrar
                         </Link>
                         <button
                             onClick={() => setIsAuthModalOpen(true)}

@@ -142,7 +142,7 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                     <div className="hidden md:flex items-center gap-8">
                         <a href="#" className="font-medium hover:text-indigo-600 transition-colors text-slate-800 dark:text-white">Início</a>
                         <a href="#modules" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">Módulos</a>
-                        <Link href="/pricing" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">Planos</Link>
+                        <a href="#pricing" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">Planos</a>
                         <a href="#about" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">Sobre</a>
                     </div>
 
