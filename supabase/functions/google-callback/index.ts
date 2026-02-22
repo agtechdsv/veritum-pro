@@ -23,11 +23,15 @@ serve(async (req) => {
         const clientId = Deno.env.get('GOOGLE_CLIENT_ID')
         const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET')
 
+        if (!clientId || !clientSecret) {
+            console.error('ERRO: GOOGLE_CLIENT_ID ou GOOGLE_CLIENT_SECRET não configurados no Supabase!');
+            throw new Error('Configuração incompleta (Secrets ausentes no Supabase).');
+        }
+
         // Hardcoded ou vindo do Deno.env para garantir consistência total com o Google Console
         const redirectUri = `https://rmcjxcxmzsinkjnolfek.supabase.co/functions/v1/google-callback`
 
         console.log(`Trocando código por token para o usuário: ${userId}`);
-        console.log(`Redirect URI usada: ${redirectUri}`);
 
         // 1. Trocar o código pelo token
         const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
@@ -35,8 +39,8 @@ serve(async (req) => {
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams({
                 code,
-                client_id: clientId!,
-                client_secret: clientSecret!,
+                client_id: clientId,
+                client_secret: clientSecret,
                 redirect_uri: redirectUri,
                 grant_type: 'authorization_code',
             }),
@@ -45,8 +49,8 @@ serve(async (req) => {
         const tokenData = await tokenResponse.json()
 
         if (!tokenResponse.ok) {
-            console.error('Erro na resposta do Google:', tokenData);
-            throw new Error(`Google OAuth Error: ${tokenData.error_description || tokenData.error || 'Bad Request'}`);
+            console.error('Erro detalhado do Google:', JSON.stringify(tokenData));
+            throw new Error(`Google OAuth Error: ${tokenData.error_description || tokenData.error || 'Falha no Token Exchange'}`);
         }
 
         const refreshToken = tokenData.refresh_token
