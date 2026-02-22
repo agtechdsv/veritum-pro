@@ -121,7 +121,6 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
         }
     }, [isOpen, mode]);
 
-    // Handle focus when toggling mode manually inside modal
     useEffect(() => {
         if (isOpen) {
             setTimeout(() => {
@@ -129,7 +128,21 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                 else if (currentMode === 'register') nameRef.current?.focus();
             }, 50);
         }
-    }, [currentMode, isOpen]);
+
+        const handleAuthMessage = (event: MessageEvent) => {
+            // Check origin for security
+            if (event.origin !== window.location.origin) return;
+
+            if (event.data?.type === 'AUTH_SUCCESS') {
+                setLoading(false);
+                onClose();
+                window.location.href = event.data.url;
+            }
+        };
+
+        window.addEventListener('message', handleAuthMessage);
+        return () => window.removeEventListener('message', handleAuthMessage);
+    }, [currentMode, isOpen, onClose]);
 
     const handleEmailAuth = async (e: React.FormEvent) => {
         e.preventDefault();

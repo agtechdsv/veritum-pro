@@ -33,13 +33,13 @@ export async function GET(request: Request) {
                 }
             }
 
-            // Return a script that closes the popup and redirects the main window
+            // Return a script that sends a message to the opener and closes the popup
             return new NextResponse(
                 `<html>
                     <body>
                         <script>
                             if (window.opener) {
-                                window.opener.location.href = '${origin}${next}';
+                                window.opener.postMessage({ type: 'AUTH_SUCCESS', url: '${origin}${next}' }, '${origin}');
                                 window.close();
                             } else {
                                 window.location.href = '${origin}${next}';
