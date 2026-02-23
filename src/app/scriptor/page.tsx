@@ -5,12 +5,13 @@ import {
     FileText, Sparkles, ShieldCheck, PenTool, ArrowRight,
     ChevronRight, Moon, Sun, Scale, BarChart3,
     Search, Lock, History, Download, Zap, MousePointer2,
-    CheckCircle2, AlertTriangle, Cloud, LogOut
+    CheckCircle2, AlertTriangle, Cloud, LogOut, Briefcase
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AuthModal } from '@/components/auth-modal';
+import { createMasterClient } from '@/lib/supabase/master';
 
 const Logo = () => (
     <div className="bg-indigo-600/10 p-2 rounded-lg flex items-center justify-center text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400">
@@ -23,9 +24,22 @@ export default function ScriptorLanding() {
     const router = useRouter();
     const [mounted, setMounted] = useState(false);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+    const [hasAccess, setHasAccess] = useState(false);
+    const [currentUser, setCurrentUser] = useState<any>(null);
 
     useEffect(() => {
         setMounted(true);
+        const savedAccess = localStorage.getItem('veritum_access');
+        if (savedAccess === 'granted') {
+            setHasAccess(true);
+        }
+
+        const supabase = createMasterClient();
+        const fetchUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            setCurrentUser(user);
+        };
+        fetchUser();
     }, []);
 
     const toggleTheme = () => {
@@ -60,15 +74,23 @@ export default function ScriptorLanding() {
                         <button onClick={toggleTheme} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all text-slate-600 dark:text-slate-400">
                             {resolvedTheme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
                         </button>
-                        <Link href="/?login=true" className="hidden sm:flex items-center gap-2 font-bold px-4 py-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all">
-                            <LogOut size={18} /> Entrar
-                        </Link>
-                        <button
-                            onClick={() => setIsAuthModalOpen(true)}
-                            className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold shadow-xl shadow-indigo-600/20 hover:scale-105 transition-all text-sm"
-                        >
-                            Teste Grátis
-                        </button>
+                        {currentUser ? (
+                            <Link href="/veritum" className="hidden sm:flex items-center gap-2 font-bold px-4 py-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all">
+                                <LogOut size={18} /> Painel
+                            </Link>
+                        ) : hasAccess ? (
+                            <Link href="/?login=true" className="hidden sm:flex items-center gap-2 font-bold px-4 py-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all">
+                                <LogOut size={18} /> Entrar
+                            </Link>
+                        ) : null}
+                        {(hasAccess || currentUser) && (
+                            <button
+                                onClick={() => setIsAuthModalOpen(true)}
+                                className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold shadow-xl shadow-indigo-600/20 hover:scale-105 transition-all text-sm"
+                            >
+                                Teste Grátis
+                            </button>
+                        )}
                     </div>
                 </div>
             </nav>
@@ -89,12 +111,14 @@ export default function ScriptorLanding() {
                             O fim da "Síndrome da Página em Branco". Transforme horas de redação e revisão em minutos com seu co-piloto jurídico alimentado por IA.
                         </p>
                         <div className="flex flex-col sm:flex-row items-center gap-4">
-                            <button
-                                onClick={() => setIsAuthModalOpen(true)}
-                                className="w-full sm:w-auto bg-indigo-600 text-white px-10 py-4 rounded-[1.5rem] font-bold text-lg shadow-2xl shadow-indigo-600/40 hover:scale-105 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
-                            >
-                                Começar Teste Grátis <ArrowRight size={20} />
-                            </button>
+                            {(hasAccess || currentUser) && (
+                                <button
+                                    onClick={() => setIsAuthModalOpen(true)}
+                                    className="w-full sm:w-auto bg-indigo-600 text-white px-10 py-4 rounded-[1.5rem] font-bold text-lg shadow-2xl shadow-indigo-600/40 hover:scale-105 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
+                                >
+                                    Começar Teste Grátis <ArrowRight size={20} />
+                                </button>
+                            )}
                             <a href="#vision" className="w-full sm:w-auto px-10 py-4 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 font-bold text-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-center text-slate-600 dark:text-slate-300">
                                 Saiba mais
                             </a>
@@ -306,20 +330,22 @@ export default function ScriptorLanding() {
                     <p className="text-xl text-slate-500 dark:text-slate-400 mb-12 leading-relaxed max-w-2xl mx-auto font-medium">
                         Seja operando sozinho como um Super ChatGPT Jurídico ou integrado perfeitamente ao Ecossistema Veritum, o Scriptor PRO é a vantagem injusta do seu escritório.
                     </p>
-                    <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-                        <button
-                            onClick={() => setIsAuthModalOpen(true)}
-                            className="w-full sm:w-auto bg-indigo-600 text-white px-12 py-5 rounded-[2.5rem] font-black text-xl shadow-2xl shadow-indigo-600/40 hover:scale-105 hover:bg-indigo-700 transition-all cursor-pointer"
-                        >
-                            Começar Agora - É Grátis
-                        </button>
-                        <Link
-                            href="/pricing"
-                            className="w-full sm:w-auto px-12 py-5 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 font-bold text-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
-                        >
-                            Ver Planos de Assinatura
-                        </Link>
-                    </div>
+                    {(hasAccess || currentUser) && (
+                        <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+                            <button
+                                onClick={() => setIsAuthModalOpen(true)}
+                                className="w-full sm:w-auto bg-indigo-600 text-white px-12 py-5 rounded-[2.5rem] font-black text-xl shadow-2xl shadow-indigo-600/40 hover:scale-105 hover:bg-indigo-700 transition-all cursor-pointer"
+                            >
+                                Começar Agora - É Grátis
+                            </button>
+                            <Link
+                                href="/pricing"
+                                className="w-full sm:w-auto px-12 py-5 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 font-bold text-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
+                            >
+                                Ver Planos de Assinatura
+                            </Link>
+                        </div>
+                    )}
                     <p className="mt-8 text-sm text-slate-400 font-bold uppercase tracking-widest">
                         Sem cartão de crédito • Configuração rápida
                     </p>

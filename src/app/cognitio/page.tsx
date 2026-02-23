@@ -5,12 +5,13 @@ import {
     BarChart3, Brain, Scale, Building2, ArrowRight,
     ChevronRight, Moon, Sun, PieChart, TrendingUp,
     ShieldCheck, Target, Zap, MousePointer2,
-    FileText, Presentation, LayoutDashboard, Search, LogOut
+    FileText, Presentation, LayoutDashboard, Search, LogOut, Briefcase
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AuthModal } from '@/components/auth-modal';
+import { createMasterClient } from '@/lib/supabase/master';
 
 const Logo = () => (
     <div className="bg-blue-600/10 p-2 rounded-lg flex items-center justify-center text-blue-600 dark:bg-blue-500/20 dark:text-blue-400">
@@ -23,9 +24,22 @@ export default function CognitioLanding() {
     const router = useRouter();
     const [mounted, setMounted] = useState(false);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+    const [hasAccess, setHasAccess] = useState(false);
+    const [currentUser, setCurrentUser] = useState<any>(null);
 
     useEffect(() => {
         setMounted(true);
+        const savedAccess = localStorage.getItem('veritum_access');
+        if (savedAccess === 'granted') {
+            setHasAccess(true);
+        }
+
+        const supabase = createMasterClient();
+        const fetchUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            setCurrentUser(user);
+        };
+        fetchUser();
     }, []);
 
     const toggleTheme = () => {
@@ -60,15 +74,23 @@ export default function CognitioLanding() {
                         <button onClick={toggleTheme} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all text-slate-600 dark:text-slate-400">
                             {resolvedTheme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
                         </button>
-                        <Link href="/?login=true" className="hidden sm:flex items-center gap-2 font-bold px-4 py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all">
-                            <LogOut size={18} /> Entrar
-                        </Link>
-                        <button
-                            onClick={() => setIsAuthModalOpen(true)}
-                            className="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold shadow-xl shadow-blue-600/20 hover:scale-105 transition-all text-sm"
-                        >
-                            Agendar Demonstração
-                        </button>
+                        {currentUser ? (
+                            <Link href="/veritum" className="hidden sm:flex items-center gap-2 font-bold px-4 py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all">
+                                <LogOut size={18} /> Painel
+                            </Link>
+                        ) : hasAccess ? (
+                            <Link href="/?login=true" className="hidden sm:flex items-center gap-2 font-bold px-4 py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all">
+                                <LogOut size={18} /> Entrar
+                            </Link>
+                        ) : null}
+                        {(hasAccess || currentUser) && (
+                            <button
+                                onClick={() => setIsAuthModalOpen(true)}
+                                className="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold shadow-xl shadow-blue-600/20 hover:scale-105 transition-all text-sm"
+                            >
+                                Agendar Demonstração
+                            </button>
+                        )}
                     </div>
                 </div>
             </nav>
@@ -88,12 +110,14 @@ export default function CognitioLanding() {
                             Advocacia guiada por dados. Transforme dados complexos em previsibilidade financeira e decisões de alto impacto para seu departamento ou banca.
                         </p>
                         <div className="flex flex-col sm:flex-row items-center gap-4">
-                            <button
-                                onClick={() => setIsAuthModalOpen(true)}
-                                className="w-full sm:w-auto bg-blue-600 text-white px-10 py-4 rounded-[1.5rem] font-bold text-lg shadow-2xl shadow-blue-600/40 hover:scale-105 hover:bg-blue-700 transition-all flex items-center justify-center gap-2 uppercase tracking-tight"
-                            >
-                                Agendar Demonstração <ArrowRight size={20} />
-                            </button>
+                            {(hasAccess || currentUser) && (
+                                <button
+                                    onClick={() => setIsAuthModalOpen(true)}
+                                    className="w-full sm:w-auto bg-blue-600 text-white px-10 py-4 rounded-[1.5rem] font-bold text-lg shadow-2xl shadow-blue-600/40 hover:scale-105 hover:bg-blue-700 transition-all flex items-center justify-center gap-2 uppercase tracking-tight"
+                                >
+                                    Agendar Demonstração <ArrowRight size={20} />
+                                </button>
+                            )}
                             <a href="#vision" className="w-full sm:w-auto px-10 py-4 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 font-bold text-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-center text-slate-600 dark:text-slate-300">
                                 Saiba mais
                             </a>
@@ -305,20 +329,22 @@ export default function CognitioLanding() {
                     <p className="text-xl text-slate-500 dark:text-slate-400 mb-12 leading-relaxed max-w-2xl mx-auto font-medium">
                         Ideal para bancas estruturadas e corporações que buscam excelência, previsibilidade e rentabilidade em sua operação jurídica.
                     </p>
-                    <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-                        <button
-                            onClick={() => setIsAuthModalOpen(true)}
-                            className="w-full sm:w-auto bg-blue-600 text-white px-12 py-5 rounded-[2.5rem] font-black text-xl shadow-2xl shadow-blue-600/40 hover:scale-105 hover:bg-blue-700 transition-all cursor-pointer uppercase tracking-tight"
-                        >
-                            Agendar Demonstração Exclusiva
-                        </button>
-                        <Link
-                            href="/pricing"
-                            className="w-full sm:w-auto px-12 py-5 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 font-bold text-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-sans uppercase tracking-tight"
-                        >
-                            Ver Planos de Assinatura
-                        </Link>
-                    </div>
+                    {(hasAccess || currentUser) && (
+                        <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+                            <button
+                                onClick={() => setIsAuthModalOpen(true)}
+                                className="w-full sm:w-auto bg-blue-600 text-white px-12 py-5 rounded-[2.5rem] font-black text-xl shadow-2xl shadow-blue-600/40 hover:scale-105 hover:bg-blue-700 transition-all cursor-pointer uppercase tracking-tight"
+                            >
+                                Agendar Demonstração Exclusiva
+                            </button>
+                            <Link
+                                href="/pricing"
+                                className="w-full sm:w-auto px-12 py-5 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 font-bold text-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-sans uppercase tracking-tight"
+                            >
+                                Ver Planos de Assinatura
+                            </Link>
+                        </div>
+                    )}
                 </div>
             </section>
 
