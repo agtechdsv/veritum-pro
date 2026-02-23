@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { User, UserPreferences } from '@/types';
-import { Database, Key, Globe, Layout, Save, User as UserIcon, ShieldCheck, Calendar, Check, AlertCircle } from 'lucide-react';
+import { Database, Key, Globe, Layout, Save, User as UserIcon, ShieldCheck, AlertCircle } from 'lucide-react';
 import { createMasterClient } from '@/lib/supabase/master';
 
 interface Props {
@@ -17,49 +17,7 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdateUser, onUpda
     const [saving, setSaving] = useState(false);
     const supabase = createMasterClient();
 
-    useEffect(() => {
-        const handleMessage = (event: MessageEvent) => {
-            if (event.data.type === 'GOOGLE_AUTH_SUCCESS') {
-                // Atualiza o estado local para mostrar como conectado
-                setFormPrefs(prev => ({ ...prev, google_refresh_token: 'connected_placeholder' }));
-                onUpdatePrefs({ ...preferences, google_refresh_token: 'connected_placeholder' });
-            }
-            if (event.data.type === 'GOOGLE_AUTH_ERROR') {
-                console.error('Google Auth Error:', event.data.error);
-            }
-        };
 
-        window.addEventListener('message', handleMessage);
-        return () => window.removeEventListener('message', handleMessage);
-    }, [preferences, onUpdatePrefs]);
-
-    const handleConnectGoogle = () => {
-        const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-
-        // A redirectUri DEVE ser a URL da Edge Function, não do localhost
-        const redirectUri = `${supabaseUrl}/functions/v1/google-callback`;
-
-        console.log('--- Google Auth Debug ---');
-        console.log('Client ID:', clientId);
-        console.log('Redirect URI:', redirectUri);
-
-        const scope = 'https://www.googleapis.com/auth/calendar';
-
-        if (!clientId) {
-            console.error('ERRO: NEXT_PUBLIC_GOOGLE_CLIENT_ID não encontrado no ambiente!');
-            return;
-        }
-
-        const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}&access_type=offline&prompt=consent&state=${user.id}`;
-
-        const width = 500;
-        const height = 600;
-        const left = window.screenX + (window.outerWidth - width) / 2;
-        const top = window.screenY + (window.outerHeight - height) / 2;
-
-        window.open(authUrl, 'google-auth', `width=${width},height=${height},left=${left},top=${top}`);
-    };
 
     const handleSave = async () => {
         setSaving(true);
@@ -196,50 +154,6 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdateUser, onUpda
                     </div>
                 </section>
 
-                {/* Integrations Section */}
-                <section className="bg-white dark:bg-slate-900 p-8 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
-                    <h3 className="text-xl font-bold mb-6 flex items-center gap-2 dark:text-white text-slate-800">
-                        <Calendar size={20} className="text-rose-500" /> Integrações Externas
-                    </h3>
-                    <div className="space-y-6">
-                        <div className="p-6 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 transition-all">
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center shadow-sm border border-slate-100 dark:border-slate-800">
-                                        <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
-                                    </div>
-                                    <div>
-                                        <p className="font-bold text-slate-800 dark:text-white">Google Calendar</p>
-                                        <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest">Automação de Meet</p>
-                                    </div>
-                                </div>
-                                {preferences.google_refresh_token ? (
-                                    <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 text-emerald-500 rounded-full text-[10px] font-black uppercase tracking-widest">
-                                        <Check size={12} /> Conectado
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-200 dark:bg-slate-800 text-slate-500 rounded-full text-[10px] font-black uppercase tracking-widest">
-                                        Pendente
-                                    </div>
-                                )}
-                            </div>
-
-                            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mb-6 leading-relaxed">
-                                Conecte sua agenda para que o Veritum PRO possa gerar links do Google Meet automaticamente nos seus agendamentos.
-                            </p>
-
-                            <button
-                                onClick={handleConnectGoogle}
-                                className={`w-full py-4 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${preferences.google_refresh_token
-                                    ? 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'
-                                    : 'bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 shadow-sm'
-                                    }`}
-                            >
-                                {preferences.google_refresh_token ? 'Alterar Conta Google' : 'Conectar Agora'}
-                            </button>
-                        </div>
-                    </div>
-                </section>
 
                 {/* BYODB Config */}
                 <section className="md:col-span-2 bg-indigo-900 text-white p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden transition-all hover:shadow-indigo-500/30">

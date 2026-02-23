@@ -85,35 +85,12 @@ export default function SchedulingManagement() {
         setSendingInvite(true); // Reusa o estado de loading para a geração do meet
 
         try {
-            // 1. Gerar Link do Google Meet
-            const payload = {
-                calendarId: user?.email || user?.id,
-                summary: `Demonstração Veritum PRO - ${reqToSchedule.full_name}`,
-                description: `Reunião estratégica para apresentação do ecossistema Veritum Pro.\nCliente: ${reqToSchedule.full_name}\nEquipe: ${reqToSchedule.team_size}`,
-                start: date.toISOString(),
-                end: addMinutes(date, 30).toISOString(),
-                attendees: [reqToSchedule.email],
-                userId: user?.id
-            };
-            console.log('Invocando create-meeting com payload:', payload);
-
-            const { data: meetData, error: meetError } = await supabase.functions.invoke('create-meeting', {
-                body: payload
-            });
-
-            const meetingLink = meetData?.meetingLink;
-
-            if (meetError || !meetingLink) {
-                console.warn('Google Meet link generation failed, proceeding with manual link if available:', meetError);
-            }
-
-            // 2. Atualizar no Banco
+            // Atualizar no Banco
             const { error } = await supabase
                 .from('demo_requests')
                 .update({
                     scheduled_at: date.toISOString(),
                     status: 'scheduled',
-                    meeting_link: meetingLink || reqToSchedule.meeting_link // Prioriza o gerado
                 })
                 .eq('id', requestId);
 
@@ -122,7 +99,7 @@ export default function SchedulingManagement() {
                 setIsSchedulingConfirmOpen(false);
                 setSchedulingConfirmData(null);
                 fetchRequests();
-                toast.success('Agendamento confirmado com Link do Meet gerado!');
+                toast.success('Agendamento confirmado!');
             } else {
                 toast.error('Erro ao confirmar agendamento.');
             }
@@ -324,12 +301,6 @@ export default function SchedulingManagement() {
         } finally {
             setSendingInvite(false);
         }
-    };
-
-    const isSameSlot = (d1: Date, d2: Date) => {
-        return isSameDay(d1, d2) &&
-            d1.getHours() === d2.getHours() &&
-            (Math.floor(d1.getMinutes() / 30) === Math.floor(d2.getMinutes() / 30));
     };
 
     const filteredLeads = requests.filter(r => {
@@ -892,7 +863,7 @@ function ScheduleConfirmationModal({ isOpen, data, sendingInvite, onClose, onCon
                                 disabled={sendingInvite}
                                 className="flex-1 px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white bg-indigo-600 hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-500/30 disabled:opacity-50 disabled:cursor-wait"
                             >
-                                {sendingInvite ? 'Gerando Meet...' : 'Sim, Confirmar'}
+                                {sendingInvite ? 'Salvando...' : 'Sim, Confirmar'}
                             </button>
                         </div>
                     </motion.div>
