@@ -7,6 +7,7 @@ export enum ModuleId {
     VALOREM = 'valorem',
     COGNITIO = 'cognitio',
     VOX = 'vox',
+    INTELLIGENCE = 'intelligence',
     SETTINGS = 'settings',
     USERS = 'users',
     SUITES = 'suites',
@@ -16,7 +17,33 @@ export enum ModuleId {
     DASHBOARD_MASTER = 'dashboard_master',
     DASHBOARD_ROOT = 'dashboard_root',
     SCHEDULING = 'scheduling',
-    EMAIL_CONFIG = 'email_config'
+    EMAIL_CONFIG = 'email_config',
+    ACCESS_GROUPS = 'access_groups',
+    TEAM = 'team',
+    PERSONS = 'persons'
+}
+
+export interface AccessGroup {
+    id: string;
+    name: string;
+    admin_id: string;
+    created_at?: string;
+}
+
+export interface GroupPermission {
+    id: string;
+    group_id: string;
+    feature_id: string;
+    can_access: boolean;
+    created_at?: string;
+}
+
+export interface GroupTemplate {
+    id: string;
+    name: string;
+    description: string;
+    default_features: string[]; // Array of feature IDs
+    created_at?: string;
 }
 
 export interface Plan {
@@ -70,7 +97,11 @@ export interface User {
     id: string;
     name: string;
     username: string;
-    role: 'Master' | 'Administrador' | 'Operador';
+    role: 'Master' | 'Administrador' | 'Operador' |
+    'Sócio-Administrador' | 'Advogado Sênior / Coordenador' |
+    'Advogado Associado / Júnior' | 'Estagiário / Paralegal' |
+    'Departamento Financeiro / Faturamento' | 'Cliente (Acesso Externo B2B2C)' |
+    'Controladoria Jurídica (Legal Ops)' | 'Secretariado / Recepção';
     active: boolean;
     avatar_url?: string;
     email?: string;
@@ -78,6 +109,7 @@ export interface User {
     phone?: string;
     parent_user_id?: string;
     plan_id?: string;
+    access_group_id?: string;
 }
 
 export interface UserPreferences {
@@ -118,7 +150,169 @@ export interface Suite {
 export interface Lawsuit {
     id: string;
     cnj_number: string;
-    client_name: string;
-    status: 'Draft' | 'Active' | 'Closed' | 'Archived';
+    case_title?: string;
+    author_id?: string;
+    defendant_id?: string;
+    responsible_lawyer_id?: string;
+    status: 'Ativo' | 'Suspenso' | 'Arquivado' | 'Encerrado';
+    sphere?: string;
+    court?: string;
+    chamber?: string;
+    city?: string;
+    state?: string;
     value: number;
+}
+
+export interface TeamMember {
+    id: string;
+    full_name: string;
+    email: string;
+    phone?: string;
+    role: 'Sócio' | 'Advogado Associado' | 'Estagiário' | 'Paralegal' | 'Financeiro';
+    oab_number?: string;
+    is_active: boolean;
+    created_at?: string;
+}
+
+export interface Person {
+    id: string;
+    person_type: 'Cliente' | 'Reclamado' | 'Testemunha' | 'Preposto' | 'Advogado Adverso';
+    full_name: string;
+    document: string;
+    email?: string;
+    phone?: string;
+    rg?: string;
+    legal_data?: {
+        marital_status?: string;
+        profession?: string;
+        ctps?: string;
+        pis?: string;
+        history?: string;
+    };
+    address?: {
+        cep?: string;
+        street?: string;
+        number?: string;
+        neighborhood?: string;
+        city?: string;
+        state?: string;
+    };
+}
+
+export interface Task {
+    id: string;
+    title: string;
+    description?: string;
+    lawsuit_id?: string;
+    responsible_id?: string;
+    status: 'A Fazer' | 'Em Andamento' | 'Concluído' | 'Atrasado';
+    priority: 'Baixa' | 'Média' | 'Alta' | 'Urgente';
+    due_date: string;
+}
+
+export interface MonitoringAlert {
+    id: string;
+    user_id?: string;
+    title: string;
+    term: string;
+    alert_type: 'OAB' | 'CNJ' | 'Keyword' | 'Company' | 'Person';
+    is_active: boolean;
+    created_at?: string;
+}
+
+export interface Clipping {
+    id: string;
+    alert_id: string;
+    source?: string;
+    content: string;
+    sentiment: 'Positivo' | 'Negativo' | 'Neutro';
+    score?: number;
+    url?: string;
+    lawsuit_id?: string;
+    captured_at?: string;
+}
+
+export interface DocumentTemplate {
+    id: string;
+    title: string;
+    category?: string;
+    base_prompt: string;
+    created_at?: string;
+}
+
+export interface LegalDocument {
+    id: string;
+    title: string;
+    content?: string;
+    lawsuit_id?: string;
+    author_id?: string;
+    template_id?: string;
+    version: number;
+    created_at?: string;
+    updated_at?: string;
+}
+
+export interface FinancialTransaction {
+    id: string;
+    user_id?: string;
+    title: string;
+    amount: number;
+    entry_type: 'Credit' | 'Debit';
+    category?: string;
+    transaction_date: string;
+    lawsuit_id?: string;
+    person_id?: string;
+    status: 'Pago' | 'Pendente' | 'Cancelado';
+    created_at?: string;
+}
+
+export interface KnowledgeArticle {
+    id: string;
+    title: string;
+    content: string;
+    category?: string;
+    tags?: string[];
+    author_id?: string;
+    created_at?: string;
+}
+
+export interface HistoricalOutcome {
+    id: string;
+    judge_name?: string;
+    court?: string;
+    case_type?: string;
+    outcome: 'Procedente' | 'Parcialmente Procedente' | 'Improcedente';
+    decision_date?: string;
+}
+
+export interface Chat {
+    id: string;
+    person_id: string;
+    lawsuit_id?: string;
+    status: 'Aberto' | 'Encerrado' | 'Arquivado';
+    created_at?: string;
+    updated_at?: string;
+}
+
+export interface ChatMessage {
+    id: string;
+    chat_id: string;
+    sender_id?: string;
+    sender_type: 'Lawyer' | 'Client' | 'AI';
+    content: string;
+    is_read: boolean;
+    created_at?: string;
+}
+export interface GoldenAlert {
+    id: string;
+    clipping_id: string;
+    matched_knowledge_id?: string;
+    matched_lawsuit_id?: string;
+    match_score: number;
+    intelligence_type: 'Opportunity' | 'Risk' | 'Similar Success';
+    priority?: 'High' | 'Medium' | 'Low';
+    reasoning?: string;
+    status: 'unread' | 'dismissed' | 'actioned';
+    created_at?: string;
+    updated_at?: string;
 }

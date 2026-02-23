@@ -50,4 +50,16 @@ export class GeminiService {
         }
         return res.json();
     }
+
+    async runGoldenIntelligence(clippingId: string) {
+        const res = await fetch('/api/ai/match', {
+            method: 'POST',
+            body: JSON.stringify({ clippingId })
+        });
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.error || 'Erro na inteligência');
+        }
+        return res.json();
+    }
 }

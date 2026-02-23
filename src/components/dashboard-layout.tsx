@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ModuleId, User, UserPreferences, Credentials } from '@/types';
+import { ModuleId, User, UserPreferences, Credentials, GroupPermission, Feature } from '@/types';
 // Modules ported
 import Sentinel from './modules/sentinel';
 import Nexus from './modules/nexus';
@@ -13,16 +13,21 @@ import Vox from './modules/vox';
 import UserSettings from './modules/user-settings';
 import UserManagement from './modules/user-management';
 import PlanManagement from './modules/plan-management';
+import TeamManagement from './modules/team-management';
+import PersonManagement from './modules/person-management';
+import IntelligenceHub from './modules/intelligence-hub';
 import { createMasterClient } from '@/lib/supabase/master';
 import { Tooltip } from './ui/tooltip';
 import { EmailSettingsManager } from './modules/email-config';
+import AccessManagement from './modules/access-management';
+import TrialCountdown from './shared/trial-countdown';
 
 import {
-    ShieldAlert, GitBranch, FileEdit, DollarSign, BarChart3,
-    MessageSquare, LogOut, Settings, Menu, X, Bell, Search,
-    Camera, Scale, Check, Users, Crown, ChevronRight,
-    PanelLeftClose, PanelLeft, PanelLeftOpen, Sun, Moon,
-    Calendar as CalendarIcon, Mail
+    LayoutDashboard, Scale, FileEdit, DollarSign, BarChart3,
+    MessageSquare, ShieldAlert, Users, Settings, LogOut,
+    PanelLeftClose, PanelLeftOpen, Sun, Moon, Bell, Search,
+    ChevronRight, Crown, Camera, Check, User as UserIcon,
+    Calendar as CalendarIcon, Mail, Shield, GitBranch, Key, Zap
 } from 'lucide-react';
 import SuiteManagement from './modules/suite-management';
 import { useTheme } from 'next-themes';
@@ -56,6 +61,8 @@ const Logo = () => (
 export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModule, activeSuites = [], planPermissions = [], onModuleChange, onLogout, onUpdateUser, onUpdatePrefs, children }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [pendingAvatar, setPendingAvatar] = useState<string | null>(null);
+    const [permissions, setPermissions] = useState<GroupPermission[]>([]);
+    const [allFeatures, setAllFeatures] = useState<Feature[]>([]);
     const { theme, setTheme } = useTheme();
     const hasSyncedTheme = React.useRef(false);
 
@@ -69,6 +76,27 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
         }
     }, [preferences?.theme, theme, setTheme]);
 
+    // Fetch Dynamic Permissions (RBAC)
+    React.useEffect(() => {
+        const fetchRBAC = async () => {
+            const supabase = createMasterClient();
+
+            // Always fetch features mapping for filtering logic
+            const { data: featData } = await supabase.from('features').select('id, suite_id');
+            if (featData) setAllFeatures(featData as any);
+
+            if (user.role === 'Master' || !user.access_group_id) return;
+
+            const { data: permData } = await supabase
+                .from('group_permissions')
+                .select('*')
+                .eq('group_id', user.access_group_id);
+
+            if (permData) setPermissions(permData);
+        };
+        fetchRBAC();
+    }, [user.access_group_id, user.role]);
+
     const baseSuiteItems = [
         { id: ModuleId.NEXUS, label: 'Nexus', icon: GitBranch, color: 'text-indigo-500' },
         { id: ModuleId.SCRIPTOR, label: 'Scriptor', icon: FileEdit, color: 'text-amber-500' },
@@ -76,6 +104,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
         { id: ModuleId.COGNITIO, label: 'Cognitio', icon: BarChart3, color: 'text-cyan-500' },
         { id: ModuleId.VOX, label: 'Vox Clientis', icon: MessageSquare, color: 'text-violet-500' },
         { id: ModuleId.SENTINEL, label: 'Sentinel', icon: ShieldAlert, color: 'text-rose-500' },
+        { id: ModuleId.INTELLIGENCE, label: 'Intelligence', icon: Zap, color: 'text-amber-500' },
     ];
 
     // Key Normalization for matching DB keys (e.g. SCRIPTOR_KEY) with internal IDs
@@ -99,16 +128,32 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
     // fallback to baseSuiteItems so the menu never disappears.
     const fallbackSuites = syncedSuites.length > 0 ? syncedSuites : baseSuiteItems;
 
-    // PLAN PERMISSIONS FILTER: Only for non-Master users
+    // PLAN PERMISSIONS FILTER: Only for non-Master users + Intern Safety (RBAC)
     const suiteItems = user.role === 'Master'
         ? fallbackSuites
         : fallbackSuites.filter(bs => {
             const normalizedKey = normalize(bs.id);
+            // Block Valorem for Estagiários (Legacy Core Rule)
+            if (normalizedKey === 'valorem' && user.role === 'Estagiário / Paralegal') return false;
+
+            // DYNAMIC RBAC: Check if user has an access group
+            if (user.access_group_id) {
+                // Find Suite UUID to match with features
+                const suiteData = activeSuites.find(as => normalize(as.suite_key) === normalizedKey);
+                if (!suiteData) return false;
+
+                // User must have at least one feature enabled in this suite
+                const suiteFeatureIds = allFeatures.filter(f => f.suite_id === suiteData.id).map(f => f.id);
+                return permissions.some(p => suiteFeatureIds.includes(p.feature_id) && p.can_access);
+            }
+
+            // Fallback to Plan Permissions for legacy/no-group users
             return planPermissions.some(pp => normalize(pp.suite_key) === normalizedKey);
         });
 
     const adminItems = [
         { id: ModuleId.USERS, label: 'Gestão de Usuários', icon: Users, color: 'text-slate-500' },
+        { id: ModuleId.ACCESS_GROUPS, label: 'Grupos de Acesso', icon: Shield, color: 'text-indigo-600' },
         { id: ModuleId.SETTINGS, label: 'Configurações', icon: Settings, color: 'text-slate-500' },
     ];
 
@@ -117,6 +162,8 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
         { id: ModuleId.PLANS, label: 'Gestão de Planos', icon: DollarSign, color: 'text-indigo-500' },
         { id: ModuleId.SCHEDULING, label: 'Agendamentos', icon: CalendarIcon, color: 'text-rose-500' },
         { id: ModuleId.EMAIL_CONFIG, label: 'Gestão de E-mails', icon: Mail, color: 'text-cyan-500' },
+        { id: ModuleId.TEAM, label: 'Gestão de Equipe', icon: Users, color: 'text-indigo-600' },
+        { id: ModuleId.PERSONS, label: 'CRM de Clientes', icon: UserIcon, color: 'text-emerald-600' },
     ];
 
     const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -164,14 +211,25 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
             case 'sentinel': return <Sentinel credentials={creds} permissions={planPermissions.find(p => normalize(p.suite_key) === 'sentinel')} />;
             case 'nexus': return <Nexus credentials={creds} permissions={planPermissions.find(p => normalize(p.suite_key) === 'nexus')} />;
             case 'scriptor': return <Scriptor credentials={creds} permissions={planPermissions.find(p => normalize(p.suite_key) === 'scriptor')} />;
-            case 'valorem': return <Valorem credentials={creds} permissions={planPermissions.find(p => normalize(p.suite_key) === 'valorem')} />;
+            case 'valorem':
+                if (user.role === 'Estagiário / Paralegal') return <div className="flex items-center justify-center h-full text-rose-500 font-bold p-12 bg-rose-50 dark:bg-rose-950/20 rounded-3xl border border-rose-200">Acesso Negado: Estagiários não possuem permissão para acessar o módulo financeiro.</div>;
+                return <Valorem credentials={creds} permissions={planPermissions.find(p => normalize(p.suite_key) === 'valorem')} />;
             case 'cognitio': return <Cognitio credentials={creds} permissions={planPermissions.find(p => normalize(p.suite_key) === 'cognitio')} />;
             case 'vox': return <Vox credentials={creds} permissions={planPermissions.find(p => normalize(p.suite_key) === 'vox')} />;
+            case 'intelligence': return <IntelligenceHub credentials={creds} permissions={planPermissions.find(p => normalize(p.suite_key) === 'intelligence')} />;
             case 'settings': return <UserSettings user={user} preferences={preferences} onUpdateUser={onUpdateUser} onUpdatePrefs={onUpdatePrefs} />;
             case 'users': return <UserManagement currentUser={user} />;
             case 'suites': return <SuiteManagement credentials={creds} />;
             case 'plans': return <PlanManagement credentials={creds} />;
             case 'scheduling': return <SchedulingManagement />;
+            case ModuleId.EMAIL_CONFIG:
+                return <EmailSettingsManager />;
+            case ModuleId.ACCESS_GROUPS:
+                return <AccessManagement currentUser={user} />;
+            case ModuleId.TEAM:
+                return <TeamManagement credentials={creds} />;
+            case ModuleId.PERSONS:
+                return <PersonManagement credentials={creds} />;
             case 'dashboard_suites': return <SuiteDashboard items={suiteItems} onModuleChange={onModuleChange} />;
             case 'dashboard_admin': return <AdminDashboard items={adminItems} onModuleChange={onModuleChange} />;
             case 'dashboard_master': return <MasterDashboard items={masterItems} onModuleChange={onModuleChange} />;
@@ -362,6 +420,12 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                     )}
                 </nav>
 
+                {/* 💎 TRIAL COUNTDOWN */}
+                <TrialCountdown
+                    userId={user.id}
+                    isSidebarOpen={isSidebarOpen}
+                />
+
             </aside>
 
             {/* Main Content Area */}
@@ -496,6 +560,6 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                     </div>
                 </div>
             </main>
-        </div>
+        </div >
     );
 };

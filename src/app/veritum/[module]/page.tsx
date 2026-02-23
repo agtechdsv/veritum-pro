@@ -17,9 +17,13 @@ import SchedulingManagement from '@/components/modules/scheduling-management';
 import SuiteDashboard from '@/components/modules/dashboards/suite-dashboard';
 import AdminDashboard from '@/components/modules/dashboards/admin-dashboard';
 import MasterDashboard from '@/components/modules/dashboards/master-dashboard';
+import AccessManagement from '@/components/modules/access-management';
+import IntelligenceHub from '@/components/modules/intelligence-hub';
+import TeamManagement from '@/components/modules/team-management';
+import PersonManagement from '@/components/modules/person-management';
 import { EmailSettingsManager } from '@/components/modules/email-config';
 import { ModuleId } from '@/types';
-import { GitBranch, FileEdit, DollarSign, BarChart3, MessageSquare, ShieldAlert, Users, Settings, Crown, Calendar as CalendarIcon, Mail } from 'lucide-react';
+import { GitBranch, FileEdit, DollarSign, BarChart3, MessageSquare, ShieldAlert, Users, Settings, Crown, Calendar as CalendarIcon, Mail, Shield, Zap, User as UserIcon } from 'lucide-react';
 
 export default function DynamicModulePage() {
     const { module } = useParams();
@@ -38,6 +42,7 @@ export default function DynamicModulePage() {
         { id: ModuleId.COGNITIO, label: 'Cognitio', icon: BarChart3, color: 'text-cyan-500' },
         { id: ModuleId.VOX, label: 'Vox Clientis', icon: MessageSquare, color: 'text-violet-500' },
         { id: ModuleId.SENTINEL, label: 'Sentinel', icon: ShieldAlert, color: 'text-rose-500' },
+        { id: ModuleId.INTELLIGENCE, label: 'Intelligence', icon: Zap, color: 'text-amber-500' },
     ];
 
     // Sync order and texts with activeSuites from DB
@@ -65,6 +70,7 @@ export default function DynamicModulePage() {
 
     const adminItems = [
         { id: ModuleId.USERS, label: 'Gestão de Usuários', icon: Users, color: 'text-slate-500' },
+        { id: ModuleId.ACCESS_GROUPS, label: 'Grupos de Acesso', icon: Shield, color: 'text-indigo-600' },
         { id: ModuleId.SETTINGS, label: 'Configurações', icon: Settings, color: 'text-slate-500' },
     ];
 
@@ -73,6 +79,8 @@ export default function DynamicModulePage() {
         { id: ModuleId.PLANS, label: 'Gestão de Planos', icon: DollarSign, color: 'text-indigo-500' },
         { id: ModuleId.SCHEDULING, label: 'Agendamentos', icon: CalendarIcon, color: 'text-rose-500' },
         { id: ModuleId.EMAIL_CONFIG, label: 'Gestão de E-mails', icon: Mail, color: 'text-cyan-500' },
+        { id: ModuleId.TEAM, label: 'Gestão de Equipe', icon: Users, color: 'text-indigo-600' },
+        { id: ModuleId.PERSONS, label: 'CRM de Clientes', icon: UserIcon, color: 'text-emerald-600' },
     ];
 
     switch (moduleToRender) {
@@ -82,12 +90,16 @@ export default function DynamicModulePage() {
         case 'valorem': return <Valorem credentials={credentials} permissions={planPermissions.find(p => normalize(p.suite_key) === 'valorem')} />;
         case 'cognitio': return <Cognitio credentials={credentials} permissions={planPermissions.find(p => normalize(p.suite_key) === 'cognitio')} />;
         case 'vox': return <Vox credentials={credentials} permissions={planPermissions.find(p => normalize(p.suite_key) === 'vox')} />;
+        case 'intelligence': return <IntelligenceHub credentials={credentials} permissions={planPermissions.find(p => normalize(p.suite_key) === 'intelligence')} />;
         case 'settings': return <UserSettings user={user} preferences={preferences} onUpdateUser={onUpdateUser} onUpdatePrefs={onUpdatePrefs} />;
         case 'users': return <UserManagement currentUser={user} />;
         case 'suites': return <SuiteManagement credentials={credentials} />;
         case 'plans': return <PlanManagement credentials={credentials} />;
         case 'scheduling': return <SchedulingManagement />;
         case 'email_config': return <EmailSettingsManager />;
+        case 'access_groups': return <AccessManagement currentUser={user} />;
+        case 'team': return <TeamManagement credentials={credentials} />;
+        case 'persons': return <PersonManagement credentials={credentials} />;
         case 'dashboard_suites': return <SuiteDashboard items={suiteItems} onModuleChange={onModuleChange} />;
         case 'dashboard_admin': return <AdminDashboard items={adminItems} onModuleChange={onModuleChange} />;
         case 'dashboard_master': return <MasterDashboard items={masterItems} onModuleChange={onModuleChange} />;

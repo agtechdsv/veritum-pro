@@ -107,7 +107,18 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
     useEffect(() => {
         const fetchUser = async () => {
             const { data: { user } } = await supabase.auth.getUser();
-            setCurrentUser(user);
+            if (user) {
+                // Buscar perfil no banco público para pegar avatar/metadata customizada
+                const { data: profile } = await supabase
+                    .from('users')
+                    .select('name, avatar_url, role')
+                    .eq('id', user.id)
+                    .single();
+
+                setCurrentUser({ ...user, profile });
+            } else {
+                setCurrentUser(null);
+            }
         };
         fetchUser();
 
@@ -181,10 +192,14 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                         {currentUser ? (
                             <div className="flex items-center gap-4">
                                 <Link href="/veritum" className="flex items-center gap-2 font-bold text-indigo-600 dark:text-indigo-400 hover:scale-105 transition-all">
-                                    <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center">
-                                        <User size={16} />
+                                    <div className="w-9 h-9 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center overflow-hidden border-2 border-indigo-600/20 shadow-lg">
+                                        {currentUser.profile?.avatar_url ? (
+                                            <img src={currentUser.profile.avatar_url} alt={currentUser.profile.name} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <User size={18} />
+                                        )}
                                     </div>
-                                    <span className="hidden sm:inline">Painel</span>
+                                    <span className="hidden sm:inline text-xs uppercase tracking-widest font-black">Painel</span>
                                 </Link>
                                 <button
                                     onClick={async () => {

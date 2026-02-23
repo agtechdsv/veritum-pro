@@ -137,4 +137,9 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+  /* Use Case: High Density for Nexus PRO */
+  .high-density {
+    font-size: 70% !important; /* ~12.5% reduction from current 80% base */
+  }
 }
