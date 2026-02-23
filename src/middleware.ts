@@ -39,6 +39,12 @@ export async function middleware(request: NextRequest) {
 
     // 1. If user is NOT logged in (Master DB)
     if (!user) {
+        // Special Access Control: Block /login unless access cookie is present
+        const hasAccessCookie = request.cookies.get('veritum_access')?.value === 'granted'
+        if (path === '/login' && !hasAccessCookie) {
+            return NextResponse.redirect(new URL('/', request.url))
+        }
+
         // Allow public paths
         if (isPublicPath) {
             return response

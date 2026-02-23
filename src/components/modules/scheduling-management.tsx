@@ -85,12 +85,15 @@ export default function SchedulingManagement() {
         setSendingInvite(true); // Reusa o estado de loading para a geração do meet
 
         try {
+            const defaultZoomLink = 'https://us05web.zoom.us/j/82942209745?pwd=atP3XpfEnyDnxxzbc7ZbyWDj57hEVg.1';
+
             // Atualizar no Banco
             const { error } = await supabase
                 .from('demo_requests')
                 .update({
                     scheduled_at: date.toISOString(),
                     status: 'scheduled',
+                    meeting_link: reqToSchedule.meeting_link || defaultZoomLink
                 })
                 .eq('id', requestId);
 
@@ -284,7 +287,7 @@ export default function SchedulingManagement() {
             `;
 
             const { data, error } = await supabase.functions.invoke('send-email', {
-                body: { to: email, subject: 'Confirmação de Reunião - Veritum PRO', html: emailHtml, fullName }
+                body: { to: email, subject: 'Confirmação de Reunião - Veritum PRO', html: emailHtml, fullName, scenario: 'sales' }
             });
 
             if (!error && data?.success) {
@@ -889,16 +892,14 @@ function EditModal({ isOpen, request, onClose, onSave, onSendInvite, sendingInvi
     sendingInvite: boolean,
     supabase: any
 }) {
+    const defaultZoomLink = 'https://us05web.zoom.us/j/82942209745?pwd=atP3XpfEnyDnxxzbc7ZbyWDj57hEVg.1';
     const [formData, setFormData] = useState<Partial<DemoRequest>>({});
 
     useEffect(() => {
         if (request) {
             setFormData({
-                full_name: request.full_name,
-                email: request.email,
-                whatsapp: request.whatsapp,
-                team_size: request.team_size,
-                meeting_link: request.meeting_link || ''
+                ...request,
+                meeting_link: request.meeting_link || defaultZoomLink
             });
         }
     }, [request]);

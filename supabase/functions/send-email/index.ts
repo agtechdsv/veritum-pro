@@ -115,10 +115,11 @@ Deno.serve(async (req) => {
         const aliasEmail = langConfig?.email || providerUser || 'suporte@veritumpro.com';
         const senderName = langConfig?.name || 'Veritum PRO';
 
-        // To satisfy SPF/DKIM, the "From" header should usually be the authenticated user
-        // We use replyTo so the recipient sees and replies to the alias (vendas@, etc)
-        const fromHeader = `"${senderName}" <${providerUser}>`;
-        const replyToHeader = (aliasEmail !== providerUser) ? aliasEmail : undefined;
+        // To satisfy SPF/DKIM, the "From" header should ideally match the SMTP user or the authorized domain.
+        // If aliasEmail is different from providerUser, we use aliasEmail as 'From' but keep providerUser 
+        // as the sender if needed, though most providers allow using a different 'From' if the domain is verified.
+        const fromHeader = `"${senderName}" <${aliasEmail}>`;
+        const replyToHeader = aliasEmail;
 
         // 7. SMTP Configuration
         const transporter = nodemailer.createTransport({
@@ -138,6 +139,7 @@ Deno.serve(async (req) => {
         // 8. Execute Send
         const info = await transporter.sendMail({
             from: fromHeader,
+            sender: providerUser, // The actual authenticated account
             replyTo: replyToHeader,
             to,
             subject,

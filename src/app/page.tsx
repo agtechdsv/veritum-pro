@@ -58,17 +58,40 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
     const [suites, setSuites] = useState<DbSuite[]>([]);
     const [suitesLoading, setSuitesLoading] = useState(true);
     const [currentUser, setCurrentUser] = useState<any>(null);
+    const [hasAccess, setHasAccess] = useState(false);
     const searchParams = useSearchParams();
     const router = useRouter();
     const supabase = createMasterClient();
 
     useEffect(() => {
-        if (searchParams.get('login') === 'true') {
+        if (searchParams.get('login') === 'true' && (hasAccess || currentUser)) {
             setAuthMode('login');
             setIsAuthModalOpen(true);
             router.replace('/', { scroll: false });
         }
-    }, [searchParams, router]);
+    }, [searchParams, router, hasAccess, currentUser]);
+
+    useEffect(() => {
+        if (mounted) {
+            const accessParam = searchParams.get('access');
+            const savedAccess = localStorage.getItem('veritum_access');
+
+            if (accessParam === 'veritas') {
+                localStorage.setItem('veritum_access', 'granted');
+                // Set cookie for middleware
+                document.cookie = "veritum_access=granted; path=/; max-age=31536000"; // 1 year
+                setHasAccess(true);
+
+                // Clean URL
+                const params = new URLSearchParams(searchParams.toString());
+                params.delete('access');
+                const newUrl = params.toString() ? `/?${params.toString()}` : '/';
+                router.replace(newUrl, { scroll: false });
+            } else if (savedAccess === 'granted') {
+                setHasAccess(true);
+            }
+        }
+    }, [mounted, searchParams, router]);
 
     const [legalModal, setLegalModal] = useState<{ isOpen: boolean; type: 'privacy' | 'terms' }>({
         isOpen: false,
@@ -174,7 +197,7 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                                     <LogOut size={20} />
                                 </button>
                             </div>
-                        ) : (
+                        ) : hasAccess ? (
                             <>
                                 <button onClick={() => openAuth('login')} className="hidden sm:flex items-center gap-2 font-semibold px-4 py-2 hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300 cursor-pointer">
                                     <LogIn size={18} /> Entrar
@@ -183,7 +206,7 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                                     <UserPlus size={18} /> Começar Grátis
                                 </button>
                             </>
-                        )}
+                        ) : null}
                     </div>
                 </div>
             </nav>
@@ -200,9 +223,11 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                         Seu dado, sua infraestrutura, nossos módulos inteligentes.
                     </p>
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                        <button onClick={() => openAuth('register')} className="w-full sm:w-auto bg-indigo-600 text-white px-10 py-4 rounded-[2rem] font-bold text-lg shadow-2xl shadow-indigo-600/40 hover:scale-105 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 cursor-pointer">
-                            Começar Agora <ArrowRight size={20} />
-                        </button>
+                        {(hasAccess || currentUser) && (
+                            <button onClick={() => openAuth('register')} className="w-full sm:w-auto bg-indigo-600 text-white px-10 py-4 rounded-[2rem] font-bold text-lg shadow-2xl shadow-indigo-600/40 hover:scale-105 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 cursor-pointer">
+                                Começar Agora <ArrowRight size={20} />
+                            </button>
+                        )}
                         <Link href="/pricing" className="w-full sm:w-auto px-10 py-4 rounded-[2rem] border border-slate-200 dark:border-slate-800 font-bold text-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-center cursor-pointer">
                             Ver planos e preços
                         </Link>
