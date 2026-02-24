@@ -49,8 +49,8 @@ export async function middleware(request: NextRequest) {
         if (isPublicPath) {
             return response
         }
-        // Redirect others to login
-        return NextResponse.redirect(new URL('/login', request.url))
+        // Redirect others to home (where the login modal is)
+        return NextResponse.redirect(new URL('/', request.url))
     }
 
     // 2. If user IS logged in

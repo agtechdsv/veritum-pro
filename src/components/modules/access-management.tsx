@@ -46,7 +46,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
 
     const fetchRoles = async () => {
         let query = supabase.from('roles').select('*');
-        const isAdmin = currentUser.role === 'Administrador' || currentUser.role === 'Sócio-Administrador';
+        const isAdmin = ['Administrador', 'Sócio-Administrador', 'Sócio Administrador'].includes(currentUser.role);
 
         if (isAdmin) {
             const adminIds = [currentUser.id];
@@ -86,7 +86,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
         setLoading(true);
         let query = supabase.from('access_groups').select('*');
 
-        const isAdmin = currentUser.role === 'Administrador' || currentUser.role === 'Sócio-Administrador';
+        const isAdmin = ['Administrador', 'Sócio-Administrador', 'Sócio Administrador'].includes(currentUser.role);
 
         if (isAdmin) {
             const adminIds = [currentUser.id];
@@ -597,43 +597,71 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                                 {roles.length === 0 ? (
                                                     <div className="p-3 text-center text-xs text-slate-500 dark:text-slate-400">Nenhum cargo encontrado. Crie um novo primeiro.</div>
                                                 ) : (
-                                                    roles.map(role => {
-                                                        const isSelected = selectedRoleIds.includes(role.id);
-                                                        return (
-                                                            <div
-                                                                key={role.id}
-                                                                className={`flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${isSelected ? 'bg-indigo-50/50 dark:bg-indigo-900/10' : ''}`}
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    if (isSelected) {
-                                                                        setSelectedRoleIds(prev => prev.filter(id => id !== role.id));
-                                                                    } else {
-                                                                        setSelectedRoleIds(prev => [...prev, role.id]);
-                                                                    }
-                                                                }}
-                                                            >
-                                                                <div className="flex items-center gap-2">
-                                                                    <div className={`flex items-center justify-center w-4 h-4 rounded border ${isSelected ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 dark:border-slate-700'}`}>
-                                                                        {isSelected && <Check size={10} strokeWidth={3} />}
-                                                                    </div>
-                                                                    <span className={`text-xs font-semibold ${isSelected ? 'text-indigo-900 dark:text-indigo-100' : 'text-slate-600 dark:text-slate-300'}`}>{role.name}</span>
-                                                                </div>
+                                                    (() => {
+                                                        // Group roles by access_group_id
+                                                        const groupedRoles: Record<string, Role[]> = {};
 
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        setEditingRole(role);
-                                                                        setShowRoleModal(true);
-                                                                        setIsRoleSelectOpen(false);
-                                                                    }}
-                                                                    className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/40 transition-all opacity-50 hover:opacity-100"
-                                                                >
-                                                                    <FileEdit size={12} />
-                                                                </button>
-                                                            </div>
-                                                        );
-                                                    })
+                                                        roles.forEach(role => {
+                                                            const groupId = role.access_group_id || 'none';
+                                                            if (!groupedRoles[groupId]) groupedRoles[groupId] = [];
+                                                            groupedRoles[groupId].push(role);
+                                                        });
+
+                                                        return Object.keys(groupedRoles).map(groupId => {
+                                                            const groupRoles = groupedRoles[groupId];
+                                                            const group = groups.find(g => g.id === groupId);
+                                                            const groupName = group ? group.name : 'Outros Cargos / Avulsos';
+
+                                                            return (
+                                                                <div key={groupId} className="mb-2 last:mb-0">
+                                                                    <div className="sticky top-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm px-3 py-1.5 z-10">
+                                                                        <span className="text-[10px] font-black tracking-widest uppercase text-indigo-500/80 dark:text-indigo-400/80">
+                                                                            {groupName}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="space-y-0.5">
+                                                                        {groupRoles.map(role => {
+                                                                            const isSelected = selectedRoleIds.includes(role.id);
+                                                                            return (
+                                                                                <div
+                                                                                    key={role.id}
+                                                                                    className={`flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors mx-1 ${isSelected ? 'bg-indigo-50/50 dark:bg-indigo-900/10' : ''}`}
+                                                                                    onClick={(e) => {
+                                                                                        e.stopPropagation();
+                                                                                        if (isSelected) {
+                                                                                            setSelectedRoleIds(prev => prev.filter(id => id !== role.id));
+                                                                                        } else {
+                                                                                            setSelectedRoleIds(prev => [...prev, role.id]);
+                                                                                        }
+                                                                                    }}
+                                                                                >
+                                                                                    <div className="flex items-center gap-2">
+                                                                                        <div className={`flex items-center justify-center w-4 h-4 rounded border ${isSelected ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 dark:border-slate-700'}`}>
+                                                                                            {isSelected && <Check size={10} strokeWidth={3} />}
+                                                                                        </div>
+                                                                                        <span className={`text-xs font-semibold ${isSelected ? 'text-indigo-900 dark:text-indigo-100' : 'text-slate-600 dark:text-slate-300'}`}>{role.name}</span>
+                                                                                    </div>
+
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        onClick={(e) => {
+                                                                                            e.stopPropagation();
+                                                                                            setEditingRole(role);
+                                                                                            setShowRoleModal(true);
+                                                                                            setIsRoleSelectOpen(false);
+                                                                                        }}
+                                                                                        className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/40 transition-all opacity-50 hover:opacity-100"
+                                                                                    >
+                                                                                        <FileEdit size={12} />
+                                                                                    </button>
+                                                                                </div>
+                                                                            );
+                                                                        })}
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        });
+                                                    })()
                                                 )}
                                             </div>
                                         </>

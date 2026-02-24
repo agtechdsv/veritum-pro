@@ -138,13 +138,31 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
                 .eq('user_id', authUser.id)
                 .maybeSingle();
 
+            let custom_url = prefs?.custom_supabase_url;
+            let custom_key = prefs?.custom_supabase_key;
+            let gemini_key = prefs?.custom_gemini_key;
+
+            if (parentId) {
+                const { data: parentPrefs } = await supabase
+                    .from('user_preferences')
+                    .select('custom_supabase_url, custom_supabase_key, custom_gemini_key')
+                    .eq('user_id', parentId)
+                    .maybeSingle();
+
+                if (parentPrefs) {
+                    custom_url = parentPrefs.custom_supabase_url;
+                    custom_key = parentPrefs.custom_supabase_key;
+                    gemini_key = parentPrefs.custom_gemini_key;
+                }
+            }
+
             setPreferences({
                 user_id: authUser.id,
                 language: prefs?.language || 'pt',
                 theme: prefs?.theme || 'dark',
-                custom_supabase_url: prefs?.custom_supabase_url,
-                custom_supabase_key: prefs?.custom_supabase_key,
-                custom_gemini_key: prefs?.custom_gemini_key,
+                custom_supabase_url: custom_url,
+                custom_supabase_key: custom_key,
+                custom_gemini_key: gemini_key,
             });
 
             const { data: suites } = await supabase

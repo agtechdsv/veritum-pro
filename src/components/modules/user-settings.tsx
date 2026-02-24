@@ -12,6 +12,7 @@ interface Props {
 }
 
 const UserSettings: React.FC<Props> = ({ user, preferences, onUpdateUser, onUpdatePrefs }) => {
+    const isRootAdmin = ['Master', 'Administrador', 'Sócio-Administrador', 'Sócio Administrador'].includes(user.role);
     const [formPrefs, setFormPrefs] = useState(preferences);
     const [formUser, setFormUser] = useState(user);
     const [saving, setSaving] = useState(false);
@@ -95,8 +96,8 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdateUser, onUpda
                             <label className="block text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Username</label>
                             <input
                                 value={formUser.username}
-                                onChange={e => setFormUser({ ...formUser, username: e.target.value })}
-                                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-slate-100 transition-colors font-medium"
+                                disabled={true}
+                                className="w-full px-4 py-3 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-0 outline-none text-slate-500 dark:text-slate-400 font-medium cursor-not-allowed select-none"
                             />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
@@ -155,71 +156,73 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdateUser, onUpda
                 </section>
 
 
-                {/* BYODB Config */}
-                <section className="md:col-span-2 bg-indigo-900 text-white p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden transition-all hover:shadow-indigo-500/30">
-                    <div className="relative z-10">
-                        <div className="flex items-center gap-3 mb-8">
-                            <ShieldCheck size={28} className="text-indigo-300" />
-                            <h3 className="text-2xl font-black">Infraestrutura BYODB (Bring Your Own Database)</h3>
-                        </div>
+                {/* BYODB Config - Só aparece para Root Admins */}
+                {isRootAdmin && (
+                    <section className="md:col-span-2 bg-indigo-900 text-white p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden transition-all hover:shadow-indigo-500/30">
+                        <div className="relative z-10">
+                            <div className="flex items-center gap-3 mb-8">
+                                <ShieldCheck size={28} className="text-indigo-300" />
+                                <h3 className="text-2xl font-black">Infraestrutura BYODB (Bring Your Own Database)</h3>
+                            </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-xs font-black text-indigo-300 uppercase tracking-widest mb-2">Custom Supabase URL</label>
-                                    <div className="relative">
-                                        <Globe className="absolute left-4 top-4 text-indigo-400/50" size={18} />
-                                        <input
-                                            type="url"
-                                            placeholder="https://your-project.supabase.co"
-                                            value={formPrefs.custom_supabase_url || ''}
-                                            onChange={e => setFormPrefs({ ...formPrefs, custom_supabase_url: e.target.value })}
-                                            className="w-full pl-12 pr-4 py-4 bg-white/10 border border-white/20 rounded-2xl focus:ring-2 focus:ring-white/50 outline-none placeholder:text-indigo-300/40 text-white transition-all font-medium"
-                                        />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-xs font-black text-indigo-300 uppercase tracking-widest mb-2">Custom Supabase URL</label>
+                                        <div className="relative">
+                                            <Globe className="absolute left-4 top-4 text-indigo-400/50" size={18} />
+                                            <input
+                                                type="url"
+                                                placeholder="https://your-project.supabase.co"
+                                                value={formPrefs.custom_supabase_url || ''}
+                                                onChange={e => setFormPrefs({ ...formPrefs, custom_supabase_url: e.target.value })}
+                                                className="w-full pl-12 pr-4 py-4 bg-white/10 border border-white/20 rounded-2xl focus:ring-2 focus:ring-white/50 outline-none placeholder:text-indigo-300/40 text-white transition-all font-medium"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-black text-indigo-300 uppercase tracking-widest mb-2">Custom Supabase Key</label>
+                                        <div className="relative">
+                                            <Database className="absolute left-4 top-4 text-indigo-400/50" size={18} />
+                                            <input
+                                                type="password"
+                                                placeholder="Anon/Public Key..."
+                                                value={formPrefs.custom_supabase_key || ''}
+                                                onChange={e => setFormPrefs({ ...formPrefs, custom_supabase_key: e.target.value })}
+                                                className="w-full pl-12 pr-4 py-4 bg-white/10 border border-white/20 rounded-2xl focus:ring-2 focus:ring-white/50 outline-none placeholder:text-indigo-300/40 text-white transition-all font-medium"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-black text-indigo-300 uppercase tracking-widest mb-2">Custom Supabase Key</label>
-                                    <div className="relative">
-                                        <Database className="absolute left-4 top-4 text-indigo-400/50" size={18} />
-                                        <input
-                                            type="password"
-                                            placeholder="Anon/Public Key..."
-                                            value={formPrefs.custom_supabase_key || ''}
-                                            onChange={e => setFormPrefs({ ...formPrefs, custom_supabase_key: e.target.value })}
-                                            className="w-full pl-12 pr-4 py-4 bg-white/10 border border-white/20 rounded-2xl focus:ring-2 focus:ring-white/50 outline-none placeholder:text-indigo-300/40 text-white transition-all font-medium"
-                                        />
+
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-xs font-black text-indigo-300 uppercase tracking-widest mb-2">Custom Gemini Key</label>
+                                        <div className="relative">
+                                            <Key className="absolute left-4 top-4 text-indigo-400/50" size={18} />
+                                            <input
+                                                type="password"
+                                                placeholder="AIzaSyB..."
+                                                value={formPrefs.custom_gemini_key || ''}
+                                                onChange={e => setFormPrefs({ ...formPrefs, custom_gemini_key: e.target.value })}
+                                                className="w-full pl-12 pr-4 py-4 bg-white/10 border border-white/20 rounded-2xl focus:ring-2 focus:ring-white/50 outline-none placeholder:text-indigo-300/40 text-white transition-all font-medium"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="p-6 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-sm">
+                                        <p className="text-sm text-indigo-100 leading-relaxed font-bold">
+                                            <span className="font-black text-indigo-300 block mb-1 uppercase tracking-tighter">Privacidade Garantida</span>
+                                            Ao utilizar BYODB, seus dados de clientes, processos e faturamento nunca tocam nossos servidores centrais após a autenticação.
+                                        </p>
                                     </div>
                                 </div>
                             </div>
-
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-xs font-black text-indigo-300 uppercase tracking-widest mb-2">Custom Gemini Key</label>
-                                    <div className="relative">
-                                        <Key className="absolute left-4 top-4 text-indigo-400/50" size={18} />
-                                        <input
-                                            type="password"
-                                            placeholder="AIzaSyB..."
-                                            value={formPrefs.custom_gemini_key || ''}
-                                            onChange={e => setFormPrefs({ ...formPrefs, custom_gemini_key: e.target.value })}
-                                            className="w-full pl-12 pr-4 py-4 bg-white/10 border border-white/20 rounded-2xl focus:ring-2 focus:ring-white/50 outline-none placeholder:text-indigo-300/40 text-white transition-all font-medium"
-                                        />
-                                    </div>
-                                </div>
-                                <div className="p-6 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-sm">
-                                    <p className="text-sm text-indigo-100 leading-relaxed font-bold">
-                                        <span className="font-black text-indigo-300 block mb-1 uppercase tracking-tighter">Privacidade Garantida</span>
-                                        Ao utilizar BYODB, seus dados de clientes, processos e faturamento nunca tocam nossos servidores centrais após a autenticação.
-                                    </p>
-                                </div>
-                            </div>
                         </div>
-                    </div>
 
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500 rounded-full blur-[100px] opacity-20 pointer-events-none"></div>
-                    <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-500 rounded-full blur-[100px] opacity-20 pointer-events-none"></div>
-                </section>
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500 rounded-full blur-[100px] opacity-20 pointer-events-none"></div>
+                        <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-500 rounded-full blur-[100px] opacity-20 pointer-events-none"></div>
+                    </section>
+                )}
             </div>
         </div>
     );

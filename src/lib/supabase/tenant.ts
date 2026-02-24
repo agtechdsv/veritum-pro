@@ -21,11 +21,20 @@ export async function createTenantServerClient() {
         throw new Error('Unauthorized: Could not determine current user on Master DB.')
     }
 
-    // 2. Retrieve BYODB credentials from public.user_preferences
+    // 2. Determine target user ID for BYODB keys (Self or Parent)
+    const { data: profile } = await masterClient
+        .from('users')
+        .select('parent_user_id')
+        .eq('id', user.id)
+        .single()
+
+    const targetUserId = profile?.parent_user_id || user.id;
+
+    // 3. Retrieve BYODB credentials from public.user_preferences
     const { data: prefs, error: prefsError } = await masterClient
         .from('user_preferences')
         .select('custom_supabase_url, custom_supabase_key')
-        .eq('user_id', user.id)
+        .eq('user_id', targetUserId)
         .single()
 
     if (prefsError) {
@@ -40,7 +49,7 @@ export async function createTenantServerClient() {
         throw new Error('BYODB_NOT_CONFIGURED')
     }
 
-    // 3. Instantiate the dynamic Tenant client using SSR
+    // 4. Instantiate the dynamic Tenant client using SSR
     return createServerClient(
         prefs.custom_supabase_url,
         prefs.custom_supabase_key,

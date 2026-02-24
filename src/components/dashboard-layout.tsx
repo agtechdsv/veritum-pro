@@ -208,7 +208,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
         // 2. Checa se é módulo Admin
         const isAdminModule = adminItems.some(ai => normalize(ai.id) === currentNormalized);
         if (isAdminModule) {
-            const isAllowedAdmin = user.role === 'Administrador' || user.role === 'Sócio-Administrador';
+            const isAllowedAdmin = ['Administrador', 'Sócio-Administrador', 'Sócio Administrador'].includes(user.role);
             if (!isAllowedAdmin && currentNormalized !== 'settings' && currentNormalized !== 'users') { // Everyone can access settings and users (with restricted view)
                 toast.error('Acesso restrito a administradores.');
                 onModuleChange(ModuleId.DASHBOARD_ROOT);

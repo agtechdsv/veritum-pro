@@ -57,7 +57,7 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
     const fetchRoles = async () => {
         let query = supabase.from('roles').select('*');
 
-        const isAdmin = currentUser.role === 'Administrador' || currentUser.role === 'Sócio-Administrador';
+        const isAdmin = ['Administrador', 'Sócio-Administrador', 'Sócio Administrador'].includes(currentUser.role);
 
         if (isAdmin) {
             const adminIds = [currentUser.id];
@@ -78,7 +78,7 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
     const fetchAccessGroups = async () => {
         let query = supabase.from('access_groups').select('*');
 
-        const isAdmin = currentUser.role === 'Administrador' || currentUser.role === 'Sócio-Administrador';
+        const isAdmin = ['Administrador', 'Sócio-Administrador', 'Sócio Administrador'].includes(currentUser.role);
 
         // Scope optimization: Master sees all, Admins see their own + parent (who created them)
         if (isAdmin) {
@@ -122,7 +122,7 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
             .select('*');
 
         // Hierarchy Filtering
-        const isAdmin = currentUser.role === 'Administrador' || currentUser.role === 'Sócio-Administrador';
+        const isAdmin = ['Administrador', 'Sócio-Administrador', 'Sócio Administrador'].includes(currentUser.role);
         if (isAdmin) {
             query = query.or(`id.eq.${currentUser.id},parent_user_id.eq.${currentUser.id}`);
         } else if (currentUser.role !== 'Master') {
@@ -249,7 +249,7 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                 if (!result.success) throw new Error(result.error);
                 toast.success('Usuário atualizado com sucesso!');
             } else {
-                const parentUserId = currentUser.id;
+                const parentUserId = currentUser.parent_user_id || currentUser.id;
                 const result = await createUserDirectly(formData, parentUserId);
                 if (!result.success) throw new Error(result.error);
                 toast.success('Usuário cadastrado com sucesso!');

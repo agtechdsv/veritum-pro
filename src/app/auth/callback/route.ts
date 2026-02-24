@@ -19,10 +19,19 @@ export async function GET(request: Request) {
                 // We only need to check for BYODB preferences if needed.
 
                 // 2. Check Preferences (BYODB)
+                // Determine target user ID for BYODB keys (Self or Parent)
+                const { data: profile } = await supabase
+                    .from('users')
+                    .select('parent_user_id')
+                    .eq('id', user.id)
+                    .single()
+
+                const targetUserId = profile?.parent_user_id || user.id;
+
                 const { data: prefs } = await supabase
                     .from('user_preferences')
                     .select('custom_supabase_url, custom_supabase_key')
-                    .eq('user_id', user.id)
+                    .eq('user_id', targetUserId)
                     .single()
 
                 if (prefs && prefs.custom_supabase_url && prefs.custom_supabase_key) {
