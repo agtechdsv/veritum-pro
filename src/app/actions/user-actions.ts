@@ -4,7 +4,22 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 
 export async function createUserDirectly(formData: any, parentUserId: string | null) {
-    const supabase = createAdminClient()
+    const supabase = createAdminClient();
+
+    let assignedPlanId = formData.plan_id || null;
+
+    if (parentUserId) {
+        // Obter o plano do criador da conta (herança de plano)
+        const { data: parentData } = await supabase
+            .from('users')
+            .select('plan_id')
+            .eq('id', parentUserId)
+            .single();
+
+        if (parentData?.plan_id) {
+            assignedPlanId = parentData.plan_id;
+        }
+    }
 
     const { data, error } = await supabase.auth.admin.createUser({
         email: formData.email,
@@ -15,7 +30,8 @@ export async function createUserDirectly(formData: any, parentUserId: string | n
             name: formData.name,
             role: formData.role,
             parent_user_id: parentUserId,
-            plan_id: formData.plan_id || null
+            plan_id: assignedPlanId,
+            access_group_id: formData.access_group_id || null
         }
     })
 
@@ -23,26 +39,15 @@ export async function createUserDirectly(formData: any, parentUserId: string | n
         return { success: false, error: error.message }
     }
 
-    // 2. Also update public table for consistency (trigger might handle it but let's be sure)
+    // 2. Update public table for consistency (trigger might handle it but let's be sure)
     const { error: publicError } = await supabase
         .from('users')
         .update({
-            plan_id: formData.plan_id || null,
+            plan_id: assignedPlanId,
+            access_group_id: formData.access_group_id || null,
             force_password_reset: true // Ensure new users are forced to reset
         })
         .eq('id', data.user.id)
-
-    if (!publicError && formData.plan_id) {
-        // Create initial subscription record
-        await supabase
-            .from('user_subscriptions')
-            .insert({
-                user_id: data.user.id,
-                plan_id: formData.plan_id,
-                status: 'active',
-                is_trial: false
-            })
-    }
 
     revalidatePath('/veritum')
     return { success: true, user: data.user }
@@ -76,11 +81,11 @@ export async function resetTemporaryPassword(userId: string, newPassword: string
 export async function startTrial(userId: string) {
     const supabase = createAdminClient()
 
-    // 1. Find the "Trial" plan ID
+    // 1. Find the "Trial 14 Dias" plan ID
     const { data: trialPlan } = await supabase
         .from('plans')
         .select('id')
-        .ilike('name', '%Trial%')
+        .eq('name', 'Trial 14 Dias')
         .single()
 
     if (!trialPlan) {
@@ -126,7 +131,8 @@ export async function updateUserDirectly(userId: string, formData: any) {
             full_name: formData.name,
             name: formData.name,
             role: formData.role,
-            plan_id: formData.plan_id || null
+            plan_id: formData.plan_id || null,
+            access_group_id: formData.access_group_id || null
         }
     }
 
@@ -147,7 +153,8 @@ export async function updateUserDirectly(userId: string, formData: any) {
             name: formData.name,
             role: formData.role,
             username: formData.email,
-            plan_id: formData.plan_id || null
+            plan_id: formData.plan_id || null,
+            access_group_id: formData.access_group_id || null
         })
         .eq('id', userId)
 

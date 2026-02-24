@@ -112,6 +112,13 @@ export interface User {
     access_group_id?: string;
 }
 
+export interface Role {
+    id: string;
+    name: string;
+    access_group_id: string;
+    admin_id: string;
+}
+
 export interface UserPreferences {
     user_id: string;
     language: 'pt' | 'en' | 'es';

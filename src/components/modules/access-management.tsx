@@ -1,21 +1,24 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { Shield, Plus, Trash2, CheckCircle2, XCircle, Layout, Filter, Scale, FileEdit, DollarSign, BarChart3, MessageSquare, ShieldAlert, ChevronRight, Check, ChevronDown, Database, Layers, Package, Wand2, Sparkles } from 'lucide-react';
-import { AccessGroup, GroupPermission, User, ModuleId, Suite, Feature, GroupTemplate } from '@/types';
+import { Shield, Plus, Trash2, CheckCircle2, XCircle, Layout, Filter, Scale, FileEdit, DollarSign, BarChart3, MessageSquare, ShieldAlert, ChevronRight, Check, ChevronDown, Database, Layers, Package, Wand2, Sparkles, Lock, Briefcase, X } from 'lucide-react';
+import { AccessGroup, GroupPermission, User, ModuleId, Suite, Feature, GroupTemplate, Role } from '@/types';
 import { createMasterClient } from '@/lib/supabase/master';
 import { toast } from '../ui/toast';
+import { useModule } from '@/app/veritum/layout';
 
 interface Props {
     currentUser: User;
 }
 
 const AccessManagement: React.FC<Props> = ({ currentUser }) => {
+    const { planPermissions } = useModule();
     const [groups, setGroups] = useState<AccessGroup[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingGroup, setEditingGroup] = useState<Partial<AccessGroup> | null>(null);
     const [groupToDelete, setGroupToDelete] = useState<AccessGroup | null>(null);
+    const [allPermissions, setAllPermissions] = useState<Record<string, string[]>>({});
 
     // Feature-level RBAC state
     const [suites, setSuites] = useState<Suite[]>([]);
@@ -24,6 +27,13 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
     const [selectedFeatureIds, setSelectedFeatureIds] = useState<string[]>([]);
     const [expandedSuites, setExpandedSuites] = useState<string[]>([]);
 
+    // Roles Management State
+    const [roles, setRoles] = useState<Role[]>([]);
+    const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
+    const [showRoleModal, setShowRoleModal] = useState(false);
+    const [editingRole, setEditingRole] = useState<{ id?: string, name: string }>({ name: '' });
+    const [isRoleSelectOpen, setIsRoleSelectOpen] = useState(false);
+
     const supabase = createMasterClient();
 
     useEffect(() => {
@@ -31,7 +41,25 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
         fetchSuites();
         fetchFeatures();
         fetchTemplates();
+        fetchRoles();
     }, []);
+
+    const fetchRoles = async () => {
+        let query = supabase.from('roles').select('*');
+        const isAdmin = currentUser.role === 'Administrador' || currentUser.role === 'Sócio-Administrador';
+
+        if (isAdmin) {
+            const adminIds = [currentUser.id];
+            if (currentUser.parent_user_id) adminIds.push(currentUser.parent_user_id);
+            query = query.in('admin_id', adminIds);
+        } else if (currentUser.role !== 'Master') {
+            if (currentUser.parent_user_id) query = query.eq('admin_id', currentUser.parent_user_id);
+            else query = query.eq('admin_id', currentUser.id);
+        }
+
+        const { data } = await query;
+        if (data) setRoles(data);
+    };
 
     useEffect(() => {
         const orphanFeatures = features.filter(f => !suites.some(s => s.id === f.suite_id));
@@ -56,12 +84,37 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
 
     const fetchGroups = async () => {
         setLoading(true);
-        const { data, error } = await supabase
-            .from('access_groups')
-            .select('*')
-            .eq('admin_id', currentUser.id);
+        let query = supabase.from('access_groups').select('*');
 
-        if (!error && data) setGroups(data);
+        const isAdmin = currentUser.role === 'Administrador' || currentUser.role === 'Sócio-Administrador';
+
+        if (isAdmin) {
+            const adminIds = [currentUser.id];
+            if (currentUser.parent_user_id) adminIds.push(currentUser.parent_user_id);
+            query = query.in('admin_id', adminIds);
+        } else if (currentUser.role !== 'Master') {
+            query = query.eq('admin_id', currentUser.id);
+        }
+
+        const { data, error } = await query;
+
+        if (!error && data) {
+            setGroups(data);
+            // Fetch ALL permissions for these groups to feed the badges
+            const { data: perms } = await supabase
+                .from('group_permissions')
+                .select('group_id, feature_id')
+                .in('group_id', data.map(g => g.id));
+
+            if (perms) {
+                const map: Record<string, string[]> = {};
+                perms.forEach(p => {
+                    if (!map[p.group_id]) map[p.group_id] = [];
+                    map[p.group_id].push(p.feature_id);
+                });
+                setAllPermissions(map);
+            }
+        }
         setLoading(false);
     };
 
@@ -109,9 +162,11 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
         if (group) {
             setEditingGroup(group);
             await fetchGroupPermissions(group.id);
+            setSelectedRoleIds(roles.filter(r => r.access_group_id === group.id).map(r => r.id));
         } else {
             setEditingGroup({ name: '' });
             setSelectedFeatureIds([]);
+            setSelectedRoleIds([]);
             setExpandedSuites([]);
         }
         setIsModalOpen(true);
@@ -138,44 +193,101 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                 // Update Group Name
                 const { error: groupError } = await supabase.from('access_groups').update({ name: editingGroup.name }).eq('id', groupId);
                 if (groupError) throw groupError;
+                toast.success('Nome do grupo atualizado.');
             } else {
-                // Create Group
-                const { data, error } = await supabase
-                    .from('access_groups')
-                    .insert({ name: editingGroup.name, admin_id: currentUser.id })
-                    .select()
-                    .single();
+                // Create New Group
+                const { data: newGroup, error: groupError } = await supabase.from('access_groups').insert({
+                    admin_id: currentUser.id,
+                    name: editingGroup.name
+                }).select().single();
 
-                if (error) throw error;
-                groupId = data.id;
+                if (groupError) throw groupError;
+                groupId = newGroup.id;
             }
 
-            // Sync Permissions (Delete old, Insert new)
+            // Sync Permissions
+            // 1. Delete existing
             await supabase.from('group_permissions').delete().eq('group_id', groupId);
 
+            // 2. Insert new
             if (selectedFeatureIds.length > 0) {
-                const permissionInserts = selectedFeatureIds.map(fid => ({
-                    group_id: groupId,
-                    feature_id: fid,
-                    can_access: true
-                }));
-
-                const { error: permError } = await supabase
-                    .from('group_permissions')
-                    .insert(permissionInserts);
-
+                const { error: permError } = await supabase.from('group_permissions').insert(
+                    selectedFeatureIds.map(fId => ({
+                        group_id: groupId,
+                        feature_id: fId
+                    }))
+                );
                 if (permError) throw permError;
             }
 
-            toast.success('Grupo de acesso e permissões salvos!');
-            setIsModalOpen(false);
-            fetchGroups();
-        } catch (err: any) {
-            if (err.code === '23505') {
-                toast.error(`Já existe um grupo chamado "${editingGroup.name}" no seu ecossistema.`);
-            } else {
-                toast.error('Erro ao salvar grupo: ' + err.message);
+            // Sync Roles
+            if (selectedRoleIds.length > 0) {
+                const { error: roleErr } = await supabase.from('roles').update({ access_group_id: groupId }).in('id', selectedRoleIds);
+                if (roleErr) throw roleErr;
             }
+            // Remove roles that were associated but are no longer selected
+            const removedRoleIds = roles.filter(r => r.access_group_id === groupId && !selectedRoleIds.includes(r.id)).map(r => r.id);
+            if (removedRoleIds.length > 0) {
+                const { error: rmErr } = await supabase.from('roles').update({ access_group_id: null }).in('id', removedRoleIds);
+                if (rmErr) throw rmErr;
+            }
+
+            toast.success(editingGroup.id ? 'Grupo e permissões atualizados!' : 'Grupo criado com sucesso!');
+            setIsModalOpen(false);
+            fetchGroups(); // This will also update allPermissions
+            fetchRoles();
+        } catch (error: any) {
+            console.error('Save error:', error);
+            if (error.code === '23505') {
+                toast.error(`O nome "${editingGroup.name}" já está em uso.`);
+            } else {
+                toast.error('Ocorreu um erro ao salvar o grupo.');
+            }
+        }
+    };
+
+    const handleSaveRole = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingRole.name.trim()) return;
+
+        const roleName = editingRole.name.trim();
+
+        // Check duplicate within the same admin context
+        if (roles.some(r => r.name.toLowerCase() === roleName.toLowerCase() && r.id !== editingRole.id)) {
+            toast.error(`O cargo "${roleName}" já existe.`);
+            return;
+        }
+
+        try {
+            if (editingRole.id) {
+                // Update
+                const { error } = await supabase.from('roles').update({ name: roleName }).eq('id', editingRole.id);
+                if (error) throw error;
+                toast.success('Cargo atualizado.');
+            } else {
+                // Insert
+                const newRoleAdminId = currentUser.role === 'Master' ? currentUser.id : (currentUser.parent_user_id || currentUser.id);
+                const { data, error } = await supabase.from('roles').insert({
+                    name: roleName,
+                    admin_id: newRoleAdminId,
+                    access_group_id: editingGroup?.id || null
+                }).select().single();
+
+                if (error) throw error;
+                toast.success('Cargo criado com sucesso.');
+
+                // Automatically select the newly created role
+                if (data) {
+                    setSelectedRoleIds(prev => [...prev, data.id]);
+                }
+            }
+
+            setShowRoleModal(false);
+            setEditingRole({ name: '' });
+            fetchRoles();
+        } catch (error: any) {
+            console.error('Error saving role:', error);
+            toast.error('Erro ao salvar cargo.');
         }
     };
 
@@ -196,7 +308,22 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
         }
     };
 
+    const isFeatureAllowed = (feature: Feature) => {
+        if (currentUser.role === 'Master') return true;
+        const suite = suites.find(s => s.id === feature.suite_id);
+        if (!suite) return false;
+        const normalizedSuiteKey = suite.suite_key.toLowerCase().replace('_key', '');
+        const suitePerm = planPermissions.find(p => p.suite_key?.toLowerCase().replace('_key', '') === normalizedSuiteKey);
+        if (!suitePerm) return false;
+        return suitePerm.enabled_features.includes(feature.feature_key);
+    };
+
     const toggleFeaturePermission = (featureId: string) => {
+        const feature = features.find(f => f.id === featureId);
+        if (feature && !isFeatureAllowed(feature)) {
+            toast.error('O plano atual não tem acesso a esta funcionalidade.');
+            return;
+        }
         setSelectedFeatureIds(prev =>
             prev.includes(featureId) ? prev.filter(id => id !== featureId) : [...prev, featureId]
         );
@@ -209,30 +336,44 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
     };
 
     const toggleSuiteAllFeatures = (suiteId: string) => {
-        const suiteFeatures = features.filter(f => f.suite_id === suiteId).map(f => f.id);
-        const allEnabled = suiteFeatures.every(id => selectedFeatureIds.includes(id));
+        const suiteFeatures = features.filter(f => f.suite_id === suiteId);
+        const allowedFeatures = suiteFeatures.filter(f => isFeatureAllowed(f));
+        const allowedFeatureIds = allowedFeatures.map(f => f.id);
 
-        if (allEnabled) {
-            // Disable all for this suite
-            setSelectedFeatureIds(prev => prev.filter(id => !suiteFeatures.includes(id)));
+        const allAllowedEnabled = allowedFeatureIds.length > 0 && allowedFeatureIds.every(id => selectedFeatureIds.includes(id));
+
+        if (allAllowedEnabled) {
+            // Disable all allowed for this suite
+            setSelectedFeatureIds(prev => prev.filter(id => !allowedFeatureIds.includes(id)));
         } else {
-            // Enable all for this suite
-            const otherIds = selectedFeatureIds.filter(id => !suiteFeatures.includes(id));
-            setSelectedFeatureIds([...otherIds, ...suiteFeatures]);
+            // Enable all allowed for this suite
+            const otherIds = selectedFeatureIds.filter(id => !allowedFeatureIds.includes(id));
+            setSelectedFeatureIds([...otherIds, ...allowedFeatureIds]);
         }
     };
 
     const applyTemplate = (template: GroupTemplate) => {
-        setSelectedFeatureIds(template.default_features);
+        const allowedFeatures = template.default_features.filter(fid => {
+            const feat = features.find(f => f.id === fid);
+            return feat ? isFeatureAllowed(feat) : false;
+        });
+
+        setSelectedFeatureIds(allowedFeatures);
         setEditingGroup(prev => ({ ...prev, name: template.name }));
+
+        const hasBlockedFeatures = allowedFeatures.length < template.default_features.length;
 
         // Auto-expand suites that have features in this template
         const suitesWithFeatures = suites
-            .filter(s => features.some(f => f.suite_id === s.id && template.default_features.includes(f.id)))
+            .filter(s => features.some(f => f.suite_id === s.id && allowedFeatures.includes(f.id)))
             .map(s => s.id);
         setExpandedSuites(suitesWithFeatures);
 
-        toast.success(`Template "${template.name}" aplicado!`);
+        if (hasBlockedFeatures) {
+            toast.success(`Template "${template.name}" aplicado! (Recursos premium ignorados)`);
+        } else {
+            toast.success(`Template "${template.name}" aplicado!`);
+        }
     };
 
     const getIcon = (key: string) => {
@@ -270,13 +411,13 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                         <p className="text-slate-400 font-bold">Nenhum grupo de acesso criado.</p>
                     </div>
                 ) : groups.map(group => (
-                    <div key={group.id} className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden">
+                    <div key={group.id} className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all group relative hover:z-20">
                         <div className="flex items-start justify-between mb-6">
                             <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center text-indigo-600 dark:text-indigo-400">
                                 <Shield size={24} />
                             </div>
                             <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => handleOpenModal(group)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/50 rounded-lg transition-all">
+                                <button onClick={() => handleOpenModal(group)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/50 rounded-lg transition-all" title="Editar">
                                     <FileEdit size={18} />
                                 </button>
                                 <button onClick={() => handleDeleteGroup(group)} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/50 rounded-lg transition-all" title="Excluir">
@@ -285,14 +426,53 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                             </div>
                         </div>
                         <h3 className="text-xl font-black text-slate-800 dark:text-white mb-2 uppercase tracking-tight">{group.name}</h3>
+
                         <p className="text-[10px] text-slate-400 font-bold mb-6 uppercase tracking-widest opacity-60">Criado em {new Date(group.created_at!).toLocaleDateString('pt-BR')}</p>
 
-                        <div className="flex flex-wrap gap-2">
-                            {suites.map(s => (
-                                <div key={s.id} className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center opacity-30" title={s.name}>
-                                    {React.createElement(getIcon(s.suite_key), { size: 14 })}
-                                </div>
-                            ))}
+                        <div className="flex flex-wrap gap-2 pt-4 border-t border-slate-50 dark:border-slate-800/50">
+                            {suites.map(s => {
+                                const groupPerms = allPermissions[group.id] || [];
+                                const suiteFeatures = features.filter(f => f.suite_id === s.id);
+                                const activeFeatures = suiteFeatures.filter(f => groupPerms.includes(f.id));
+                                const isActive = activeFeatures.length > 0;
+                                const Icon = getIcon(s.suite_key);
+
+                                return (
+                                    <div
+                                        key={s.id}
+                                        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all relative group/badge ${isActive
+                                            ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 shadow-sm border border-indigo-100 dark:border-indigo-800/50'
+                                            : 'bg-slate-50 dark:bg-slate-800/50 text-slate-300 dark:text-slate-700 opacity-40'
+                                            }`}
+                                    >
+                                        <Icon size={18} />
+
+                                        {/* Rich Tooltip */}
+                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-48 p-4 bg-slate-900 dark:bg-white rounded-2xl shadow-2xl opacity-0 group-hover/badge:opacity-100 pointer-events-none transition-all z-[60] translate-y-2 group-hover/badge:translate-y-0 scale-95 group-hover/badge:scale-100">
+                                            <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-800 dark:border-slate-100">
+                                                <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${isActive ? 'bg-indigo-500 text-white' : 'bg-slate-700 text-slate-400'}`}>
+                                                    <Icon size={12} />
+                                                </div>
+                                                <span className="text-[10px] font-black uppercase tracking-tighter text-white dark:text-slate-900">{s.name}</span>
+                                            </div>
+                                            <div className="space-y-1">
+                                                {isActive ? (
+                                                    activeFeatures.map(f => (
+                                                        <div key={f.id} className="flex items-center gap-1.5">
+                                                            <div className="w-1 h-1 rounded-full bg-emerald-500" />
+                                                            <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 truncate">{f.display_name}</span>
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <span className="text-[9px] font-bold text-slate-600 dark:text-slate-400 italic">Nenhum acesso ativo</span>
+                                                )}
+                                            </div>
+                                            {/* Tooltip Arrow */}
+                                            <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-8 border-transparent border-t-slate-900 dark:border-t-white" />
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
                 ))}
@@ -353,6 +533,114 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                 </div>
                             </div>
 
+                            {/* Roles Management MultiSelect */}
+                            <div className="space-y-4 border-t border-slate-100 dark:border-slate-800 pt-6 mb-8">
+                                <div className="flex items-center justify-between">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 flex items-center gap-2">
+                                        <Briefcase size={12} className="text-indigo-500" /> Cargos Vinculados
+                                    </label>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setEditingRole({ name: '' });
+                                            setShowRoleModal(true);
+                                        }}
+                                        className="flex items-center gap-1.5 text-[10px] font-black uppercase text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1.5 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
+                                    >
+                                        <Plus size={12} /> Novo Cargo
+                                    </button>
+                                </div>
+
+                                <div className="relative">
+                                    <div
+                                        className="min-h-[50px] w-full px-4 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl flex items-center flex-wrap gap-2 cursor-text transition-all focus-within:ring-2 focus-within:ring-indigo-600 hover:border-slate-300 dark:hover:border-slate-700"
+                                        onClick={() => setIsRoleSelectOpen(true)}
+                                    >
+                                        {selectedRoleIds.length === 0 && (
+                                            <span className="text-xs font-medium text-slate-400 pl-2">Selecione cargos ou crie novos...</span>
+                                        )}
+                                        {selectedRoleIds.map(id => {
+                                            const role = roles.find(r => r.id === id);
+                                            if (!role) return null;
+                                            return (
+                                                <div
+                                                    key={role.id}
+                                                    className="flex items-center gap-1.5 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-900 dark:text-indigo-100 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    {role.name}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setSelectedRoleIds(prev => prev.filter(rId => rId !== id))}
+                                                        className="ml-1 hover:text-indigo-500 dark:hover:text-indigo-300"
+                                                    >
+                                                        <X size={12} />
+                                                    </button>
+                                                </div>
+                                            );
+                                        })}
+
+                                        {/* Dropdown Toggle Context Area */}
+                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                                            <ChevronDown size={16} className={`transition-transform duration-200 ${isRoleSelectOpen ? 'rotate-180' : ''}`} />
+                                        </div>
+                                    </div>
+
+                                    {/* Dropdown Options */}
+                                    {isRoleSelectOpen && (
+                                        <>
+                                            <div
+                                                className="fixed inset-0 z-10"
+                                                onClick={() => setIsRoleSelectOpen(false)}
+                                            />
+                                            <div className="absolute z-20 mt-2 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl max-h-56 overflow-y-auto custom-scrollbar p-2">
+                                                {roles.length === 0 ? (
+                                                    <div className="p-3 text-center text-xs text-slate-500 dark:text-slate-400">Nenhum cargo encontrado. Crie um novo primeiro.</div>
+                                                ) : (
+                                                    roles.map(role => {
+                                                        const isSelected = selectedRoleIds.includes(role.id);
+                                                        return (
+                                                            <div
+                                                                key={role.id}
+                                                                className={`flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${isSelected ? 'bg-indigo-50/50 dark:bg-indigo-900/10' : ''}`}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    if (isSelected) {
+                                                                        setSelectedRoleIds(prev => prev.filter(id => id !== role.id));
+                                                                    } else {
+                                                                        setSelectedRoleIds(prev => [...prev, role.id]);
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <div className="flex items-center gap-2">
+                                                                    <div className={`flex items-center justify-center w-4 h-4 rounded border ${isSelected ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 dark:border-slate-700'}`}>
+                                                                        {isSelected && <Check size={10} strokeWidth={3} />}
+                                                                    </div>
+                                                                    <span className={`text-xs font-semibold ${isSelected ? 'text-indigo-900 dark:text-indigo-100' : 'text-slate-600 dark:text-slate-300'}`}>{role.name}</span>
+                                                                </div>
+
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setEditingRole(role);
+                                                                        setShowRoleModal(true);
+                                                                        setIsRoleSelectOpen(false);
+                                                                    }}
+                                                                    className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/40 transition-all opacity-50 hover:opacity-100"
+                                                                >
+                                                                    <FileEdit size={12} />
+                                                                </button>
+                                                            </div>
+                                                        );
+                                                    })
+                                                )}
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+
                             {/* Granular Permissions (Scrollable) */}
                             <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-4 mb-4">
                                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Permissões Granulares por Suíte</label>
@@ -391,21 +679,27 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                                     <div className="p-5 pt-0 grid grid-cols-1 gap-3 animate-in fade-in slide-in-from-top-4 duration-500">
                                                         {suiteFeatures.map(f => {
                                                             const isActive = selectedFeatureIds.includes(f.id);
+                                                            const isAllowed = isFeatureAllowed(f);
                                                             return (
                                                                 <button
                                                                     key={f.id}
                                                                     type="button"
                                                                     onClick={() => toggleFeaturePermission(f.id)}
-                                                                    className={`flex items-center gap-4 px-6 py-4 rounded-[1.5rem] border-2 transition-all text-left group/feat shadow-sm ${isActive
-                                                                        ? 'bg-emerald-50 border-emerald-500 text-emerald-900 dark:bg-emerald-500/10 dark:border-emerald-500 dark:text-emerald-100'
-                                                                        : 'bg-white border-slate-200 text-slate-600 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700'
+                                                                    title={!isAllowed ? "Seu plano atual não dá acesso a esta funcionalidade. Faça upgrade para desbloquear." : ""}
+                                                                    className={`flex items-center gap-4 px-6 py-4 rounded-[1.5rem] border-2 transition-all text-left group/feat shadow-sm ${!isAllowed
+                                                                        ? 'bg-slate-50 border-slate-100 text-slate-400 dark:bg-slate-900/40 dark:border-slate-800/50 dark:text-slate-500 cursor-not-allowed opacity-80'
+                                                                        : isActive
+                                                                            ? 'bg-emerald-50 border-emerald-500 text-emerald-900 dark:bg-emerald-500/10 dark:border-emerald-500 dark:text-emerald-100'
+                                                                            : 'bg-white border-slate-200 text-slate-600 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700'
                                                                         }`}
                                                                 >
-                                                                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center border-2 transition-all ${isActive
-                                                                        ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/30'
-                                                                        : 'bg-slate-50 border-slate-200 dark:bg-slate-950 dark:border-slate-800'
+                                                                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center border-2 transition-all ${!isAllowed
+                                                                        ? 'bg-slate-100 border-slate-200 text-slate-400 dark:bg-slate-800 dark:border-slate-700'
+                                                                        : isActive
+                                                                            ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/30'
+                                                                            : 'bg-slate-50 border-slate-200 dark:bg-slate-950 dark:border-slate-800'
                                                                         }`}>
-                                                                        {isActive && <Check size={14} strokeWidth={4} />}
+                                                                        {!isAllowed ? <Lock size={12} strokeWidth={3} /> : isActive && <Check size={14} strokeWidth={4} />}
                                                                     </div>
                                                                     <div className="flex-1">
                                                                         <span className={`block text-xs font-black uppercase tracking-tight transition-colors ${isActive ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-300'}`}>
@@ -465,6 +759,45 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                 Cancelar
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Mini Modal para Cadastro de Cargo */}
+            {showRoleModal && (
+                <div className="fixed inset-0 z-[120] flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl p-8 text-center relative overflow-hidden">
+                        <button
+                            type="button"
+                            onClick={() => setShowRoleModal(false)}
+                            className="absolute top-6 right-6 p-2 bg-slate-100 dark:bg-slate-800 text-slate-400 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+                        >
+                            <X size={16} />
+                        </button>
+
+                        <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 mx-auto mb-6">
+                            <Briefcase size={32} />
+                        </div>
+
+                        <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-2">
+                            {editingRole.id ? 'Editar Cargo' : 'Novo Cargo'}
+                        </h3>
+                        <p className="text-xs text-slate-500 font-medium mb-6 uppercase tracking-widest">Defina o nome da função</p>
+
+                        <form onSubmit={handleSaveRole} className="space-y-4">
+                            <input
+                                required
+                                autoFocus
+                                placeholder="Ex: Advogado Pleno"
+                                className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white font-bold text-center"
+                                value={editingRole.name}
+                                onChange={(e) => setEditingRole({ ...editingRole, name: e.target.value })}
+                            />
+
+                            <button type="submit" className="w-full bg-indigo-600 text-white py-4 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 transition-all text-xs">
+                                Salvar
+                            </button>
+                        </form>
                     </div>
                 </div>
             )}

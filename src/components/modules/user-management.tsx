@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ShieldCheck, UserPlus, Trash2, Mail, User as UserIcon, Lock, FileEdit, Radio, ShieldAlert, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, CheckSquare, Package, Shield, Briefcase, ChevronDown } from 'lucide-react';
-import { User, AccessGroup, ModuleId } from '@/types';
+import { User, AccessGroup, ModuleId, Role } from '@/types';
 import { createMasterClient } from '@/lib/supabase/master';
 import { createUserDirectly, updateUserDirectly, deleteUserDirectly } from '@/app/actions/user-actions';
 import { toast } from '../ui/toast';
@@ -19,12 +19,13 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
     const [editingUser, setEditingUser] = useState<User | null>(null);
     const [plans, setPlans] = useState<any[]>([]);
     const [accessGroups, setAccessGroups] = useState<AccessGroup[]>([]);
+    const [roles, setRoles] = useState<Role[]>([]);
     const [formData, setFormData] = useState({
         name: '',
         email: '',
         username: '',
         password: '',
-        role: 'Operador' as 'Master' | 'Administrador' | 'Operador' | 'Estagiário',
+        role: '',
         plan_id: '',
         access_group_id: ''
     });
@@ -50,13 +51,50 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
         fetchUsers();
         fetchPlans();
         fetchAccessGroups();
+        fetchRoles();
     }, []);
 
+    const fetchRoles = async () => {
+        let query = supabase.from('roles').select('*');
+
+        const isAdmin = currentUser.role === 'Administrador' || currentUser.role === 'Sócio-Administrador';
+
+        if (isAdmin) {
+            const adminIds = [currentUser.id];
+            if (currentUser.parent_user_id) adminIds.push(currentUser.parent_user_id);
+            query = query.in('admin_id', adminIds);
+        } else if (currentUser.role !== 'Master') {
+            if (currentUser.parent_user_id) {
+                query = query.eq('admin_id', currentUser.parent_user_id);
+            } else {
+                query = query.eq('admin_id', currentUser.id);
+            }
+        }
+
+        const { data } = await query;
+        if (data) setRoles(data);
+    };
+
     const fetchAccessGroups = async () => {
-        const { data } = await supabase
-            .from('access_groups')
-            .select('*')
-            .eq('admin_id', currentUser.id);
+        let query = supabase.from('access_groups').select('*');
+
+        const isAdmin = currentUser.role === 'Administrador' || currentUser.role === 'Sócio-Administrador';
+
+        // Scope optimization: Master sees all, Admins see their own + parent (who created them)
+        if (isAdmin) {
+            const adminIds = [currentUser.id];
+            if (currentUser.parent_user_id) adminIds.push(currentUser.parent_user_id);
+            query = query.in('admin_id', adminIds);
+        } else if (currentUser.role !== 'Master') {
+            // For other roles, just their own admin's groups
+            if (currentUser.parent_user_id) {
+                query = query.eq('admin_id', currentUser.parent_user_id);
+            } else {
+                query = query.eq('admin_id', currentUser.id);
+            }
+        }
+
+        const { data } = await query;
         if (data) setAccessGroups(data);
     };
 
@@ -84,11 +122,13 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
             .select('*');
 
         // Hierarchy Filtering
-        if (currentUser.role === 'Administrador') {
+        const isAdmin = currentUser.role === 'Administrador' || currentUser.role === 'Sócio-Administrador';
+        if (isAdmin) {
             query = query.or(`id.eq.${currentUser.id},parent_user_id.eq.${currentUser.id}`);
-        } else if (currentUser.role === 'Operador') {
+        } else if (currentUser.role !== 'Master') {
             if (currentUser.parent_user_id) {
-                query = query.or(`id.eq.${currentUser.id},parent_user_id.eq.${currentUser.parent_user_id}`);
+                // Anyone below Admin sees themselves, their peers (same parent), and the Admin (parent)
+                query = query.or(`id.eq.${currentUser.id},parent_user_id.eq.${currentUser.parent_user_id},id.eq.${currentUser.parent_user_id}`);
             } else {
                 query = query.eq('id', currentUser.id);
             }
@@ -209,7 +249,7 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                 if (!result.success) throw new Error(result.error);
                 toast.success('Usuário atualizado com sucesso!');
             } else {
-                const parentUserId = currentUser.role === 'Administrador' ? currentUser.id : null;
+                const parentUserId = currentUser.id;
                 const result = await createUserDirectly(formData, parentUserId);
                 if (!result.success) throw new Error(result.error);
                 toast.success('Usuário cadastrado com sucesso!');
@@ -404,7 +444,7 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                         <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800 rounded-xl w-fit">
                                             <Shield size={12} className="text-indigo-600 dark:text-indigo-400" />
                                             <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase">
-                                                {accessGroups.find(g => g.id === u.access_group_id)?.name || 'Carregando...'}
+                                                {accessGroups.find(g => g.id === u.access_group_id)?.name || (loading ? 'Carregando...' : 'Não Encontrado')}
                                             </span>
                                         </div>
                                     ) : (
@@ -413,11 +453,11 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                 </td>
                                 <td className="px-8 py-6 text-center">
                                     <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tight ${u.role === 'Master' ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/40' :
-                                            u.role?.includes('Sócio') || u.role?.includes('Administrador') ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40' :
-                                                u.role?.includes('Coordenador') || u.role?.includes('Sênior') ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/40' :
-                                                    u.role?.includes('Estagiário') || u.role?.includes('Paralegal') ? 'bg-violet-100 text-violet-600 dark:bg-violet-900/40' :
-                                                        u.role?.includes('Financeiro') ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40' :
-                                                            'bg-slate-100 text-slate-500 dark:bg-slate-800'
+                                        u.role?.includes('Sócio') || u.role?.includes('Administrador') ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40' :
+                                            u.role?.includes('Coordenador') || u.role?.includes('Sênior') ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/40' :
+                                                u.role?.includes('Estagiário') || u.role?.includes('Paralegal') ? 'bg-violet-100 text-violet-600 dark:bg-violet-900/40' :
+                                                    u.role?.includes('Financeiro') ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40' :
+                                                        'bg-slate-100 text-slate-500 dark:bg-slate-800'
                                         }`}>
                                         {u.role}
                                     </span>
@@ -430,9 +470,19 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                 </td>
                                 <td className="px-8 py-6 text-right">
                                     <div className="flex items-center justify-end gap-1">
-                                        <button onClick={() => handleToggleStatus(u)} className={`p-2 rounded-xl transition-all ${u.active ? 'text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20' : 'text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}`} title="Alternar Status"><Radio size={20} /></button>
-                                        <button onClick={() => openEditModal(u)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all" title="Editar"><FileEdit size={20} /></button>
-                                        <button onClick={() => setUserToDelete(u)} className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all" title="Excluir"><Trash2 size={20} /></button>
+                                        {currentUser.role !== 'Operador' || currentUser.id === u.id ? (
+                                            <>
+                                                {currentUser.role !== 'Operador' && (
+                                                    <button onClick={() => handleToggleStatus(u)} className={`p-2 rounded-xl transition-all ${u.active ? 'text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20' : 'text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}`} title="Alternar Status"><Radio size={20} /></button>
+                                                )}
+                                                <button onClick={() => openEditModal(u)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all" title="Editar"><FileEdit size={20} /></button>
+                                                {currentUser.id !== u.id && currentUser.role !== 'Operador' && (
+                                                    <button onClick={() => setUserToDelete(u)} className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all" title="Excluir"><Trash2 size={20} /></button>
+                                                )}
+                                            </>
+                                        ) : (
+                                            <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest italic flex items-center justify-end px-2">Apenas Leitura</div>
+                                        )}
                                     </div>
                                 </td>
                             </tr>
@@ -479,56 +529,53 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                             </div>
 
                             <div className="space-y-1.5 pb-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Cargo / Nível de Acesso</label>
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Cargo / Função Corporativa</label>
                                 <div className="relative">
                                     <Briefcase className="absolute left-5 top-5 text-slate-400" size={20} />
                                     <select
-                                        className="w-full pl-14 pr-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl font-bold focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white appearance-none cursor-pointer shadow-sm"
+                                        disabled={currentUser.role === 'Operador'}
+                                        className="w-full pl-14 pr-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl font-bold focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white appearance-none cursor-pointer shadow-sm disabled:opacity-50"
                                         value={formData.role}
-                                        onChange={e => setFormData({ ...formData, role: e.target.value as any })}
+                                        onChange={e => {
+                                            const selectedRoleName = e.target.value;
+                                            const roleObj = roles.find(r => r.name === selectedRoleName);
+                                            setFormData({
+                                                ...formData,
+                                                role: selectedRoleName as any,
+                                                access_group_id: roleObj ? roleObj.access_group_id : ''
+                                            });
+                                        }}
                                     >
-                                        <optgroup label="Administrativo">
-                                            <option value="Administrador">Administrador Geral</option>
-                                            <option value="Sócio-Administrador">Sócio-Administrador</option>
-                                            <option value="Controladoria Jurídica (Legal Ops)">Controladoria / Legal Ops</option>
-                                        </optgroup>
-                                        <optgroup label="Jurídico">
-                                            <option value="Sócio">Sócio</option>
-                                            <option value="Advogado Sênior / Coordenador">Advogado Sênior / Coordenador</option>
-                                            <option value="Advogado Associado / Júnior">Advogado Associado / Júnior</option>
-                                            <option value="Estagiário / Paralegal">Estagiário / Paralegal</option>
-                                        </optgroup>
-                                        <optgroup label="Operacional & Suporte">
-                                            <option value="Operador">Operador de Sistema</option>
-                                            <option value="Departamento Financeiro / Faturamento">Financeiro / Faturamento</option>
-                                            <option value="Secretariado / Recepção">Secretariado / Recepção</option>
-                                        </optgroup>
+                                        <option value="" disabled>Selecione um Cargo...</option>
+                                        {/* Dynamic groupings based on Access Groups */}
+                                        {accessGroups.map(group => {
+                                            const groupRoles = roles.filter(r => r.access_group_id === group.id);
+                                            if (groupRoles.length === 0) return null;
+                                            return (
+                                                <optgroup key={group.id} label={group.name}>
+                                                    {groupRoles.map(role => (
+                                                        <option key={role.id} value={role.name}>{role.name}</option>
+                                                    ))}
+                                                </optgroup>
+                                            );
+                                        })}
                                         {currentUser?.role === 'Master' && (
-                                            <option value="Master">Super Master</option>
+                                            <optgroup label="Sistema Global">
+                                                <option value="Master">Super Master (Deus)</option>
+                                            </optgroup>
                                         )}
                                     </select>
                                     <ChevronDown className="absolute right-5 top-6 text-slate-400 pointer-events-none" size={16} />
                                 </div>
-                            </div>
-
-                            {formData.role !== 'Master' && (
-                                <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Vínculo a Grupo de Acesso</label>
-                                    <div className="relative">
-                                        <Shield className="absolute left-5 top-5 text-slate-400" size={20} />
-                                        <select
-                                            className="w-full pl-14 pr-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl font-bold focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white appearance-none cursor-pointer shadow-sm"
-                                            value={formData.access_group_id}
-                                            onChange={e => setFormData({ ...formData, access_group_id: e.target.value })}
-                                        >
-                                            <option value="">Nenhum Grupo (Acesso Padrão)</option>
-                                            {accessGroups.map(g => (
-                                                <option key={g.id} value={g.id}>{g.name}</option>
-                                            ))}
-                                        </select>
+                                {formData.access_group_id && formData.role !== 'Master' && (
+                                    <div className="flex items-center gap-2 mt-3 ml-2 px-3 py-2 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800 rounded-xl w-fit animate-in fade-in slide-in-from-top-2">
+                                        <Shield size={14} className="text-indigo-600 dark:text-indigo-400" />
+                                        <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
+                                            Permissões herdadas do Grupo: {accessGroups.find(g => g.id === formData.access_group_id)?.name}
+                                        </span>
                                     </div>
-                                </div>
-                            )}
+                                )}
+                            </div>
 
                             <div className="flex gap-4 pt-6">
                                 <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 px-8 py-5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-[1.5rem] font-black uppercase tracking-widest hover:bg-slate-200 transition-all text-xs">Fechar</button>

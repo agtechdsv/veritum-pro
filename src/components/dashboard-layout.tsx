@@ -17,6 +17,7 @@ import TeamManagement from './modules/team-management';
 import PersonManagement from './modules/person-management';
 import IntelligenceHub from './modules/intelligence-hub';
 import { createMasterClient } from '@/lib/supabase/master';
+import { createDynamicClient } from '@/utils/supabase/client';
 import { Tooltip } from './ui/tooltip';
 import { EmailSettingsManager } from './modules/email-config';
 import AccessManagement from './modules/access-management';
@@ -32,7 +33,7 @@ import {
 import SuiteManagement from './modules/suite-management';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
-import { ToastContainer } from './ui/toast';
+import { ToastContainer, toast } from './ui/toast';
 import SuiteDashboard from './modules/dashboards/suite-dashboard';
 import AdminDashboard from './modules/dashboards/admin-dashboard';
 import MasterDashboard from './modules/dashboards/master-dashboard';
@@ -96,6 +97,27 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
         };
         fetchRBAC();
     }, [user.access_group_id, user.role]);
+
+    // BYODB Shadow Provisioning: Ensure user exists in Tenant DB
+    React.useEffect(() => {
+        const provisionShadowUser = async () => {
+            if (!preferences?.custom_supabase_url || !preferences?.custom_supabase_key) return;
+            try {
+                const tenantClient = createDynamicClient(preferences.custom_supabase_url, preferences.custom_supabase_key);
+                await tenantClient.from('users').upsert({
+                    id: user.id,
+                    name: user.name,
+                    email: user.email,
+                    role: user.role,
+                    avatar_url: user.avatar_url,
+                    active: true
+                });
+            } catch (err) {
+                console.error('Failed to provision shadow user on Tenant DB:', err);
+            }
+        };
+        provisionShadowUser();
+    }, [user, preferences?.custom_supabase_url, preferences?.custom_supabase_key]);
 
     const baseSuiteItems = [
         { id: ModuleId.NEXUS, label: 'Nexus', icon: GitBranch, color: 'text-indigo-500' },
@@ -166,6 +188,44 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
         { id: ModuleId.PERSONS, label: 'CRM de Clientes', icon: UserIcon, color: 'text-emerald-600' },
     ];
 
+    // PROTEÇÃO DE ROTAS - URL ACCESS CONTROL (Regra 3)
+    React.useEffect(() => {
+        if (user.role === 'Master') return; // Master tem acesso iminente a tudo
+
+        const currentNormalized = normalize(activeModule);
+
+        // 1. Checa se é um módulo core (Suite)
+        const isCoreModule = baseSuiteItems.some(bs => normalize(bs.id) === currentNormalized);
+        if (isCoreModule) {
+            const isAllowedCore = suiteItems.some(si => normalize(si.id) === currentNormalized);
+            if (!isAllowedCore) {
+                toast.error('Seu plano ou nível de acesso não permite visualizar este módulo.');
+                onModuleChange(ModuleId.DASHBOARD_ROOT);
+                return;
+            }
+        }
+
+        // 2. Checa se é módulo Admin
+        const isAdminModule = adminItems.some(ai => normalize(ai.id) === currentNormalized);
+        if (isAdminModule) {
+            const isAllowedAdmin = user.role === 'Administrador' || user.role === 'Sócio-Administrador';
+            if (!isAllowedAdmin && currentNormalized !== 'settings' && currentNormalized !== 'users') { // Everyone can access settings and users (with restricted view)
+                toast.error('Acesso restrito a administradores.');
+                onModuleChange(ModuleId.DASHBOARD_ROOT);
+                return;
+            }
+        }
+
+        // 3. Checa se é módulo Master
+        const isMasterModule = masterItems.some(mi => normalize(mi.id) === currentNormalized);
+        if (isMasterModule) {
+            toast.error('Acesso negado. Restrito ao Master.');
+            onModuleChange(ModuleId.DASHBOARD_ROOT);
+            return;
+        }
+
+    }, [activeModule, suiteItems, user.role, onModuleChange]);
+
     const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
@@ -200,8 +260,8 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
 
     const renderModule = () => {
         const creds: Credentials = {
-            supabaseUrl: preferences.custom_supabase_url || '',
-            supabaseAnonKey: preferences.custom_supabase_key || '',
+            supabaseUrl: preferences.custom_supabase_url || process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+            supabaseAnonKey: preferences.custom_supabase_key || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
             geminiKey: preferences.custom_gemini_key || process.env.NEXT_PUBLIC_GEMINI_API_KEY || '',
         };
 
@@ -211,9 +271,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
             case 'sentinel': return <Sentinel credentials={creds} permissions={planPermissions.find(p => normalize(p.suite_key) === 'sentinel')} />;
             case 'nexus': return <Nexus credentials={creds} permissions={planPermissions.find(p => normalize(p.suite_key) === 'nexus')} />;
             case 'scriptor': return <Scriptor credentials={creds} permissions={planPermissions.find(p => normalize(p.suite_key) === 'scriptor')} />;
-            case 'valorem':
-                if (user.role === 'Estagiário / Paralegal') return <div className="flex items-center justify-center h-full text-rose-500 font-bold p-12 bg-rose-50 dark:bg-rose-950/20 rounded-3xl border border-rose-200">Acesso Negado: Estagiários não possuem permissão para acessar o módulo financeiro.</div>;
-                return <Valorem credentials={creds} permissions={planPermissions.find(p => normalize(p.suite_key) === 'valorem')} />;
+            case 'valorem': return <Valorem credentials={creds} permissions={planPermissions.find(p => normalize(p.suite_key) === 'valorem')} />;
             case 'cognitio': return <Cognitio credentials={creds} permissions={planPermissions.find(p => normalize(p.suite_key) === 'cognitio')} />;
             case 'vox': return <Vox credentials={creds} permissions={planPermissions.find(p => normalize(p.suite_key) === 'vox')} />;
             case 'intelligence': return <IntelligenceHub credentials={creds} permissions={planPermissions.find(p => normalize(p.suite_key) === 'intelligence')} />;

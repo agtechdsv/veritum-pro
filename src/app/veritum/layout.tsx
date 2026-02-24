@@ -57,7 +57,12 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
                 .single();
 
             if (profileError) {
-                console.error("Erro ao buscar perfil na tabela public.users:", profileError);
+                // Ignore PGRST116 (No rows returned) if the trigger failed and the user is fresh
+                if (profileError.code !== 'PGRST116') {
+                    console.error("Erro ao buscar perfil na tabela public.users:", JSON.stringify(profileError, null, 2));
+                } else {
+                    console.warn("Perfil não encontrado na tabela public.users (PGRST116). O Trigger falhou ao registrar?");
+                }
             }
 
             setUser({
@@ -69,15 +74,19 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
                 active: profile?.active ?? true,
                 avatar_url: profile?.avatar_url || authUser.user_metadata.avatar_url || authUser.user_metadata.picture,
                 parent_user_id: profile?.parent_user_id || authUser.user_metadata.parent_user_id,
-                plan_id: profile?.plan_id || authUser.user_metadata.plan_id
+                plan_id: profile?.plan_id || authUser.user_metadata.plan_id,
+                access_group_id: profile?.access_group_id || authUser.user_metadata.access_group_id
             });
 
-            // Fetch plan permissions
-            if (profile?.plan_id) {
+            // Fetch plan permissions with robust metadata fallback
+            const planId = profile?.plan_id || authUser.user_metadata.plan_id;
+            const parentId = profile?.parent_user_id || authUser.user_metadata.parent_user_id;
+
+            if (planId) {
                 const { data: perms } = await supabase
                     .from('plan_permissions')
                     .select('feature_id, features(feature_key, suite_id, suites(suite_key))')
-                    .eq('plan_id', profile.plan_id);
+                    .eq('plan_id', planId);
 
                 if (perms) {
                     const suiteMap = new Map<string, any>();
@@ -93,11 +102,11 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
                     });
                     setPlanPermissions(Array.from(suiteMap.values()));
                 }
-            } else if (profile?.parent_user_id) {
+            } else if (parentId) {
                 const { data: parentProfile } = await supabase
                     .from('users')
                     .select('plan_id')
-                    .eq('id', profile.parent_user_id)
+                    .eq('id', parentId)
                     .single();
 
                 if (parentProfile?.plan_id) {
@@ -127,7 +136,7 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
                 .from('user_preferences')
                 .select('*')
                 .eq('user_id', authUser.id)
-                .single();
+                .maybeSingle();
 
             setPreferences({
                 user_id: authUser.id,

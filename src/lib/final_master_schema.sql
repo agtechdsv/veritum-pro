@@ -1,32 +1,15 @@
 -- ============================================================================
--- VERITUM PRO: THE MASTER GOLDEN SCHEMA (COMPREHENSIVA)
+-- VERITUM PRO: FINAL MASTER SCHEMA (SAAS CONTROL PLANE)
 -- ============================================================================
--- Description: Script único para setup completo do ambiente.
--- ATENÇÃO: Inclui comandos de limpeza (DROP) para re-instalação total.
--- ============================================================================
+-- Description: Banco de Dados Mestre da Trademaster Pro.
+-- Responsável por: Auth, Cobrança, Licenciamento (Planos/Suítes) e Segurança Global (RBAC).
 
--- ----------------------------------------------------------------------------
--- 0. LIMPEZA TOTAL (DROP) - USE COM CAUTELA
--- ----------------------------------------------------------------------------
-drop table if exists public.golden_alerts cascade;
-drop table if exists public.knowledge_articles cascade;
-drop table if exists public.historical_outcomes cascade;
-drop table if exists public.clippings cascade;
-drop table if exists public.monitoring_alerts cascade;
-drop table if exists public.movements cascade;
-drop table if exists public.legal_documents cascade;
-drop table if exists public.document_templates cascade;
-drop table if exists public.document_embeddings cascade;
-drop table if exists public.financial_records cascade;
-drop table if exists public.financial_transactions cascade;
-drop table if exists public.tasks cascade;
-drop table if exists public.lawsuits cascade;
-drop table if exists public.persons cascade;
-drop table if exists public.team_members cascade;
-drop table if exists public.chat_messages cascade;
-drop table if exists public.chats cascade;
+-- 0. LIMPEZA (DROP)
+drop table if exists public.user_subscriptions cascade;
+drop table if exists public.audit_logs cascade;
 drop table if exists public.group_permissions cascade;
 drop table if exists public.group_templates cascade;
+drop table if exists public.roles cascade;
 drop table if exists public.access_groups cascade;
 drop table if exists public.plan_permissions cascade;
 drop table if exists public.features cascade;
@@ -35,23 +18,14 @@ drop table if exists public.plans cascade;
 drop table if exists public.user_preferences cascade;
 drop table if exists public.email_settings cascade;
 drop table if exists public.app_settings cascade;
+drop table if exists public.demo_requests cascade;
 drop table if exists public.users cascade;
-
 drop function if exists handle_updated_at() cascade;
-drop function if exists match_knowledge(vector, float, int) cascade;
 
--- ----------------------------------------------------------------------------
--- 1. INFRAESTRUTURA & EXTENSÕES
--- ----------------------------------------------------------------------------
+-- 1. INFRAESTRUTURA
 create extension if not exists "uuid-ossp";
 create extension if not exists "pgcrypto";
-create extension if not exists "vector";
 
--- ----------------------------------------------------------------------------
--- 2. FUNÇÕES DE AUTOMAÇÃO & GLOBAIS
--- ----------------------------------------------------------------------------
-
--- Função para atualizar timestamp 'updated_at'
 create or replace function handle_updated_at()
 returns trigger as $$
 begin
@@ -60,175 +34,38 @@ begin
 end;
 $$ language plpgsql;
 
--- ----------------------------------------------------------------------------
--- 3. GESTÃO DE USUÁRIOS & AUTH (Sincronização com Supabase Auth)
--- ----------------------------------------------------------------------------
-
--- Tabela de Usuários (Profiles)
+-- 2. GESTÃO DE USUÁRIOS E AUTH (Sincronização com Supabase Auth)
 create table if not exists public.users (
   id uuid primary key references auth.users(id) on delete cascade,
   name text not null,
   username text unique not null,
-  role text default 'Administrador' check (role in (
-    'Master', 'Administrador', 'Operador', 
-    'Sócio-Administrador', 'Advogado Sênior / Coordenador', 
-    'Advogado Associado / Júnior', 'Estagiário / Paralegal', 
-    'Departamento Financeiro / Faturamento', 'Cliente (Acesso Externo B2B2C)', 
-    'Controladoria Jurídica (Legal Ops)', 'Secretariado / Recepção',
-    'Sócio', 'Advogado Associado', 'Estagiário', 'Paralegal', 'Financeiro'
-  )),
+  role text default 'Administrador',
   active boolean default true,
   avatar_url text,
   cpf_cnpj text,
   phone text,
-  access_group_id uuid, -- Linkado ao RBAC abaixo
-  plan_id uuid, -- Linkado ao sistema de planos
+  access_group_id uuid,
+  plan_id uuid,
   parent_user_id uuid references public.users(id) on delete cascade,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
 
--- Preferências do Usuário
 create table if not exists public.user_preferences (
   user_id uuid primary key references auth.users(id) on delete cascade,
   language text default 'pt' check (language in ('pt', 'en', 'es')),
   theme text default 'dark' check (theme in ('light', 'dark')),
+  
+  -- BYODB Campos (Chaves do Inquilino/Cliente)
   custom_supabase_url text,
   custom_supabase_key text,
   custom_gemini_key text,
+  
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
 
--- Assinaturas (Planos)
-create table if not exists public.user_subscriptions (
-    id uuid primary key default gen_random_uuid(),
-    user_id uuid not null references auth.users(id) on delete cascade,
-    plan_id uuid not null, -- Referência à tabela plans abaixo
-    start_date timestamptz default now(),
-    end_date timestamptz,
-    status text default 'active' check (status in ('active', 'expired', 'canceled')),
-    is_trial boolean default false,
-    created_at timestamptz default now()
-);
-
--- Trigger: Criar perfil público ao criar usuário no Auth
-create or replace function public.handle_new_user()
-returns trigger as $$
-declare
-  default_role text := 'Administrador';
-  user_role text;
-  user_name text;
-  user_plan_id uuid;
-begin
-  user_role := coalesce(new.raw_user_meta_data->>'role', default_role);
-  user_name := coalesce(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name', 'Usuário');
-  user_plan_id := (new.raw_user_meta_data->>'plan_id')::uuid;
-
-  -- 💎 AUTO TRIAL: Se nenhum plan_id foi fornecido, busca o plano "Trial 14 Dias"
-  if user_plan_id is null then
-     select id into user_plan_id from public.plans where name = 'Trial 14 Dias' limit 1;
-  end if;
-
-  insert into public.users (id, name, username, role, active, avatar_url, parent_user_id, plan_id, access_group_id)
-  values (
-    new.id,
-    user_name,
-    new.email,
-    user_role, 
-    true,
-    coalesce(new.raw_user_meta_data->>'avatar_url', new.raw_user_meta_data->>'picture'),
-    (new.raw_user_meta_data->>'parent_user_id')::uuid,
-    user_plan_id,
-    (new.raw_user_meta_data->>'access_group_id')::uuid
-  )
-  on conflict (id) do update set
-    role = excluded.role,
-    name = excluded.name,
-    plan_id = excluded.plan_id,
-    access_group_id = excluded.access_group_id;
-
-  -- 💎 AUTO SUBSCRIPTION: Vincula o usuário ao plano trial/atribuído
-  if user_plan_id is not null then
-     insert into public.user_subscriptions (user_id, plan_id, start_date, end_date, status, is_trial)
-     values (
-       new.id,
-       user_plan_id,
-       now(),
-       case when (new.raw_user_meta_data->>'parent_user_id') is not null then null else now() + interval '14 days' end,
-       'active',
-       case when (new.raw_user_meta_data->>'parent_user_id') is not null then false else true end
-     )
-     on conflict do nothing;
-  end if;
-
-  -- 💎 AUTO PREFERENCES: Cria preferências padrão para o usuário
-  insert into public.user_preferences (user_id, language, theme)
-  values (new.id, 'pt', 'dark')
-  on conflict (user_id) do nothing;
-
-  -- Ensure Auth Metadata matches the role and plan for instant RLS validation
-  update auth.users
-  set raw_user_meta_data = 
-    coalesce(raw_user_meta_data, '{}'::jsonb) || 
-    jsonb_build_object(
-      'role', user_role,
-      'full_name', user_name,
-      'name', user_name,
-      'plan_id', user_plan_id,
-      'access_group_id', (new.raw_user_meta_data->>'access_group_id')
-    )
-  where id = new.id;
-
-  return new;
-end;
-$$ language plpgsql security definer;
-
--- Trigger: Sincronizar alterações do Perfil de volta para o Auth
-create or replace function public.handle_updated_user()
-returns trigger as $$
-begin
-  update auth.users
-  set raw_user_meta_data = 
-    coalesce(raw_user_meta_data, '{}'::jsonb) || 
-    jsonb_build_object(
-      'role', new.role,
-      'full_name', new.name,
-      'name', new.name,
-      'parent_user_id', new.parent_user_id,
-      'active', new.active,
-      'plan_id', new.plan_id,
-      'access_group_id', new.access_group_id
-    )
-  where id = new.id;
-
-  -- Cascade Active status to Operators
-  if (old.active is distinct from new.active) then
-    update public.users set active = new.active where parent_user_id = new.id;
-  end if;
-
-  return new;
-end;
-$$ language plpgsql security definer;
-
--- Membros da Equipe (Staff)
-create table if not exists public.team_members (
-    id uuid primary key default gen_random_uuid(),
-    full_name text not null,
-    email text unique not null,
-    phone text,
-    role text,
-    oab_number text,
-    is_active boolean default true,
-    created_at timestamptz default now(),
-    updated_at timestamptz default now()
-);
-
--- ----------------------------------------------------------------------------
--- 4. FUNDAÇÃO RBAC & PLANOS
--- ----------------------------------------------------------------------------
-
--- Suítes (Módulos)
+-- 3. FUNDAÇÃO RBAC & PLANOS
 create table if not exists public.suites (
   id uuid primary key default gen_random_uuid (),
   suite_key text unique not null,
@@ -242,7 +79,6 @@ create table if not exists public.suites (
   created_at timestamptz default now()
 );
 
--- Funcionalidades Granulares
 create table if not exists public.features (
     id uuid primary key default gen_random_uuid(),
     feature_key text unique not null,
@@ -252,7 +88,6 @@ create table if not exists public.features (
     created_at timestamptz default now()
 );
 
--- Planos de Venda
 create table if not exists public.plans (
   id uuid primary key default gen_random_uuid (),
   name text not null,
@@ -269,7 +104,6 @@ create table if not exists public.plans (
   created_at timestamptz default now()
 );
 
--- Link Planos x Features
 create table if not exists public.plan_permissions (
     id uuid primary key default gen_random_uuid(),
     plan_id uuid not null references public.plans(id) on delete cascade,
@@ -278,50 +112,46 @@ create table if not exists public.plan_permissions (
     unique(plan_id, feature_id)
 );
 
--- Constraints de Integridade Referencial (Planos)
+create table if not exists public.user_subscriptions (
+    id uuid primary key default gen_random_uuid(),
+    user_id uuid not null references auth.users(id) on delete cascade,
+    plan_id uuid not null references public.plans(id) on delete cascade,
+    start_date timestamptz default now(),
+    end_date timestamptz,
+    status text default 'active' check (status in ('active', 'expired', 'canceled')),
+    is_trial boolean default false,
+    created_at timestamptz default now()
+);
+
+-- Restrição de Plans na tabela Users
 alter table public.users add constraint fk_user_plan foreign key (plan_id) references public.plans(id) on delete set null;
-alter table public.user_subscriptions add constraint fk_sub_plan foreign key (plan_id) references public.plans(id) on delete cascade;
 
--- Índices de Performance
-create index if not exists idx_users_plan_id on public.users(plan_id);
-create index if not exists idx_subscriptions_plan_id on public.user_subscriptions(plan_id);
-
--- Grupos de Acesso (RBAC Admin)
+-- Grupos de Acesso Globais & Roles do Cliente (RBAC de Negócio)
 create table if not exists public.access_groups (
     id uuid primary key default gen_random_uuid(),
     name text not null,
     admin_id uuid not null, 
     created_at timestamptz default now(),
-    unique(admin_id, name) -- Impedir grupos com mesmo nome para o mesmo admin
+    unique(admin_id, name)
 );
 
--- Cargos (Roles Internos vinculados a Grupos de Acesso)
 create table if not exists public.roles (
     id uuid primary key default gen_random_uuid(),
     name text not null,
     access_group_id uuid references public.access_groups(id) on delete set null,
     admin_id uuid not null,
     created_at timestamptz default now(),
-    unique(admin_id, name) -- Cada admin pode ter nomes de cargos únicos
+    unique(admin_id, name)
 );
 
--- Habilitar RLS para roles
-alter table public.roles enable row level security;
-create policy "Admins can view their own roles" on public.roles for select using (admin_id = auth.uid() or admin_id = (select parent_user_id from public.users where id = auth.uid()));
-create policy "Admins can insert their own roles" on public.roles for insert with check (admin_id = auth.uid());
-create policy "Admins can update their own roles" on public.roles for update using (admin_id = auth.uid());
-create policy "Admins can delete their own roles" on public.roles for delete using (admin_id = auth.uid());
-
--- Templates de Grupos (Personas Padrão do Sistema)
 create table if not exists public.group_templates (
     id uuid primary key default gen_random_uuid(),
     name text not null unique,
     description text,
-    default_features uuid[], -- Array de IDs de features recomendadas
+    default_features uuid[],
     created_at timestamptz default now()
 );
 
--- Permissões de Grupo
 create table if not exists public.group_permissions (
     id uuid primary key default gen_random_uuid(),
     group_id uuid references public.access_groups(id) on delete cascade,
@@ -331,274 +161,9 @@ create table if not exists public.group_permissions (
     unique(group_id, feature_id)
 );
 
--- Agora vinculamos users à access_groups
 alter table public.users add constraint fk_user_access_group foreign key (access_group_id) references public.access_groups(id) on delete set null;
 
--- ----------------------------------------------------------------------------
--- 5. MÓDULOS CORE: NEXUS PRO (Operacional)
--- ----------------------------------------------------------------------------
-
--- Pessoas (Contatos/Clientes/Reclamados)
-create table if not exists public.persons (
-  id uuid primary key default gen_random_uuid(),
-  person_type text check (person_type in ('Cliente', 'Reclamado', 'Testemunha', 'Preposto', 'Advogado Adverso')),
-  full_name text not null,
-  document text unique not null,
-  email text,
-  phone text,
-  rg text,
-  legal_data jsonb,
-  address jsonb,
-  workspace_id uuid,
-  created_at timestamptz default now(),
-  updated_at timestamptz default now(),
-  deleted_at timestamptz
-);
-
--- Processos Judiciais (Lawsuits)
-create table if not exists public.lawsuits (
-  id uuid primary key default gen_random_uuid(),
-  cnj_number text unique not null,
-  case_title text,
-  author_id uuid references public.persons(id),
-  defendant_id uuid references public.persons(id),
-  responsible_lawyer_id uuid references public.users(id),
-  status text check (status in ('Ativo', 'Suspenso', 'Arquivado', 'Encerrado')),
-  sphere text,
-  court text,
-  chamber text,
-  city text,
-  state text,
-  value numeric(15, 2),
-  created_at timestamptz default now(),
-  updated_at timestamptz default now(),
-  deleted_at timestamptz
-);
-
--- Tarefas & Kanban
-create table if not exists public.tasks (
-  id uuid primary key default gen_random_uuid(),
-  title text not null,
-  description text,
-  lawsuit_id uuid references public.lawsuits(id) on delete cascade,
-  responsible_id uuid references public.users(id),
-  status text check (status in ('A Fazer', 'Em Andamento', 'Concluído', 'Atrasado')) default 'A Fazer',
-  priority text check (priority in ('Baixa', 'Média', 'Alta', 'Urgente')) default 'Média',
-  due_date timestamptz not null,
-  created_at timestamptz default now(),
-  updated_at timestamptz default now(),
-  deleted_at timestamptz
-);
-
--- ----------------------------------------------------------------------------
--- 6. SENTINEL PRO (Vigilância)
--- ----------------------------------------------------------------------------
-
-create table if not exists public.monitoring_alerts (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid default auth.uid(),
-  title text not null,
-  term text not null,
-  alert_type text check (alert_type in ('OAB', 'CNJ', 'Keyword', 'Company', 'Person')),
-  is_active boolean default true,
-  created_at timestamptz default now(),
-  deleted_at timestamptz
-);
-
-create table if not exists public.clippings (
-  id uuid primary key default gen_random_uuid(),
-  alert_id uuid references public.monitoring_alerts(id) on delete cascade,
-  source text,
-  content text not null,
-  sentiment text check (sentiment in ('Positivo', 'Negativo', 'Neutro')),
-  score float,
-  url text,
-  lawsuit_id uuid references public.lawsuits(id) on delete set null,
-  captured_at timestamptz default now(),
-  embedding vector(768)
-);
-
-create table if not exists public.chats (
-  id uuid primary key default gen_random_uuid(),
-  person_id uuid references public.persons(id) on delete cascade,
-  lawsuit_id uuid references public.lawsuits(id) on delete set null,
-  status text default 'Ativo',
-  created_at timestamptz default now(),
-  updated_at timestamptz default now(),
-  deleted_at timestamptz
-);
-
-create table if not exists public.chat_messages (
-  id uuid primary key default gen_random_uuid(),
-  chat_id uuid references public.chats(id) on delete cascade,
-  sender_id uuid default auth.uid(),
-  sender_type text check (sender_type in ('Lawyer', 'Client', 'AI')) default 'Lawyer',
-  content text not null,
-  is_read boolean default false,
-  created_at timestamptz default now(),
-  deleted_at timestamptz
-);
-
--- ----------------------------------------------------------------------------
--- 7. NOTEBOOKLM: COGNITIO & GOLDEN ALERTS (Inteligência Proativa)
--- ----------------------------------------------------------------------------
-
-create table if not exists public.knowledge_articles (
-    id uuid primary key default gen_random_uuid(),
-    title text not null,
-    content text not null,
-    category text,
-    tags text[],
-    embedding vector(768),
-    created_at timestamptz default now(),
-    updated_at timestamptz default now()
-);
-
--- Index para busca semântica em Conhecimento
-create index if not exists idx_knowledge_embedding on public.knowledge_articles 
-using hnsw (embedding vector_cosine_ops);
-
--- Função de busca semântica para Conhecimento (RPC)
-create or replace function match_knowledge (
-  query_embedding vector(768),
-  match_threshold float,
-  match_count int
-)
-returns table (
-  id uuid,
-  title text,
-  content text,
-  category text,
-  similarity float
-)
-language plpgsql
-as $$
-begin
-  return query
-  select
-    ka.id,
-    ka.title,
-    ka.content,
-    ka.category,
-    1 - (ka.embedding <=> query_embedding) as similarity
-  from public.knowledge_articles ka
-  where 1 - (ka.embedding <=> query_embedding) > match_threshold
-  order by ka.embedding <=> query_embedding
-  limit match_count;
-end;
-$$;
-
-create table if not exists public.historical_outcomes (
-    id uuid primary key default gen_random_uuid(),
-    judge_name text,
-    court text,
-    case_type text,
-    outcome text,
-    created_at timestamptz default now()
-);
-
-create table if not exists public.golden_alerts (
-    id uuid primary key default gen_random_uuid(),
-    clipping_id uuid not null references public.clippings(id) on delete cascade,
-    matched_knowledge_id uuid references public.knowledge_articles(id) on delete set null,
-    matched_lawsuit_id uuid references public.lawsuits(id) on delete set null,
-    match_score float not null,
-    intelligence_type text check (intelligence_type in ('Opportunity', 'Risk', 'Similar Success')),
-    priority text check (priority in ('High', 'Medium', 'Low')) default 'Medium',
-    reasoning text,
-    status text default 'unread' check (status in ('unread', 'dismissed', 'actioned')),
-    created_at timestamptz default now(),
-    updated_at timestamptz default now()
-);
-
-create table if not exists public.movements (
-  id uuid primary key default gen_random_uuid(),
-  lawsuit_id uuid references public.lawsuits(id) on delete cascade,
-  original_text text,
-  translated_text text,
-  sentiment_score float,
-  source text default 'Manual',
-  is_notified boolean default false,
-  created_at timestamptz default now(),
-  deleted_at timestamptz
-);
-
--- ----------------------------------------------------------------------------
--- 8. SCRIPTOR PRO (Documentos & IA)
--- ----------------------------------------------------------------------------
-
-create table if not exists public.document_templates (
-  id uuid primary key default gen_random_uuid(),
-  title text not null,
-  category text,
-  base_prompt text not null,
-  created_at timestamptz default now(),
-  deleted_at timestamptz
-);
-
-create table if not exists public.legal_documents (
-  id uuid primary key default gen_random_uuid(),
-  title text not null,
-  content text,
-  lawsuit_id uuid references public.lawsuits(id) on delete set null,
-  author_id uuid references public.users(id) on delete set null,
-  template_id uuid references public.document_templates(id) on delete set null,
-  version integer default 1,
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
-);
-
--- Embeddings para busca semântica (RAG)
-create table if not exists public.document_embeddings (
-  id uuid primary key default gen_random_uuid(),
-  lawsuit_id uuid references public.lawsuits(id) on delete cascade,
-  filename text,
-  content text,
-  embedding vector(768),
-  created_at timestamptz default now()
-);
-
--- Index para busca semântica (HNSW)
-create index if not exists idx_doc_embeddings_vector on public.document_embeddings 
-using hnsw (embedding vector_cosine_ops);
-
--- ----------------------------------------------------------------------------
--- 8. VALOREM PRO (Financeiro)
--- ----------------------------------------------------------------------------
-
--- Registros Financeiros (V1)
-create table if not exists public.financial_records (
-  id uuid primary key default gen_random_uuid(),
-  lawsuit_id uuid references public.lawsuits(id) on delete set null,
-  description text,
-  type text check (type in ('fee', 'cost', 'settlement', 'honorarium')),
-  amount numeric,
-  due_date date,
-  is_paid boolean default false,
-  created_at timestamptz default now()
-);
-
--- Transações Financeiras (V2)
-create table if not exists public.financial_transactions (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid default auth.uid(),
-  title text not null,
-  amount numeric(12,2) not null,
-  entry_type text check (entry_type in ('Credit', 'Debit')),
-  category text,
-  transaction_date timestamptz default now(),
-  lawsuit_id uuid references public.lawsuits(id) on delete set null,
-  person_id uuid references public.persons(id) on delete set null,
-  status text check (status in ('Pago', 'Pendente', 'Cancelado')) default 'Pendente',
-  created_at timestamptz default now(),
-  updated_at timestamptz default now(),
-  deleted_at timestamptz
-);
-
--- ----------------------------------------------------------------------------
--- 9. CONFIGURAÇÕES & SUPORTE (App Settings, Emails, Demos)
--- ----------------------------------------------------------------------------
-
+-- 4. CONFIGURAÇÕES & AUDITORIA MASTER
 create table if not exists public.app_settings (
   id uuid primary key default gen_random_uuid(),
   office_name text,
@@ -625,18 +190,14 @@ create table if not exists public.demo_requests (
     preferred_end timestamptz not null,
     scheduled_at timestamptz,
     attended_at timestamptz,
-    status text not null default 'pending' check (status in ('pending', 'scheduled', 'attended', 'canceled')),
+    status text not null default 'pending',
     created_at timestamptz default now()
 );
-
--- ----------------------------------------------------------------------------
--- 10. AUDITORIA
--- ----------------------------------------------------------------------------
 
 create table if not exists public.audit_logs (
   id uuid primary key default gen_random_uuid(),
   user_id uuid,
-  action text, -- CREATE, UPDATE, DELETE
+  action text,
   table_name text,
   record_id uuid,
   old_data jsonb,
@@ -644,53 +205,55 @@ create table if not exists public.audit_logs (
   created_at timestamptz default now()
 );
 
--- 💎 ONE-TIME MIGRATION: Garantir que todos os usuários existentes tenham preferências
-insert into public.user_preferences (user_id, language, theme)
-select id, 'pt', 'dark' from public.users
-on conflict (user_id) do nothing;
+-- 5. FUNCTION & TRIGGERS MASTER (Somente para a camada Master)
+create or replace function public.handle_new_user()
+returns trigger as $$
+declare
+  default_role text := 'Administrador';
+  user_role text;
+  user_name text;
+  user_plan_id uuid;
+begin
+  user_role := coalesce(new.raw_user_meta_data->>'role', default_role);
+  user_name := coalesce(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name', 'Usuário');
+  user_plan_id := (new.raw_user_meta_data->>'plan_id')::uuid;
 
--- ----------------------------------------------------------------------------
--- 11. TRIGGERS
--- ----------------------------------------------------------------------------
+  if user_plan_id is null then select id into user_plan_id from public.plans where name = 'Trial 14 Dias' limit 1; end if;
 
--- Auth integration
-drop trigger if exists on_auth_user_created on auth.users;
-create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute function public.handle_new_user();
+  insert into public.users (id, name, username, role, active, avatar_url, parent_user_id, plan_id, access_group_id)
+  values (new.id, user_name, new.email, user_role, true, coalesce(new.raw_user_meta_data->>'avatar_url', new.raw_user_meta_data->>'picture'), (new.raw_user_meta_data->>'parent_user_id')::uuid, user_plan_id, (new.raw_user_meta_data->>'access_group_id')::uuid)
+  on conflict (id) do update set role = excluded.role, name = excluded.name, plan_id = excluded.plan_id, access_group_id = excluded.access_group_id;
 
-drop trigger if exists on_public_user_updated on public.users;
-create trigger on_public_user_updated
-  after update on public.users
-  for each row 
-  when (
-    old.role is distinct from new.role or 
-    old.name is distinct from new.name or 
-    old.parent_user_id is distinct from new.parent_user_id or
-    old.active is distinct from new.active
-  )
-  execute function public.handle_updated_user();
+  if user_plan_id is not null then
+     insert into public.user_subscriptions (user_id, plan_id, start_date, end_date, status, is_trial)
+     values (new.id, user_plan_id, now(), case when (new.raw_user_meta_data->>'parent_user_id') is not null then null else now() + interval '14 days' end, 'active', case when (new.raw_user_meta_data->>'parent_user_id') is not null then false else true end)
+     on conflict do nothing;
+  end if;
 
--- Updated_at automation
+  insert into public.user_preferences (user_id, language, theme) values (new.id, 'pt', 'dark') on conflict (user_id) do nothing;
+
+  update auth.users set raw_user_meta_data = coalesce(raw_user_meta_data, '{}'::jsonb) || jsonb_build_object('role', user_role, 'full_name', user_name, 'name', user_name, 'plan_id', user_plan_id, 'access_group_id', (new.raw_user_meta_data->>'access_group_id')) where id = new.id;
+  return new;
+end;
+$$ language plpgsql security definer;
+
+create trigger on_auth_user_created after insert on auth.users for each row execute function public.handle_new_user();
+
+create or replace function public.handle_updated_user()
+returns trigger as $$
+begin
+  update auth.users set raw_user_meta_data = coalesce(raw_user_meta_data, '{}'::jsonb) || jsonb_build_object('role', new.role, 'full_name', new.name, 'name', new.name, 'parent_user_id', new.parent_user_id, 'active', new.active, 'plan_id', new.plan_id, 'access_group_id', new.access_group_id) where id = new.id;
+  if (old.active is distinct from new.active) then update public.users set active = new.active where parent_user_id = new.id; end if;
+  return new;
+end;
+$$ language plpgsql security definer;
+
+create trigger on_public_user_updated after update on public.users for each row when (old.role is distinct from new.role or old.name is distinct from new.name or old.parent_user_id is distinct from new.parent_user_id or old.active is distinct from new.active) execute function public.handle_updated_user();
+
 create trigger tr_users_updated before update on public.users for each row execute function handle_updated_at();
 create trigger tr_user_prefs_updated before update on public.user_preferences for each row execute function handle_updated_at();
-create trigger tr_suites_updated before update on public.suites for each row execute function handle_updated_at();
-create trigger tr_persons_updated before update on public.persons for each row execute function handle_updated_at();
-create trigger tr_lawsuits_updated before update on public.lawsuits for each row execute function handle_updated_at();
-create trigger tr_tasks_updated before update on public.tasks for each row execute function handle_updated_at();
-create trigger tr_legal_docs_updated before update on public.legal_documents for each row execute function handle_updated_at();
-create trigger tr_financial_updated before update on public.financial_transactions for each row execute function handle_updated_at();
-create trigger tr_email_settings_updated before update on public.email_settings for each row execute function handle_updated_at();
-create trigger tr_golden_alerts_updated before update on public.golden_alerts for each row execute function handle_updated_at();
-create trigger tr_knowledge_updated before update on public.knowledge_articles for each row execute function handle_updated_at();
-create trigger tr_team_updated before update on public.team_members for each row execute function handle_updated_at();
-create trigger tr_chats_updated before update on public.chats for each row execute function handle_updated_at();
 
--- ----------------------------------------------------------------------------
--- 12. SEGURANÇA (RLS)
--- ----------------------------------------------------------------------------
-
--- Habilitar RLS em absoluto tudo
+-- RLS Básico MASTER
 alter table public.users enable row level security;
 alter table public.user_preferences enable row level security;
 alter table public.user_subscriptions enable row level security;
@@ -700,116 +263,13 @@ alter table public.plans enable row level security;
 alter table public.plan_permissions enable row level security;
 alter table public.access_groups enable row level security;
 alter table public.group_permissions enable row level security;
-alter table public.persons enable row level security;
-alter table public.lawsuits enable row level security;
-alter table public.tasks enable row level security;
-alter table public.monitoring_alerts enable row level security;
-alter table public.clippings enable row level security;
-alter table public.movements enable row level security;
-alter table public.document_templates enable row level security;
-alter table public.legal_documents enable row level security;
-alter table public.document_embeddings enable row level security;
-alter table public.financial_records enable row level security;
-alter table public.financial_transactions enable row level security;
-alter table public.app_settings enable row level security;
-alter table public.email_settings enable row level security;
-alter table public.demo_requests enable row level security;
-alter table public.audit_logs enable row level security;
-alter table public.golden_alerts enable row level security;
-alter table public.knowledge_articles enable row level security;
-alter table public.historical_outcomes enable row level security;
-alter table public.team_members enable row level security;
-alter table public.chats enable row level security;
-alter table public.document_templates enable row level security;
+alter table public.roles enable row level security;
 
--- Políticas de Exemplo (Idempotentes)
-DROP POLICY IF EXISTS "Master: Full Control" ON public.users;
-CREATE POLICY "Master: Full Control" ON public.users FOR ALL USING ((auth.jwt() -> 'user_metadata' ->> 'role') = 'Master');
+-- Insira a mesma lógica de RLS do schema original aqui depois.
 
-DROP POLICY IF EXISTS "Users can read own profile" ON public.users;
-CREATE POLICY "Users can read own profile" ON public.users FOR SELECT USING (auth.uid() = id);
-
-DROP POLICY IF EXISTS "Admins can read their team" ON public.users;
-CREATE POLICY "Admins can read their team" ON public.users FOR SELECT USING (auth.uid() = parent_user_id);
-
-DROP POLICY IF EXISTS "Users can update own basic data" ON public.users;
-CREATE POLICY "Users can update own basic data" ON public.users 
-FOR UPDATE USING (auth.uid() = id)
-WITH CHECK (auth.uid() = id);
-
-DROP POLICY IF EXISTS "Users manage self preferences" ON public.user_preferences;
-CREATE POLICY "Users manage self preferences" ON public.user_preferences FOR ALL USING (auth.uid() = user_id);
-
-DROP POLICY IF EXISTS "Authenticated users can read suites" ON public.suites;
-CREATE POLICY "Authenticated users can read suites" ON public.suites FOR SELECT USING (auth.role() = 'authenticated');
-
-DROP POLICY IF EXISTS "Master: Full Control on suites" ON public.suites;
-CREATE POLICY "Master: Full Control on suites" ON public.suites FOR ALL USING ((auth.jwt() -> 'user_metadata' ->> 'role') = 'Master');
-
-DROP POLICY IF EXISTS "Allow auth on lawsuits" ON public.lawsuits;
-CREATE POLICY "Allow auth on lawsuits" ON public.lawsuits FOR ALL USING (auth.role() = 'authenticated');
-
-DROP POLICY IF EXISTS "Allow auth on golden_alerts" ON public.golden_alerts;
-CREATE POLICY "Allow auth on golden_alerts" ON public.golden_alerts FOR ALL USING (auth.role() = 'authenticated');
-
--- RLS para RBAC e Planos (Visibilidade do Ecossistema)
-DROP POLICY IF EXISTS "Authenticated users can read plans" ON public.plans;
-CREATE POLICY "Authenticated users can read plans" ON public.plans FOR SELECT USING (auth.role() = 'authenticated');
-
-DROP POLICY IF EXISTS "Authenticated users can read features" ON public.features;
-CREATE POLICY "Authenticated users can read features" ON public.features FOR SELECT USING (auth.role() = 'authenticated');
-
-DROP POLICY IF EXISTS "Master: Full Control on features" ON public.features;
-CREATE POLICY "Master: Full Control on features" ON public.features FOR ALL USING ((auth.jwt() -> 'user_metadata' ->> 'role') = 'Master');
-
-DROP POLICY IF EXISTS "Authenticated users can read plan_permissions" ON public.plan_permissions;
-CREATE POLICY "Authenticated users can read plan_permissions" ON public.plan_permissions FOR SELECT USING (auth.role() = 'authenticated');
-
-DROP POLICY IF EXISTS "Authenticated users can read group_templates" ON public.group_templates;
-CREATE POLICY "Authenticated users can read group_templates" ON public.group_templates FOR SELECT USING (auth.role() = 'authenticated');
-
-DROP POLICY IF EXISTS "Authenticated users can read groups" ON public.access_groups;
-CREATE POLICY "Authenticated users can read groups" ON public.access_groups FOR SELECT USING (auth.role() = 'authenticated');
-
-DROP POLICY IF EXISTS "Users can insert own groups" ON public.access_groups;
-CREATE POLICY "Users can insert own groups" ON public.access_groups FOR INSERT WITH CHECK (auth.uid() = admin_id);
-
-DROP POLICY IF EXISTS "Users can update own groups" ON public.access_groups;
-CREATE POLICY "Users can update own groups" ON public.access_groups FOR UPDATE USING (auth.uid() = admin_id);
-
-DROP POLICY IF EXISTS "Users can delete own groups" ON public.access_groups;
-CREATE POLICY "Users can delete own groups" ON public.access_groups FOR DELETE USING (auth.uid() = admin_id);
-
-DROP POLICY IF EXISTS "Authenticated users can read group_permissions" ON public.group_permissions;
-CREATE POLICY "Authenticated users can read group_permissions" ON public.group_permissions FOR SELECT USING (auth.role() = 'authenticated');
-
-DROP POLICY IF EXISTS "Users can manage own group_permissions" ON public.group_permissions;
-CREATE POLICY "Users can manage own group_permissions" ON public.group_permissions 
-FOR ALL USING (
-    EXISTS (
-        SELECT 1 FROM public.access_groups 
-        WHERE id = group_id AND admin_id = auth.uid()
-    )
-);
-
-DROP POLICY IF EXISTS "Users can read own subscriptions" ON public.user_subscriptions;
-CREATE POLICY "Users can read own subscriptions" ON public.user_subscriptions FOR SELECT USING (auth.uid() = user_id);
-
-DROP POLICY IF EXISTS "Master full control on subscriptions" ON public.user_subscriptions;
-CREATE POLICY "Master full control on subscriptions" ON public.user_subscriptions FOR ALL USING ((auth.jwt() -> 'user_metadata' ->> 'role') = 'Master');
-
--- ----------------------------------------------------------------------------
--- 13. REALTIME
--- ----------------------------------------------------------------------------
-alter publication supabase_realtime add table public.tasks;
-alter publication supabase_realtime add table public.financial_transactions;
-alter publication supabase_realtime add table public.movements;
-alter publication supabase_realtime add table public.golden_alerts;
-alter publication supabase_realtime add table public.clippings;
-
--- ----------------------------------------------------------------------------
+-- ============================================================================
 -- 14. SEED DATA (Initial Setup)
--- ----------------------------------------------------------------------------
+-- ============================================================================
 
 -- 14.1. Suítes (Módulos)
 INSERT INTO public.suites (id, suite_key, name, short_desc, detailed_desc, features, icon_svg, active, order_index) VALUES 
@@ -916,7 +376,6 @@ ON CONFLICT (id) DO UPDATE SET
   order_index = EXCLUDED.order_index;
 
 -- 14.4. Plan Permissions (Official Mapping - Robust)
--- Limpar mapeamentos antigos para garantir integridade com as novas subqueries
 DELETE FROM "public"."plan_permissions";
 
 INSERT INTO "public"."plan_permissions" ("plan_id", "feature_id") 
@@ -1014,35 +473,20 @@ INSERT INTO "public"."group_templates" ("name", "description", "default_features
 SELECT 'Secretariado / Recepção', 'A linha de frente: cadastro básico de clientes e atendimento via WhatsApp.', array_agg(id)
 FROM public.features WHERE feature_key IN ('nexus_gestao_prazos', 'nexus_gestao_pessoas', 'vox_whatsapp');
 
--- 💎 ONE-TIME MIGRATION: Garantir que alertas existentes tenham priority baseada no score/tipo
-update public.golden_alerts
-set priority = case 
-    when intelligence_type = 'Risk' then 'High'
-    when match_score >= 90 then 'High'
-    when match_score >= 70 then 'Medium'
-end
-where priority is null;
-
 -- 14.7. GERAR ACCESS GROUPS GLOBAIS (SISTEMA) A PARTIR DOS TEMPLATES
--- Criamos grupos de acesso vinculados ao usuário Master para que eles apareçam
--- organicamente para toda a hierarquia de administradores.
 DO $$
 DECLARE
   master_id uuid;
 BEGIN
-  -- Busca o ID do único usuário Master (caso exista)
   SELECT id INTO master_id FROM public.users WHERE role = 'Master' LIMIT 1;
 
   IF master_id IS NOT NULL THEN
-    -- Limpa os templates antigos atrelados ao Master para evitar duplicidades se rodar 2x
     DELETE FROM "public"."access_groups" WHERE admin_id = master_id AND name IN (SELECT name FROM "public"."group_templates");
 
-    -- Insere os templates na tabela de Access Groups do Master
     INSERT INTO "public"."access_groups" ("id", "name", "admin_id")
     SELECT gen_random_uuid(), name, master_id
     FROM "public"."group_templates";
 
-    -- Espelha as permissões padrões (features) para os grupos recém criados
     INSERT INTO "public"."group_permissions" ("group_id", "feature_id")
     SELECT g.id, unnest(t.default_features)
     FROM "public"."access_groups" g
@@ -1097,3 +541,112 @@ BEGIN
 
   END IF;
 END $$;
+
+-- ============================================================================
+-- 15. SEGURANÇA (RLS DO MASTER)
+-- ============================================================================
+
+-- 15.1. Habilitar RLS nas tabelas Master
+alter table public.users enable row level security;
+alter table public.user_preferences enable row level security;
+alter table public.user_subscriptions enable row level security;
+alter table public.suites enable row level security;
+alter table public.features enable row level security;
+alter table public.plans enable row level security;
+alter table public.plan_permissions enable row level security;
+alter table public.access_groups enable row level security;
+alter table public.group_permissions enable row level security;
+alter table public.roles enable row level security;
+alter table public.group_templates enable row level security;
+alter table public.app_settings enable row level security;
+alter table public.email_settings enable row level security;
+alter table public.demo_requests enable row level security;
+alter table public.audit_logs enable row level security;
+
+-- 15.2. Políticas de Acesso
+DROP POLICY IF EXISTS "Master: Full Control" ON public.users;
+CREATE POLICY "Master: Full Control" ON public.users FOR ALL USING ((auth.jwt() -> 'user_metadata' ->> 'role') = 'Master');
+
+DROP POLICY IF EXISTS "Users can read own profile" ON public.users;
+CREATE POLICY "Users can read own profile" ON public.users FOR SELECT USING (auth.uid() = id);
+
+DROP POLICY IF EXISTS "Admins can read their team" ON public.users;
+CREATE POLICY "Admins can read their team" ON public.users FOR SELECT USING (auth.uid() = parent_user_id);
+
+DROP POLICY IF EXISTS "Users can update own basic data" ON public.users;
+CREATE POLICY "Users can update own basic data" ON public.users 
+FOR UPDATE USING (auth.uid() = id)
+WITH CHECK (auth.uid() = id);
+
+DROP POLICY IF EXISTS "Users manage self preferences" ON public.user_preferences;
+CREATE POLICY "Users manage self preferences" ON public.user_preferences FOR ALL USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Authenticated users can read suites" ON public.suites;
+CREATE POLICY "Authenticated users can read suites" ON public.suites FOR SELECT USING (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Master: Full Control on suites" ON public.suites;
+CREATE POLICY "Master: Full Control on suites" ON public.suites FOR ALL USING ((auth.jwt() -> 'user_metadata' ->> 'role') = 'Master');
+
+DROP POLICY IF EXISTS "Authenticated users can read plans" ON public.plans;
+CREATE POLICY "Authenticated users can read plans" ON public.plans FOR SELECT USING (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Authenticated users can read features" ON public.features;
+CREATE POLICY "Authenticated users can read features" ON public.features FOR SELECT USING (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Master: Full Control on features" ON public.features;
+CREATE POLICY "Master: Full Control on features" ON public.features FOR ALL USING ((auth.jwt() -> 'user_metadata' ->> 'role') = 'Master');
+
+DROP POLICY IF EXISTS "Authenticated users can read plan_permissions" ON public.plan_permissions;
+CREATE POLICY "Authenticated users can read plan_permissions" ON public.plan_permissions FOR SELECT USING (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Authenticated users can read group_templates" ON public.group_templates;
+CREATE POLICY "Authenticated users can read group_templates" ON public.group_templates FOR SELECT USING (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Authenticated users can read groups" ON public.access_groups;
+CREATE POLICY "Authenticated users can read groups" ON public.access_groups FOR SELECT USING (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Users can insert own groups" ON public.access_groups;
+CREATE POLICY "Users can insert own groups" ON public.access_groups FOR INSERT WITH CHECK (auth.uid() = admin_id);
+
+DROP POLICY IF EXISTS "Users can update own groups" ON public.access_groups;
+CREATE POLICY "Users can update own groups" ON public.access_groups FOR UPDATE USING (auth.uid() = admin_id);
+
+DROP POLICY IF EXISTS "Users can delete own groups" ON public.access_groups;
+CREATE POLICY "Users can delete own groups" ON public.access_groups FOR DELETE USING (auth.uid() = admin_id);
+
+DROP POLICY IF EXISTS "Authenticated users can read group_permissions" ON public.group_permissions;
+CREATE POLICY "Authenticated users can read group_permissions" ON public.group_permissions FOR SELECT USING (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Users can manage own group_permissions" ON public.group_permissions;
+CREATE POLICY "Users can manage own group_permissions" ON public.group_permissions 
+FOR ALL USING (
+    EXISTS (
+        SELECT 1 FROM public.access_groups 
+        WHERE id = group_id AND admin_id = auth.uid()
+    )
+);
+
+DROP POLICY IF EXISTS "Users can read own subscriptions" ON public.user_subscriptions;
+CREATE POLICY "Users can read own subscriptions" ON public.user_subscriptions FOR SELECT USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Master full control on subscriptions" ON public.user_subscriptions;
+CREATE POLICY "Master full control on subscriptions" ON public.user_subscriptions FOR ALL USING ((auth.jwt() -> 'user_metadata' ->> 'role') = 'Master');
+
+DROP POLICY IF EXISTS "Admins can view their own roles" ON public.roles;
+CREATE POLICY "Admins can view their own roles" ON public.roles FOR SELECT USING (admin_id = auth.uid() OR admin_id = (SELECT parent_user_id FROM public.users WHERE id = auth.uid()));
+
+DROP POLICY IF EXISTS "Admins can insert their own roles" ON public.roles;
+CREATE POLICY "Admins can insert their own roles" ON public.roles FOR INSERT WITH CHECK (admin_id = auth.uid());
+
+DROP POLICY IF EXISTS "Admins can update their own roles" ON public.roles;
+CREATE POLICY "Admins can update their own roles" ON public.roles FOR UPDATE USING (admin_id = auth.uid());
+
+DROP POLICY IF EXISTS "Admins can delete their own roles" ON public.roles;
+CREATE POLICY "Admins can delete their own roles" ON public.roles FOR DELETE USING (admin_id = auth.uid());
+
+DROP POLICY IF EXISTS "Authenticated users can read email_settings" ON public.email_settings;
+CREATE POLICY "Authenticated users can read email_settings" ON public.email_settings FOR SELECT USING (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Authenticated users can read app_settings" ON public.app_settings;
+CREATE POLICY "Authenticated users can read app_settings" ON public.app_settings FOR SELECT USING (auth.role() = 'authenticated');
+
