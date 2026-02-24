@@ -172,6 +172,41 @@ create table if not exists public.app_settings (
   created_at timestamptz default now()
 );
 
+-- 4.1. ORGANIZAÇÕES (DADOS DO ESCRITÓRIO/EMPRESA)
+create table if not exists public.organizations (
+    id uuid primary key default gen_random_uuid(),
+    admin_id uuid not null references auth.users(id) on delete cascade unique,
+    company_name text,
+    trading_name text,
+    cnpj text,
+    email text,
+    phone text,
+    website text,
+    address_zip text,
+    address_street text,
+    address_number text,
+    address_complement text,
+    address_neighborhood text,
+    address_city text,
+    address_state text,
+    logo_url text,
+    created_at timestamptz default now(),
+    updated_at timestamptz default now()
+);
+
+alter table public.organizations enable row level security;
+
+DROP POLICY IF EXISTS "Owners can manage their organization" ON public.organizations;
+CREATE POLICY "Owners can manage their organization" ON public.organizations 
+FOR ALL USING (auth.uid() = admin_id);
+
+DROP POLICY IF EXISTS "Team members can read organization data" ON public.organizations;
+CREATE POLICY "Team members can read organization data" ON public.organizations 
+FOR SELECT USING (
+    auth.uid() = admin_id OR 
+    EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND parent_user_id = organizations.admin_id)
+);
+
 create table if not exists public.email_settings (
   id uuid primary key default gen_random_uuid (),
   scenario_key text unique not null,
@@ -313,6 +348,13 @@ begin
   -- AUTO-SEED: Gera grupos e cargos padrões para este novo workspace (se for Titular/Admin Root)
   PERFORM public.seed_user_workspace(new.id);
   
+  -- CRIA A ENTRADA DA ORGANIZAÇÃO (DADOS DO ESCRITÓRIO) PARA O ROOT
+  IF (new.raw_user_meta_data->>'parent_user_id') IS NULL THEN
+      INSERT INTO public.organizations (admin_id, company_name)
+      VALUES (new.id, user_name || ' - Escritório')
+      ON CONFLICT (admin_id) DO NOTHING;
+  END IF;
+  
   -- VINCULA O PIONEIRO (ROOT) AO GRUPO DE SÓCIO-ADMINISTRADOR
   if (new.raw_user_meta_data->>'parent_user_id') is null then
       select id into generated_group_id from public.access_groups where admin_id = new.id and name = 'Sócio-Administrador' limit 1;
@@ -349,6 +391,7 @@ create trigger on_public_user_updated after update on public.users for each row 
 
 create trigger tr_users_updated before update on public.users for each row execute function handle_updated_at();
 create trigger tr_user_prefs_updated before update on public.user_preferences for each row execute function handle_updated_at();
+create trigger tr_organizations_updated before update on public.organizations for each row execute function handle_updated_at();
 
 -- RLS Básico MASTER
 alter table public.users enable row level security;

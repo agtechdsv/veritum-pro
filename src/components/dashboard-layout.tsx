@@ -22,6 +22,7 @@ import { Tooltip } from './ui/tooltip';
 import { EmailSettingsManager } from './modules/email-config';
 import AccessManagement from './modules/access-management';
 import TrialCountdown from './shared/trial-countdown';
+import ProfileModal from './ui/profile-modal';
 
 import {
     LayoutDashboard, Scale, FileEdit, DollarSign, BarChart3,
@@ -61,9 +62,10 @@ const Logo = () => (
 
 export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModule, activeSuites = [], planPermissions = [], onModuleChange, onLogout, onUpdateUser, onUpdatePrefs, children }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-    const [pendingAvatar, setPendingAvatar] = useState<string | null>(null);
     const [permissions, setPermissions] = useState<GroupPermission[]>([]);
     const [allFeatures, setAllFeatures] = useState<Feature[]>([]);
+    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const { theme, setTheme } = useTheme();
     const hasSyncedTheme = React.useRef(false);
 
@@ -225,38 +227,6 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
         }
 
     }, [activeModule, suiteItems, user.role, onModuleChange]);
-
-    const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                const base64 = reader.result as string;
-                // Update preview immediately, but set pending for DB
-                onUpdateUser({ ...user, avatar_url: base64 });
-                setPendingAvatar(base64);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
-    const handleSaveAvatar = async () => {
-        if (!pendingAvatar) return;
-
-        try {
-            const supabase = createMasterClient();
-            const { error } = await supabase
-                .from('users')
-                .update({ avatar_url: pendingAvatar })
-                .eq('id', user.id);
-
-            if (error) throw error;
-            setPendingAvatar(null);
-            // Optionally show a small toast/feedback
-        } catch (err) {
-            console.error('Failed to persist avatar:', err);
-        }
-    };
 
     const renderModule = () => {
         const creds: Credentials = {
@@ -575,36 +545,45 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                 <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">{user.role}</p>
                             </div>
 
-                            <div className="relative group cursor-pointer">
-                                <div className="w-12 h-12 rounded-2xl overflow-hidden border-2 border-indigo-100 dark:border-indigo-900/30 shadow-sm transition-all group-hover:scale-105 group-hover:border-indigo-500">
+                            <div
+                                className="relative group"
+                                onMouseEnter={() => setIsUserMenuOpen(true)}
+                                onMouseLeave={() => setIsUserMenuOpen(false)}
+                            >
+                                <div className="w-12 h-12 rounded-2xl overflow-hidden border-2 border-indigo-100 dark:border-indigo-900/30 shadow-sm transition-all group-hover:scale-105 group-hover:border-indigo-500 cursor-pointer">
                                     <img src={user.avatar_url || `https://ui-avatars.com/api/?name=${user.name}&background=6366f1&color=fff`} alt="Avatar" className="w-full h-full object-cover" />
                                 </div>
 
-                                {pendingAvatar && (
-                                    <button
-                                        onClick={handleSaveAvatar}
-                                        title="Salvar novo avatar"
-                                        className="absolute -top-2 -right-2 p-1.5 bg-emerald-600 text-white rounded-lg shadow-lg cursor-pointer hover:bg-emerald-700 transition-all z-50 animate-bounce border-2 border-white dark:border-slate-900"
-                                    >
-                                        <Check size={12} />
-                                    </button>
-                                )}
-
-                                <label className="absolute bottom-[-4px] right-[-4px] p-1.5 bg-indigo-600 text-white rounded-lg shadow-lg cursor-pointer hover:bg-indigo-700 transition-all scale-0 group-hover:scale-100 opacity-0 group-hover:opacity-100">
-                                    <Camera size={12} />
-                                    <input type="file" className="hidden" accept="image/*" onChange={handleAvatarChange} />
-                                </label>
+                                <AnimatePresence>
+                                    {isUserMenuOpen && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                            className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl py-2 z-[100] overflow-hidden"
+                                        >
+                                            <button
+                                                onClick={() => {
+                                                    setIsProfileModalOpen(true);
+                                                    setIsUserMenuOpen(false);
+                                                }}
+                                                className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-left"
+                                            >
+                                                <UserIcon size={18} className="text-indigo-600" />
+                                                Meu Perfil
+                                            </button>
+                                            <div className="h-px bg-slate-100 dark:bg-slate-800 mx-2 my-1" />
+                                            <button
+                                                onClick={onLogout}
+                                                className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-all text-left"
+                                            >
+                                                <LogOut size={18} />
+                                                Sair do Ecossistema
+                                            </button>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                             </div>
-
-                            <Tooltip content="Sair do Ecossistema">
-                                <button
-                                    onClick={onLogout}
-                                    className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-full transition-all cursor-pointer"
-                                    title="Sair do Ecossistema"
-                                >
-                                    <LogOut size={20} />
-                                </button>
-                            </Tooltip>
                         </div>
                     </div>
                 </header>
@@ -614,6 +593,13 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                         {children}
                     </div>
                 </div>
+
+                <ProfileModal
+                    isOpen={isProfileModalOpen}
+                    onClose={() => setIsProfileModalOpen(false)}
+                    user={user}
+                    onUpdateUser={onUpdateUser}
+                />
             </main>
         </div >
     );

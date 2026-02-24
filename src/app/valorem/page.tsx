@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AuthModal } from '@/components/auth-modal';
 import { createMasterClient } from '@/lib/supabase/master';
+import { UserMenu } from '@/components/ui/user-menu';
 
 const Logo = () => (
     <div className="bg-emerald-600/10 p-2 rounded-lg flex items-center justify-center text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">
@@ -26,7 +27,7 @@ export default function ValoremLanding() {
     const [mounted, setMounted] = useState(false);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [hasAccess, setHasAccess] = useState(false);
-    const [currentUser, setCurrentUser] = useState<any>(null);
+    const [currentUser, setCurrentUser] = useState<any>(undefined);
 
     useEffect(() => {
         setMounted(true);
@@ -38,7 +39,16 @@ export default function ValoremLanding() {
         const supabase = createMasterClient();
         const fetchUser = async () => {
             const { data: { user } } = await supabase.auth.getUser();
-            setCurrentUser(user);
+            if (user) {
+                const { data: profile } = await supabase
+                    .from('users')
+                    .select('name, avatar_url, role')
+                    .eq('id', user.id)
+                    .single();
+                setCurrentUser({ ...user, profile });
+            } else {
+                setCurrentUser(null);
+            }
         };
         fetchUser();
     }, []);
@@ -75,10 +85,10 @@ export default function ValoremLanding() {
                         <button onClick={toggleTheme} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all text-slate-600 dark:text-slate-400">
                             {resolvedTheme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
                         </button>
-                        {currentUser ? (
-                            <Link href="/veritum" className="hidden sm:flex items-center gap-2 font-bold px-4 py-2 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-xl transition-all">
-                                <LogOut size={18} /> Painel
-                            </Link>
+                        {currentUser === undefined ? (
+                            <div className="w-24 h-10 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl" />
+                        ) : currentUser ? (
+                            <UserMenu user={currentUser} supabase={createMasterClient()} />
                         ) : hasAccess ? (
                             <Link href="/?login=true" className="hidden sm:flex items-center gap-2 font-bold px-4 py-2 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-xl transition-all">
                                 <LogOut size={18} /> Entrar

@@ -323,3 +323,24 @@ export interface GoldenAlert {
     created_at?: string;
     updated_at?: string;
 }
+
+export interface Organization {
+    id: string;
+    admin_id: string;
+    company_name: string;
+    trading_name?: string;
+    cnpj?: string;
+    email?: string;
+    phone?: string;
+    website?: string;
+    address_zip?: string;
+    address_street?: string;
+    address_number?: string;
+    address_complement?: string;
+    address_neighborhood?: string;
+    address_city?: string;
+    address_state?: string;
+    logo_url?: string;
+    created_at?: string;
+    updated_at?: string;
+}

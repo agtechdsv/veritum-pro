@@ -13,6 +13,8 @@ import { LegalModal } from '@/components/legal-modal';
 import { SuiteDetailModal } from '@/components/suite-detail-modal';
 import { useTheme } from 'next-themes'
 import Link from 'next/link'
+import { AnimatePresence } from 'framer-motion'
+import { UserMenu } from '@/components/ui/user-menu'
 
 interface Suite {
     id: string;
@@ -57,7 +59,7 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
     const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
     const [suites, setSuites] = useState<DbSuite[]>([]);
     const [suitesLoading, setSuitesLoading] = useState(true);
-    const [currentUser, setCurrentUser] = useState<any>(null);
+    const [currentUser, setCurrentUser] = useState<any>(undefined);
     const [hasAccess, setHasAccess] = useState(false);
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -189,29 +191,10 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                             <span className="text-xs font-bold">PT</span>
                         </div>
 
-                        {currentUser ? (
-                            <div className="flex items-center gap-4">
-                                <Link href="/veritum" className="flex items-center gap-2 font-bold text-indigo-600 dark:text-indigo-400 hover:scale-105 transition-all">
-                                    <div className="w-9 h-9 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center overflow-hidden border-2 border-indigo-600/20 shadow-lg">
-                                        {currentUser.profile?.avatar_url ? (
-                                            <img src={currentUser.profile.avatar_url} alt={currentUser.profile.name} className="w-full h-full object-cover" />
-                                        ) : (
-                                            <User size={18} />
-                                        )}
-                                    </div>
-                                    <span className="hidden sm:inline text-xs uppercase tracking-widest font-black">Painel</span>
-                                </Link>
-                                <button
-                                    onClick={async () => {
-                                        await supabase.auth.signOut();
-                                        setCurrentUser(null);
-                                    }}
-                                    className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-full transition-all cursor-pointer"
-                                    title="Sair"
-                                >
-                                    <LogOut size={20} />
-                                </button>
-                            </div>
+                        {currentUser === undefined ? (
+                            <div className="w-32 h-10 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-full" />
+                        ) : currentUser ? (
+                            <UserMenu user={currentUser} supabase={supabase} />
                         ) : hasAccess ? (
                             <>
                                 <button onClick={() => openAuth('login')} className="hidden sm:flex items-center gap-2 font-semibold px-4 py-2 hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300 cursor-pointer">
