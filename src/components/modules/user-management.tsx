@@ -152,15 +152,16 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
 
         if (currentUser.role === 'Master') {
             query = query.or(`id.eq.${selectedClientId},parent_user_id.eq.${selectedClientId}`);
-        } else if (isAdmin) {
-            query = query.or(`id.eq.${currentUser.id},parent_user_id.eq.${currentUser.id}`);
         } else {
+            // Universal hierarchy logic: see self, subordinates, boss, and peers
+            const conditions = [`id.eq.${currentUser.id}`, `parent_user_id.eq.${currentUser.id}`];
+
             if (currentUser.parent_user_id) {
-                // Anyone below Admin sees themselves, their peers (same parent), and the Admin (parent)
-                query = query.or(`id.eq.${currentUser.id},parent_user_id.eq.${currentUser.parent_user_id},id.eq.${currentUser.parent_user_id}`);
-            } else {
-                query = query.eq('id', currentUser.id);
+                conditions.push(`id.eq.${currentUser.parent_user_id}`);
+                conditions.push(`parent_user_id.eq.${currentUser.parent_user_id}`);
             }
+
+            query = query.or(conditions.join(','));
         }
 
         const { data, error } = await query;
@@ -264,8 +265,16 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
 
     const admins = users.filter(u => u.role === 'Administrador');
 
+    const superAdminGroups = ['Sócio-Administrativo', 'Sócio-Administrador', 'Sócio Administrador'];
+    const isSuperAdmin = currentUser.role === 'Master' || (currentUser.access_group_name && superAdminGroups.some(g => currentUser.access_group_name?.includes(g)));
+
     const handleSaveUser = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!isSuperAdmin) {
+            toast.error('Apenas usuários do grupo Sócio-Administrativo podem cadastrar novos integrantes.');
+            return;
+        }
 
         if (currentUser.role === 'Operador' && formData.role === 'Administrador') {
             toast.error('Operadores não podem atribuir nível Admin.');
@@ -274,6 +283,11 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
 
         try {
             if (editingUser) {
+                // Check if user is allowed to edit this specific user
+                if (!isSuperAdmin && editingUser.id !== currentUser.id) {
+                    toast.error('Você só pode editar o seu próprio perfil.');
+                    return;
+                }
                 const result = await updateUserDirectly(editingUser.id, formData);
                 if (!result.success) throw new Error(result.error);
                 toast.success('Usuário atualizado com sucesso!');
@@ -312,6 +326,10 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
 
     const handleDeleteUser = async () => {
         if (!userToDelete) return;
+        if (!isSuperAdmin) {
+            toast.error('Ação não autorizada.');
+            return;
+        }
         try {
             const result = await deleteUserDirectly(userToDelete.id);
             if (!result.success) throw new Error(result.error);
@@ -366,7 +384,7 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                             </div>
                         </div>
                     )}
-                    {currentUser.role !== 'Operador' && (
+                    {isSuperAdmin && (
                         <button
                             onClick={() => {
                                 setEditingUser(null);
@@ -525,13 +543,13 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                 </td>
                                 <td className="px-8 py-6 text-right">
                                     <div className="flex items-center justify-end gap-1">
-                                        {currentUser.role !== 'Operador' || currentUser.id === u.id ? (
+                                        {isSuperAdmin || currentUser.id === u.id ? (
                                             <>
-                                                {currentUser.role !== 'Operador' && (
+                                                {isSuperAdmin && (
                                                     <button onClick={() => handleToggleStatus(u)} className={`p-2 rounded-xl transition-all ${u.active ? 'text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20' : 'text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}`} title="Alternar Status"><Radio size={20} /></button>
                                                 )}
                                                 <button onClick={() => openEditModal(u)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all" title="Editar"><FileEdit size={20} /></button>
-                                                {currentUser.id !== u.id && currentUser.role !== 'Operador' && (
+                                                {currentUser.id !== u.id && isSuperAdmin && (
                                                     <button onClick={() => setUserToDelete(u)} className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all" title="Excluir"><Trash2 size={20} /></button>
                                                 )}
                                             </>
@@ -589,7 +607,7 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                     <div className="relative">
                                         <Briefcase className="absolute left-5 top-5 text-slate-400" size={20} />
                                         <select
-                                            disabled={currentUser.role === 'Operador'}
+                                            disabled={!isSuperAdmin}
                                             className="w-full pl-14 pr-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl font-bold focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white appearance-none cursor-pointer shadow-sm disabled:opacity-50"
                                             value={formData.role}
                                             onChange={e => {
@@ -623,6 +641,11 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                         </select>
                                         <ChevronDown className="absolute right-5 top-6 text-slate-400 pointer-events-none" size={16} />
                                     </div>
+                                    {!isSuperAdmin && editingUser && (
+                                        <p className="text-[9px] font-black uppercase tracking-widest text-amber-500 mt-2 ml-2 italic">
+                                            Apenas administradores podem alterar cargos e permissões.
+                                        </p>
+                                    )}
                                     {formData.access_group_id && formData.role !== 'Master' && (
                                         <div className="flex items-center gap-2 mt-3 ml-2 px-3 py-2 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800 rounded-xl w-fit animate-in fade-in slide-in-from-top-2">
                                             <Shield size={14} className="text-indigo-600 dark:text-indigo-400" />

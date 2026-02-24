@@ -15,6 +15,8 @@ interface ModuleContextType {
     onUpdatePrefs: (p: UserPreferences) => void;
     onModuleChange: (m: ModuleId) => void;
     activeSuites: any[];
+    groupPermissions: any[];
+    allFeatures: any[];
 }
 
 const ModuleContext = React.createContext<ModuleContextType | undefined>(undefined);
@@ -36,6 +38,8 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
     const [activeModule, setActiveModule] = useState<ModuleId>(ModuleId.DASHBOARD_ROOT);
     const [activeSuites, setActiveSuites] = useState<any[]>([]);
     const [planPermissions, setPlanPermissions] = useState<any[]>([]);
+    const [groupPermissions, setGroupPermissions] = useState<any[]>([]);
+    const [allFeatures, setAllFeatures] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
     const pathname = usePathname();
@@ -181,6 +185,20 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
                 setActiveSuites(suites);
             }
 
+            // Fetch Dynamic Permissions (RBAC)
+            const { data: featData } = await supabase.from('features').select('id, suite_id');
+            if (featData) setAllFeatures(featData as any);
+
+            const profileDataFinal = profile as any;
+            if (profileDataFinal?.access_group_id && profileDataFinal?.role !== 'Master') {
+                const { data: permData } = await supabase
+                    .from('group_permissions')
+                    .select('*')
+                    .eq('group_id', profileDataFinal.access_group_id);
+
+                if (permData) setGroupPermissions(permData);
+            }
+
             setLoading(false);
         };
 
@@ -285,10 +303,12 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
             preferences,
             planPermissions,
             credentials: creds,
-            onUpdateUser: (u) => setUser(u),
-            onUpdatePrefs: handleUpdatePrefs,
+            onUpdateUser: setUser,
+            onUpdatePrefs: (p) => setPreferences(p),
             onModuleChange: handleModuleChange,
-            activeSuites
+            activeSuites,
+            groupPermissions,
+            allFeatures
         }}>
             <DashboardLayout
                 user={user!}
@@ -296,6 +316,8 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
                 activeModule={activeModule}
                 activeSuites={activeSuites}
                 planPermissions={planPermissions}
+                groupPermissions={groupPermissions}
+                allFeatures={allFeatures}
                 onModuleChange={handleModuleChange}
                 onLogout={handleLogout}
                 onUpdateUser={(u) => setUser(u)}
@@ -303,6 +325,6 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
             >
                 {children}
             </DashboardLayout>
-        </ModuleContext.Provider>
+        </ModuleContext.Provider >
     );
 }

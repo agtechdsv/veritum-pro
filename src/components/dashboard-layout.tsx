@@ -29,7 +29,7 @@ import {
     MessageSquare, ShieldAlert, Users, Settings, LogOut,
     PanelLeftClose, PanelLeftOpen, Sun, Moon, Bell, Search,
     ChevronRight, Crown, Camera, Check, User as UserIcon,
-    Calendar as CalendarIcon, Mail, Shield, GitBranch, Key, Zap
+    Calendar as CalendarIcon, Mail, Shield, GitBranch, Key, Zap, Lock
 } from 'lucide-react';
 import SuiteManagement from './modules/suite-management';
 import { useTheme } from 'next-themes';
@@ -39,6 +39,7 @@ import SuiteDashboard from './modules/dashboards/suite-dashboard';
 import AdminDashboard from './modules/dashboards/admin-dashboard';
 import MasterDashboard from './modules/dashboards/master-dashboard';
 import RootDashboard from './modules/dashboards/root-dashboard';
+import { BASE_SUITE_ITEMS } from '@/utils/module-meta';
 import SchedulingManagement from './modules/scheduling-management';
 
 interface Props {
@@ -47,6 +48,8 @@ interface Props {
     activeModule: ModuleId;
     activeSuites?: any[];
     planPermissions?: any[];
+    groupPermissions?: any[];
+    allFeatures?: any[];
     onModuleChange: (m: ModuleId) => void;
     onLogout: () => void;
     onUpdateUser: (u: User) => void;
@@ -60,46 +63,7 @@ const Logo = () => (
     </div>
 );
 
-export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModule, activeSuites = [], planPermissions = [], onModuleChange, onLogout, onUpdateUser, onUpdatePrefs, children }) => {
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-    const [permissions, setPermissions] = useState<GroupPermission[]>([]);
-    const [allFeatures, setAllFeatures] = useState<Feature[]>([]);
-    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-    const { theme, setTheme } = useTheme();
-    const hasSyncedTheme = React.useRef(false);
-
-    // Sync theme with user preferences on mount (ONLY ONCE)
-    React.useEffect(() => {
-        if (preferences?.theme && !hasSyncedTheme.current) {
-            if (theme !== preferences.theme) {
-                setTheme(preferences.theme);
-            }
-            hasSyncedTheme.current = true;
-        }
-    }, [preferences?.theme, theme, setTheme]);
-
-    // Fetch Dynamic Permissions (RBAC)
-    React.useEffect(() => {
-        const fetchRBAC = async () => {
-            const supabase = createMasterClient();
-
-            // Always fetch features mapping for filtering logic
-            const { data: featData } = await supabase.from('features').select('id, suite_id');
-            if (featData) setAllFeatures(featData as any);
-
-            if (user.role === 'Master' || !user.access_group_id) return;
-
-            const { data: permData } = await supabase
-                .from('group_permissions')
-                .select('*')
-                .eq('group_id', user.access_group_id);
-
-            if (permData) setPermissions(permData);
-        };
-        fetchRBAC();
-    }, [user.access_group_id, user.role]);
-
+export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModule, activeSuites = [], planPermissions = [], groupPermissions = [], allFeatures = [], onModuleChange, onLogout, onUpdateUser, onUpdatePrefs, children }) => {
     // BYODB Shadow Provisioning: Ensure user exists in Tenant DB
     React.useEffect(() => {
         const provisionShadowUser = async () => {
@@ -121,15 +85,6 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
         provisionShadowUser();
     }, [user, preferences?.custom_supabase_url, preferences?.custom_supabase_key]);
 
-    const baseSuiteItems = [
-        { id: ModuleId.NEXUS, label: 'Nexus', icon: GitBranch, color: 'text-indigo-500' },
-        { id: ModuleId.SCRIPTOR, label: 'Scriptor', icon: FileEdit, color: 'text-amber-500' },
-        { id: ModuleId.VALOREM, label: 'Valorem', icon: DollarSign, color: 'text-emerald-500' },
-        { id: ModuleId.COGNITIO, label: 'Cognitio', icon: BarChart3, color: 'text-cyan-500' },
-        { id: ModuleId.VOX, label: 'Vox Clientis', icon: MessageSquare, color: 'text-violet-500' },
-        { id: ModuleId.SENTINEL, label: 'Sentinel', icon: ShieldAlert, color: 'text-rose-500' },
-        { id: ModuleId.INTELLIGENCE, label: 'Intelligence', icon: Zap, color: 'text-amber-500' },
-    ];
 
     // Key Normalization for matching DB keys (e.g. SCRIPTOR_KEY) with internal IDs
     const normalize = (k: string) => k?.toLowerCase().replace('_key', '') || '';
@@ -139,41 +94,40 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
         ? activeSuites
             .map(as => {
                 const normalizedDbKey = normalize(as.suite_key);
-                const baseItem = baseSuiteItems.find(bs => normalize(bs.id) === normalizedDbKey);
+                const baseItem = BASE_SUITE_ITEMS.find(bs => normalize(bs.id) === normalizedDbKey);
                 if (baseItem) {
                     return { ...baseItem, label: as.name || baseItem.label, short_desc: as.short_desc, detailed_desc: as.detailed_desc };
                 }
                 return null;
             })
             .filter(Boolean) as any[]
-        : [];
+        : []; // Added semicolon and empty array for when activeSuites is empty
+
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+    const { theme, setTheme } = useTheme();
+    const hasSyncedTheme = React.useRef(false);
+
+    // Sync theme with user preferences on mount (ONLY ONCE)
+    React.useEffect(() => {
+        if (preferences?.theme && !hasSyncedTheme.current) {
+            if (theme !== preferences.theme) {
+                setTheme(preferences.theme);
+            }
+            hasSyncedTheme.current = true;
+        }
+    }, [preferences?.theme, theme, setTheme]);
 
     // DEFENSIVE FALLBACK: If syncedSuites is empty but we have activeSuites or general failure,
     // fallback to baseSuiteItems so the menu never disappears.
-    const fallbackSuites = syncedSuites.length > 0 ? syncedSuites : baseSuiteItems;
+    const fallbackSuites = syncedSuites.length > 0 ? syncedSuites : BASE_SUITE_ITEMS;
 
-    // PLAN PERMISSIONS FILTER: Only for non-Master users + Intern Safety (RBAC)
-    const suiteItems = user.role === 'Master'
-        ? fallbackSuites
-        : fallbackSuites.filter(bs => {
-            const normalizedKey = normalize(bs.id);
-            // Block Valorem for Estagiários (Legacy Core Rule)
-            if (normalizedKey === 'valorem' && user.role === 'Estagiário / Paralegal') return false;
-
-            // DYNAMIC RBAC: Check if user has an access group
-            if (user.access_group_id) {
-                // Find Suite UUID to match with features
-                const suiteData = activeSuites.find(as => normalize(as.suite_key) === normalizedKey);
-                if (!suiteData) return false;
-
-                // User must have at least one feature enabled in this suite
-                const suiteFeatureIds = allFeatures.filter(f => f.suite_id === suiteData.id).map(f => f.id);
-                return permissions.some(p => suiteFeatureIds.includes(p.feature_id) && p.can_access);
-            }
-
-            // Fallback to Plan Permissions for legacy/no-group users
-            return planPermissions.some(pp => normalize(pp.suite_key) === normalizedKey);
-        });
+    const superAdminGroupsNames = ['Sócio-Administrativo', 'Sócio-Administrador', 'Sócio Administrador'];
+    const superAdminRoles = ['Sócio-Administrador', 'Sócio Administrador', 'Administrador', 'Sócio-Administrativo'];
+    const isSocioAdminRole = superAdminRoles.some(r => user.role?.includes(r));
+    const isSocioAdminGroup = user.access_group_name && superAdminGroupsNames.some(g => user.access_group_name?.includes(g));
+    const isSuperAdmin = user.role === 'Master' || isSocioAdminRole || isSocioAdminGroup;
 
     const adminItems = [
         { id: ModuleId.USERS, label: 'Gestão de Usuários', icon: Users, color: 'text-slate-500' },
@@ -191,8 +145,66 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
     ];
 
     const isAdmin = user.role === 'Master' || ['Administrador', 'Sócio-Administrador', 'Sócio Administrador'].includes(user.role);
-    const superAdminGroups = ['Sócio-Administrativo', 'Sócio-Administrador', 'Sócio Administrador'];
-    const isSuperAdmin = user.role === 'Master' || (user.access_group_name && superAdminGroups.some(g => user.access_group_name?.includes(g)));
+
+    // PLAN PERMISSIONS FILTER: Only for non-Master users + Intern Safety (RBAC)
+    const suiteItems = isSuperAdmin
+        ? fallbackSuites.map(bs => {
+            const normalizedKey = normalize(bs.id);
+
+            // 1. Plan Check (Robust comparison)
+            const hasPlanAccess = planPermissions.length > 0 && planPermissions.some(pp => {
+                const pKey = typeof pp === 'string' ? pp : pp.suite_key;
+                return normalize(pKey) === normalizedKey;
+            });
+
+            // 2. Permission Check (RBAC)
+            let hasGroupAccess = false; // Default to locked for safety
+            if (user.role === 'Master') {
+                hasGroupAccess = true;
+            } else if (user.access_group_id) {
+                const suiteData = activeSuites.find(as => normalize(as.suite_key) === normalizedKey);
+                if (suiteData) {
+                    const suiteFeatureIds = allFeatures.filter(f => f.suite_id === suiteData.id).map(f => f.id);
+                    hasGroupAccess = groupPermissions.some(p => suiteFeatureIds.includes(p.feature_id) && p.can_access);
+                } else {
+                    // If suite not found in DB but is in baseSuiteItems (fallback case)
+                    hasGroupAccess = true;
+                }
+            } else {
+                hasGroupAccess = true; // Fallback for legacy users without groups
+            }
+
+            return {
+                ...bs,
+                isLocked: (!hasPlanAccess || !hasGroupAccess) && user.role !== 'Master'
+            };
+        })
+        : fallbackSuites.filter(bs => {
+            const normalizedKey = normalize(bs.id);
+            // Block Valorem for Estagiários (Legacy Core Rule)
+            if (normalizedKey === 'valorem' && user.role === 'Estagiário / Paralegal') return false;
+
+            // 1. Plan Check (Robust comparison)
+            const hasPlanAccess = planPermissions.length > 0 && planPermissions.some(pp => {
+                const pKey = typeof pp === 'string' ? pp : pp.suite_key;
+                return normalize(pKey) === normalizedKey;
+            });
+            if (!hasPlanAccess) return false;
+
+            // 2. DYNAMIC RBAC: Check if user has an access group
+            if (user.access_group_id) {
+                // Find Suite UUID to match with features
+                const suiteData = activeSuites.find(as => normalize(as.suite_key) === normalizedKey);
+                if (!suiteData) return false;
+
+                // User must have at least one feature enabled in this suite
+                const suiteFeatureIds = allFeatures.filter(f => f.suite_id === suiteData.id).map(f => f.id);
+                const hasGroupAccess = groupPermissions.some(p => suiteFeatureIds.includes(p.feature_id) && p.can_access);
+                return hasGroupAccess;
+            }
+
+            return true;
+        }).map(bs => ({ ...bs, isLocked: false }));
 
     const filteredAdminItems = adminItems.filter(item => {
         if (item.id === ModuleId.USERS) {
@@ -211,7 +223,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
         const currentNormalized = normalize(activeModule);
 
         // 1. Checa se é um módulo core (Suite)
-        const isCoreModule = baseSuiteItems.some(bs => normalize(bs.id) === currentNormalized);
+        const isCoreModule = BASE_SUITE_ITEMS.some(bs => normalize(bs.id) === currentNormalized);
         if (isCoreModule) {
             const isAllowedCore = suiteItems.some(si => normalize(si.id) === currentNormalized);
             if (!isAllowedCore) {
@@ -337,16 +349,29 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                 </motion.button>
                             )}
                         </AnimatePresence>
-                        {suiteItems.map((item) => (
+                        {suiteItems.map((item: any) => (
                             <Tooltip key={item.id} content={item.label} enabled={!isSidebarOpen}>
                                 <Link
-                                    href={`/veritum/${normalize(item.id)}`}
-                                    className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 cursor-pointer ${normalize(activeModule) === normalize(item.id)
+                                    href={item.isLocked ? '#' : `/veritum/${normalize(item.id)}`}
+                                    onClick={(e) => {
+                                        if (item.isLocked) {
+                                            e.preventDefault();
+                                            toast.error('Este módulo não faz parte do seu plano atual.');
+                                        }
+                                    }}
+                                    className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 cursor-pointer ${item.isLocked ? 'opacity-50 grayscale' : ''} ${normalize(activeModule) === normalize(item.id)
                                         ? 'bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-400 font-bold shadow-sm'
                                         : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white'
                                         }`}
                                 >
-                                    <item.icon size={20} className={normalize(activeModule) === normalize(item.id) ? item.color : 'text-slate-400 dark:text-slate-500'} />
+                                    <div className="relative">
+                                        <item.icon size={20} className={normalize(activeModule) === normalize(item.id) ? item.color : 'text-slate-400 dark:text-slate-500'} />
+                                        {item.isLocked && (
+                                            <div className="absolute -top-1.5 -right-1.5 bg-amber-500 text-white rounded-full p-0.5 border-2 border-white dark:border-slate-900">
+                                                <Lock size={8} />
+                                            </div>
+                                        )}
+                                    </div>
                                     <AnimatePresence>
                                         {isSidebarOpen && (
                                             <motion.span
@@ -354,7 +379,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                                 animate={{ opacity: 1, width: 'auto' }}
                                                 exit={{ opacity: 0, width: 0 }}
                                                 transition={{ duration: 0.2 }}
-                                                className="text-sm whitespace-nowrap overflow-hidden"
+                                                className="text-sm whitespace-nowrap overflow-hidden flex-1"
                                             >
                                                 {item.label}
                                             </motion.span>
@@ -589,7 +614,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                                     setIsProfileModalOpen(true);
                                                     setIsUserMenuOpen(false);
                                                 }}
-                                                className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-left"
+                                                className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-left cursor-pointer"
                                             >
                                                 <UserIcon size={18} className="text-indigo-600" />
                                                 Meu Perfil
@@ -597,7 +622,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                             <div className="h-px bg-slate-100 dark:bg-slate-800 mx-2 my-1" />
                                             <button
                                                 onClick={onLogout}
-                                                className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-all text-left"
+                                                className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-all text-left cursor-pointer"
                                             >
                                                 <LogOut size={18} />
                                                 Sair do Ecossistema

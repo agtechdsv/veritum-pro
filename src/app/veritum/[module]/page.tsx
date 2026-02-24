@@ -23,11 +23,12 @@ import TeamManagement from '@/components/modules/team-management';
 import PersonManagement from '@/components/modules/person-management';
 import { EmailSettingsManager } from '@/components/modules/email-config';
 import { ModuleId } from '@/types';
+import { BASE_SUITE_ITEMS } from '@/utils/module-meta';
 import { GitBranch, FileEdit, DollarSign, BarChart3, MessageSquare, ShieldAlert, Users, Settings, Crown, Calendar as CalendarIcon, Mail, Shield, Zap, User as UserIcon } from 'lucide-react';
 
 export default function DynamicModulePage() {
     const { module } = useParams();
-    const { user, preferences, planPermissions, credentials, onUpdateUser, onUpdatePrefs, onModuleChange, activeSuites } = useModule();
+    const { user, preferences, planPermissions, credentials, onUpdateUser, onUpdatePrefs, onModuleChange, activeSuites, groupPermissions, allFeatures } = useModule();
 
     if (!user || !preferences) return null;
 
@@ -35,22 +36,13 @@ export default function DynamicModulePage() {
     const moduleToRender = normalize(module as string);
 
     // Sidebar items for dashboards (need to match DashboardLayout logic)
-    const baseSuiteItems = [
-        { id: ModuleId.NEXUS, label: 'Nexus', icon: GitBranch, color: 'text-indigo-500' },
-        { id: ModuleId.SCRIPTOR, label: 'Scriptor', icon: FileEdit, color: 'text-amber-500' },
-        { id: ModuleId.VALOREM, label: 'Valorem', icon: DollarSign, color: 'text-emerald-500' },
-        { id: ModuleId.COGNITIO, label: 'Cognitio', icon: BarChart3, color: 'text-cyan-500' },
-        { id: ModuleId.VOX, label: 'Vox Clientis', icon: MessageSquare, color: 'text-violet-500' },
-        { id: ModuleId.SENTINEL, label: 'Sentinel', icon: ShieldAlert, color: 'text-rose-500' },
-        { id: ModuleId.INTELLIGENCE, label: 'Intelligence', icon: Zap, color: 'text-amber-500' },
-    ];
 
     // Sync order and texts with activeSuites from DB
     const syncedSuites = activeSuites.length > 0
         ? activeSuites
             .map(as => {
                 const normalizedDbKey = normalize(as.suite_key);
-                const baseItem = baseSuiteItems.find(bs => normalize(bs.id) === normalizedDbKey);
+                const baseItem = BASE_SUITE_ITEMS.find(bs => normalize(bs.id) === normalizedDbKey);
                 if (baseItem) {
                     return {
                         ...baseItem,
@@ -62,21 +54,77 @@ export default function DynamicModulePage() {
                 return null;
             })
             .filter(Boolean) as any[]
-        : baseSuiteItems;
+        : BASE_SUITE_ITEMS;
 
-    const suiteItems = user.role === 'Master'
-        ? syncedSuites
-        : syncedSuites.filter(bs => planPermissions.some(pp => normalize(pp.suite_key) === normalize(bs.id)));
+    const superAdminRoles = ['Sócio-Administrador', 'Sócio Administrador', 'Administrador', 'Sócio-Administrativo'];
+    const isSocioAdminRole = superAdminRoles.some(r => user.role?.includes(r));
+    const superAdminGroups = ['Sócio-Administrativo', 'Sócio-Administrador', 'Sócio Administrador'];
+    const isSocioAdminGroup = user.access_group_name && superAdminGroups.some(g => user.access_group_name?.includes(g));
+    const isSuperAdmin = user.role === 'Master' || isSocioAdminRole || isSocioAdminGroup;
+    const isAdmin = isSuperAdmin;
+
+    const suiteItems = isSuperAdmin
+        ? syncedSuites.map(bs => {
+            const normalizedKey = normalize(bs.id);
+
+            // 1. Plan Check (Robust comparison)
+            const hasPlanAccess = planPermissions.length > 0 && planPermissions.some(pp => {
+                const pKey = typeof pp === 'string' ? pp : pp.suite_key;
+                return normalize(pKey) === normalizedKey;
+            });
+
+            // 2. Permission Check (RBAC)
+            let hasGroupAccess = false; // Default to locked
+            if (user.role === 'Master') {
+                hasGroupAccess = true;
+            } else if (user.access_group_id) {
+                const suiteData = activeSuites.find(as => normalize(as.suite_key) === normalizedKey);
+                if (suiteData) {
+                    const suiteFeatureIds = allFeatures.filter(f => f.suite_id === suiteData.id).map(f => f.id);
+                    hasGroupAccess = groupPermissions.some(p => suiteFeatureIds.includes(p.feature_id) && p.can_access);
+                } else {
+                    hasGroupAccess = true;
+                }
+            } else {
+                hasGroupAccess = true;
+            }
+
+            return {
+                ...bs,
+                isLocked: (!hasPlanAccess || !hasGroupAccess) && user.role !== 'Master'
+            };
+        })
+        : syncedSuites.filter(bs => {
+            const normalizedKey = normalize(bs.id);
+            // Block Valorem for Estagiários (Legacy Core Rule)
+            if (normalizedKey === 'valorem' && user.role === 'Estagiário / Paralegal') return false;
+
+            // 1. Plan Check (Robust comparison)
+            const hasPlanAccess = planPermissions.length > 0 && planPermissions.some(pp => {
+                const pKey = typeof pp === 'string' ? pp : pp.suite_key;
+                return normalize(pKey) === normalizedKey;
+            });
+            if (!hasPlanAccess) return false;
+
+            // 2. DYNAMIC RBAC: Check if user has an access group
+            if (user.access_group_id) {
+                // Find Suite UUID to match with features
+                const suiteData = activeSuites.find(as => normalize(as.suite_key) === normalizedKey);
+                if (!suiteData) return false;
+
+                // User must have at least one feature enabled in this suite
+                const suiteFeatureIds = allFeatures.filter(f => f.suite_id === suiteData.id).map(f => f.id);
+                return groupPermissions.some(p => suiteFeatureIds.includes(p.feature_id) && p.can_access);
+            }
+
+            return true;
+        }).map(bs => ({ ...bs, isLocked: false }));
 
     const adminItems = [
         { id: ModuleId.USERS, label: 'Gestão de Usuários', icon: Users, color: 'text-slate-500' },
         { id: ModuleId.ACCESS_GROUPS, label: 'Grupos de Acesso', icon: Shield, color: 'text-indigo-600' },
         { id: ModuleId.SETTINGS, label: 'Configurações', icon: Settings, color: 'text-slate-500' },
     ];
-
-    const isAdmin = user.role === 'Master' || ['Administrador', 'Sócio-Administrador', 'Sócio Administrador'].includes(user.role);
-    const superAdminGroups = ['Sócio-Administrativo', 'Sócio-Administrador', 'Sócio Administrador'];
-    const isSuperAdmin = user.role === 'Master' || (user.access_group_name && superAdminGroups.some(g => user.access_group_name?.includes(g)));
 
     const filteredAdminItems = adminItems.filter(item => {
         if (item.id === ModuleId.USERS) {

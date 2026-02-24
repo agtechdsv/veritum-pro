@@ -60,7 +60,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, supabase }) => {
                                     setIsProfileModalOpen(true);
                                     setIsOpen(false);
                                 }}
-                                className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-left"
+                                className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-left cursor-pointer"
                             >
                                 <UserIcon size={18} className="text-indigo-600" />
                                 Meu Perfil
@@ -68,7 +68,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, supabase }) => {
                             <div className="h-px bg-slate-100 dark:bg-slate-800 mx-2 my-1" />
                             <button
                                 onClick={handleLogout}
-                                className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-all text-left"
+                                className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-all text-left cursor-pointer"
                             >
                                 <LogOut size={18} />
                                 Sair do Ecossistema

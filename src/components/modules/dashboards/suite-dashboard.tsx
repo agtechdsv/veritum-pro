@@ -30,6 +30,7 @@ const SuiteDashboard: React.FC<Props> = ({ items, onModuleChange }) => {
                         description={item.detailed_desc?.pt || `Acesse as funcionalidades do módulo ${item.label}.`}
                         icon={item.icon}
                         color={item.color}
+                        isLocked={item.isLocked}
                         onClick={() => onModuleChange(item.id)}
                     />
                 ))}

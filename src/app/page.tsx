@@ -6,7 +6,7 @@ import {
     ShieldAlert, GitBranch, FileEdit, DollarSign, BarChart3,
     MessageSquare, Globe, Moon, Sun, ArrowRight, Check,
     LogIn, UserPlus, ChevronRight, Scale, LogOut, User,
-    Briefcase, Zap
+    Briefcase, Zap, Lock, LayoutDashboard
 } from 'lucide-react';
 import { AuthModal } from '@/components/auth-modal';
 import { LegalModal } from '@/components/legal-modal';
@@ -15,6 +15,7 @@ import { useTheme } from 'next-themes'
 import Link from 'next/link'
 import { AnimatePresence } from 'framer-motion'
 import { UserMenu } from '@/components/ui/user-menu'
+import { getModuleMeta } from '@/utils/module-meta';
 
 interface Suite {
     id: string;
@@ -58,8 +59,12 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
     const [suites, setSuites] = useState<DbSuite[]>([]);
-    const [suitesLoading, setSuitesLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(true);
     const [currentUser, setCurrentUser] = useState<any>(undefined);
+    const [planPermissions, setPlanPermissions] = useState<string[]>([]);
+    const [userGroupName, setUserGroupName] = useState<string | null>(null);
+    const [groupPermissions, setGroupPermissions] = useState<any[]>([]);
+    const [allFeatures, setAllFeatures] = useState<any[]>([]);
     const [hasAccess, setHasAccess] = useState(false);
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -110,12 +115,70 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
         const fetchUser = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
-                // Buscar perfil no banco público para pegar avatar/metadata customizada
                 const { data: profile } = await supabase
                     .from('users')
-                    .select('name, avatar_url, role')
+                    .select('name, avatar_url, role, plan_id, access_group_id, access_groups(name)')
                     .eq('id', user.id)
                     .single();
+
+                if (profile) {
+                    const profileData = profile as any;
+                    const groupName = Array.isArray(profileData?.access_groups)
+                        ? profileData.access_groups[0]?.name
+                        : profileData?.access_groups?.name;
+
+                    setUserGroupName(groupName);
+
+                    // Fetch plan permissions
+                    const planId = profile.plan_id;
+                    if (planId) {
+                        const { data: perms } = await supabase
+                            .from('plan_permissions')
+                            .select('features(suites(suite_key))')
+                            .eq('plan_id', planId);
+
+                        if (perms) {
+                            const suitesWithAccess = Array.from(new Set(
+                                perms.map((p: any) => p.features?.suites?.suite_key?.toLowerCase().replace('_key', ''))
+                                    .filter(Boolean)
+                            )) as string[];
+                            setPlanPermissions(suitesWithAccess);
+                        }
+                    } else if (user.user_metadata?.parent_user_id) {
+                        const { data: parent } = await supabase
+                            .from('users')
+                            .select('plan_id')
+                            .eq('id', user.user_metadata.parent_user_id)
+                            .single();
+                        if (parent?.plan_id) {
+                            const { data: perms } = await supabase
+                                .from('plan_permissions')
+                                .select('features(suites(suite_key))')
+                                .eq('plan_id', parent.plan_id);
+
+                            if (perms) {
+                                const suitesWithAccess = Array.from(new Set(
+                                    perms.map((p: any) => p.features?.suites?.suite_key?.toLowerCase().replace('_key', ''))
+                                        .filter(Boolean)
+                                )) as string[];
+                                setPlanPermissions(suitesWithAccess);
+                            }
+                        }
+                    }
+
+                    // Fetch Dynamic Permissions (RBAC)
+                    const { data: featData } = await supabase.from('features').select('id, suite_id');
+                    if (featData) setAllFeatures(featData as any);
+
+                    if (profileData?.access_group_id && profileData?.role !== 'Master') {
+                        const { data: permData } = await supabase
+                            .from('group_permissions')
+                            .select('*')
+                            .eq('group_id', profileData.access_group_id);
+
+                        if (permData) setGroupPermissions(permData);
+                    }
+                }
 
                 setCurrentUser({ ...user, profile });
             } else {
@@ -125,14 +188,12 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
         fetchUser();
 
         const fetchData = async () => {
-            setSuitesLoading(true);
-            const [suitesRes] = await Promise.all([
-                supabase.from('suites').select('*').eq('active', true).order('order_index', { ascending: true })
-            ]);
+            const { data: suitesRes } = await supabase.from('suites').select('*').eq('active', true).order('order_index', { ascending: true });
+            if (suitesRes) setSuites(suitesRes);
 
-            if (suitesRes.data) setSuites(suitesRes.data);
-
-            setSuitesLoading(false);
+            // Now resolve auth and everything else
+            await fetchUser();
+            setIsLoading(false);
         };
         fetchData();
     }, [supabase]);
@@ -179,7 +240,7 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                         <a href="#" className="font-medium hover:text-indigo-600 transition-colors text-slate-800 dark:text-white">Início</a>
                         <a href="#modules" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">Módulos</a>
                         <a href="#pricing" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">Planos</a>
-                        <a href="#about" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">Sobre</a>
+                        <Link href="/historia" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">Nossa História</Link>
                     </div>
 
                     <div className="flex items-center gap-4">
@@ -194,7 +255,16 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                         {currentUser === undefined ? (
                             <div className="w-32 h-10 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-full" />
                         ) : currentUser ? (
-                            <UserMenu user={currentUser} supabase={supabase} />
+                            <div className="flex items-center gap-3">
+                                <Link
+                                    href="/veritum"
+                                    className="hidden sm:flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-bold text-sm shadow-xl shadow-indigo-600/20 transition-all hover:scale-105"
+                                >
+                                    <LayoutDashboard size={18} />
+                                    Painel Veritum
+                                </Link>
+                                <UserMenu user={currentUser} supabase={supabase} />
+                            </div>
                         ) : hasAccess ? (
                             <>
                                 <button onClick={() => openAuth('login')} className="hidden sm:flex items-center gap-2 font-semibold px-4 py-2 hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300 cursor-pointer">
@@ -246,46 +316,102 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {suitesLoading ? (
+                        {isLoading ? (
                             Array.from({ length: 6 }).map((_, i) => (
                                 <div key={i} className="bg-slate-50 dark:bg-slate-900/50 h-64 rounded-[2rem] animate-pulse"></div>
                             ))
                         ) : (
-                            suites.map((suite) => (
-                                <div key={suite.id} className="bg-white dark:bg-slate-900 p-8 rounded-[2rem] border border-slate-200 dark:border-slate-800 hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 group">
-                                    <div
-                                        className={`w-16 h-16 rounded-2xl mb-6 flex items-center justify-center bg-slate-50 dark:bg-slate-800 group-hover:scale-110 transition-transform text-indigo-600`}
-                                        dangerouslySetInnerHTML={{ __html: suite.icon_svg }}
-                                    />
-                                    <h3 className="text-2xl font-bold mb-1 text-slate-800 dark:text-white">
-                                        {suite.name.split(/\b(PRO)\b/i).map((part, i) =>
-                                            part.toUpperCase() === 'PRO' ? (
-                                                <span key={i} className="text-branding-gradient">{part}</span>
-                                            ) : part
-                                        )}
-                                    </h3>
-                                    <h4 className="text-indigo-600 dark:text-indigo-400 text-sm font-bold versalete mb-4">
-                                        {suite.short_desc?.pt || ''}
-                                    </h4>
-                                    <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-6">
-                                        {suite.detailed_desc?.pt || ''}
-                                    </p>
+                            (() => {
+                                const groupKeywords = ['Sócio-Administrativo', 'Sócio-Administrador', 'Sócio Administrador'];
+                                const isSocioAdmin = currentUser?.profile?.role === 'Master' || (userGroupName && groupKeywords.some(g => userGroupName.includes(g)));
 
-                                    <button
-                                        onClick={() => {
-                                            if (currentUser) {
-                                                router.push(`/veritum?module=${suite.suite_key}`);
-                                            } else {
-                                                const suiteSlug = suite.suite_key.toLowerCase().replace('_key', '');
-                                                router.push(`/${suiteSlug}`);
-                                            }
-                                        }}
-                                        className="text-indigo-600 dark:text-indigo-400 font-bold text-sm flex items-center gap-1 group-hover:gap-2 transition-all mt-auto cursor-pointer"
-                                    >
-                                        {currentUser ? 'Acessar Módulo' : 'Saiba mais'} <ChevronRight size={16} />
-                                    </button>
-                                </div>
-                            ))
+                                const displaySuites = suites.filter(suite => {
+                                    if (!currentUser) return true; // Visitors see everything (Saiba mais)
+                                    if (isSocioAdmin) return true; // SocioAdmins see everything (Locked/Unlocked)
+
+                                    const suiteKey = suite.suite_key.toLowerCase().replace('_key', '');
+
+                                    // 1. Plan Check (HIGH PRIORITY)
+                                    const hasPlanAccess = planPermissions.includes(suiteKey);
+                                    if (!hasPlanAccess) return false;
+
+                                    // 2. Access Group Check (RBAC)
+                                    if (currentUser.profile?.access_group_id) {
+                                        const suiteFeatureIds = allFeatures.filter(f => f.suite_id === suite.id).map(f => f.id);
+                                        const hasGroupAccess = groupPermissions.some(p => suiteFeatureIds.includes(p.feature_id) && p.can_access);
+                                        return hasGroupAccess;
+                                    }
+
+                                    return true;
+                                });
+
+                                return displaySuites.map((suite) => {
+                                    const suiteKey = suite.suite_key.toLowerCase().replace('_key', '');
+                                    const hasPlanAccess = planPermissions.includes(suiteKey);
+
+                                    // isLocked: Only for SocioAdmin if module not in plan
+                                    const isLocked = currentUser && isSocioAdmin && !hasPlanAccess;
+
+                                    // For cards that are visible, we decide if they can 'Access' or 'Learn More'
+                                    // If we are here, and not an admin, we MUST have access (because of the filter)
+                                    const showLearnMore = !currentUser;
+
+                                    const meta = getModuleMeta(suite.suite_key);
+                                    const Icon = meta?.icon || LayoutDashboard;
+                                    const iconColor = meta?.color || 'text-indigo-600';
+
+                                    return (
+                                        <div key={suite.id} className={`relative bg-white dark:bg-slate-900 p-8 rounded-[2rem] border border-slate-200 dark:border-slate-800 hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 group flex flex-col ${isLocked ? 'opacity-75 grayscale-[0.5]' : ''}`}>
+                                            {isLocked && (
+                                                <div className="absolute top-6 right-6 p-2 bg-amber-100 dark:bg-amber-900/30 text-amber-600 rounded-xl" title="Módulo não incluído no seu plano">
+                                                    <Lock size={20} />
+                                                </div>
+                                            )}
+
+                                            <div
+                                                className={`w-16 h-16 rounded-2xl mb-6 flex items-center justify-center transition-transform group-hover:scale-110 ${isLocked ? 'bg-slate-50 dark:bg-slate-800 text-slate-400' : `${iconColor.replace('text-', 'bg-')}/10 ${iconColor}`}`}
+                                            >
+                                                <Icon size={32} />
+                                            </div>
+                                            <h3 className="text-2xl font-bold mb-1 text-slate-800 dark:text-white">
+                                                {suite.name.split(/\b(PRO)\b/i).map((part, i) =>
+                                                    part.toUpperCase() === 'PRO' ? (
+                                                        <span key={i} className="text-branding-gradient">{part}</span>
+                                                    ) : part
+                                                )}
+                                            </h3>
+                                            <h4 className="text-indigo-600 dark:text-indigo-400 text-sm font-bold versalete mb-4">
+                                                {suite.short_desc?.pt || ''}
+                                            </h4>
+                                            <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-6 flex-grow">
+                                                {suite.detailed_desc?.pt || ''}
+                                            </p>
+
+                                            {isLocked && (
+                                                <p className="text-[10px] font-black uppercase text-amber-600 dark:text-amber-500 mb-4 tracking-widest italic text-center">
+                                                    Este módulo não faz parte do seu plano atual.
+                                                </p>
+                                            )}
+
+                                            <button
+                                                onClick={() => {
+                                                    if (isLocked) {
+                                                        router.push('/pricing');
+                                                    } else if (showLearnMore) {
+                                                        const suiteSlug = suite.suite_key.toLowerCase().replace('_key', '');
+                                                        router.push(`/${suiteSlug}`);
+                                                    } else {
+                                                        router.push(`/veritum?module=${suite.suite_key}`);
+                                                    }
+                                                }}
+                                                className={`font-bold text-sm flex items-center gap-1 group-hover:gap-2 transition-all mt-auto cursor-pointer ${isLocked ? 'text-amber-600 dark:text-amber-500' : 'text-indigo-600 dark:text-indigo-400'}`}
+                                            >
+                                                {isLocked ? 'Adquirir Módulo' : (showLearnMore ? 'Saiba mais' : 'Acessar Módulo')} <ChevronRight size={16} />
+                                            </button>
+                                        </div>
+                                    );
+                                });
+                            })()
                         )}
                     </div>
                 </div>
