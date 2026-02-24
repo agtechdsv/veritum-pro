@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, UserPlus, Trash2, Mail, User as UserIcon, Lock, FileEdit, Radio, ShieldAlert, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, CheckSquare, Package, Shield, Briefcase, ChevronDown } from 'lucide-react';
+import { ShieldCheck, UserPlus, Trash2, Mail, User as UserIcon, Lock, FileEdit, Radio, ShieldAlert, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, CheckSquare, Package, Shield, Briefcase, ChevronDown, Filter } from 'lucide-react';
 import { User, AccessGroup, ModuleId, Role } from '@/types';
 import { createMasterClient } from '@/lib/supabase/master';
 import { createUserDirectly, updateUserDirectly, deleteUserDirectly } from '@/app/actions/user-actions';
@@ -47,23 +47,47 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
     const nameRef = React.useRef<HTMLInputElement>(null);
     const supabase = createMasterClient();
 
+    // Master Client Filter State
+    const [clients, setClients] = useState<User[]>([]);
+    const [selectedClientId, setSelectedClientId] = useState<string>(currentUser.id);
+
+    useEffect(() => {
+        if (currentUser.role === 'Master') {
+            fetchClients();
+        }
+    }, [currentUser]);
+
     useEffect(() => {
         fetchUsers();
-        fetchPlans();
         fetchAccessGroups();
         fetchRoles();
+    }, [selectedClientId, currentUser]);
+
+    useEffect(() => {
+        fetchPlans();
     }, []);
+
+    const fetchClients = async () => {
+        const { data } = await supabase
+            .from('users')
+            .select('id, name, username, role, active')
+            .in('role', ['Sócio-Administrador', 'Sócio Administrador'])
+            .order('name');
+        if (data) setClients(data);
+    };
 
     const fetchRoles = async () => {
         let query = supabase.from('roles').select('*');
 
         const isAdmin = ['Administrador', 'Sócio-Administrador', 'Sócio Administrador'].includes(currentUser.role);
 
-        if (isAdmin) {
+        if (currentUser.role === 'Master') {
+            query = query.eq('admin_id', selectedClientId);
+        } else if (isAdmin) {
             const adminIds = [currentUser.id];
             if (currentUser.parent_user_id) adminIds.push(currentUser.parent_user_id);
             query = query.in('admin_id', adminIds);
-        } else if (currentUser.role !== 'Master') {
+        } else {
             if (currentUser.parent_user_id) {
                 query = query.eq('admin_id', currentUser.parent_user_id);
             } else {
@@ -80,12 +104,14 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
 
         const isAdmin = ['Administrador', 'Sócio-Administrador', 'Sócio Administrador'].includes(currentUser.role);
 
-        // Scope optimization: Master sees all, Admins see their own + parent (who created them)
-        if (isAdmin) {
+        // Scope optimization: Master sees selected client, Admins see their own + parent (who created them)
+        if (currentUser.role === 'Master') {
+            query = query.eq('admin_id', selectedClientId);
+        } else if (isAdmin) {
             const adminIds = [currentUser.id];
             if (currentUser.parent_user_id) adminIds.push(currentUser.parent_user_id);
             query = query.in('admin_id', adminIds);
-        } else if (currentUser.role !== 'Master') {
+        } else {
             // For other roles, just their own admin's groups
             if (currentUser.parent_user_id) {
                 query = query.eq('admin_id', currentUser.parent_user_id);
@@ -123,9 +149,12 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
 
         // Hierarchy Filtering
         const isAdmin = ['Administrador', 'Sócio-Administrador', 'Sócio Administrador'].includes(currentUser.role);
-        if (isAdmin) {
+
+        if (currentUser.role === 'Master') {
+            query = query.or(`id.eq.${selectedClientId},parent_user_id.eq.${selectedClientId}`);
+        } else if (isAdmin) {
             query = query.or(`id.eq.${currentUser.id},parent_user_id.eq.${currentUser.id}`);
-        } else if (currentUser.role !== 'Master') {
+        } else {
             if (currentUser.parent_user_id) {
                 // Anyone below Admin sees themselves, their peers (same parent), and the Admin (parent)
                 query = query.or(`id.eq.${currentUser.id},parent_user_id.eq.${currentUser.parent_user_id},id.eq.${currentUser.parent_user_id}`);
@@ -249,8 +278,10 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                 if (!result.success) throw new Error(result.error);
                 toast.success('Usuário atualizado com sucesso!');
             } else {
-                const parentUserId = currentUser.parent_user_id || currentUser.id;
-                const result = await createUserDirectly(formData, parentUserId);
+                const parentUserId = currentUser.role === 'Master' ? selectedClientId : (currentUser.parent_user_id || currentUser.id);
+                // When Master assigns to another Master account, make sure we aren't creating a cyclic loop
+                const finalParentUserId = parentUserId === currentUser.id && formData.role === 'Master' ? null : parentUserId;
+                const result = await createUserDirectly(formData, finalParentUserId as string);
                 if (!result.success) throw new Error(result.error);
                 toast.success('Usuário cadastrado com sucesso!');
             }
@@ -314,18 +345,40 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                     <h1 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Gestão de Usuários</h1>
                     <p className="text-slate-500 dark:text-slate-400 font-medium tracking-tight uppercase text-xs">Administre quem acessa seu ecossistema.</p>
                 </div>
-                {currentUser.role !== 'Operador' && (
-                    <button
-                        onClick={() => {
-                            setEditingUser(null);
-                            setFormData({ name: '', email: '', username: '', password: '', role: 'Operador', plan_id: '', access_group_id: '' });
-                            setShowAddModal(true);
-                        }}
-                        className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold shadow-xl shadow-indigo-600/20 hover:scale-105 transition-all flex items-center gap-2 cursor-pointer"
-                    >
-                        <UserPlus size={20} /> Novo Usuário
-                    </button>
-                )}
+                <div className="flex items-center gap-4">
+                    {currentUser.role === 'Master' && (
+                        <div className="relative group/filter z-50">
+                            <div className="flex items-center gap-2 px-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm text-sm font-bold text-slate-700 dark:text-slate-300">
+                                <Filter size={16} className="text-amber-500" />
+                                <select
+                                    className="bg-transparent outline-none appearance-none pr-6 cursor-pointer"
+                                    value={selectedClientId}
+                                    onChange={e => setSelectedClientId(e.target.value)}
+                                >
+                                    <option value={currentUser.id}>Master (Meus Usuários)</option>
+                                    <optgroup label="Sócio-Administradores Privados">
+                                        {clients.map(c => (
+                                            <option key={c.id} value={c.id}>🏢 {c.name} ({c.username})</option>
+                                        ))}
+                                    </optgroup>
+                                </select>
+                                <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
+                            </div>
+                        </div>
+                    )}
+                    {currentUser.role !== 'Operador' && (
+                        <button
+                            onClick={() => {
+                                setEditingUser(null);
+                                setFormData({ name: '', email: '', username: '', password: '', role: 'Operador', plan_id: '', access_group_id: '' });
+                                setShowAddModal(true);
+                            }}
+                            className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold shadow-xl shadow-indigo-600/20 hover:scale-105 transition-all flex items-center gap-2 cursor-pointer"
+                        >
+                            <UserPlus size={20} /> Novo Usuário
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Filters */}
@@ -373,21 +426,23 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
             </div>
 
             {/* Bulk Actions */}
-            {selectedUserIds.length > 0 && (
-                <div className="bg-indigo-600 text-white p-6 rounded-3xl flex items-center justify-between shadow-2xl animate-in slide-in-from-bottom-6 group">
-                    <div className="flex items-center gap-4 ml-4">
-                        <CheckSquare className="text-indigo-200" size={24} />
-                        <span className="font-black text-lg uppercase tracking-tight">{selectedUserIds.length} selecionados</span>
+            {
+                selectedUserIds.length > 0 && (
+                    <div className="bg-indigo-600 text-white p-6 rounded-3xl flex items-center justify-between shadow-2xl animate-in slide-in-from-bottom-6 group">
+                        <div className="flex items-center gap-4 ml-4">
+                            <CheckSquare className="text-indigo-200" size={24} />
+                            <span className="font-black text-lg uppercase tracking-tight">{selectedUserIds.length} selecionados</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <button onClick={() => handleBulkStatus(true)} className="px-5 py-3 bg-white/10 hover:bg-white/20 rounded-xl text-[10px] font-black uppercase transition-all">Ativar</button>
+                            <button onClick={() => handleBulkStatus(false)} className="px-5 py-3 bg-white/10 hover:bg-white/20 rounded-xl text-[10px] font-black uppercase transition-all">Desativar</button>
+                            <button onClick={handleBulkDelete} className="px-5 py-3 bg-rose-500 hover:bg-rose-600 rounded-xl text-[10px] font-black uppercase transition-all flex items-center gap-2">
+                                <Trash2 size={16} /> Excluir
+                            </button>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <button onClick={() => handleBulkStatus(true)} className="px-5 py-3 bg-white/10 hover:bg-white/20 rounded-xl text-[10px] font-black uppercase transition-all">Ativar</button>
-                        <button onClick={() => handleBulkStatus(false)} className="px-5 py-3 bg-white/10 hover:bg-white/20 rounded-xl text-[10px] font-black uppercase transition-all">Desativar</button>
-                        <button onClick={handleBulkDelete} className="px-5 py-3 bg-rose-500 hover:bg-rose-600 rounded-xl text-[10px] font-black uppercase transition-all flex items-center gap-2">
-                            <Trash2 size={16} /> Excluir
-                        </button>
-                    </div>
-                </div>
-            )}
+                )
+            }
 
             <div className="bg-white dark:bg-slate-900 rounded-[3rem] border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
                 <table className="w-full text-left">
@@ -503,106 +558,110 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
             </div>
 
             {/* Modal: Add/Edit User */}
-            {showAddModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-sm animate-in fade-in duration-300">
-                    <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[3.5rem] border border-slate-200 dark:border-slate-800 shadow-2xl p-12 relative overflow-hidden">
-                        <div className="mb-10 text-center">
-                            <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/40 rounded-[1.5rem] flex items-center justify-center text-indigo-600 dark:text-indigo-400 mx-auto mb-4">
-                                <UserPlus size={32} />
-                            </div>
-                            <h2 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">{editingUser ? 'Atualizar Dados' : 'Novo Integrante'}</h2>
-                            <p className="text-sm text-slate-500 font-medium uppercase tracking-tight">Configure as credenciais e o nível de acesso.</p>
-                        </div>
-
-                        <form onSubmit={handleSaveUser} className="space-y-5">
-                            <div className="relative">
-                                <UserIcon className="absolute left-5 top-5 text-slate-400" size={20} />
-                                <input ref={nameRef} required placeholder="Nome Completo" className="w-full pl-14 pr-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl font-bold focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white shadow-sm" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
-                            </div>
-                            <div className="relative">
-                                <Mail className="absolute left-5 top-5 text-slate-400" size={20} />
-                                <input required type="email" placeholder="E-mail / Login" disabled={!!editingUser} className="w-full pl-14 pr-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl font-bold focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white shadow-sm disabled:opacity-50" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value, username: e.target.value })} />
-                            </div>
-                            <div className="relative">
-                                <Lock className="absolute left-5 top-5 text-slate-400" size={20} />
-                                <input required={!editingUser} type="password" placeholder={editingUser ? "Trocar Senha (Opcional)" : "Senha Inicial"} className="w-full pl-14 pr-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl font-bold focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white shadow-sm" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} />
-                            </div>
-
-                            <div className="space-y-1.5 pb-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Cargo / Função Corporativa</label>
-                                <div className="relative">
-                                    <Briefcase className="absolute left-5 top-5 text-slate-400" size={20} />
-                                    <select
-                                        disabled={currentUser.role === 'Operador'}
-                                        className="w-full pl-14 pr-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl font-bold focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white appearance-none cursor-pointer shadow-sm disabled:opacity-50"
-                                        value={formData.role}
-                                        onChange={e => {
-                                            const selectedRoleName = e.target.value;
-                                            const roleObj = roles.find(r => r.name === selectedRoleName);
-                                            setFormData({
-                                                ...formData,
-                                                role: selectedRoleName as any,
-                                                access_group_id: roleObj ? roleObj.access_group_id : ''
-                                            });
-                                        }}
-                                    >
-                                        <option value="" disabled>Selecione um Cargo...</option>
-                                        {/* Dynamic groupings based on Access Groups */}
-                                        {accessGroups.map(group => {
-                                            const groupRoles = roles.filter(r => r.access_group_id === group.id);
-                                            if (groupRoles.length === 0) return null;
-                                            return (
-                                                <optgroup key={group.id} label={group.name}>
-                                                    {groupRoles.map(role => (
-                                                        <option key={role.id} value={role.name}>{role.name}</option>
-                                                    ))}
-                                                </optgroup>
-                                            );
-                                        })}
-                                        {currentUser?.role === 'Master' && (
-                                            <optgroup label="Sistema Global">
-                                                <option value="Master">Super Master (Deus)</option>
-                                            </optgroup>
-                                        )}
-                                    </select>
-                                    <ChevronDown className="absolute right-5 top-6 text-slate-400 pointer-events-none" size={16} />
+            {
+                showAddModal && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-sm animate-in fade-in duration-300">
+                        <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[3.5rem] border border-slate-200 dark:border-slate-800 shadow-2xl p-12 relative overflow-hidden">
+                            <div className="mb-10 text-center">
+                                <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/40 rounded-[1.5rem] flex items-center justify-center text-indigo-600 dark:text-indigo-400 mx-auto mb-4">
+                                    <UserPlus size={32} />
                                 </div>
-                                {formData.access_group_id && formData.role !== 'Master' && (
-                                    <div className="flex items-center gap-2 mt-3 ml-2 px-3 py-2 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800 rounded-xl w-fit animate-in fade-in slide-in-from-top-2">
-                                        <Shield size={14} className="text-indigo-600 dark:text-indigo-400" />
-                                        <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
-                                            Permissões herdadas do Grupo: {accessGroups.find(g => g.id === formData.access_group_id)?.name}
-                                        </span>
-                                    </div>
-                                )}
+                                <h2 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">{editingUser ? 'Atualizar Dados' : 'Novo Integrante'}</h2>
+                                <p className="text-sm text-slate-500 font-medium uppercase tracking-tight">Configure as credenciais e o nível de acesso.</p>
                             </div>
 
-                            <div className="flex gap-4 pt-6">
-                                <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 px-8 py-5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-[1.5rem] font-black uppercase tracking-widest hover:bg-slate-200 transition-all text-xs">Fechar</button>
-                                <button type="submit" className="flex-[2] px-8 py-5 bg-indigo-600 text-white rounded-[1.5rem] font-black uppercase tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-600/30 transition-all text-xs">{editingUser ? 'Salvar Edição' : 'Finalizar Cadastro'}</button>
-                            </div>
-                        </form>
+                            <form onSubmit={handleSaveUser} className="space-y-5">
+                                <div className="relative">
+                                    <UserIcon className="absolute left-5 top-5 text-slate-400" size={20} />
+                                    <input ref={nameRef} required placeholder="Nome Completo" className="w-full pl-14 pr-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl font-bold focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white shadow-sm" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                                </div>
+                                <div className="relative">
+                                    <Mail className="absolute left-5 top-5 text-slate-400" size={20} />
+                                    <input required type="email" placeholder="E-mail / Login" disabled={!!editingUser} className="w-full pl-14 pr-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl font-bold focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white shadow-sm disabled:opacity-50" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value, username: e.target.value })} />
+                                </div>
+                                <div className="relative">
+                                    <Lock className="absolute left-5 top-5 text-slate-400" size={20} />
+                                    <input required={!editingUser} type="password" placeholder={editingUser ? "Trocar Senha (Opcional)" : "Senha Inicial"} className="w-full pl-14 pr-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl font-bold focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white shadow-sm" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} />
+                                </div>
+
+                                <div className="space-y-1.5 pb-2">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Cargo / Função Corporativa</label>
+                                    <div className="relative">
+                                        <Briefcase className="absolute left-5 top-5 text-slate-400" size={20} />
+                                        <select
+                                            disabled={currentUser.role === 'Operador'}
+                                            className="w-full pl-14 pr-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl font-bold focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white appearance-none cursor-pointer shadow-sm disabled:opacity-50"
+                                            value={formData.role}
+                                            onChange={e => {
+                                                const selectedRoleName = e.target.value;
+                                                const roleObj = roles.find(r => r.name === selectedRoleName);
+                                                setFormData({
+                                                    ...formData,
+                                                    role: selectedRoleName as any,
+                                                    access_group_id: roleObj ? roleObj.access_group_id : ''
+                                                });
+                                            }}
+                                        >
+                                            <option value="" disabled>Selecione um Cargo...</option>
+                                            {/* Dynamic groupings based on Access Groups */}
+                                            {accessGroups.map(group => {
+                                                const groupRoles = roles.filter(r => r.access_group_id === group.id);
+                                                if (groupRoles.length === 0) return null;
+                                                return (
+                                                    <optgroup key={group.id} label={group.name}>
+                                                        {groupRoles.map(role => (
+                                                            <option key={role.id} value={role.name}>{role.name}</option>
+                                                        ))}
+                                                    </optgroup>
+                                                );
+                                            })}
+                                            {currentUser?.role === 'Master' && (
+                                                <optgroup label="Sistema Global">
+                                                    <option value="Master">Super Master (Deus)</option>
+                                                </optgroup>
+                                            )}
+                                        </select>
+                                        <ChevronDown className="absolute right-5 top-6 text-slate-400 pointer-events-none" size={16} />
+                                    </div>
+                                    {formData.access_group_id && formData.role !== 'Master' && (
+                                        <div className="flex items-center gap-2 mt-3 ml-2 px-3 py-2 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800 rounded-xl w-fit animate-in fade-in slide-in-from-top-2">
+                                            <Shield size={14} className="text-indigo-600 dark:text-indigo-400" />
+                                            <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
+                                                Permissões herdadas do Grupo: {accessGroups.find(g => g.id === formData.access_group_id)?.name}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="flex gap-4 pt-6">
+                                    <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 px-8 py-5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-[1.5rem] font-black uppercase tracking-widest hover:bg-slate-200 transition-all text-xs">Fechar</button>
+                                    <button type="submit" className="flex-[2] px-8 py-5 bg-indigo-600 text-white rounded-[1.5rem] font-black uppercase tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-600/30 transition-all text-xs">{editingUser ? 'Salvar Edição' : 'Finalizar Cadastro'}</button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Modal: Delete Confirmation */}
-            {userToDelete && (
-                <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[3rem] border border-slate-200 dark:border-slate-800 shadow-2xl p-12 text-center relative overflow-hidden">
-                        <div className="w-20 h-20 bg-rose-100 dark:bg-rose-900/30 rounded-3xl flex items-center justify-center text-rose-600 dark:text-rose-400 mx-auto mb-6">
-                            <ShieldAlert size={40} />
-                        </div>
-                        <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-2 uppercase tracking-tighter">Excluir?</h2>
-                        <p className="text-sm text-slate-500 font-medium mb-10 leading-relaxed uppercase tracking-tight">Remover acesso de <span className="font-black text-slate-800 dark:text-white underline">{userToDelete.name}</span>?</p>
-                        <div className="flex flex-col gap-3">
-                            <button onClick={handleDeleteUser} className="w-full bg-rose-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-rose-600/20 hover:bg-rose-700 transition-all text-xs">Sim, Remover Acesso</button>
-                            <button onClick={() => setUserToDelete(null)} className="w-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-200 transition-all text-xs">Cancelar</button>
+            {
+                userToDelete && (
+                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-md animate-in fade-in duration-300">
+                        <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[3rem] border border-slate-200 dark:border-slate-800 shadow-2xl p-12 text-center relative overflow-hidden">
+                            <div className="w-20 h-20 bg-rose-100 dark:bg-rose-900/30 rounded-3xl flex items-center justify-center text-rose-600 dark:text-rose-400 mx-auto mb-6">
+                                <ShieldAlert size={40} />
+                            </div>
+                            <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-2 uppercase tracking-tighter">Excluir?</h2>
+                            <p className="text-sm text-slate-500 font-medium mb-10 leading-relaxed uppercase tracking-tight">Remover acesso de <span className="font-black text-slate-800 dark:text-white underline">{userToDelete.name}</span>?</p>
+                            <div className="flex flex-col gap-3">
+                                <button onClick={handleDeleteUser} className="w-full bg-rose-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-rose-600/20 hover:bg-rose-700 transition-all text-xs">Sim, Remover Acesso</button>
+                                <button onClick={() => setUserToDelete(null)} className="w-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-200 transition-all text-xs">Cancelar</button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 };
 

@@ -34,25 +34,49 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
     const [editingRole, setEditingRole] = useState<{ id?: string, name: string }>({ name: '' });
     const [isRoleSelectOpen, setIsRoleSelectOpen] = useState(false);
 
+    // Master Client Filter State
+    const [clients, setClients] = useState<User[]>([]);
+    const [selectedClientId, setSelectedClientId] = useState<string>(currentUser.id);
+
     const supabase = createMasterClient();
 
     useEffect(() => {
+        if (currentUser.role === 'Master') {
+            fetchClients();
+        }
+    }, [currentUser]);
+
+    useEffect(() => {
         fetchGroups();
+        fetchRoles();
+    }, [selectedClientId, currentUser]);
+
+    useEffect(() => {
         fetchSuites();
         fetchFeatures();
         fetchTemplates();
-        fetchRoles();
     }, []);
+
+    const fetchClients = async () => {
+        const { data } = await supabase
+            .from('users')
+            .select('id, name, username, role, active')
+            .in('role', ['Sócio-Administrador', 'Sócio Administrador'])
+            .order('name');
+        if (data) setClients(data);
+    };
 
     const fetchRoles = async () => {
         let query = supabase.from('roles').select('*');
         const isAdmin = ['Administrador', 'Sócio-Administrador', 'Sócio Administrador'].includes(currentUser.role);
 
-        if (isAdmin) {
+        if (currentUser.role === 'Master') {
+            query = query.eq('admin_id', selectedClientId);
+        } else if (isAdmin) {
             const adminIds = [currentUser.id];
             if (currentUser.parent_user_id) adminIds.push(currentUser.parent_user_id);
             query = query.in('admin_id', adminIds);
-        } else if (currentUser.role !== 'Master') {
+        } else {
             if (currentUser.parent_user_id) query = query.eq('admin_id', currentUser.parent_user_id);
             else query = query.eq('admin_id', currentUser.id);
         }
@@ -88,11 +112,13 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
 
         const isAdmin = ['Administrador', 'Sócio-Administrador', 'Sócio Administrador'].includes(currentUser.role);
 
-        if (isAdmin) {
+        if (currentUser.role === 'Master') {
+            query = query.eq('admin_id', selectedClientId);
+        } else if (isAdmin) {
             const adminIds = [currentUser.id];
             if (currentUser.parent_user_id) adminIds.push(currentUser.parent_user_id);
             query = query.in('admin_id', adminIds);
-        } else if (currentUser.role !== 'Master') {
+        } else {
             query = query.eq('admin_id', currentUser.id);
         }
 
@@ -196,8 +222,9 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                 toast.success('Nome do grupo atualizado.');
             } else {
                 // Create New Group
+                const newGroupAdminId = currentUser.role === 'Master' ? selectedClientId : currentUser.id;
                 const { data: newGroup, error: groupError } = await supabase.from('access_groups').insert({
-                    admin_id: currentUser.id,
+                    admin_id: newGroupAdminId,
                     name: editingGroup.name
                 }).select().single();
 
@@ -266,7 +293,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                 toast.success('Cargo atualizado.');
             } else {
                 // Insert
-                const newRoleAdminId = currentUser.role === 'Master' ? currentUser.id : (currentUser.parent_user_id || currentUser.id);
+                const newRoleAdminId = currentUser.role === 'Master' ? selectedClientId : (currentUser.parent_user_id || currentUser.id);
                 const { data, error } = await supabase.from('roles').insert({
                     name: roleName,
                     admin_id: newRoleAdminId,
@@ -394,12 +421,34 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                     <h1 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Grupos de Acesso</h1>
                     <p className="text-slate-500 dark:text-slate-400 font-medium tracking-tight uppercase text-xs">Refinamento Granular: Defina permissões por funcionalidade.</p>
                 </div>
-                <button
-                    onClick={() => handleOpenModal()}
-                    className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold shadow-xl shadow-indigo-600/20 hover:scale-105 transition-all flex items-center gap-2 cursor-pointer"
-                >
-                    <Plus size={20} /> Novo Grupo
-                </button>
+                <div className="flex items-center gap-4">
+                    {currentUser.role === 'Master' && (
+                        <div className="relative group/filter z-50">
+                            <div className="flex items-center gap-2 px-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm text-sm font-bold text-slate-700 dark:text-slate-300">
+                                <Filter size={16} className="text-amber-500" />
+                                <select
+                                    className="bg-transparent outline-none appearance-none pr-6 cursor-pointer"
+                                    value={selectedClientId}
+                                    onChange={e => setSelectedClientId(e.target.value)}
+                                >
+                                    <option value={currentUser.id}>Master (Meus Grupos)</option>
+                                    <optgroup label="Sócio-Administradores Privados">
+                                        {clients.map(c => (
+                                            <option key={c.id} value={c.id}>🏢 {c.name} ({c.username})</option>
+                                        ))}
+                                    </optgroup>
+                                </select>
+                                <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
+                            </div>
+                        </div>
+                    )}
+                    <button
+                        onClick={() => handleOpenModal()}
+                        className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold shadow-xl shadow-indigo-600/20 hover:scale-105 transition-all flex items-center gap-2 cursor-pointer"
+                    >
+                        <Plus size={20} /> Novo Grupo
+                    </button>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
