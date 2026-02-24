@@ -349,7 +349,6 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                             <Tooltip key={item.id} content={item.label} enabled={!isSidebarOpen}>
                                 <Link
                                     href={`/veritum/${normalize(item.id)}`}
-                                    onClick={() => onModuleChange(item.id)}
                                     className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 cursor-pointer ${normalize(activeModule) === normalize(item.id)
                                         ? 'bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-400 font-bold shadow-sm'
                                         : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white'
@@ -400,7 +399,6 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                 <Link
                                     key={item.id}
                                     href={`/veritum/${normalize(item.id)}`}
-                                    onClick={() => onModuleChange(item.id)}
                                     className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 cursor-pointer ${normalize(activeModule) === normalize(item.id)
                                         ? 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white font-bold'
                                         : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
@@ -450,7 +448,6 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                     <Tooltip key={item.id} content={item.label} enabled={!isSidebarOpen}>
                                         <Link
                                             href={`/veritum/${normalize(item.id)}`}
-                                            onClick={() => onModuleChange(item.id)}
                                             className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 cursor-pointer ${normalize(activeModule) === normalize(item.id)
                                                 ? 'bg-amber-50 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 font-bold shadow-sm'
                                                 : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white'
