@@ -190,6 +190,20 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
         { id: ModuleId.PERSONS, label: 'CRM de Clientes', icon: UserIcon, color: 'text-emerald-600' },
     ];
 
+    const isAdmin = user.role === 'Master' || ['Administrador', 'Sócio-Administrador', 'Sócio Administrador'].includes(user.role);
+    const superAdminGroups = ['Sócio-Administrativo', 'Sócio-Administrador', 'Sócio Administrador'];
+    const isSuperAdmin = user.role === 'Master' || (user.access_group_name && superAdminGroups.some(g => user.access_group_name?.includes(g)));
+
+    const filteredAdminItems = adminItems.filter(item => {
+        if (item.id === ModuleId.USERS) {
+            // USERS: Visible for Master, Admins, and potentially Advogados (as they are in the 'user level' but should see management if allowed)
+            // The user said "Menu Gestão de Usuários foi oculto, mas o user tem acesso" for Advogado.
+            return isAdmin || user.role.includes('Advogado');
+        }
+        // ACCESS_GROUPS and SETTINGS: Restricted to SuperAdmin (Sócio-Administrativo group)
+        return isSuperAdmin;
+    });
+
     // PROTEÇÃO DE ROTAS - URL ACCESS CONTROL (Regra 3)
     React.useEffect(() => {
         if (user.role === 'Master') return; // Master tem acesso iminente a tudo
@@ -210,11 +224,19 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
         // 2. Checa se é módulo Admin
         const isAdminModule = adminItems.some(ai => normalize(ai.id) === currentNormalized);
         if (isAdminModule) {
-            const isAllowedAdmin = ['Administrador', 'Sócio-Administrador', 'Sócio Administrador'].includes(user.role);
-            if (!isAllowedAdmin && currentNormalized !== 'settings' && currentNormalized !== 'users') { // Everyone can access settings and users (with restricted view)
-                toast.error('Acesso restrito a administradores.');
-                onModuleChange(ModuleId.DASHBOARD_ROOT);
-                return;
+            if (currentNormalized === 'access_groups' || currentNormalized === 'settings') {
+                if (!isSuperAdmin) {
+                    toast.error('Acesso restrito ao Grupo Sócio-Administrativo.');
+                    onModuleChange(ModuleId.DASHBOARD_ROOT);
+                    return;
+                }
+            } else if (currentNormalized === 'users') {
+                const canSeeUsers = isAdmin || user.role.includes('Advogado');
+                if (!canSeeUsers) {
+                    toast.error('Acesso restrito.');
+                    onModuleChange(ModuleId.DASHBOARD_ROOT);
+                    return;
+                }
             }
         }
 
@@ -259,9 +281,9 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
             case ModuleId.PERSONS:
                 return <PersonManagement credentials={creds} />;
             case 'dashboard_suites': return <SuiteDashboard items={suiteItems} onModuleChange={onModuleChange} />;
-            case 'dashboard_admin': return <AdminDashboard items={adminItems} onModuleChange={onModuleChange} />;
+            case 'dashboard_admin': return <AdminDashboard items={filteredAdminItems} onModuleChange={onModuleChange} />;
             case 'dashboard_master': return <MasterDashboard items={masterItems} onModuleChange={onModuleChange} />;
-            case 'dashboard_root': return <RootDashboard onModuleChange={onModuleChange} userRole={user.role} />;
+            case 'dashboard_root': return <RootDashboard onModuleChange={onModuleChange} userRole={user.role} userGroupName={user.access_group_name} />;
             default:
                 return (
                     <div className="flex flex-col items-center justify-center h-full text-slate-400">
@@ -359,12 +381,12 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                     onClick={() => onModuleChange(ModuleId.DASHBOARD_ADMIN)}
                                     className="group flex items-center gap-2 px-3 mb-4 w-full text-left cursor-pointer overflow-hidden"
                                 >
-                                    <div className={`w-1 h-3 rounded-full transition-all ${normalize(activeModule).includes('dashboard_admin') || adminItems.some(i => i.id === activeModule) ? 'bg-indigo-600 h-5' : 'bg-slate-300 group-hover:bg-indigo-400'}`} />
-                                    <h3 className={`text-[10px] font-black uppercase tracking-widest transition-colors whitespace-nowrap ${normalize(activeModule).includes('dashboard_admin') || adminItems.some(i => i.id === activeModule) ? 'text-indigo-600' : 'text-slate-400 group-hover:text-slate-600'}`}>Administração</h3>
+                                    <div className={`w-1 h-3 rounded-full transition-all ${normalize(activeModule).includes('dashboard_admin') || filteredAdminItems.some(i => i.id === activeModule) ? 'bg-indigo-600 h-5' : 'bg-slate-300 group-hover:bg-indigo-400'}`} />
+                                    <h3 className={`text-[10px] font-black uppercase tracking-widest transition-colors whitespace-nowrap ${normalize(activeModule).includes('dashboard_admin') || filteredAdminItems.some(i => i.id === activeModule) ? 'text-indigo-600' : 'text-slate-400 group-hover:text-slate-600'}`}>Administração</h3>
                                 </motion.button>
                             )}
                         </AnimatePresence>
-                        {adminItems.map((item) => (
+                        {filteredAdminItems.map((item) => (
                             <Tooltip key={item.id} content={item.label} enabled={!isSidebarOpen}>
                                 <Link
                                     key={item.id}
@@ -480,7 +502,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                         >
                                             Módulos
                                         </button>
-                                    ) : adminItems.some(i => i.id === activeModule) || normalize(activeModule) === 'dashboard_admin' ? (
+                                    ) : filteredAdminItems.some(i => i.id === activeModule) || normalize(activeModule) === 'dashboard_admin' ? (
                                         <button
                                             onClick={() => onModuleChange(ModuleId.DASHBOARD_ADMIN)}
                                             className={`${normalize(activeModule) === 'dashboard_admin' ? 'text-slate-800 dark:text-white font-black' : 'text-slate-400 hover:text-indigo-600'} transition-colors cursor-pointer`}
@@ -503,7 +525,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                     <ChevronRight size={14} className="text-slate-300" />
                                     <span className="text-slate-800 dark:text-white font-black tracking-tight cursor-default">
                                         {(() => {
-                                            const label = [...suiteItems, ...adminItems, ...masterItems].find(m => normalize(m.id) === normalize(activeModule))?.label || activeModule;
+                                            const label = [...suiteItems, ...filteredAdminItems, ...masterItems].find(m => normalize(m.id) === normalize(activeModule))?.label || activeModule;
                                             // Enforce Title Case (First letter upper, rest lower)
                                             return label.charAt(0).toUpperCase() + label.slice(1).toLowerCase();
                                         })()}

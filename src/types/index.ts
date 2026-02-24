@@ -110,6 +110,7 @@ export interface User {
     parent_user_id?: string;
     plan_id?: string;
     access_group_id?: string;
+    access_group_name?: string;
 }
 
 export interface Role {

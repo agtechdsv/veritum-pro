@@ -52,9 +52,14 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
 
             const { data: profile, error: profileError } = await supabase
                 .from('users')
-                .select('*')
+                .select('*, access_groups(name)')
                 .eq('id', authUser.id)
                 .single();
+
+            const profileData = profile as any;
+            const accessGroupName = Array.isArray(profileData?.access_groups)
+                ? profileData.access_groups[0]?.name
+                : profileData?.access_groups?.name;
 
             if (profileError) {
                 // Ignore PGRST116 (No rows returned) if the trigger failed and the user is fresh
@@ -75,7 +80,8 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
                 avatar_url: profile?.avatar_url || authUser.user_metadata.avatar_url || authUser.user_metadata.picture,
                 parent_user_id: profile?.parent_user_id || authUser.user_metadata.parent_user_id,
                 plan_id: profile?.plan_id || authUser.user_metadata.plan_id,
-                access_group_id: profile?.access_group_id || authUser.user_metadata.access_group_id
+                access_group_id: profile?.access_group_id || authUser.user_metadata.access_group_id,
+                access_group_name: accessGroupName
             });
 
             // Fetch plan permissions with robust metadata fallback

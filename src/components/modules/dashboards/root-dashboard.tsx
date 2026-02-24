@@ -8,9 +8,17 @@ import { Boxes, Settings2, Crown } from 'lucide-react';
 interface Props {
     onModuleChange: (id: ModuleId) => void;
     userRole: string;
+    userGroupName?: string;
 }
 
-const RootDashboard: React.FC<Props> = ({ onModuleChange, userRole }) => {
+const RootDashboard: React.FC<Props> = ({ onModuleChange, userRole, userGroupName }) => {
+    const isAdmin = userRole === 'Master' || ['Administrador', 'Sócio-Administrador', 'Sócio Administrador'].includes(userRole);
+    const superAdminGroups = ['Sócio-Administrativo', 'Sócio-Administrador', 'Sócio Administrador'];
+    const isSuperAdmin = userRole === 'Master' || (userGroupName && superAdminGroups.some(g => userGroupName.includes(g)));
+
+    // Administration area is visible if they are an Admin OR if they have access to specific admin modules (like Advogados seeing Users)
+    const canSeeAdminArea = isAdmin || (userRole && userRole.includes('Advogado')) || isSuperAdmin;
+
     const groups = [
         {
             id: ModuleId.DASHBOARD_SUITES,
@@ -19,13 +27,13 @@ const RootDashboard: React.FC<Props> = ({ onModuleChange, userRole }) => {
             icon: Boxes,
             color: 'text-indigo-600'
         },
-        {
+        ...(canSeeAdminArea ? [{
             id: ModuleId.DASHBOARD_ADMIN,
             title: 'Administração',
             description: 'Gerencie usuários, permissões e configurações do sistema.',
             icon: Settings2,
             color: 'text-slate-600'
-        },
+        }] : []),
         ...(userRole === 'Master' ? [{
             id: ModuleId.DASHBOARD_MASTER,
             title: 'Master',

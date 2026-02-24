@@ -74,6 +74,17 @@ export default function DynamicModulePage() {
         { id: ModuleId.SETTINGS, label: 'Configurações', icon: Settings, color: 'text-slate-500' },
     ];
 
+    const isAdmin = user.role === 'Master' || ['Administrador', 'Sócio-Administrador', 'Sócio Administrador'].includes(user.role);
+    const superAdminGroups = ['Sócio-Administrativo', 'Sócio-Administrador', 'Sócio Administrador'];
+    const isSuperAdmin = user.role === 'Master' || (user.access_group_name && superAdminGroups.some(g => user.access_group_name?.includes(g)));
+
+    const filteredAdminItems = adminItems.filter(item => {
+        if (item.id === ModuleId.USERS) {
+            return isAdmin || (user.role && user.role.includes('Advogado'));
+        }
+        return isSuperAdmin;
+    });
+
     const masterItems = [
         { id: ModuleId.SUITES, label: 'Gestão de Módulos', icon: Crown, color: 'text-amber-500' },
         { id: ModuleId.PLANS, label: 'Gestão de Planos', icon: DollarSign, color: 'text-indigo-500' },
@@ -101,7 +112,7 @@ export default function DynamicModulePage() {
         case 'team': return <TeamManagement credentials={credentials} />;
         case 'persons': return <PersonManagement credentials={credentials} />;
         case 'dashboard_suites': return <SuiteDashboard items={suiteItems} onModuleChange={onModuleChange} />;
-        case 'dashboard_admin': return <AdminDashboard items={adminItems} onModuleChange={onModuleChange} />;
+        case 'dashboard_admin': return <AdminDashboard items={filteredAdminItems} onModuleChange={onModuleChange} />;
         case 'dashboard_master': return <MasterDashboard items={masterItems} onModuleChange={onModuleChange} />;
         default:
             return (

@@ -20,6 +20,7 @@ export default function VeritumPage() {
     return (
         <RootDashboard
             userRole={user.role}
+            userGroupName={user.access_group_name}
             onModuleChange={handleModuleChange}
         />
     );
