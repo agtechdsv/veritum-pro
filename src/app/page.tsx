@@ -120,7 +120,7 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
             if (user) {
                 const { data: profile, error } = await supabase
                     .from('users')
-                    .select('name, avatar_url, role, plan_id, access_group_id, access_groups(name), plans:plan_id(name)')
+                    .select('name, avatar_url, role, plan_id, access_group_id, access_groups(name, name_loc), plans:plan_id(name)')
                     .eq('id', user.id)
                     .single();
 
@@ -128,16 +128,21 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
 
                 if (profile) {
                     const profileData = profile as any;
-                    const groupName = Array.isArray(profileData?.access_groups)
+                    const groupNameRaw = Array.isArray(profileData?.access_groups)
                         ? profileData.access_groups[0]?.name
                         : profileData?.access_groups?.name;
+
+                    const groupNameTranslated = Array.isArray(profileData?.access_groups)
+                        ? (profileData.access_groups[0]?.name_loc?.[locale] || profileData.access_groups[0]?.name)
+                        : (profileData?.access_groups?.name_loc?.[locale] || profileData?.access_groups?.name);
 
                     const planName = profileData?.plans?.name || (Array.isArray(profileData?.plans) ? profileData?.plans[0]?.name : undefined);
 
                     profileData.plan_name = planName;
-                    profileData.access_group_name = groupName;
+                    profileData.access_group_name = groupNameRaw;
+                    profileData.translated_group_name = groupNameTranslated;
 
-                    setUserGroupName(groupName);
+                    setUserGroupName(groupNameRaw);
 
                     // Fetch plan permissions
                     const planId = profile.plan_id;

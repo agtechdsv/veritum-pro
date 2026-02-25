@@ -31,7 +31,13 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, supabase }) => {
     // Normalize data
     const profile = user.profile || user;
     const displayName = profile.name || user.user_metadata?.full_name || t('common.user');
-    const displayRole = profile.role || t('common.user');
+    const displayRole = profile.translated_group_name || profile.access_group_name || (
+        profile.role?.toLowerCase().includes('master') ? t('management.users.roles.master') :
+            profile.role?.toLowerCase().includes('sócio') ? t('management.users.roles.partnerAdmin') :
+                profile.role?.toLowerCase().includes('admin') ? t('management.users.roles.admin') :
+                    profile.role?.toLowerCase().includes('operador') ? t('management.users.roles.operator') :
+                        profile.role || t('common.user')
+    );
     const planName = profile.plan_name;
     const avatarUrl = profile.avatar_url || user.user_metadata?.avatar_url || user.user_metadata?.picture;
 

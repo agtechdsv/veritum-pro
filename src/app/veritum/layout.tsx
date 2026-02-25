@@ -45,7 +45,7 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
     const router = useRouter();
     const pathname = usePathname();
     const supabase = createMasterClient();
-    const { t } = useTranslation();
+    const { t, locale } = useTranslation();
 
     useEffect(() => {
         const checkUser = async () => {
@@ -58,14 +58,18 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
 
             const { data: profile, error: profileError } = await supabase
                 .from('users')
-                .select('*, access_groups(name), plans:plan_id(name)')
+                .select('*, access_groups(name, name_loc), plans:plan_id(name)')
                 .eq('id', authUser.id)
                 .single();
 
             const profileData = profile as any;
-            const accessGroupName = Array.isArray(profileData?.access_groups)
+            const accessGroupNameRaw = Array.isArray(profileData?.access_groups)
                 ? profileData.access_groups[0]?.name
                 : profileData?.access_groups?.name;
+
+            const accessGroupNameTranslated = Array.isArray(profileData?.access_groups)
+                ? (profileData.access_groups[0]?.name_loc?.[locale] || profileData.access_groups[0]?.name)
+                : (profileData?.access_groups?.name_loc?.[locale] || profileData?.access_groups?.name);
 
             if (profileError) {
                 // Ignore PGRST116 (No rows returned) if the trigger failed and the user is fresh
@@ -87,7 +91,8 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
                 parent_user_id: profile?.parent_user_id || authUser.user_metadata.parent_user_id,
                 plan_id: profile?.plan_id || authUser.user_metadata.plan_id,
                 access_group_id: profile?.access_group_id || authUser.user_metadata.access_group_id,
-                access_group_name: accessGroupName,
+                access_group_name: accessGroupNameRaw,
+                translated_group_name: accessGroupNameTranslated,
                 plan_name: profileData?.plans?.name || (Array.isArray(profileData?.plans) ? profileData?.plans[0]?.name : undefined)
             });
 

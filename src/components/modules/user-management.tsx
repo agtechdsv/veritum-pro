@@ -15,6 +15,8 @@ interface Props {
 const UserManagement: React.FC<Props> = ({ currentUser }) => {
     const { t, locale } = useTranslation();
 
+    const [roles, setRoles] = useState<Role[]>([]);
+
     const getRoleTranslation = (roleName: string) => {
         if (!roleName) return '';
         const lowerRole = roleName.toLowerCase();
@@ -29,6 +31,13 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
         if (lowerRole.includes('sênior')) return t('management.users.roles.senior');
         if (lowerRole.includes('coordenador')) return t('management.users.roles.coordinator');
         if (lowerRole.includes('financeiro')) return t('management.users.roles.financial');
+
+        // Dynamic search in roles state
+        const dynamicRole = roles.find(r => r.name === roleName);
+        if (dynamicRole && dynamicRole.name_loc) {
+            return (dynamicRole.name_loc as any)[locale] || (dynamicRole.name_loc as any)['pt'] || roleName;
+        }
+
         return roleName;
     };
     const [users, setUsers] = useState<User[]>([]);
@@ -38,7 +47,7 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
     const [editingUser, setEditingUser] = useState<User | null>(null);
     const [plans, setPlans] = useState<any[]>([]);
     const [accessGroups, setAccessGroups] = useState<AccessGroup[]>([]);
-    const [roles, setRoles] = useState<Role[]>([]);
+
     const [formData, setFormData] = useState({
         name: '',
         email: '',

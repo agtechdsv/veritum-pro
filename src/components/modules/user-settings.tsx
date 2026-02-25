@@ -1,11 +1,15 @@
-
 import React, { useState, useEffect } from 'react';
-import { User, UserPreferences } from '@/types';
-import { Database, Key, Globe, Save, ShieldCheck, AlertCircle, Building2, Crown, Zap, CheckCircle2, ArrowRight, FileText, Scale, DollarSign, Calendar, Search, Mic } from 'lucide-react';
+import { User, UserPreferences, Plan, Suite, Feature, ModuleId } from '@/types';
+import {
+    Database, Key, Globe, Save, ShieldCheck, AlertCircle, Building2,
+    Crown, Zap, CheckCircle2, ArrowRight, FileText, Scale, DollarSign,
+    Calendar, Search, Mic
+} from 'lucide-react';
 import { createMasterClient } from '@/lib/supabase/master';
 import { toast } from '../ui/toast';
 import OrganizationForm from '../ui/organization-form';
 import { useTranslation } from '@/contexts/language-context';
+import { getFeatures, getPlanPermissions } from '@/app/actions/plan-actions';
 
 interface Props {
     user: User;
@@ -17,10 +21,20 @@ interface Props {
 
 const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initialTab }) => {
     const { t } = useTranslation();
+    const isSubscriptionAdmin = user.role === 'Master' ||
+        ['Sócio-Administrador', 'Sócio Administrador'].includes(user.role) ||
+        (user.access_group_name && ['Sócio-Administrador', 'Sócio Administrador'].some(g => user.access_group_name?.includes(g)));
     const isRootAdmin = ['Master', 'Administrador', 'Sócio-Administrador', 'Sócio Administrador'].includes(user.role);
     const [activeTab, setActiveTab] = useState<'infra' | 'org' | 'plan'>(initialTab || (isRootAdmin ? 'infra' : 'plan'));
     const [formPrefs, setFormPrefs] = useState(preferences);
     const [saving, setSaving] = useState(false);
+    const [loadingPlanData, setLoadingPlanData] = useState(false);
+    const [planData, setPlanData] = useState<{
+        plans: Plan[];
+        suites: Suite[];
+        features: Feature[];
+        userPermissions: string[];
+    } | null>(null);
     const supabase = createMasterClient();
 
     useEffect(() => {
@@ -28,6 +42,49 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
             setActiveTab(initialTab);
         }
     }, [initialTab]);
+
+    useEffect(() => {
+        if (activeTab === 'plan' && !planData && isSubscriptionAdmin) {
+            fetchPlanData();
+        }
+    }, [activeTab, planData, isSubscriptionAdmin]);
+
+    const fetchPlanData = async () => {
+        setLoadingPlanData(true);
+        try {
+            const [suitesRes, plansRes, featuresRes] = await Promise.all([
+                supabase.from('suites').select('*').order('order_index', { ascending: true }),
+                supabase.from('plans').select('*').eq('is_combo', true).order('order_index', { ascending: true }),
+                getFeatures()
+            ]);
+
+            let userPermissions: string[] = [];
+            if (user.plan_id) {
+                const permRes = await getPlanPermissions(user.plan_id);
+                if (permRes.success) {
+                    userPermissions = permRes.permissions || [];
+                }
+            } else if (user.role === 'Master') {
+                // Master technically has all features
+                if (featuresRes.success && featuresRes.features) {
+                    userPermissions = featuresRes.features.map(f => f.id);
+                }
+            }
+
+            if (!suitesRes.error && !plansRes.error && featuresRes.success) {
+                setPlanData({
+                    suites: suitesRes.data as Suite[],
+                    plans: plansRes.data as Plan[],
+                    features: featuresRes.features as Feature[],
+                    userPermissions
+                });
+            }
+        } catch (err) {
+            console.error('Error fetching plan data:', err);
+        } finally {
+            setLoadingPlanData(false);
+        }
+    };
 
     const handleSavePrefs = async () => {
         setSaving(true);
@@ -188,18 +245,24 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
 
                 {activeTab === 'plan' && (
                     <div className="space-y-10 animate-in slide-in-from-right-8 duration-500">
-                        {!isRootAdmin ? (
+                        {!isSubscriptionAdmin ? (
                             <div className="flex flex-col items-center justify-center p-12 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] shadow-xl text-center max-w-2xl mx-auto mt-12">
                                 <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-full mb-6">
                                     <ShieldCheck size={48} className="text-indigo-500" />
                                 </div>
-                                <h3 className="text-3xl font-black uppercase tracking-tighter mb-4 text-slate-800 dark:text-white">Acesso Restrito</h3>
+                                <h3 className="text-3xl font-black uppercase tracking-tighter mb-4 text-slate-800 dark:text-white">{t('management.settings.infra.restricted')}</h3>
                                 <p className="text-slate-500 text-lg mb-8 leading-relaxed font-medium">
-                                    Apenas os administradores responsáveis pela organização podem visualizar detalhes ou gerenciar a assinatura do ecossistema.
+                                    Apenas os administradores responsáveis pela organização (Sócio-Administrador) podem visualizar detalhes ou gerenciar a assinatura do ecossistema.
                                 </p>
                             </div>
-                        ) : (
+                        ) : loadingPlanData ? (
+                            <div className="flex flex-col items-center justify-center py-24 space-y-4">
+                                <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                                <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Carregando detalhes da assinatura...</p>
+                            </div>
+                        ) : planData ? (
                             <>
+                                {/* Plan Header */}
                                 <section className="bg-amber-500 text-white p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden transition-all hover:shadow-amber-500/30">
                                     <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
                                         <div>
@@ -223,38 +286,142 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                                     </div>
                                 </section>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {[
-                                        { title: 'Veritum Sentinel', desc: 'Monitoramento Push de Diários e Tribunais.', icon: <ShieldCheck size={24} />, active: true },
-                                        { title: 'Veritum Nexus', desc: 'Gestão Inteligente de Processos e Prazos.', icon: <Scale size={24} />, active: true },
-                                        { title: 'Veritum Scriptor', desc: 'Gerador de Documentos e Petições IA.', icon: <FileText size={24} />, active: true },
-                                        { title: 'Veritum Valorem', desc: 'Financeiro, Fluxo de Caixa e Honorários.', icon: <DollarSign size={24} />, active: true },
-                                        { title: 'Voice Legal IA (Vox)', desc: 'Comandos de Voz e Transcrição Jurídica.', icon: <Mic size={24} />, active: false },
-                                        { title: 'Veritum Cognitio', desc: 'Busca Jurisprudencial e Doutrinária IA.', icon: <Search size={24} />, active: false },
-                                        { title: 'Intelligence Hub', desc: 'Dashboards de BI e Predição de Resultados.', icon: <Zap size={24} />, active: false },
-                                    ].map((mod, idx) => (
-                                        <div key={idx} className={`p-6 rounded-[2rem] border transition-all ${mod.active ? 'bg-white dark:bg-slate-900 border-emerald-200 dark:border-emerald-900/50 shadow-sm' : 'bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800 opacity-80'}`}>
-                                            <div className="flex items-center justify-between mb-4">
-                                                <div className={`p-3 rounded-xl ${mod.active ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600' : 'bg-slate-200 dark:bg-slate-800 text-slate-400'}`}>
-                                                    {mod.icon}
+                                {/* Modules Section */}
+                                <div className="space-y-6">
+                                    <div className="flex items-center gap-3 ml-4">
+                                        <div className="w-1.5 h-6 bg-indigo-600 rounded-full" />
+                                        <h3 className="text-lg font-black uppercase tracking-tighter text-slate-800 dark:text-white">Módulos do Ecossistema</h3>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        {planData.suites.map((suite) => {
+                                            const suiteFeatures = planData.features.filter((f: Feature) => f.suite_id === suite.id);
+                                            const userFeaturesInSuite = suiteFeatures.filter((f: Feature) => planData.userPermissions.includes(f.id));
+
+                                            const hasAllFeatures = suiteFeatures.length > 0 && userFeaturesInSuite.length === suiteFeatures.length;
+                                            const hasSomeFeatures = userFeaturesInSuite.length > 0 && userFeaturesInSuite.length < suiteFeatures.length;
+                                            const hasNoFeatures = userFeaturesInSuite.length === 0;
+
+                                            // Get matching icon based on suite_key or order_index
+                                            const getIcon = () => {
+                                                switch (suite.suite_key) {
+                                                    case 'sentinel': return <ShieldCheck size={24} />;
+                                                    case 'nexus': return <Scale size={24} />;
+                                                    case 'scriptor': return <FileText size={24} />;
+                                                    case 'valorem': return <DollarSign size={24} />;
+                                                    case 'cognitio': return <Search size={24} />;
+                                                    case 'vox': return <Mic size={24} />;
+                                                    case 'intelligence': return <Zap size={24} />;
+                                                    default: return <Database size={24} />;
+                                                }
+                                            };
+
+                                            const status = hasAllFeatures ? 'Liberado' : (hasSomeFeatures ? 'Acesso Parcial' : 'Bloqueado');
+                                            const lang = (preferences.language || 'pt') as 'pt' | 'en' | 'es';
+
+                                            return (
+                                                <div key={suite.id} className={`p-6 rounded-[2rem] border transition-all ${hasAllFeatures ? 'bg-white dark:bg-slate-900 border-emerald-200 dark:border-emerald-900/50 shadow-sm' : 'bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800 opacity-80'}`}>
+                                                    <div className="flex items-center justify-between mb-4">
+                                                        <div className={`p-3 rounded-xl ${hasAllFeatures ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600' : 'bg-slate-200 dark:bg-slate-800 text-slate-400'}`}>
+                                                            {getIcon()}
+                                                        </div>
+                                                        {hasAllFeatures ? (
+                                                            <span className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 text-[9px] font-black uppercase tracking-widest rounded-full">
+                                                                <CheckCircle2 size={12} /> {status}
+                                                            </span>
+                                                        ) : (
+                                                            <button
+                                                                onClick={() => window.open('https://api.whatsapp.com/send?phone=YOUR_SALES_NUMBER', '_blank')}
+                                                                className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/40 hover:scale-105 transition-all cursor-pointer text-amber-600 text-[9px] font-black uppercase tracking-widest rounded-full border border-amber-200 dark:border-amber-800/50"
+                                                            >
+                                                                <ArrowRight size={12} /> Adquirir {hasSomeFeatures && '(Parcial)'}
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                    <h4 className={`text-sm font-black mb-1 ${hasAllFeatures ? 'text-slate-800 dark:text-white' : 'text-slate-500'}`}>{suite.name}</h4>
+                                                    <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold leading-relaxed">
+                                                        {suite.short_desc?.[lang] || suite.short_desc?.pt}
+                                                    </p>
+                                                    {hasSomeFeatures && (
+                                                        <div className="mt-3 flex items-center gap-2">
+                                                            <div className="flex-1 h-1 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                                                                <div
+                                                                    className="h-full bg-amber-500"
+                                                                    style={{ width: `${(userFeaturesInSuite.length / suiteFeatures.length) * 100}%` }}
+                                                                />
+                                                            </div>
+                                                            <span className="text-[8px] font-black text-slate-400 uppercase">{userFeaturesInSuite.length}/{suiteFeatures.length} Funcionalidades</span>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                                {mod.active ? (
-                                                    <span className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 text-[9px] font-black uppercase tracking-widest rounded-full">
-                                                        <CheckCircle2 size={12} /> Liberado
-                                                    </span>
-                                                ) : (
-                                                    <button onClick={() => toast.success(`Redirecionando para assinar o módulo ${mod.title}...`)} className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/40 hover:scale-105 transition-all cursor-pointer text-amber-600 text-[9px] font-black uppercase tracking-widest rounded-full border border-amber-200 dark:border-amber-800/50">
-                                                        <ArrowRight size={12} /> Adquirir
-                                                    </button>
-                                                )}
-                                            </div>
-                                            <h4 className={`text-sm font-black mb-1 ${mod.active ? 'text-slate-800 dark:text-white' : 'text-slate-500'}`}>{mod.title}</h4>
-                                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold leading-relaxed">{mod.desc}</p>
-                                        </div>
-                                    ))}
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                {/* Plans Section */}
+                                <div className="space-y-6 pt-10">
+                                    <div className="flex items-center gap-3 ml-4">
+                                        <div className="w-1.5 h-6 bg-amber-500 rounded-full" />
+                                        <h3 className="text-lg font-black uppercase tracking-tighter text-slate-800 dark:text-white">Planos Comerciais</h3>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        {planData.plans.map((p) => {
+                                            const isCurrentPlan = p.id === user.plan_id;
+                                            const lang = (preferences.language || 'pt') as 'pt' | 'en' | 'es';
+
+                                            return (
+                                                <div key={p.id} className={`p-8 rounded-[2.5rem] border transition-all flex flex-col h-full ${isCurrentPlan ? 'bg-white dark:bg-slate-900 border-amber-300 dark:border-amber-900 shadow-2xl scale-105 z-10' : 'bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800 opacity-90'}`}>
+                                                    <div className="flex justify-between items-start mb-6">
+                                                        <div>
+                                                            <h4 className={`text-xl font-black uppercase tracking-tighter ${isCurrentPlan ? 'text-amber-600' : 'text-slate-700 dark:text-slate-300'}`}>{p.name}</h4>
+                                                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{p.is_combo ? 'Ecosystem Combo' : 'Individual Module'}</p>
+                                                        </div>
+                                                        {p.recommended && (
+                                                            <span className="px-3 py-1 bg-amber-100 text-amber-700 text-[8px] font-black uppercase tracking-widest rounded-full">Recomendado</span>
+                                                        )}
+                                                    </div>
+
+                                                    <div className="mb-8">
+                                                        <div className="flex items-baseline gap-1">
+                                                            <span className="text-sm font-black text-slate-400">R$</span>
+                                                            <span className="text-4xl font-black text-slate-800 dark:text-white">{p.monthly_price.toLocaleString('pt-BR')}</span>
+                                                            <span className="text-xs font-bold text-slate-400">/mês</span>
+                                                        </div>
+                                                        <p className="text-[10px] text-slate-500 mt-2 font-medium leading-relaxed">
+                                                            {p.short_desc?.[lang] || p.short_desc?.pt}
+                                                        </p>
+                                                    </div>
+
+                                                    <div className="space-y-3 mb-8 flex-1">
+                                                        {(p.features?.[lang] || p.features?.pt || []).slice(0, 5).map((feat: string, i: number) => (
+                                                            <div key={i} className="flex items-start gap-2">
+                                                                <CheckCircle2 size={14} className="text-emerald-500 mt-0.5 shrink-0" />
+                                                                <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400">{feat}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+
+                                                    {isCurrentPlan ? (
+                                                        <div className="w-full py-4 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 border border-emerald-100 dark:border-emerald-800">
+                                                            <CheckCircle2 size={16} /> Liberado
+                                                        </div>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => window.open('https://api.whatsapp.com/send?phone=YOUR_SALES_NUMBER', '_blank')}
+                                                            className="w-full py-4 bg-slate-900 text-white dark:bg-white dark:text-slate-900 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:scale-105 transition-all shadow-lg"
+                                                        >
+                                                            Adquirir Plano
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
                             </>
-                        )}
+                        ) : null}
                     </div>
                 )}
             </div>

@@ -124,6 +124,7 @@ export interface User {
     plan_id?: string;
     access_group_id?: string;
     access_group_name?: string;
+    translated_group_name?: string;
     plan_name?: string;
 }
 
