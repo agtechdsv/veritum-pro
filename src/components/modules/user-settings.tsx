@@ -20,7 +20,7 @@ interface Props {
 }
 
 const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initialTab }) => {
-    const { t } = useTranslation();
+    const { t, locale } = useTranslation();
     const isSubscriptionAdmin = user.role === 'Master' ||
         ['Sócio-Administrador', 'Sócio Administrador'].includes(user.role) ||
         (user.access_group_name && ['Sócio-Administrador', 'Sócio Administrador'].some(g => user.access_group_name?.includes(g)));
@@ -146,7 +146,7 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                                 : 'text-slate-400 hover:text-slate-600 dark:hover:text-amber-500'
                                 }`}
                         >
-                            <Crown size={14} /> Minha Assinatura
+                            <Crown size={14} /> {t('management.settings.tabs.plan') || 'Minha Assinatura'}
                         </button>
                     </div>
                 )}
@@ -233,7 +233,7 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                         ) : (
                             <div className="flex flex-col items-center justify-center py-20 bg-slate-50 dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-800 rounded-[3rem]">
                                 <AlertCircle size={48} className="text-slate-300 mb-4" />
-                                <p className="text-slate-400 font-bold uppercase tracking-widest text-sm">Acesso restrito a Sócio-Administradores.</p>
+                                <p className="text-slate-400 font-bold uppercase tracking-widest text-sm">{t('management.settings.plan.restrictedSub') || 'Acesso restrito a Sócio-Administradores.'}</p>
                             </div>
                         )}
                     </div>
@@ -252,13 +252,13 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                                 </div>
                                 <h3 className="text-3xl font-black uppercase tracking-tighter mb-4 text-slate-800 dark:text-white">{t('management.settings.infra.restricted')}</h3>
                                 <p className="text-slate-500 text-lg mb-8 leading-relaxed font-medium">
-                                    Apenas os administradores responsáveis pela organização (Sócio-Administrador) podem visualizar detalhes ou gerenciar a assinatura do ecossistema.
+                                    {t('management.settings.plan.restrictedDesc') || 'Apenas os administradores responsáveis pela organização (Sócio-Administrador) podem visualizar detalhes ou gerenciar a assinatura.'}
                                 </p>
                             </div>
                         ) : loadingPlanData ? (
                             <div className="flex flex-col items-center justify-center py-24 space-y-4">
                                 <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-                                <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Carregando detalhes da assinatura...</p>
+                                <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">{t('management.settings.plan.loading') || 'Carregando detalhes da assinatura...'}</p>
                             </div>
                         ) : planData ? (
                             <>
@@ -268,17 +268,17 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                                         <div>
                                             <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/20 rounded-full mb-6">
                                                 <Crown size={14} className="text-amber-100" />
-                                                <span className="text-[10px] font-black uppercase tracking-widest text-amber-50">Plano Atual</span>
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-amber-50">{t('management.settings.plan.currentPlan') || 'Plano Atual'}</span>
                                             </div>
                                             <h3 className="text-5xl font-black uppercase tracking-tighter mb-2">{user.plan_name || 'Free Trial'}</h3>
-                                            <p className="text-amber-100 font-medium">Acesso total ao ecossistema habilitado no seu plano.</p>
+                                            <p className="text-amber-100 font-medium">{t('management.settings.plan.planAccess') || 'Acesso total ao ecossistema habilitado no seu plano.'}</p>
                                         </div>
                                         <button
                                             onClick={() => window.open('https://api.whatsapp.com/send?phone=YOUR_SALES_NUMBER', '_blank')}
                                             className="bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-8 py-5 rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl hover:scale-105 transition-all flex items-center justify-center gap-3 w-full md:w-auto"
                                         >
                                             <Zap size={18} className="text-amber-500" />
-                                            Fazer Upgrade
+                                            {t('management.settings.plan.upgrade') || 'Fazer Upgrade'}
                                         </button>
                                     </div>
                                     <div className="absolute -right-20 -bottom-20 opacity-10 pointer-events-none">
@@ -290,7 +290,7 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                                 <div className="space-y-6">
                                     <div className="flex items-center gap-3 ml-4">
                                         <div className="w-1.5 h-6 bg-indigo-600 rounded-full" />
-                                        <h3 className="text-lg font-black uppercase tracking-tighter text-slate-800 dark:text-white">Módulos do Ecossistema</h3>
+                                        <h3 className="text-lg font-black uppercase tracking-tighter text-slate-800 dark:text-white">{t('management.settings.plan.ecosystemModules') || 'Módulos do Ecossistema'}</h3>
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -316,8 +316,8 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                                                 }
                                             };
 
-                                            const status = hasAllFeatures ? 'Liberado' : (hasSomeFeatures ? 'Acesso Parcial' : 'Bloqueado');
-                                            const lang = (preferences.language || 'pt') as 'pt' | 'en' | 'es';
+                                            const status = hasAllFeatures ? (t('management.settings.plan.statusUnlocked') || 'Liberado') : (hasSomeFeatures ? (t('management.settings.plan.statusPartial') || 'Acesso Parcial') : (t('management.settings.plan.statusLocked') || 'Bloqueado'));
+                                            const lang = locale as 'pt' | 'en' | 'es';
 
                                             return (
                                                 <div key={suite.id} className={`p-6 rounded-[2rem] border transition-all ${hasAllFeatures ? 'bg-white dark:bg-slate-900 border-emerald-200 dark:border-emerald-900/50 shadow-sm' : 'bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800 opacity-80'}`}>
@@ -334,7 +334,7 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                                                                 onClick={() => window.open('https://api.whatsapp.com/send?phone=YOUR_SALES_NUMBER', '_blank')}
                                                                 className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/40 hover:scale-105 transition-all cursor-pointer text-amber-600 text-[9px] font-black uppercase tracking-widest rounded-full border border-amber-200 dark:border-amber-800/50"
                                                             >
-                                                                <ArrowRight size={12} /> Adquirir {hasSomeFeatures && '(Parcial)'}
+                                                                <ArrowRight size={12} /> {t('management.settings.plan.acquire') || 'Adquirir'} {hasSomeFeatures && '(Parcial)'}
                                                             </button>
                                                         )}
                                                     </div>
@@ -350,7 +350,7 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                                                                     style={{ width: `${(userFeaturesInSuite.length / suiteFeatures.length) * 100}%` }}
                                                                 />
                                                             </div>
-                                                            <span className="text-[8px] font-black text-slate-400 uppercase">{userFeaturesInSuite.length}/{suiteFeatures.length} Funcionalidades</span>
+                                                            <span className="text-[8px] font-black text-slate-400 uppercase">{userFeaturesInSuite.length}/{suiteFeatures.length} {t('management.settings.plan.features') || 'Funcionalidades'}</span>
                                                         </div>
                                                     )}
                                                 </div>
@@ -363,23 +363,23 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                                 <div className="space-y-6 pt-10">
                                     <div className="flex items-center gap-3 ml-4">
                                         <div className="w-1.5 h-6 bg-amber-500 rounded-full" />
-                                        <h3 className="text-lg font-black uppercase tracking-tighter text-slate-800 dark:text-white">Planos Comerciais</h3>
+                                        <h3 className="text-lg font-black uppercase tracking-tighter text-slate-800 dark:text-white">{t('management.settings.plan.commercialPlans') || 'Planos Comerciais'}</h3>
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                         {planData.plans.map((p) => {
                                             const isCurrentPlan = p.id === user.plan_id;
-                                            const lang = (preferences.language || 'pt') as 'pt' | 'en' | 'es';
+                                            const lang = locale as 'pt' | 'en' | 'es';
 
                                             return (
                                                 <div key={p.id} className={`p-8 rounded-[2.5rem] border transition-all flex flex-col h-full ${isCurrentPlan ? 'bg-white dark:bg-slate-900 border-amber-300 dark:border-amber-900 shadow-2xl scale-105 z-10' : 'bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800 opacity-90'}`}>
                                                     <div className="flex justify-between items-start mb-6">
                                                         <div>
                                                             <h4 className={`text-xl font-black uppercase tracking-tighter ${isCurrentPlan ? 'text-amber-600' : 'text-slate-700 dark:text-slate-300'}`}>{p.name}</h4>
-                                                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{p.is_combo ? 'Ecosystem Combo' : 'Individual Module'}</p>
+                                                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{p.is_combo ? (t('management.settings.plan.ecosystemCombo') || 'Ecosystem Combo') : (t('management.settings.plan.individualModule') || 'Módulo Individual')}</p>
                                                         </div>
                                                         {p.recommended && (
-                                                            <span className="px-3 py-1 bg-amber-100 text-amber-700 text-[8px] font-black uppercase tracking-widest rounded-full">Recomendado</span>
+                                                            <span className="px-3 py-1 bg-amber-100 text-amber-700 text-[8px] font-black uppercase tracking-widest rounded-full">{t('management.settings.plan.recommended') || 'Recomendado'}</span>
                                                         )}
                                                     </div>
 
@@ -387,7 +387,7 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                                                         <div className="flex items-baseline gap-1">
                                                             <span className="text-sm font-black text-slate-400">R$</span>
                                                             <span className="text-4xl font-black text-slate-800 dark:text-white">{p.monthly_price.toLocaleString('pt-BR')}</span>
-                                                            <span className="text-xs font-bold text-slate-400">/mês</span>
+                                                            <span className="text-xs font-bold text-slate-400">{t('management.settings.plan.perMonth') || '/mês'}</span>
                                                         </div>
                                                         <p className="text-[10px] text-slate-500 mt-2 font-medium leading-relaxed">
                                                             {p.short_desc?.[lang] || p.short_desc?.pt}
@@ -405,14 +405,14 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
 
                                                     {isCurrentPlan ? (
                                                         <div className="w-full py-4 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 border border-emerald-100 dark:border-emerald-800">
-                                                            <CheckCircle2 size={16} /> Liberado
+                                                            <CheckCircle2 size={16} /> {t('management.settings.plan.statusUnlocked') || 'Liberado'}
                                                         </div>
                                                     ) : (
                                                         <button
                                                             onClick={() => window.open('https://api.whatsapp.com/send?phone=YOUR_SALES_NUMBER', '_blank')}
                                                             className="w-full py-4 bg-slate-900 text-white dark:bg-white dark:text-slate-900 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:scale-105 transition-all shadow-lg"
                                                         >
-                                                            Adquirir Plano
+                                                            {t('management.settings.plan.acquirePlan') || 'Adquirir Plano'}
                                                         </button>
                                                     )}
                                                 </div>

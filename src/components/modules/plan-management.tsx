@@ -350,7 +350,12 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
                                                 <Radio size={14} className={p.active ? 'fill-emerald-500/20' : ''} />
                                             </button>
                                             <button
-                                                onClick={() => { setEditingPlan(p); setFormData(p); }}
+                                                onClick={() => {
+                                                    setEditingPlan(p);
+                                                    setFormData(p);
+                                                    const activeLocale = (locale === 'en' || locale === 'es') ? locale : 'pt';
+                                                    setActiveLang(activeLocale);
+                                                }}
                                                 className={`p-1.5 rounded-lg transition-all shadow-sm ${editingPlan?.id === p.id ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
                                             >
                                                 <FileEdit size={14} />
@@ -455,9 +460,9 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
                                                             key={l}
                                                             type="button"
                                                             onClick={() => setActiveLang(l)}
-                                                            className={`w-5 h-5 rounded-full border-2 overflow-hidden transition-all ${activeLang === l ? 'border-indigo-600 scale-110 shadow-md' : 'border-transparent opacity-40 hover:opacity-100'}`}
+                                                            className={`w-8 h-8 rounded-full overflow-hidden border-2 transition-all p-0.5 hover:scale-110 active:scale-95 ${activeLang === l ? 'border-indigo-600 shadow-lg shadow-indigo-600/20' : 'border-transparent opacity-40 hover:opacity-100'}`}
                                                         >
-                                                            <img src={l === 'pt' ? BR_FLAG : l === 'en' ? US_FLAG : ES_FLAG} alt={l} className="w-full h-full object-cover" />
+                                                            <img src={l === 'pt' ? BR_FLAG : l === 'en' ? US_FLAG : ES_FLAG} alt={l} className="w-full h-full object-cover rounded-full" />
                                                         </button>
                                                     ))}
                                                 </div>

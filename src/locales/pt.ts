@@ -562,7 +562,8 @@ export const pt = {
             subtitle: 'Ajustes globais do seu workspace.',
             tabs: {
                 infra: 'Infraestrutura',
-                org: 'Dados do Escritório'
+                org: 'Dados do Escritório',
+                plan: 'Minha Assinatura'
             },
             infra: {
                 title: 'Bring Your Own Database (BYODB)',
@@ -580,6 +581,26 @@ export const pt = {
             toast: {
                 saveSuccess: 'Configurações de infraestrutura salvas!',
                 saveError: 'Erro ao salvar configurações.'
+            },
+            plan: {
+                restrictedSub: 'Acesso restrito a Sócio-Administradores.',
+                restrictedDesc: 'Apenas os administradores responsáveis pela organização (Sócio-Administrador) podem visualizar detalhes ou gerenciar a assinatura do ecossistema.',
+                loading: 'Carregando detalhes da assinatura...',
+                currentPlan: 'Plano Atual',
+                planAccess: 'Acesso total ao ecossistema habilitado no seu plano.',
+                upgrade: 'Fazer Upgrade',
+                ecosystemModules: 'Módulos do Ecossistema',
+                statusUnlocked: 'Liberado',
+                statusPartial: 'Acesso Parcial',
+                statusLocked: 'Bloqueado',
+                acquire: 'Adquirir',
+                features: 'Funcionalidades',
+                commercialPlans: 'Planos Comerciais',
+                ecosystemCombo: 'Ecosystem Combo',
+                individualModule: 'Módulo Individual',
+                recommended: 'Recomendado',
+                perMonth: '/mês',
+                acquirePlan: 'Adquirir Plano'
             }
         },
         organization: {

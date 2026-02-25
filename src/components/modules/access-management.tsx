@@ -207,7 +207,10 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
             setSelectedRoleIds([]);
             setExpandedSuites([]);
         }
-        setActiveLang('pt');
+
+        // Auto-select the active locale's tab
+        const activeLocale = (locale === 'en' || locale === 'es') ? locale : 'pt';
+        setActiveLang(activeLocale);
         setIsModalOpen(true);
     };
 
@@ -701,11 +704,14 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                         placeholder={t('management.access.modal.groupNamePlaceholder')}
                                         className="w-full px-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white font-bold shadow-sm"
                                         value={editingGroup?.name_loc?.[activeLang] || ''}
-                                        onChange={e => setEditingGroup({
-                                            ...editingGroup,
-                                            name_loc: {
-                                                ...(editingGroup?.name_loc || { pt: '', en: '', es: '' }),
-                                                [activeLang]: e.target.value
+                                        onChange={e => setEditingGroup(prev => {
+                                            if (!prev) return prev;
+                                            return {
+                                                ...prev,
+                                                name_loc: {
+                                                    ...(prev.name_loc || { pt: prev.name as string, en: prev.name as string, es: prev.name as string }),
+                                                    [activeLang]: e.target.value
+                                                }
                                             }
                                         })}
                                     />
@@ -751,6 +757,8 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                         type="button"
                                         onClick={() => {
                                             setEditingRole({ name: '' });
+                                            const activeLocale = (locale === 'en' || locale === 'es') ? locale : 'pt';
+                                            setActiveLang(activeLocale);
                                             setShowRoleModal(true);
                                         }}
                                         className="flex items-center gap-1.5 text-[10px] font-black uppercase text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1.5 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
@@ -855,6 +863,8 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                                                                         onClick={(e) => {
                                                                                             e.stopPropagation();
                                                                                             setEditingRole(role);
+                                                                                            const activeLocale = (locale === 'en' || locale === 'es') ? locale : 'pt';
+                                                                                            setActiveLang(activeLocale);
                                                                                             setShowRoleModal(true);
                                                                                             setIsRoleSelectOpen(false);
                                                                                         }}
@@ -1045,7 +1055,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                 onChange={(e) => setEditingRole({
                                     ...editingRole,
                                     name_loc: {
-                                        ...(editingRole.name_loc || { pt: '', en: '', es: '' }),
+                                        ...(editingRole.name_loc || { pt: editingRole.name as string, en: editingRole.name as string, es: editingRole.name as string }),
                                         [activeLang]: e.target.value
                                     }
                                 })}

@@ -23,7 +23,7 @@ export const LanguageSelector: React.FC = () => {
 
     return (
         <div
-            className="relative"
+            className="relative z-[150]"
             onMouseEnter={() => setIsOpen(true)}
             onMouseLeave={() => setIsOpen(false)}
         >

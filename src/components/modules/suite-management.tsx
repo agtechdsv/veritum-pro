@@ -18,7 +18,7 @@ const US_FLAG = "https://flagcdn.com/w40/us.png";
 const ES_FLAG = "https://flagcdn.com/w40/es.png";
 
 const SuiteManagement: React.FC<Props> = ({ credentials }) => {
-    const { t } = useTranslation();
+    const { t, locale } = useTranslation();
     const [suites, setSuites] = useState<Suite[]>([]);
     const [loading, setLoading] = useState(true);
     const [editingSuite, setEditingSuite] = useState<Suite | null>(null);
@@ -229,6 +229,8 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
         setEditingSuite(suite);
         setFormData(suite);
         setActiveTab('metadata');
+        const activeLocale = (locale === 'en' || locale === 'es') ? locale : 'pt';
+        setActiveLang(activeLocale);
         const { data } = await supabase.from('features').select('*').eq('suite_id', suite.id).order('feature_key');
         if (data) {
             setSuiteFeatures(data);

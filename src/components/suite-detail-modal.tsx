@@ -5,6 +5,7 @@ import { X, Check } from 'lucide-react';
 import { useTheme } from 'next-themes'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Suite } from '@/types';
+import { useTranslation } from '@/contexts/language-context';
 
 interface Props {
     isOpen: boolean;
@@ -14,11 +15,11 @@ interface Props {
 
 export function SuiteDetailModal({ isOpen, onClose, suite }: Props) {
     const { theme } = useTheme()
+    const { locale } = useTranslation();
 
     if (!suite) return null;
 
-    // Default to PT for the landing page context
-    const lang = 'pt';
+    const lang = locale as 'pt' | 'en' | 'es';
 
     return (
         <Dialog open={isOpen} onOpenChange={(open: boolean) => !open && onClose()}>

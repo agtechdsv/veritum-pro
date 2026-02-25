@@ -3,6 +3,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useTranslation } from '@/contexts/language-context';
 
 interface PlanCarouselProps {
     plans: any[];
@@ -20,6 +21,8 @@ const DiscountBadge = ({ value }: { value: number }) => {
 };
 
 const PlanCard = ({ plan, billingCycle, openAuth, isActive, index }: any) => {
+    const { locale, t } = useTranslation();
+    const lang = locale as 'pt' | 'en' | 'es';
     const isYearly = billingCycle === 'yearly';
     const basePrice = isYearly ? plan.yearly_price : plan.monthly_price;
     const discount = isYearly ? plan.yearly_discount : plan.monthly_discount;
@@ -39,7 +42,7 @@ const PlanCard = ({ plan, billingCycle, openAuth, isActive, index }: any) => {
 
             <div className="mb-8">
                 <h3 className="text-2xl font-black mb-2 text-white uppercase tracking-tight">{plan.name}</h3>
-                <p className="text-xs font-medium text-slate-500 italic min-h-[32px]">{plan.short_desc?.pt || ''}</p>
+                <p className="text-xs font-medium text-slate-500 italic min-h-[32px]">{plan.short_desc?.[lang] || plan.short_desc?.pt || ''}</p>
             </div>
 
             <div className="mb-8 flex flex-col items-baseline gap-1 relative">
@@ -68,7 +71,7 @@ const PlanCard = ({ plan, billingCycle, openAuth, isActive, index }: any) => {
             </div>
 
             <ul className="space-y-4 mb-10 flex-1">
-                {(plan.features?.pt || []).map((f: string, idx: number) => (
+                {(plan.features?.[lang] || plan.features?.pt || []).map((f: string, idx: number) => (
                     <li key={idx} className="flex items-start gap-3">
                         <div className="w-5 h-5 rounded-full bg-indigo-500/10 text-indigo-500 flex items-center justify-center shrink-0 mt-0.5 border border-indigo-500/20">
                             <Check size={12} strokeWidth={3} />

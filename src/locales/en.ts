@@ -562,7 +562,8 @@ export const en = {
             subtitle: 'Global workspace adjustments.',
             tabs: {
                 infra: 'Infrastructure',
-                org: 'Office Data'
+                org: 'Office Data',
+                plan: 'My Subscription'
             },
             infra: {
                 title: 'Bring Your Own Database (BYODB)',
@@ -580,6 +581,26 @@ export const en = {
             toast: {
                 saveSuccess: 'Infrastructure settings saved!',
                 saveError: 'Error saving settings.'
+            },
+            plan: {
+                restrictedSub: 'Access restricted to Partner-Administrators.',
+                restrictedDesc: 'Only administrators responsible for the organization (Partner-Administrator) can view details or manage the ecosystem subscription.',
+                loading: 'Loading subscription details...',
+                currentPlan: 'Current Plan',
+                planAccess: 'Full access to the ecosystem enabled in your plan.',
+                upgrade: 'Upgrade Plan',
+                ecosystemModules: 'Ecosystem Modules',
+                statusUnlocked: 'Unlocked',
+                statusPartial: 'Partial Access',
+                statusLocked: 'Locked',
+                acquire: 'Acquire',
+                features: 'Features',
+                commercialPlans: 'Commercial Plans',
+                ecosystemCombo: 'Ecosystem Combo',
+                individualModule: 'Individual Module',
+                recommended: 'Recommended',
+                perMonth: '/month',
+                acquirePlan: 'Acquire Plan'
             }
         },
         organization: {
