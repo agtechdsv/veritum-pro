@@ -1,9 +1,10 @@
-'use client'
-
+'use client';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Sparkles, BookOpen, Heart, Shield, Zap, ChevronRight, Scale, Moon, Sun, Globe } from 'lucide-react';
+import { ArrowLeft, Sparkles, Zap, Shield, Globe, Users, Scale, MessageSquare, Moon, Sun } from 'lucide-react';
 import Link from 'next/link';
+import { useTranslation } from '@/contexts/language-context';
+import { LanguageSelector } from '@/components/ui/language-selector';
 import { useTheme } from 'next-themes';
 
 const Logo = () => (
@@ -12,7 +13,8 @@ const Logo = () => (
     </div>
 );
 
-export default function HistoryPage() {
+export default function HistoriaPage() {
+    const { t } = useTranslation();
     const { theme, setTheme, resolvedTheme } = useTheme();
     const [mounted, setMounted] = useState(false);
 
@@ -46,8 +48,9 @@ export default function HistoryPage() {
                             href="/"
                             className="flex items-center gap-2 px-6 py-2.5 border border-slate-200 dark:border-slate-800 rounded-full font-bold text-sm transition-all hover:bg-slate-50 dark:hover:bg-slate-800"
                         >
-                            <ArrowLeft size={16} /> Voltar para o Início
+                            <ArrowLeft size={16} /> {t('common.backToHome')}
                         </Link>
+                        <LanguageSelector />
                     </div>
                 </div>
             </nav>
@@ -60,10 +63,14 @@ export default function HistoryPage() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8 }}
                     >
-                        <h1 className="text-5xl md:text-8xl font-black tracking-tight mb-8 leading-[1.1] max-w-5xl mx-auto">
-                            A Busca pela <span className="text-branding-gradient">Clareza</span>.<br />
-                            A Busca pela <span className="text-indigo-600 dark:text-indigo-400">Verdade</span>.
-                        </h1>
+                        <div className="relative inline-block">
+                            <h1 className="text-6xl md:text-8xl font-black mb-4 tracking-tighter text-slate-900 dark:text-white uppercase">
+                                {t('storyPage.title')}
+                            </h1>
+                            <p className="text-2xl md:text-3xl font-bold bg-branding-gradient bg-clip-text text-transparent italic">
+                                {t('storyPage.subtitle')}
+                            </p>
+                        </div>
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -88,16 +95,18 @@ export default function HistoryPage() {
                             className="flex flex-col gap-8"
                         >
                             <div className="flex items-center gap-4">
-                                <span className="px-4 py-1 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 rounded-full text-xs font-black uppercase tracking-[0.2em]">O Propósito</span>
+                                <span className="px-4 py-1 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 rounded-full text-xs font-black uppercase tracking-[0.2em]">{t('storyPage.purpose')}</span>
                                 <div className="h-px flex-1 bg-slate-200 dark:border-slate-800" />
                             </div>
-                            <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white italic">A dor que nos moveu</h2>
+                            <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white italic">
+                                {t('storyPage.pain.title')}
+                            </h2>
                             <div className="space-y-6 text-xl text-slate-600 dark:text-slate-400 font-medium leading-[1.8]">
                                 <p>
-                                    Sabemos que a advocacia moderna se tornou um mar de caos. Entre sistemas judiciais complexos, planilhas intermináveis e o medo constante de perder um prazo fatal, o advogado perdeu o seu bem mais precioso: <span className="text-indigo-600 dark:text-indigo-400 font-bold">o tempo para pensar estrategicamente e a qualidade de vida.</span>
+                                    {t('storyPage.pain.content1')}
                                 </p>
                                 <p>
-                                    O mercado estava cheio de softwares, mas a maioria parecia ter sido desenhada para dificultar, e não para ajudar. Sentíamos que a tecnologia jurídica precisava de menos burocracia e mais humanidade.
+                                    {t('storyPage.pain.content2')}
                                 </p>
                             </div>
                         </motion.div>
@@ -117,9 +126,11 @@ export default function HistoryPage() {
                             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-emerald-500 to-transparent opacity-50" />
 
                             <Sparkles className="w-12 h-12 text-emerald-500 mx-auto mb-8 animate-pulse" />
-                            <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-8 mb-12 uppercase tracking-tighter italic">O nascimento de um Ecossistema</h2>
+                            <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-8 mb-12 uppercase tracking-tighter italic">
+                                {t('storyPage.birth.title')}
+                            </h2>
                             <p className="text-2xl text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
-                                Foi dessa frustração que nasceu o nosso ecossistema. Nós não queríamos criar apenas "mais um sistema de gestão". <span className="bg-indigo-600/5 px-2 rounded-lg italic">Queríamos construir um parceiro silencioso</span>, uma inteligência invisível que trabalhasse nos bastidores para que os escritórios pudessem focar no que realmente importa: <span className="text-branding-gradient font-black">a justiça e os seus clientes.</span>
+                                {t('storyPage.birth.content')}
                             </p>
                         </motion.div>
                     </div>
@@ -136,34 +147,36 @@ export default function HistoryPage() {
 
                     <div className="max-w-6xl mx-auto relative z-10">
                         <div className="text-center mb-24">
-                            <h2 className="text-5xl md:text-7xl font-black mb-8 italic tracking-tighter">O Significado de <span className="text-branding-gradient">Veritum</span></h2>
+                            <h2 className="text-5xl md:text-7xl font-black mb-8 italic tracking-tighter">
+                                {t('storyPage.meaning.title')}
+                            </h2>
                             <p className="text-xl text-slate-400 max-w-2xl mx-auto font-medium">
-                                Quando fomos batizar nossa plataforma, não queríamos uma palavra que significasse apenas "dados corretos". Queríamos algo que fosse além dos números e olhasse para as pessoas.
+                                {t('storyPage.meaning.content')}
                             </p>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center italic">
                             {[
                                 {
-                                    title: "Veritas",
-                                    subtitle: "A verdade abstrata",
-                                    desc: "O conceito geral de justiça que você defende. O ideal.",
+                                    title: t('storyPage.meaning.veritas.title'),
+                                    subtitle: t('storyPage.meaning.veritas.subtitle'),
+                                    desc: t('storyPage.meaning.veritas.desc'),
                                     color: "from-slate-700 to-slate-800",
                                     icon: Shield
                                 },
                                 {
-                                    title: "Verum",
-                                    subtitle: "O fato frio",
-                                    desc: "A prova objetiva, o documento anexado aos autos. Dados brutos.",
+                                    title: t('storyPage.meaning.verum.title'),
+                                    subtitle: t('storyPage.meaning.verum.subtitle'),
+                                    desc: t('storyPage.meaning.verum.desc'),
                                     color: "from-blue-800 to-blue-900",
                                     icon: Scale
                                 },
                                 {
-                                    title: "Veritum",
-                                    subtitle: "A verdade sentida",
-                                    desc: "A realidade experimentada. O aspecto psicológico da paz mental.",
+                                    title: t('storyPage.meaning.veritum.title'),
+                                    subtitle: t('storyPage.meaning.veritum.subtitle'),
+                                    desc: t('storyPage.meaning.veritum.desc'),
                                     color: "bg-branding-gradient shadow-[0_0_50px_rgba(16,185,129,0.3)] scale-110 h-[100%]",
-                                    icon: Heart,
+                                    icon: MessageSquare,
                                     isSpecial: true
                                 }
                             ].map((item, i) => (
@@ -184,7 +197,7 @@ export default function HistoryPage() {
                                         {item.desc}
                                     </p>
                                     {item.isSpecial && (
-                                        <div className="mt-4 px-4 py-1 bg-white/10 rounded-full text-[10px] font-black uppercase tracking-widest">A Escolha Veritum</div>
+                                        <div className="mt-4 px-4 py-1 bg-white/10 rounded-full text-[10px] font-black uppercase tracking-widest">{t('storyPage.meaning.veritum.specialTag')}</div>
                                     )}
                                 </motion.div>
                             ))}
@@ -215,9 +228,9 @@ export default function HistoryPage() {
                                     <Zap className="w-32 h-32 text-indigo-600 dark:text-indigo-400 absolute opacity-5" />
                                     <div className="text-center italic z-10">
                                         <h4 className="text-7xl font-black mb-2 bg-gradient-to-b from-indigo-600 to-white bg-clip-text text-transparent pb-2">
-                                            PAZ
+                                            {t('storyPage.deepDive.peaceTitle')}
                                         </h4>
-                                        <p className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-widest">Psicológica</p>
+                                        <p className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-widest">{t('storyPage.deepDive.peaceSubtitle')}</p>
                                     </div>
                                 </div>
                             </motion.div>
@@ -230,13 +243,13 @@ export default function HistoryPage() {
                                 className="space-y-8"
                             >
                                 <p className="text-2xl text-slate-600 dark:text-slate-400 font-medium leading-[1.8]">
-                                    E no Direito, onde a verdade muitas vezes fica oculta sob pilhas de documentos e prazos, entregar Veritum significa entregar a <span className="text-slate-900 dark:text-white font-black italic">paz mental.</span>
+                                    {t('storyPage.deepDive.content1')}
                                 </p>
                                 <p className="text-xl text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
-                                    É a tranquilidade psicológica de saber que nenhum prazo será perdido. O Veritum PRO existe para trazer a clareza à tona: ele ilumina o seu escritório, transformando o caos processual em controle visual, dados brutos em jurimetria exata, e tarefas repetitivas em automação inteligente.
+                                    {t('storyPage.deepDive.content2')}
                                 </p>
                                 <p className="text-xl text-slate-500 dark:text-slate-400 font-bold border-l-4 border-indigo-500 pl-6 italic">
-                                    Nós simplificamos a tecnologia para que você sinta a verdadeira liberdade de advogar e possa elevar a sua performance ao máximo.
+                                    {t('storyPage.deepDive.quote')}
                                 </p>
                             </motion.div>
                         </div>
@@ -253,8 +266,7 @@ export default function HistoryPage() {
                         className="max-w-4xl mx-auto relative z-10"
                     >
                         <h2 className="text-4xl md:text-6xl font-black mb-12 italic leading-tight scale-[1.05]">
-                            Veritum PRO - A verdade sobre o seu escritório, <br />
-                            <span className="text-branding-gradient">o controle sobre o seu futuro.</span>
+                            {t('storyPage.cta.title')}
                         </h2>
 
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-6 m-12">
@@ -262,7 +274,7 @@ export default function HistoryPage() {
                                 href="/?login=true"
                                 className="px-12 py-5 bg-indigo-600 text-white rounded-full font-black text-xl shadow-2xl shadow-indigo-600/30 hover:scale-110 hover:bg-indigo-700 transition-all uppercase tracking-tight flex items-center gap-3"
                             >
-                                Começar Agora <ArrowLeft className="rotate-180" size={24} />
+                                {t('hero.ctaPrimary')} <ArrowLeft className="rotate-180" size={24} />
                             </Link>
                         </div>
                     </motion.div>
@@ -285,11 +297,11 @@ export default function HistoryPage() {
                         </span>
                     </div>
                     <p className="text-sm text-slate-400 dark:text-slate-500 font-medium italic">
-                        BYODB Architecture & Legal Intelligence.
+                        {t('common.byodb')}
                     </p>
                     <div className="flex items-center gap-8">
-                        <Link href="/privacy" className="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-indigo-600 transition-colors">Privacidade</Link>
-                        <Link href="/terms" className="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-indigo-600 transition-colors">Termos</Link>
+                        <Link href="/privacy" className="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-indigo-600 transition-colors">{t('common.privacy')}</Link>
+                        <Link href="/terms" className="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-indigo-600 transition-colors">{t('common.terms')}</Link>
                     </div>
                 </div>
             </footer>

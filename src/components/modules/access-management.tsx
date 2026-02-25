@@ -6,12 +6,14 @@ import { AccessGroup, GroupPermission, User, ModuleId, Suite, Feature, GroupTemp
 import { createMasterClient } from '@/lib/supabase/master';
 import { toast } from '../ui/toast';
 import { useModule } from '@/app/veritum/layout';
+import { useTranslation } from '@/contexts/language-context';
 
 interface Props {
     currentUser: User;
 }
 
 const AccessManagement: React.FC<Props> = ({ currentUser }) => {
+    const { t } = useTranslation();
     const { planPermissions } = useModule();
     const [groups, setGroups] = useState<AccessGroup[]>([]);
     const [loading, setLoading] = useState(true);
@@ -153,7 +155,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
 
         if (error) {
             console.error('Error fetching suites:', error.message, error.details);
-            toast.error('Erro ao carregar módulos do sistema.');
+            toast.error(t('management.access.toast.loadModulesError'));
         }
         if (data) setSuites(data);
     };
@@ -166,7 +168,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
 
         if (error) {
             console.error('Error fetching features:', error.message, error.details);
-            toast.error('Erro ao carregar funcionalidades.');
+            toast.error(t('management.access.toast.loadFeaturesError'));
         }
         if (data) setFeatures(data);
     };
@@ -208,7 +210,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
         );
 
         if (isDuplicate) {
-            toast.error(`Já existe um grupo com o nome "${editingGroup.name}"`);
+            toast.error(t('management.access.toast.duplicate', { name: editingGroup.name }));
             return;
         }
 
@@ -219,7 +221,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                 // Update Group Name
                 const { error: groupError } = await supabase.from('access_groups').update({ name: editingGroup.name }).eq('id', groupId);
                 if (groupError) throw groupError;
-                toast.success('Nome do grupo atualizado.');
+                toast.success(t('management.access.toast.successName'));
             } else {
                 // Create New Group
                 const newGroupAdminId = currentUser.role === 'Master' ? selectedClientId : currentUser.id;
@@ -259,16 +261,16 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                 if (rmErr) throw rmErr;
             }
 
-            toast.success(editingGroup.id ? 'Grupo e permissões atualizados!' : 'Grupo criado com sucesso!');
+            toast.success(editingGroup.id ? t('management.access.toast.successSave') : t('management.access.toast.successCreate'));
             setIsModalOpen(false);
             fetchGroups(); // This will also update allPermissions
             fetchRoles();
         } catch (error: any) {
             console.error('Save error:', error);
             if (error.code === '23505') {
-                toast.error(`O nome "${editingGroup.name}" já está em uso.`);
+                toast.error(t('management.access.toast.duplicate', { name: editingGroup.name }));
             } else {
-                toast.error('Ocorreu um erro ao salvar o grupo.');
+                toast.error(t('management.access.toast.errorSave'));
             }
         }
     };
@@ -281,7 +283,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
 
         // Check duplicate within the same admin context
         if (roles.some(r => r.name.toLowerCase() === roleName.toLowerCase() && r.id !== editingRole.id)) {
-            toast.error(`O cargo "${roleName}" já existe.`);
+            toast.error(t('management.access.toast.duplicateRole', { name: roleName }));
             return;
         }
 
@@ -290,7 +292,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                 // Update
                 const { error } = await supabase.from('roles').update({ name: roleName }).eq('id', editingRole.id);
                 if (error) throw error;
-                toast.success('Cargo atualizado.');
+                toast.success(t('management.access.toast.successRoleEdit'));
             } else {
                 // Insert
                 const newRoleAdminId = currentUser.role === 'Master' ? selectedClientId : (currentUser.parent_user_id || currentUser.id);
@@ -301,7 +303,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                 }).select().single();
 
                 if (error) throw error;
-                toast.success('Cargo criado com sucesso.');
+                toast.success(t('management.access.toast.successRoleAdd'));
 
                 // Automatically select the newly created role
                 if (data) {
@@ -314,7 +316,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
             fetchRoles();
         } catch (error: any) {
             console.error('Error saving role:', error);
-            toast.error('Erro ao salvar cargo.');
+            toast.error(t('management.access.toast.errorRole'));
         }
     };
 
@@ -327,11 +329,11 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
 
         const { error } = await supabase.from('access_groups').delete().eq('id', groupToDelete.id);
         if (!error) {
-            toast.success('Grupo removido.');
+            toast.success(t('management.access.delete.confirm'));
             setGroupToDelete(null);
             fetchGroups();
         } else {
-            toast.error('Erro ao remover: ' + error.message);
+            toast.error(t('management.access.delete.error', { error: error.message }));
         }
     };
 
@@ -418,8 +420,8 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
         <div className="space-y-8 animate-in fade-in duration-700">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Grupos de Acesso</h1>
-                    <p className="text-slate-500 dark:text-slate-400 font-medium tracking-tight uppercase text-xs">Refinamento Granular: Defina permissões por funcionalidade.</p>
+                    <h1 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">{t('management.accessGroups.title') || 'Grupos de Acesso'}</h1>
+                    <p className="text-slate-500 dark:text-slate-400 font-medium tracking-tight uppercase text-xs">{t('management.accessGroups.subtitle') || 'Refinamento Granular: Defina permissões por funcionalidade.'}</p>
                 </div>
                 <div className="flex items-center gap-4">
                     {currentUser.role === 'Master' && (
@@ -431,8 +433,8 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                     value={selectedClientId}
                                     onChange={e => setSelectedClientId(e.target.value)}
                                 >
-                                    <option value={currentUser.id}>Master (Meus Grupos)</option>
-                                    <optgroup label="Sócio-Administradores Privados">
+                                    <option value={currentUser.id}>{t('management.access.masterGroups') || 'Master (Meus Grupos)'}</option>
+                                    <optgroup label={t('management.access.privateAdmins') || 'Sócio-Administradores Privados'}>
                                         {clients.map(c => (
                                             <option key={c.id} value={c.id}>🏢 {c.name} ({c.username})</option>
                                         ))}
@@ -446,18 +448,18 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                         onClick={() => handleOpenModal()}
                         className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold shadow-xl shadow-indigo-600/20 hover:scale-105 transition-all flex items-center gap-2 cursor-pointer"
                     >
-                        <Plus size={20} /> Novo Grupo
+                        <Plus size={20} /> {t('management.access.newGroup')}
                     </button>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {loading ? (
-                    <div className="col-span-full py-20 text-center text-slate-400 font-bold uppercase tracking-widest opacity-50">Sincronizando Ecossistema...</div>
+                    <div className="col-span-full py-20 text-center text-slate-400 font-bold uppercase tracking-widest opacity-50">{t('management.access.syncing')}</div>
                 ) : groups.length === 0 ? (
                     <div className="col-span-full py-20 text-center bg-slate-50 dark:bg-slate-900/50 rounded-[3rem] border-2 border-dashed border-slate-200 dark:border-slate-800">
                         <Shield className="mx-auto mb-4 text-slate-300" size={48} />
-                        <p className="text-slate-400 font-bold">Nenhum grupo de acesso criado.</p>
+                        <p className="text-slate-400 font-bold">{t('management.access.noGroups')}</p>
                     </div>
                 ) : groups.map(group => (
                     <div key={group.id} className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all group relative hover:z-20">
@@ -476,7 +478,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                         </div>
                         <h3 className="text-xl font-black text-slate-800 dark:text-white mb-2 uppercase tracking-tight">{group.name}</h3>
 
-                        <p className="text-[10px] text-slate-400 font-bold mb-6 uppercase tracking-widest opacity-60">Criado em {new Date(group.created_at!).toLocaleDateString('pt-BR')}</p>
+                        <p className="text-[10px] text-slate-400 font-bold mb-6 uppercase tracking-widest opacity-60">{t('management.access.created', { date: new Date(group.created_at!).toLocaleDateString(t('common.locale_date') === 'en-US' ? 'en-US' : 'pt-BR') })}</p>
 
                         <div className="flex flex-wrap gap-2 pt-4 border-t border-slate-50 dark:border-slate-800/50">
                             {suites.map(s => {
@@ -502,18 +504,22 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                                 <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${isActive ? 'bg-indigo-500 text-white' : 'bg-slate-700 text-slate-400'}`}>
                                                     <Icon size={12} />
                                                 </div>
-                                                <span className="text-[10px] font-black uppercase tracking-tighter text-white dark:text-slate-900">{s.name}</span>
+                                                <span className="text-[10px] font-black uppercase tracking-tighter text-white dark:text-slate-900">
+                                                    {t(`modules.${s.suite_key.toLowerCase().replace('_key', '')}.title`) !== `modules.${s.suite_key.toLowerCase().replace('_key', '')}.title` ? t(`modules.${s.suite_key.toLowerCase().replace('_key', '')}.title`) : s.name}
+                                                </span>
                                             </div>
                                             <div className="space-y-1">
                                                 {isActive ? (
                                                     activeFeatures.map(f => (
                                                         <div key={f.id} className="flex items-center gap-1.5">
                                                             <div className="w-1 h-1 rounded-full bg-emerald-500" />
-                                                            <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 truncate">{f.display_name}</span>
+                                                            <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 truncate">
+                                                                {t(`management.features.${f.feature_key}`) !== `management.features.${f.feature_key}` ? t(`management.features.${f.feature_key}`) : f.display_name}
+                                                            </span>
                                                         </div>
                                                     ))
                                                 ) : (
-                                                    <span className="text-[9px] font-bold text-slate-600 dark:text-slate-400 italic">Nenhum acesso ativo</span>
+                                                    <span className="text-[9px] font-bold text-slate-600 dark:text-slate-400 italic">{t('management.access.noAccess')}</span>
                                                 )}
                                             </div>
                                             {/* Tooltip Arrow */}
@@ -533,19 +539,19 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                     <div className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-[3.5rem] border border-slate-200 dark:border-slate-800 shadow-2xl p-12 relative overflow-hidden max-h-[90vh] flex flex-col">
                         <div className="mb-10 text-center">
                             <h2 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">
-                                {editingGroup?.id ? 'Configurar Permissões' : 'Novo Grupo RBAC'}
+                                {editingGroup?.id ? t('management.access.modal.editTitle') : t('management.access.modal.addTitle')}
                             </h2>
-                            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium uppercase tracking-tight">Ative funcionalidades específicas para este perfil.</p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium uppercase tracking-tight">{t('management.access.modal.subtitle')}</p>
                         </div>
 
                         <form onSubmit={handleSaveGroup} className="flex-1 flex flex-col min-h-0">
                             {/* Header and Templates (Fixed) */}
                             <div className="space-y-8 mb-8">
                                 <div className="space-y-2">
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Identificação do Grupo</label>
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">{t('management.access.modal.groupName')}</label>
                                     <input
                                         required
-                                        placeholder="Ex: Equipe de Triagem, Controladoria, Sócios..."
+                                        placeholder={t('management.access.modal.groupNamePlaceholder')}
                                         className="w-full px-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white font-bold shadow-sm"
                                         value={editingGroup?.name || ''}
                                         onChange={e => setEditingGroup({ ...editingGroup, name: e.target.value })}
@@ -554,7 +560,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
 
                                 <div className="space-y-4">
                                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 flex items-center gap-2">
-                                        <Wand2 size={12} className="text-indigo-500" /> Usar Template (Acesso Rápido)
+                                        <Wand2 size={12} className="text-indigo-500" /> {t('management.access.modal.templateLabel')}
                                     </label>
                                     <div className="relative group/select">
                                         <select
@@ -563,17 +569,17 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                                 if (template) applyTemplate(template);
                                                 else if (e.target.value === 'clear') {
                                                     setSelectedFeatureIds([]);
-                                                    toast.success('Permissões limpas.');
+                                                    toast.success(t('management.access.modal.clearSelectionSuccess') || 'Permissões limpas.');
                                                 }
                                             }}
                                             className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl text-xs font-bold text-slate-600 dark:text-slate-400 outline-none focus:ring-2 focus:ring-indigo-600 appearance-none cursor-pointer transition-all hover:border-slate-300 dark:hover:border-slate-700"
                                             defaultValue=""
                                         >
-                                            <option value="" disabled>Selecione um template para preenchimento rápido...</option>
+                                            <option value="" disabled>{t('management.access.modal.templatePlaceholder')}</option>
                                             {templates.map(t => (
                                                 <option key={t.id} value={t.id}>✨ {t.name}</option>
                                             ))}
-                                            <option value="clear" className="text-rose-500 font-bold border-t border-slate-200 mt-2">🛑 Limpar Seleção</option>
+                                            <option value="clear" className="text-rose-500 font-bold border-t border-slate-200 mt-2">🛑 {t('management.access.modal.clearSelection')}</option>
                                         </select>
                                         <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
                                             <ChevronDown size={16} />
@@ -586,7 +592,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                             <div className="space-y-4 border-t border-slate-100 dark:border-slate-800 pt-6 mb-8">
                                 <div className="flex items-center justify-between">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 flex items-center gap-2">
-                                        <Briefcase size={12} className="text-indigo-500" /> Cargos Vinculados
+                                        <Briefcase size={12} className="text-indigo-500" /> {t('management.access.modal.linkedRoles')}
                                     </label>
                                     <button
                                         type="button"
@@ -596,7 +602,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                         }}
                                         className="flex items-center gap-1.5 text-[10px] font-black uppercase text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1.5 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
                                     >
-                                        <Plus size={12} /> Novo Cargo
+                                        <Plus size={12} /> {t('management.access.modal.newRole')}
                                     </button>
                                 </div>
 
@@ -606,7 +612,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                         onClick={() => setIsRoleSelectOpen(true)}
                                     >
                                         {selectedRoleIds.length === 0 && (
-                                            <span className="text-xs font-medium text-slate-400 pl-2">Selecione cargos ou crie novos...</span>
+                                            <span className="text-xs font-medium text-slate-400 pl-2">{t('management.access.modal.rolesPlaceholder')}</span>
                                         )}
                                         {selectedRoleIds.map(id => {
                                             const role = roles.find(r => r.id === id);
@@ -644,7 +650,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                             />
                                             <div className="absolute z-20 mt-2 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl max-h-56 overflow-y-auto custom-scrollbar p-2">
                                                 {roles.length === 0 ? (
-                                                    <div className="p-3 text-center text-xs text-slate-500 dark:text-slate-400">Nenhum cargo encontrado. Crie um novo primeiro.</div>
+                                                    <div className="p-3 text-center text-xs text-slate-500 dark:text-slate-400">{t('management.access.noRoles') || 'Nenhum cargo encontrado. Crie um novo primeiro.'}</div>
                                                 ) : (
                                                     (() => {
                                                         // Group roles by access_group_id
@@ -659,7 +665,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                                         return Object.keys(groupedRoles).map(groupId => {
                                                             const groupRoles = groupedRoles[groupId];
                                                             const group = groups.find(g => g.id === groupId);
-                                                            const groupName = group ? group.name : 'Outros Cargos / Avulsos';
+                                                            const groupName = group ? group.name : t('management.access.modal.others');
 
                                                             return (
                                                                 <div key={groupId} className="mb-2 last:mb-0">
@@ -720,7 +726,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
 
                             {/* Granular Permissions (Scrollable) */}
                             <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-4 mb-4">
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Permissões Granulares por Suíte</label>
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">{t('management.access.modal.granularTitle')}</label>
                                 <div className="space-y-3">
                                     {suites.map(suite => {
                                         const suiteFeatures = features.filter(f => f.suite_id === suite.id);
@@ -738,7 +744,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                                         </div>
                                                         <div className="flex-1">
                                                             <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight leading-none mb-1">{suite.name}</h4>
-                                                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{enabledInSuite.length} de {suiteFeatures.length} Ativos</p>
+                                                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{t('management.access.modal.featuresActive', { count: enabledInSuite.length, total: suiteFeatures.length })}</p>
                                                         </div>
                                                         <ChevronDown size={18} className={`text-slate-300 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                                                     </div>
@@ -746,7 +752,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                                         type="button"
                                                         onClick={() => toggleSuiteAllFeatures(suite.id)}
                                                         className={`ml-4 p-2 rounded-xl transition-all ${allEnabled ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-indigo-600'}`}
-                                                        title="Alternar Tudo"
+                                                        title={t('management.access.modal.toggleAll')}
                                                     >
                                                         {allEnabled ? <CheckCircle2 size={18} /> : <Layers size={18} />}
                                                     </button>
@@ -762,7 +768,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                                                     key={f.id}
                                                                     type="button"
                                                                     onClick={() => toggleFeaturePermission(f.id)}
-                                                                    title={!isAllowed ? "Seu plano atual não dá acesso a esta funcionalidade. Faça upgrade para desbloquear." : ""}
+                                                                    title={!isAllowed ? t('management.access.modal.planRestriction') : ""}
                                                                     className={`flex items-center gap-4 px-6 py-4 rounded-[1.5rem] border-2 transition-all text-left group/feat shadow-sm ${!isAllowed
                                                                         ? 'bg-slate-50 border-slate-100 text-slate-400 dark:bg-slate-900/40 dark:border-slate-800/50 dark:text-slate-500 cursor-not-allowed opacity-80'
                                                                         : isActive
@@ -801,8 +807,8 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
 
                             {/* Fixed Bottom Actions */}
                             <div className="flex gap-4 pt-6 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 mt-auto">
-                                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-8 py-5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-[1.5rem] font-black uppercase tracking-widest hover:bg-slate-200 transition-all text-xs">Cancelar</button>
-                                <button type="submit" className="flex-[2] px-8 py-5 bg-indigo-600 text-white rounded-[1.5rem] font-black uppercase tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-600/30 transition-all text-xs">Salvar Configuração</button>
+                                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-8 py-5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-[1.5rem] font-black uppercase tracking-widest hover:bg-slate-200 transition-all text-xs">{t('management.access.modal.close')}</button>
+                                <button type="submit" className="flex-[2] px-8 py-5 bg-indigo-600 text-white rounded-[1.5rem] font-black uppercase tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-600/30 transition-all text-xs">{t('management.access.modal.save')}</button>
                             </div>
                         </form>
                     </div>
@@ -816,24 +822,22 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                         <div className="w-20 h-20 bg-rose-100 dark:bg-rose-900/30 rounded-3xl flex items-center justify-center text-rose-600 dark:text-rose-400 mx-auto mb-6">
                             <ShieldAlert size={40} />
                         </div>
-                        <h2 className="text-3xl font-black mb-2 uppercase tracking-tighter">Excluir?</h2>
+                        <h2 className="text-3xl font-black mb-2 uppercase tracking-tighter">{t('management.access.delete.title')}</h2>
                         <p className="text-sm text-slate-500 font-medium mb-10 leading-relaxed uppercase tracking-tight">
-                            Remover o grupo <span className="font-black text-slate-800 dark:text-white underline">{groupToDelete.name}</span>?
-                            <br />
-                            <span className="text-[10px] text-rose-500 font-bold block mt-2 whitespace-nowrap overflow-hidden text-ellipsis">Usuários vinculados perderão acesso granular.</span>
+                            {t('management.access.delete.message', { name: groupToDelete.name })}
                         </p>
                         <div className="flex flex-col gap-3">
                             <button
                                 onClick={confirmDeleteGroup}
                                 className="w-full bg-rose-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-rose-600/20 hover:bg-rose-700 transition-all text-xs"
                             >
-                                Sim, Remover Grupo
+                                {t('management.access.delete.confirm')}
                             </button>
                             <button
                                 onClick={() => setGroupToDelete(null)}
                                 className="w-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-200 transition-all text-xs"
                             >
-                                Cancelar
+                                {t('management.access.delete.cancel')}
                             </button>
                         </div>
                     </div>
@@ -857,22 +861,22 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                         </div>
 
                         <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-2">
-                            {editingRole.id ? 'Editar Cargo' : 'Novo Cargo'}
+                            {editingRole.id ? t('management.access.roleModal.editTitle') : t('management.access.roleModal.addTitle')}
                         </h3>
-                        <p className="text-xs text-slate-500 font-medium mb-6 uppercase tracking-widest">Defina o nome da função</p>
+                        <p className="text-xs text-slate-500 font-medium mb-6 uppercase tracking-widest">{t('management.access.roleModal.subtitle') || 'Defina o nome da função'}</p>
 
                         <form onSubmit={handleSaveRole} className="space-y-4">
                             <input
                                 required
                                 autoFocus
-                                placeholder="Ex: Advogado Pleno"
+                                placeholder={t('management.access.roleModal.namePlaceholder')}
                                 className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white font-bold text-center"
                                 value={editingRole.name}
                                 onChange={(e) => setEditingRole({ ...editingRole, name: e.target.value })}
                             />
 
                             <button type="submit" className="w-full bg-indigo-600 text-white py-4 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 transition-all text-xs">
-                                Salvar
+                                {t('management.access.roleModal.save')}
                             </button>
                         </form>
                     </div>

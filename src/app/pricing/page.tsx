@@ -26,10 +26,11 @@ import {
     isBefore,
     startOfDay
 } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { ptBR, enUS } from 'date-fns/locale';
 import { AuthModal } from '@/components/auth-modal';
 import { createMasterClient } from '@/lib/supabase/master';
 import { UserMenu } from '@/components/ui/user-menu';
+import { useTranslation } from '@/contexts/language-context';
 
 const Logo = () => (
     <div className="bg-indigo-600/10 p-2 rounded-lg flex items-center justify-center text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400">
@@ -39,12 +40,15 @@ const Logo = () => (
 
 export default function PricingPage() {
     const { theme, setTheme, resolvedTheme } = useTheme();
+    const { t, locale } = useTranslation();
     const router = useRouter();
     const [mounted, setMounted] = useState(false);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [showComparison, setShowComparison] = useState(true);
     const [hasAccess, setHasAccess] = useState(false);
     const [currentUser, setCurrentUser] = useState<any>(undefined);
+
+    const dateLocale = locale === 'en' ? enUS : ptBR;
 
     const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
     const [demoFormStatus, setDemoFormStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
@@ -91,7 +95,7 @@ export default function PricingPage() {
     const handleDemoSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!selectedRange.start || !selectedRange.end) {
-            alert('Por favor, selecione o período para a demonstração.');
+            alert(t('pricingPage.demoModal.calendar.error') || 'Por favor, selecione o período para a demonstração.');
             return;
         }
         setDemoFormStatus('submitting');
@@ -134,68 +138,68 @@ export default function PricingPage() {
 
     const plans = [
         {
-            name: 'START',
-            desc: 'Para advogados autônomos e novos escritórios. A base sólida para organizar a rotina.',
-            price: 'R$ 297',
-            period: '/mês',
+            name: t('pricingPage.plans.start.name'),
+            desc: t('pricingPage.plans.start.desc'),
+            price: t('pricingPage.plans.start.price'),
+            period: t('pricingPage.plans.start.period'),
             features: [
-                'Nexus PRO: Gestão e Kanban (500 proc.)',
-                'Valorem PRO: Financeiro e PIX',
-                'Vox Clientis: Portal do Cliente Básico',
-                'Suporte via E-mail e Chat'
+                t('pricingPage.plans.start.features.0'),
+                t('pricingPage.plans.start.features.1'),
+                t('pricingPage.plans.start.features.2'),
+                t('pricingPage.plans.start.features.3')
             ],
-            cta: 'Começar Teste Grátis',
+            cta: t('pricingPage.plans.start.cta'),
             featured: false,
             color: 'border-slate-200 dark:border-slate-800'
         },
         {
-            name: 'GROWTH',
-            desc: 'Para escritórios em crescimento e bancas estruturadas. O motor de inteligência e automação.',
-            price: 'R$ 597',
-            period: '/mês',
+            name: t('pricingPage.plans.growth.name'),
+            desc: t('pricingPage.plans.growth.desc'),
+            price: t('pricingPage.plans.growth.price'),
+            period: t('pricingPage.plans.growth.period'),
             features: [
-                'Tudo do plano Start, mais:',
-                'Sentinel PRO: Captura Antecipada',
-                'Scriptor PRO: IA Geradora de Peças',
-                'Nexus PRO: Automação de Workflows',
-                'Vox Clientis: WhatsApp e IA Tradutora',
-                'Suporte Prioritário'
+                t('pricingPage.plans.growth.features.0'),
+                t('pricingPage.plans.growth.features.1'),
+                t('pricingPage.plans.growth.features.2'),
+                t('pricingPage.plans.growth.features.3'),
+                t('pricingPage.plans.growth.features.4'),
+                t('pricingPage.plans.growth.features.5')
             ],
-            cta: 'Começar teste grátis',
+            cta: t('pricingPage.plans.growth.cta'),
             featured: true,
             color: 'border-indigo-500 dark:border-indigo-400 shadow-2xl shadow-indigo-500/20'
         },
         {
-            name: 'STRATEGY',
-            desc: 'Para diretorias jurídicas e corporações. O cockpit estratégico com jurimetria.',
-            price: 'Sob Consulta',
-            period: '',
+            name: t('pricingPage.plans.strategy.name'),
+            desc: t('pricingPage.plans.strategy.desc'),
+            price: t('pricingPage.plans.strategy.price'),
+            period: t('pricingPage.plans.strategy.period'),
             features: [
-                'Tudo do plano Growth, mais:',
-                'Cognitio PRO: BI e Jurimetria Preditiva',
-                'Nexus PRO: Gestão de Ativos e Frota',
-                'Valorem PRO: Relatórios de Contingência',
-                'Gerente de Sucesso Dedicado (CSM)'
+                t('pricingPage.plans.strategy.features.0'),
+                t('pricingPage.plans.strategy.features.1'),
+                t('pricingPage.plans.strategy.features.2'),
+                t('pricingPage.plans.strategy.features.3'),
+                t('pricingPage.plans.strategy.features.4')
             ],
-            cta: 'Agendar Demonstração',
+            cta: t('pricingPage.plans.strategy.cta'),
             featured: false,
             color: 'border-slate-200 dark:border-slate-800'
         }
     ];
 
     const comparisonData = [
-        { category: 'Gestão Processual (Nexus)', start: true, growth: true, strategy: true, label: 'Kanban e Prazos' },
-        { category: 'Gestão Processual (Nexus)', start: false, growth: true, strategy: true, label: 'Workflows Automatizados' },
-        { category: 'Gestão Processual (Nexus)', start: false, growth: false, strategy: true, label: 'Gestão de Ativos e Frota' },
-        { category: 'Vigilância (Sentinel)', start: false, growth: true, strategy: true, label: 'Captura Antecipada (Distribuição)' },
-        { category: 'Vigilância (Sentinel)', start: false, growth: true, strategy: true, label: 'Monitoramento de Diários' },
-        { category: 'Inteligência (Scriptor)', start: false, growth: true, strategy: true, label: 'IA Generativa de Peças' },
-        { category: 'Inteligência (Scriptor)', start: false, growth: true, strategy: true, label: 'Auditoria de Risco (IA)' },
-        { category: 'Financeiro (Valorem)', start: true, growth: true, strategy: true, label: 'Fluxo de Caixa e PIX' },
-        { category: 'Financeiro (Valorem)', start: false, growth: false, strategy: true, label: 'Provisionamento e PJe-Calc' },
-        { category: 'Relacionamento (Vox)', start: 'Básico', growth: 'Completo', strategy: 'Completo', label: 'Portal do Cliente' },
-        { category: 'Relacionamento (Vox)', start: false, growth: true, strategy: true, label: 'Tradução IA e WhatsApp' },
-        { category: 'Estratégia (Cognitio)', start: false, growth: false, strategy: true, label: 'BI e Jurimetria Preditiva' }
+        { category: t('pricingPage.comparison.categories.nexus'), start: true, growth: true, strategy: true, label: t('pricingPage.comparison.features.kanban') },
+        { category: t('pricingPage.comparison.categories.nexus'), start: false, growth: true, strategy: true, label: t('pricingPage.comparison.features.workflows') },
+        { category: t('pricingPage.comparison.categories.nexus'), start: false, growth: false, strategy: true, label: t('pricingPage.comparison.features.assets') },
+        { category: t('pricingPage.comparison.categories.sentinel'), start: false, growth: true, strategy: true, label: t('pricingPage.comparison.features.capture') },
+        { category: t('pricingPage.comparison.categories.sentinel'), start: false, growth: true, strategy: true, label: t('pricingPage.comparison.features.monitoring') },
+        { category: t('pricingPage.comparison.categories.scriptor'), start: false, growth: true, strategy: true, label: t('pricingPage.comparison.features.genAi') },
+        { category: t('pricingPage.comparison.categories.scriptor'), start: false, growth: true, strategy: true, label: t('pricingPage.comparison.features.audit') },
+        { category: t('pricingPage.comparison.categories.valorem'), start: true, growth: true, strategy: true, label: t('pricingPage.comparison.features.cashflow') },
+        { category: t('pricingPage.comparison.categories.valorem'), start: false, growth: false, strategy: true, label: t('pricingPage.comparison.features.provisioning') },
+        { category: t('pricingPage.comparison.categories.vox'), start: t('pricingPage.comparison.features.portalBasic'), growth: t('pricingPage.comparison.features.portalFull'), strategy: t('pricingPage.comparison.features.portalFull'), label: t('pricingPage.comparison.features.portal') },
+        { category: t('pricingPage.comparison.categories.vox'), start: false, growth: true, strategy: true, label: t('pricingPage.comparison.features.translation') },
+        { category: t('pricingPage.comparison.categories.cognitio'), start: false, growth: false, strategy: true, label: t('pricingPage.comparison.features.bi') }
     ];
 
     return (
@@ -213,11 +217,11 @@ export default function PricingPage() {
                     </div>
 
                     <div className="hidden md:flex items-center gap-8">
-                        <Link href="/" className="text-base font-bold text-branding-gradient hover:opacity-80 transition-all">Portal</Link>
-                        <a href="#top" className="text-sm font-bold text-slate-800 dark:text-white">Início</a>
-                        <a href="#comparison" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">Comparativo</a>
-                        <a href="#modules" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">Módulos Avulsos</a>
-                        <a href="#faq" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">Dúvidas</a>
+                        <Link href="/" className="text-base font-bold text-branding-gradient hover:opacity-80 transition-all">{t('pricingPage.nav.portal')}</Link>
+                        <a href="#top" className="text-sm font-bold text-slate-800 dark:text-white">{t('pricingPage.nav.home')}</a>
+                        <a href="#comparison" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">{t('pricingPage.nav.comparison')}</a>
+                        <a href="#modules" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">{t('pricingPage.nav.modules')}</a>
+                        <a href="#faq" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">{t('pricingPage.nav.faq')}</a>
                     </div>
 
                     <div className="flex items-center gap-4">
@@ -241,11 +245,13 @@ export default function PricingPage() {
             <section className="pt-44 pb-20 px-6 text-center">
                 <div className="max-w-4xl mx-auto">
                     <h1 className="text-5xl md:text-7xl font-black mb-8 text-slate-900 dark:text-white leading-[1.05] tracking-tight">
-                        Seu momento na advocacia, <br />
-                        nosso <span className="text-branding-gradient">melhor plano.</span>
+                        {t('pricingPage.hero.title')} <br />
+                        {t('pricingPage.hero.titleAccent').split(' ').map((word: string, i: number) => (
+                            <span key={i} className={i === 1 ? "text-branding-gradient" : ""}>{word} </span>
+                        ))}
                     </h1>
                     <p className="text-xl text-slate-500 dark:text-slate-400 mb-12 leading-relaxed max-w-2xl mx-auto font-medium">
-                        Escolha o plano que acompanha o seu ritmo. Do autônomo ao departamento jurídico corporativo, temos a arquitetura exata para o seu crescimento.
+                        {t('pricingPage.hero.subtitle')}
                     </p>
                 </div>
             </section>
@@ -258,7 +264,7 @@ export default function PricingPage() {
                             <div key={i} className={`relative flex flex-col p-10 rounded-[3rem] border bg-white dark:bg-slate-950 transition-all duration-500 ${plan.color} ${plan.featured ? 'lg:-mt-4 lg:mb-4 lg:p-12 z-10' : ''}`}>
                                 {plan.featured && (
                                     <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-indigo-600 text-white px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest shadow-xl">
-                                        Mais Popular
+                                        {t('pricingPage.plans.growth.badge')}
                                     </div>
                                 )}
                                 <div className="mb-10">
@@ -309,12 +315,12 @@ export default function PricingPage() {
             {/* Comparison Table Toggle */}
             <section id="comparison" className="pb-32 px-6">
                 <div className="max-w-4xl mx-auto text-center">
-                    <p className="text-slate-400 font-bold uppercase tracking-widest text-sm mb-8">Quer analisar cada detalhe técnico?</p>
+                    <p className="text-slate-400 font-bold uppercase tracking-widest text-sm mb-8">{t('pricingPage.comparison.label')}</p>
                     <button
                         onClick={() => setShowComparison(!showComparison)}
                         className="inline-flex items-center gap-3 px-8 py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl font-black text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm group"
                     >
-                        {showComparison ? 'Ocultar' : 'Ver'} comparativo completo de funcionalidades
+                        {showComparison ? t('pricingPage.comparison.hide') : t('pricingPage.comparison.show')} {t('pricingPage.comparison.cta')}
                         {showComparison ? <ChevronUp size={20} className="group-hover:-translate-y-1 transition-transform" /> : <ChevronDown size={20} className="group-hover:translate-y-1 transition-transform" />}
                     </button>
 
@@ -323,10 +329,10 @@ export default function PricingPage() {
                             <table className="w-full border-collapse">
                                 <thead>
                                     <tr className="bg-slate-50 dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800">
-                                        <th className="text-left p-8 text-xs font-black uppercase text-slate-400 tracking-widest">Funcionalidade</th>
-                                        <th className="p-8 text-xs font-black uppercase text-slate-400 tracking-widest">Start</th>
-                                        <th className="p-8 text-xs font-black uppercase text-indigo-500 tracking-widest">Growth</th>
-                                        <th className="p-8 text-xs font-black uppercase text-slate-400 tracking-widest">Strategy</th>
+                                        <th className="text-left p-8 text-xs font-black uppercase text-slate-400 tracking-widest">{t('pricingPage.comparison.headers.feature')}</th>
+                                        <th className="p-8 text-xs font-black uppercase text-slate-400 tracking-widest">{t('pricingPage.comparison.headers.start')}</th>
+                                        <th className="p-8 text-xs font-black uppercase text-indigo-500 tracking-widest">{t('pricingPage.comparison.headers.growth')}</th>
+                                        <th className="p-8 text-xs font-black uppercase text-slate-400 tracking-widest">{t('pricingPage.comparison.headers.strategy')}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
@@ -359,19 +365,21 @@ export default function PricingPage() {
                 <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-20 relative z-10">
                     <div className="flex-1 space-y-10">
                         <h2 className="text-5xl md:text-6xl font-black leading-tight tracking-tighter uppercase">
-                            Por que escolher o <br />
-                            <span className="text-branding-gradient">Ecossistema?</span>
+                            {t('pricingPage.whyChoose.title')} <br />
+                            <span className="text-branding-gradient">{t('pricingPage.whyChoose.titleAccent')}</span>
                         </h2>
                         <p className="text-xl text-slate-300 leading-relaxed font-medium">
-                            Ferramentas isoladas geram retrabalho. Desenhamos nossos planos para garantir o <span className="text-white italic">Flow</span> perfeito. Um módulo alimenta o outro, eliminando 100% da digitação manual de dados.
+                            {t('pricingPage.whyChoose.subtitle').split('Flow').map((part: string, i: number) => (
+                                i === 0 ? <React.Fragment key={i}>{part}</React.Fragment> : <React.Fragment key={i}><span className="text-white italic">Flow</span>{part}</React.Fragment>
+                            ))}
                         </p>
                     </div>
                     <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-6">
                         {[
-                            { title: 'Sentinel Captura', desc: 'Identifica o processo na distribuição.' },
-                            { title: 'Nexus Delega', desc: 'Cria a tarefa para sua equipe.' },
-                            { title: 'Scriptor Redige', desc: 'IA gera a defesa em minutos.' },
-                            { title: 'Vox Notifica', desc: 'Avisa o cliente automaticamente.' }
+                            { title: t('pricingPage.whyChoose.items.0.title'), desc: t('pricingPage.whyChoose.items.0.desc') },
+                            { title: t('pricingPage.whyChoose.items.1.title'), desc: t('pricingPage.whyChoose.items.1.desc') },
+                            { title: t('pricingPage.whyChoose.items.2.title'), desc: t('pricingPage.whyChoose.items.2.desc') },
+                            { title: t('pricingPage.whyChoose.items.3.title'), desc: t('pricingPage.whyChoose.items.3.desc') }
                         ].map((item, i) => (
                             <div key={i} className="p-6 bg-white/5 border border-white/10 rounded-3xl">
                                 <h4 className="font-black mb-1 uppercase tracking-tight text-indigo-400">{item.title}</h4>
@@ -386,9 +394,9 @@ export default function PricingPage() {
             <section id="modules" className="py-32 px-6">
                 <div className="max-w-7xl mx-auto">
                     <div className="text-center mb-20">
-                        <span className="text-indigo-600 dark:text-indigo-400 font-black tracking-[0.2em] uppercase text-sm">Flexibilidade Total</span>
-                        <h2 className="text-5xl font-black mt-4 text-slate-900 dark:text-white uppercase tracking-tighter">Módulos Avulsos</h2>
-                        <p className="text-xl text-slate-500 dark:text-slate-400 mt-4 leading-relaxed font-medium max-w-2xl mx-auto">Precisa de uma solução pontual? Você não precisa levar o ecossistema inteiro se quiser resolver apenas um desafio imediato.</p>
+                        <span className="text-indigo-600 dark:text-indigo-400 font-black tracking-[0.2em] uppercase text-sm">{t('pricingPage.aLaCarte.badge')}</span>
+                        <h2 className="text-5xl font-black mt-4 text-slate-900 dark:text-white uppercase tracking-tighter">{t('pricingPage.aLaCarte.title')}</h2>
+                        <p className="text-xl text-slate-500 dark:text-slate-400 mt-4 leading-relaxed font-medium max-w-2xl mx-auto">{t('pricingPage.aLaCarte.subtitle')}</p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
@@ -396,12 +404,12 @@ export default function PricingPage() {
                             <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
                                 <Radar size={32} />
                             </div>
-                            <h3 className="text-3xl font-black mb-4 text-slate-900 dark:text-white tracking-tight leading-snug">Sentinel Radar</h3>
+                            <h3 className="text-3xl font-black mb-4 text-slate-900 dark:text-white tracking-tight leading-snug">{t('pricingPage.aLaCarte.sentinel.title')}</h3>
                             <p className="text-slate-500 dark:text-slate-400 font-medium mb-10 leading-relaxed">
-                                Ideal para quem só precisa monitorar diários oficiais e capturar novos processos sem a gestão completa.
+                                {t('pricingPage.aLaCarte.sentinel.desc')}
                             </p>
                             <Link href="/sentinel" className="flex items-center gap-2 font-black text-indigo-600 dark:text-indigo-400 hover:gap-3 transition-all uppercase tracking-widest text-sm">
-                                Saiba mais <ArrowRight size={18} />
+                                {t('pricingPage.aLaCarte.sentinel.cta')} <ArrowRight size={18} />
                             </Link>
                         </div>
 
@@ -409,12 +417,12 @@ export default function PricingPage() {
                             <div className="w-16 h-16 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
                                 <BarChart3 size={32} />
                             </div>
-                            <h3 className="text-3xl font-black mb-4 text-slate-900 dark:text-white tracking-tight leading-snug">Cognitio Analytics</h3>
+                            <h3 className="text-3xl font-black mb-4 text-slate-900 dark:text-white tracking-tight leading-snug">{t('pricingPage.aLaCarte.cognitio.title')}</h3>
                             <p className="text-slate-500 dark:text-slate-400 font-medium mb-10 leading-relaxed">
-                                Ideal para diretores que já usam outro sistema de gestão, mas precisam da nossa Jurimetria de Magistrados.
+                                {t('pricingPage.aLaCarte.cognitio.desc')}
                             </p>
                             <Link href="/cognitio" className="flex items-center gap-2 font-black text-blue-600 dark:text-blue-400 hover:gap-3 transition-all uppercase tracking-widest text-sm">
-                                Agendar Demo <ArrowRight size={18} />
+                                {t('pricingPage.aLaCarte.cognitio.cta')} <ArrowRight size={18} />
                             </Link>
                         </div>
                     </div>
@@ -424,12 +432,12 @@ export default function PricingPage() {
             {/* FAQ */}
             <section id="faq" className="py-32 px-6 bg-slate-50 dark:bg-slate-950 border-t border-slate-100 dark:border-slate-900">
                 <div className="max-w-4xl mx-auto">
-                    <h2 className="text-5xl font-black mb-20 text-center text-slate-900 dark:text-white uppercase tracking-tighter">Dúvidas Frequentes</h2>
+                    <h2 className="text-5xl font-black mb-20 text-center text-slate-900 dark:text-white uppercase tracking-tighter">{t('pricingPage.faq.title')}</h2>
                     <div className="space-y-6">
                         {[
-                            { q: 'Preciso de cartão de crédito para o teste grátis?', a: 'Não. Acreditamos na nossa tecnologia. Você testa os planos Start ou Growth por 14 dias com acesso total, sem burocracia.' },
-                            { q: 'Como funciona o limite de processos?', a: 'O sistema não cobra por "processo arquivado". Nós precificamos baseados nos seus casos ativos, garantindo que você pague apenas pelo que gera esforço real.' },
-                            { q: 'Posso mudar de plano depois?', a: 'A qualquer momento. O Veritum PRO tem uma arquitetura modular. Faça upgrade ou downgrade com apenas um clique a partir das suas configurações.' }
+                            { q: t('pricingPage.faq.questions.0.q'), a: t('pricingPage.faq.questions.0.a') },
+                            { q: t('pricingPage.faq.questions.1.q'), a: t('pricingPage.faq.questions.1.a') },
+                            { q: t('pricingPage.faq.questions.2.q'), a: t('pricingPage.faq.questions.2.a') }
                         ].map((faq, i) => (
                             <div key={i} className="p-8 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm">
                                 <h4 className="font-black text-lg text-slate-900 dark:text-white mb-4 flex gap-3 text-left">
@@ -449,22 +457,22 @@ export default function PricingPage() {
             <section className="py-32 px-6 text-center">
                 <div className="max-w-4xl mx-auto">
                     <h2 className="text-5xl md:text-6xl font-black mb-8 text-slate-900 dark:text-white leading-tight">
-                        A advocacia do futuro <br />
-                        <span className="text-branding-gradient">não usa planilhas.</span>
+                        {t('pricingPage.finalCta.title')} <br />
+                        <span className="text-branding-gradient">{t('pricingPage.finalCta.titleAccent')}</span>
                     </h2>
                     <p className="text-xl text-slate-500 dark:text-slate-400 mb-12 leading-relaxed max-w-2xl mx-auto font-medium">
-                        Junte-se ao ecossistema Veritum PRO hoje mesmo e transforme seu escritório em uma máquina de performance.
+                        {t('pricingPage.finalCta.subtitle')}
                     </p>
                     {(hasAccess || currentUser) && (
                         <button
                             onClick={() => setIsAuthModalOpen(true)}
                             className="bg-indigo-600 text-white px-12 py-5 rounded-[2.5rem] font-black text-xl shadow-2xl shadow-indigo-600/40 hover:scale-105 hover:bg-indigo-700 transition-all cursor-pointer uppercase tracking-tight"
                         >
-                            Criar Minha Conta Agora
+                            {t('pricingPage.finalCta.button')}
                         </button>
                     )}
                     <p className="mt-8 text-sm text-slate-400 font-bold uppercase tracking-widest italic">
-                        Desenvolvido por AgTech | LegalTech de Alta Performance © 2024
+                        {t('pricingPage.finalCta.footer')}
                     </p>
                 </div>
             </section>
@@ -478,9 +486,11 @@ export default function PricingPage() {
                                 <div className="w-20 h-20 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-8">
                                     <Sparkles size={40} />
                                 </div>
-                                <h3 className="text-3xl font-black text-slate-900 dark:text-white mb-4 uppercase tracking-tighter">Solicitação Recebida!</h3>
+                                <h3 className="text-3xl font-black text-slate-900 dark:text-white mb-4 uppercase tracking-tighter">{t('pricingPage.demoModal.successTitle')}</h3>
                                 <p className="text-slate-500 dark:text-slate-400 font-medium text-lg leading-relaxed">
-                                    Um de nossos consultores especializados entrará em contato via WhatsApp para confirmar o **melhor horário** na data que você sugeriu.
+                                    {t('pricingPage.demoModal.successDesc').split('**').map((part: string, i: number) => (
+                                        i === 1 ? <strong key={i}>{part}</strong> : <React.Fragment key={i}>{part}</React.Fragment>
+                                    ))}
                                 </p>
                             </div>
                         ) : (
@@ -496,17 +506,17 @@ export default function PricingPage() {
                                     <div className="w-12 h-12 bg-indigo-600/10 text-indigo-600 rounded-xl flex items-center justify-center mb-6">
                                         <Briefcase size={24} />
                                     </div>
-                                    <h3 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-2">Demonstração Estratégica</h3>
-                                    <p className="text-slate-500 dark:text-slate-400 font-medium">Preencha os dados abaixo para qualificar seu atendimento.</p>
+                                    <h3 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-2">{t('pricingPage.demoModal.title')}</h3>
+                                    <p className="text-slate-500 dark:text-slate-400 font-medium">{t('pricingPage.demoModal.subtitle')}</p>
                                 </div>
 
                                 <form onSubmit={handleDemoSubmit} className="space-y-4">
                                     <div className="space-y-1.5">
-                                        <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Nome Completo</label>
+                                        <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">{t('pricingPage.demoModal.labels.name')}</label>
                                         <input
                                             required
                                             type="text"
-                                            placeholder="Ex: Dr. Alexandre Aguiar"
+                                            placeholder={t('pricingPage.demoModal.placeholders.name')}
                                             className="w-full p-4 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none transition-all font-bold"
                                             value={demoFormData.name}
                                             onChange={(e) => setDemoFormData({ ...demoFormData, name: e.target.value })}
@@ -515,22 +525,22 @@ export default function PricingPage() {
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-1.5">
-                                            <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">E-mail Corporativo</label>
+                                            <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">{t('pricingPage.demoModal.labels.email')}</label>
                                             <input
                                                 required
                                                 type="email"
-                                                placeholder="nome@escritorio.com"
+                                                placeholder={t('pricingPage.demoModal.placeholders.email')}
                                                 className="w-full p-4 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none transition-all font-bold"
                                                 value={demoFormData.email}
                                                 onChange={(e) => setDemoFormData({ ...demoFormData, email: e.target.value })}
                                             />
                                         </div>
                                         <div className="space-y-1.5">
-                                            <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">WhatsApp</label>
+                                            <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">{t('pricingPage.demoModal.labels.whatsapp')}</label>
                                             <input
                                                 required
                                                 type="tel"
-                                                placeholder="(11) 99999-9999"
+                                                placeholder={t('pricingPage.demoModal.placeholders.whatsapp')}
                                                 className="w-full p-4 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none transition-all font-bold"
                                                 value={demoFormData.whatsapp}
                                                 onChange={(e) => setDemoFormData({ ...demoFormData, whatsapp: formatWhatsApp(e.target.value) })}
@@ -539,22 +549,22 @@ export default function PricingPage() {
                                     </div>
 
                                     <div className="space-y-1.5 pb-4">
-                                        <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Tamanho da Equipe / Volume</label>
+                                        <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">{t('pricingPage.demoModal.labels.teamSize')}</label>
                                         <select
                                             required
                                             className="w-full p-4 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none transition-all font-bold appearance-none cursor-pointer"
                                             value={demoFormData.teamSize}
                                             onChange={(e) => setDemoFormData({ ...demoFormData, teamSize: e.target.value })}
                                         >
-                                            <option value="">Selecione uma opção...</option>
-                                            <option value="1-5">1 a 5 advogados (Novo Escritório)</option>
-                                            <option value="6-20">6 a 20 advogados (Escritório em Expansão)</option>
-                                            <option value="+20">+20 advogados ou Depto. Jurídico</option>
+                                            <option value="">{t('pricingPage.demoModal.placeholders.teamSize')}</option>
+                                            <option value="1-5">{t('pricingPage.demoModal.teamOptions.small')}</option>
+                                            <option value="6-20">{t('pricingPage.demoModal.teamOptions.medium')}</option>
+                                            <option value="+20">{t('pricingPage.demoModal.teamOptions.large')}</option>
                                         </select>
                                     </div>
 
                                     <div className="space-y-3">
-                                        <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Selecione o intervalo de datas desejado</label>
+                                        <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">{t('pricingPage.demoModal.labels.dateRange')}</label>
 
                                         <div className="bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-3xl p-5">
                                             {/* Calendar Header */}
@@ -568,7 +578,7 @@ export default function PricingPage() {
                                                     <ChevronLeft size={20} />
                                                 </button>
                                                 <h4 className="font-black uppercase tracking-widest text-sm text-slate-800 dark:text-white">
-                                                    {format(currentMonth, 'MMMM yyyy', { locale: ptBR })}
+                                                    {format(currentMonth, locale === 'en' ? 'MMMM yyyy' : 'MMMM yyyy', { locale: dateLocale })}
                                                 </h4>
                                                 <button
                                                     type="button"
@@ -632,11 +642,11 @@ export default function PricingPage() {
                                         <div className="flex flex-col gap-1 px-2">
                                             <p className="text-[10px] font-medium text-slate-400 dark:text-slate-500 flex items-center gap-2">
                                                 <Sparkles size={14} className="text-indigo-500" />
-                                                Clique uma vez para o início e outra para o fim do período desejado.
+                                                {t('pricingPage.demoModal.calendar.tooltip1')}
                                             </p>
                                             <p className="text-[10px] font-medium text-slate-400 dark:text-slate-500 flex items-center gap-2">
                                                 <ChevronRight size={14} className="text-indigo-500" />
-                                                Entraremos em contato para confirmar o melhor horário dentro deste intervalo.
+                                                {t('pricingPage.demoModal.calendar.tooltip2')}
                                             </p>
                                         </div>
                                     </div>
@@ -650,7 +660,7 @@ export default function PricingPage() {
                                             <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
                                         ) : (
                                             <>
-                                                Confirmar Sugestão <Send size={20} />
+                                                {t('pricingPage.demoModal.submitBtn')} <Send size={20} />
                                             </>
                                         )}
                                     </button>

@@ -3,6 +3,7 @@
 import React from 'react';
 import { ArrowLeft, ShieldCheck, Scale } from 'lucide-react';
 import Link from 'next/link';
+import { useTranslation } from '@/contexts/language-context';
 
 const Logo = () => (
     <div className="bg-indigo-600/10 p-2 rounded-lg flex items-center justify-center text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400">
@@ -11,6 +12,7 @@ const Logo = () => (
 );
 
 export default function PrivacyPage() {
+    const { t } = useTranslation();
     return (
         <div className="min-h-screen bg-white text-slate-900 dark:bg-slate-950 dark:text-white transition-colors duration-500">
             <div className="fixed top-1/4 left-0 w-96 h-96 bg-indigo-400/10 blur-[120px] rounded-full pointer-events-none"></div>
@@ -23,7 +25,7 @@ export default function PrivacyPage() {
                         <span className="font-extrabold text-2xl tracking-tighter text-slate-900 dark:text-white">VERITUM <span className="text-branding-gradient">PRO</span></span>
                     </Link>
                     <Link href="/" className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-indigo-600 transition-colors">
-                        <ArrowLeft size={16} /> Voltar ao Início
+                        <ArrowLeft size={16} /> {t('common.backToHome')}
                     </Link>
                 </div>
             </nav>
@@ -34,29 +36,31 @@ export default function PrivacyPage() {
                         <ShieldCheck size={32} />
                     </div>
                     <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-4 text-slate-900 dark:text-white">
-                        Política de <span className="text-branding-gradient">Privacidade</span>
+                        {t('staticPages.privacy.title').split('Privacy').length > 1 ?
+                            <>Privacy <span className="text-branding-gradient">Policy</span></> :
+                            <>Política de <span className="text-branding-gradient">Privacidade</span></>}
                     </h1>
-                    <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-sm">Atualizado em Fevereiro 2024</p>
+                    <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-sm">{t('staticPages.privacy.updatedAt')}</p>
                 </div>
 
                 <div className="prose prose-slate dark:prose-invert max-w-none text-slate-600 dark:text-slate-300 leading-loose space-y-8">
                     <section>
-                        <p className="text-lg">A <strong>Veritum Pro</strong> valoriza a sua privacidade. Esta política descreve como tratamos as informações coletadas através do nosso ecossistema jurídico inteligente.</p>
+                        <p className="text-lg">{t('staticPages.privacy.intro')}</p>
                     </section>
 
                     <section>
-                        <h2 className="text-2xl font-bold text-slate-800 dark:text-white">1. Informações que Coletamos</h2>
-                        <p>Ao utilizar o login do Google ou preencher suas credenciais BYODB, coletamos apenas os dados essenciais (nome, e-mail e chaves de infraestrutura) para fins de autenticação e funcionamento técnico do sistema.</p>
+                        <h2 className="text-2xl font-bold text-slate-800 dark:text-white">{t('staticPages.privacy.section1Title')}</h2>
+                        <p>{t('staticPages.privacy.section1Content')}</p>
                     </section>
 
                     <section>
-                        <h2 className="text-2xl font-bold text-slate-800 dark:text-white">2. Uso dos Dados</h2>
-                        <p>Seus dados são utilizados exclusivamente para autenticar seu acesso, sincronizar seus registros de forma privada em sua própria infraestrutura (Supabase) e permitir a interação com a inteligência artificial (Gemini).</p>
+                        <h2 className="text-2xl font-bold text-slate-800 dark:text-white">{t('staticPages.privacy.section2Title')}</h2>
+                        <p>{t('staticPages.privacy.section2Content')}</p>
                     </section>
 
                     <section>
-                        <h2 className="text-2xl font-bold text-slate-800 dark:text-white">3. Armazenamento Local</h2>
-                        <p>Importante: Suas chaves de API são armazenadas localmente no seu navegador e nunca são enviadas aos nossos servidores centrais.</p>
+                        <h2 className="text-2xl font-bold text-slate-800 dark:text-white">{t('staticPages.privacy.section3Title')}</h2>
+                        <p>{t('staticPages.privacy.section3Content')}</p>
                     </section>
                 </div>
             </main>

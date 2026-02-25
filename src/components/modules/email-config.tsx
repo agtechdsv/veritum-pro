@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Mail, Save, Loader2 } from 'lucide-react'
 import { toast } from '@/components/ui/toast'
+import { useTranslation } from '@/contexts/language-context'
 
 interface EmailConfig {
     [lang: string]: {
@@ -23,13 +24,14 @@ interface EmailSetting {
 }
 
 const SCENARIOS = [
-    { key: 'general', label: 'Dúvidas Gerais e Parcerias' },
-    { key: 'sales', label: 'Vendas VIP e Agendamentos' },
-    { key: 'billing', label: 'Gestão de Assinaturas e Financeiro' },
-    { key: 'support', label: 'Ajuda Técnica e Suporte' },
+    { key: 'general', label: 'management.master.email.scenarios.general' },
+    { key: 'sales', label: 'management.master.email.scenarios.sales' },
+    { key: 'billing', label: 'management.master.email.scenarios.billing' },
+    { key: 'support', label: 'management.master.email.scenarios.support' },
 ]
 
 export function EmailSettingsManager() {
+    const { t } = useTranslation()
     const [settings, setSettings] = useState<EmailSetting[]>([])
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState<string | null>(null)
@@ -49,7 +51,7 @@ export function EmailSettingsManager() {
             if (error) throw error
             setSettings(data || [])
         } catch (error: any) {
-            toast.error('Erro ao carregar configurações de e-mail')
+            toast.error(t('management.master.email.toasts.loadError'))
             console.error(error)
         } finally {
             setLoading(false)
@@ -65,9 +67,9 @@ export function EmailSettingsManager() {
                 .eq('id', setting.id)
 
             if (error) throw error
-            toast.success('Configuração atualizada com sucesso')
+            toast.success(t('management.master.email.toasts.saveSuccess'))
         } catch (error: any) {
-            toast.error('Erro ao salvar configuração')
+            toast.error(t('management.master.email.toasts.saveError'))
             console.error(error)
         } finally {
             setSaving(null)
@@ -105,8 +107,8 @@ export function EmailSettingsManager() {
                     <Mail className="w-6 h-6 text-indigo-500" />
                 </div>
                 <div>
-                    <h1 className="text-2xl font-black text-white tracking-tight">Gestão de E-mails</h1>
-                    <p className="text-slate-400 text-sm">Configure os aliases (FROM) agrupados por cenário (JSONB).</p>
+                    <h1 className="text-2xl font-black text-white tracking-tight">{t('management.master.email.title')}</h1>
+                    <p className="text-slate-400 text-sm">{t('management.master.email.subtitle')}</p>
                 </div>
             </div>
 
@@ -119,8 +121,8 @@ export function EmailSettingsManager() {
                         <Card key={setting.id} className="bg-slate-900/50 border-slate-800 border-none overflow-hidden group">
                             <CardHeader className="border-b border-slate-800 bg-slate-800/30 flex-row items-center justify-between space-y-0">
                                 <div>
-                                    <CardTitle className="text-lg text-white">{scenario.label}</CardTitle>
-                                    <CardDescription>Traduções e e-mails</CardDescription>
+                                    <CardTitle className="text-lg text-white">{t(scenario.label)}</CardTitle>
+                                    <CardDescription>{t('management.master.email.card.description')}</CardDescription>
                                 </div>
                                 <Button
                                     size="sm"
@@ -129,18 +131,18 @@ export function EmailSettingsManager() {
                                     className="bg-indigo-600 hover:bg-indigo-500 text-white gap-2 px-4"
                                 >
                                     {saving === setting.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                                    Salvar
+                                    {t('management.master.email.card.save')}
                                 </Button>
                             </CardHeader>
                             <CardContent className="p-6 space-y-6">
                                 {['pt', 'en'].map((lang) => (
                                     <div key={lang} className="space-y-3">
                                         <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-widest">
-                                            <span>{lang === 'pt' ? 'Português (BR)' : 'Inglês (US)'}</span>
+                                            <span>{t(`management.master.email.langs.${lang}`)}</span>
                                         </div>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                             <div className="space-y-1.5">
-                                                <Label className="text-[10px] text-slate-500 uppercase">E-mail</Label>
+                                                <Label className="text-[10px] text-slate-500 uppercase">{t('management.master.email.card.email')}</Label>
                                                 <Input
                                                     value={setting.config[lang]?.email || ''}
                                                     onChange={(e) => updateConfig(setting.id, lang, 'email', e.target.value)}
@@ -148,7 +150,7 @@ export function EmailSettingsManager() {
                                                 />
                                             </div>
                                             <div className="space-y-1.5">
-                                                <Label className="text-[10px] text-slate-500 uppercase">Nome</Label>
+                                                <Label className="text-[10px] text-slate-500 uppercase">{t('management.master.email.card.name')}</Label>
                                                 <Input
                                                     value={setting.config[lang]?.name || ''}
                                                     onChange={(e) => updateConfig(setting.id, lang, 'name', e.target.value)}

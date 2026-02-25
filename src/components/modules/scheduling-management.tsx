@@ -7,7 +7,7 @@ import {
     isBefore, isAfter, startOfDay, endOfDay, addHours, startOfHour, parseISO,
     eachHourOfInterval, isWithinInterval, setHours, setMinutes, addMinutes
 } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { ptBR, enUS } from 'date-fns/locale';
 import {
     Calendar as CalendarIcon, ChevronLeft, ChevronRight,
     Clock, Users, CheckCircle2, AlertCircle, X, Search,
@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { createMasterClient } from '@/lib/supabase/master';
 import { useModule } from '@/app/veritum/layout';
+import { useTranslation } from '@/contexts/language-context';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from '@/components/ui/toast';
 
@@ -36,6 +37,10 @@ interface DemoRequest {
 
 export default function SchedulingManagement() {
     const { user } = useModule();
+    const { t, locale } = useTranslation();
+    const dateLocales = { pt: ptBR, en: enUS };
+    const dateLocale = dateLocales[locale as keyof typeof dateLocales] || ptBR;
+
     const [view, setView] = useState<'month' | 'day'>('month');
     const [currentDate, setCurrentDate] = useState(new Date());
     const [requests, setRequests] = useState<DemoRequest[]>([]);
@@ -102,13 +107,13 @@ export default function SchedulingManagement() {
                 setIsSchedulingConfirmOpen(false);
                 setSchedulingConfirmData(null);
                 fetchRequests();
-                toast.success('Agendamento confirmado!');
+                toast.success(t('management.master.scheduling.toast.successConfirm'));
             } else {
-                toast.error('Erro ao confirmar agendamento.');
+                toast.error(t('management.master.scheduling.toast.errorConfirm'));
             }
         } catch (err) {
             console.error('Scheduling error:', err);
-            toast.error('Falha técnica no agendamento.');
+            toast.error(t('management.master.scheduling.toast.errorTechnical'));
         } finally {
             setSendingInvite(false);
         }
@@ -148,9 +153,9 @@ export default function SchedulingManagement() {
             if (selectedRequest?.id === id) setSelectedRequest(null);
             setIsDeleteModalOpen(false);
             setRequestToDelete(null);
-            toast.success('Agendamento excluído permanentemente.');
+            toast.success(t('management.master.scheduling.toast.successDelete'));
         } else {
-            toast.error('Erro ao excluir agendamento.');
+            toast.error(t('management.master.scheduling.toast.errorDelete'));
         }
     };
 
@@ -171,10 +176,10 @@ export default function SchedulingManagement() {
             fetchRequests();
             setIsEditModalOpen(false);
             setEditingRequest(null);
-            toast.success('Agendamento atualizado com sucesso!');
+            toast.success(t('management.master.scheduling.toast.successUpdate'));
         } else {
             console.error('Error updating request:', error);
-            toast.error('Erro ao salvar alterações.');
+            toast.error(t('management.master.scheduling.toast.errorSave'));
         }
     };
 
@@ -184,12 +189,12 @@ export default function SchedulingManagement() {
         const fullName = overrides?.full_name || request.full_name;
 
         if (!meetingLink) {
-            toast.error('Informe o link da reunião antes de enviar o convite.');
+            toast.error(t('management.master.scheduling.toast.missingLink'));
             return false;
         }
 
         if (!request.scheduled_at) {
-            toast.error('Esta solicitação não possui data agendada.');
+            toast.error(t('management.master.scheduling.toast.missingDate'));
             return false;
         }
 
@@ -197,7 +202,7 @@ export default function SchedulingManagement() {
 
         try {
             const dateObj = parseISO(request.scheduled_at);
-            const formattedDate = dateObj.toLocaleString('pt-BR', {
+            const formattedDate = dateObj.toLocaleString(locale === 'pt' ? 'pt-BR' : 'en-US', {
                 day: '2-digit', month: 'long', year: 'numeric',
                 hour: '2-digit', minute: '2-digit'
             });
@@ -206,7 +211,7 @@ export default function SchedulingManagement() {
             const endTime = addMinutes(startTime, 30);
             const formatDateGoogle = (d: Date) => format(d, "yyyyMMdd'T'HHmmss'Z'");
             const formatDateOutlook = (d: Date) => format(d, "yyyy-MM-dd'T'HH:mm:ss'Z'");
-            const eventTitle = encodeURIComponent("Demonstração Veritum PRO");
+            const eventTitle = encodeURIComponent(t('management.master.scheduling.toast.emailSubject'));
             const eventDetails = encodeURIComponent(`Olá ${fullName}, seu agendamento do Veritum PRO foi confirmado.\n\nLink da Reunião: ${meetingLink}`);
             const eventLocation = encodeURIComponent(meetingLink || "");
             const googleUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${eventTitle}&dates=${formatDateGoogle(startTime)}/${formatDateGoogle(endTime)}&details=${eventDetails}&location=${eventLocation}`;
@@ -287,19 +292,19 @@ export default function SchedulingManagement() {
             `;
 
             const { data, error } = await supabase.functions.invoke('send-email', {
-                body: { to: email, subject: 'Confirmação de Reunião - Veritum PRO', html: emailHtml, fullName, scenario: 'sales' }
+                body: { to: email, subject: t('management.master.scheduling.toast.emailSubject'), html: emailHtml, fullName, scenario: 'sales' }
             });
 
             if (!error && data?.success) {
-                toast.success(`Convite enviado para ${email}!`);
+                toast.success(t('management.master.scheduling.toast.emailSuccess', { email }));
                 if (overrides?.meeting_link) handleSaveEdit(overrides);
                 return true;
             } else {
-                toast.error(`Falha no envio: ${error?.message || data?.error}`);
+                toast.error(t('management.master.scheduling.toast.emailError', { error: error?.message || data?.error }));
                 return false;
             }
         } catch (err) {
-            toast.error('Erro inesperado ao enviar e-mail.');
+            toast.error(t('management.master.scheduling.toast.unexpectedError'));
             return false;
         } finally {
             setSendingInvite(false);
@@ -325,10 +330,10 @@ export default function SchedulingManagement() {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
                     <h1 className="text-4xl font-black text-slate-800 dark:text-white uppercase tracking-tight">
-                        Gestão de <span className="text-branding-gradient">Agendamentos</span>
+                        {t('management.master.scheduling.title')} <span className="text-branding-gradient">{t('management.master.scheduling.titleHighlight')}</span>
                     </h1>
                     <p className="text-slate-500 dark:text-slate-400 font-medium italic mt-2">
-                        Visualize e organize as demonstrações estratégicas solicitadas.
+                        {t('management.master.scheduling.subtitle')}
                     </p>
                 </div>
 
@@ -337,13 +342,13 @@ export default function SchedulingManagement() {
                         onClick={() => setView('month')}
                         className={`px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${view === 'month' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
                     >
-                        <LayoutGrid size={18} /> Mensal
+                        <LayoutGrid size={18} /> {t('management.master.scheduling.views.month')}
                     </button>
                     <button
                         onClick={() => setView('day')}
                         className={`px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${view === 'day' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
                     >
-                        <Clock size={18} /> Diário
+                        <Clock size={18} /> {t('management.master.scheduling.views.day')}
                     </button>
                 </div>
             </div>
@@ -353,7 +358,7 @@ export default function SchedulingManagement() {
                 <div className="xl:col-span-1 space-y-6">
                     <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 shadow-xl border border-slate-100 dark:border-slate-800">
                         <div className="flex items-center justify-between mb-4 px-2">
-                            <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Solicitações</h3>
+                            <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">{t('management.master.scheduling.sidebar.title')}</h3>
                             <span className="bg-rose-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full">{filteredLeads.length}</span>
                         </div>
 
@@ -365,7 +370,7 @@ export default function SchedulingManagement() {
                                     onClick={() => setLeadsStatusFilter(s)}
                                     className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${leadsStatusFilter === s ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-indigo-500'}`}
                                 >
-                                    {s === 'all' ? 'Tudo' : s === 'pending' ? 'Pend' : s === 'scheduled' ? 'Agend' : s === 'attended' ? 'Atend' : 'Canc'}
+                                    {t(`management.master.scheduling.sidebar.status.${s}`)}
                                 </button>
                             ))}
                         </div>
@@ -373,7 +378,7 @@ export default function SchedulingManagement() {
                         {/* Filter UI */}
                         <div className="mb-6 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700/50 space-y-3">
                             <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                                <Filter size={12} /> Filtrar Período
+                                <Filter size={12} /> {t('management.master.scheduling.sidebar.filterTitle')}
                             </div>
                             <div className="grid grid-cols-2 gap-2">
                                 <input
@@ -397,7 +402,7 @@ export default function SchedulingManagement() {
                                     <div className="w-12 h-12 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
                                         <CheckCircle2 size={24} />
                                     </div>
-                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Nada encontrado</p>
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t('management.master.scheduling.sidebar.empty')}</p>
                                 </div>
                             ) : (
                                 filteredLeads.map((req: DemoRequest) => (
@@ -452,7 +457,7 @@ export default function SchedulingManagement() {
                                         onClick={() => setCurrentDate(new Date())}
                                         className="px-3 py-1 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-indigo-600 transition-colors"
                                     >
-                                        Hoje
+                                        {t('management.master.scheduling.calendar.today')}
                                     </button>
                                     <button
                                         onClick={() => setCurrentDate(view === 'month' ? addMonths(currentDate, 1) : addDays(currentDate, 1))}
@@ -463,7 +468,7 @@ export default function SchedulingManagement() {
                                 </div>
 
                                 <h2 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">
-                                    {format(currentDate, view === 'month' ? 'MMMM yyyy' : 'EEEE, dd MMMM', { locale: ptBR })}
+                                    {format(currentDate, t(`management.master.scheduling.calendar.${view === 'month' ? 'monthFormat' : 'dayFormat'}`), { locale: dateLocale })}
                                 </h2>
                             </div>
 
@@ -475,7 +480,7 @@ export default function SchedulingManagement() {
                                         onClick={() => setCalendarStatusFilter(s)}
                                         className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${calendarStatusFilter === s ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
                                     >
-                                        {s === 'all' ? 'Ver Todos' : s === 'scheduled' ? 'Agendados' : s === 'attended' ? 'Atendidos' : 'Cancelados'}
+                                        {t(`management.master.scheduling.calendar.filters.${s}`)}
                                     </button>
                                 ))}
                             </div>
@@ -483,7 +488,7 @@ export default function SchedulingManagement() {
                             {selectedRequest && view === 'day' && (
                                 <div className="flex items-center gap-3 animate-in fade-in zoom-in duration-300">
                                     <div className="px-4 py-2 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 rounded-xl">
-                                        <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Selecione o horário para {selectedRequest.full_name.split(' ')[0]}</p>
+                                        <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">{t('management.master.scheduling.calendar.tooltips.selectTime', { name: selectedRequest.full_name.split(' ')[0] })}</p>
                                     </div>
                                     <button
                                         onClick={() => setSelectedRequest(null)}
@@ -503,6 +508,8 @@ export default function SchedulingManagement() {
                                     onSelectDate={(d) => { setCurrentDate(d); setView('day'); }}
                                     onDelete={confirmDelete}
                                     onEdit={(req: DemoRequest) => { setEditingRequest(req); setIsEditModalOpen(true); }}
+                                    dateLocale={dateLocale}
+                                    t={t}
                                 />
                             ) : (
                                 <DayView
@@ -514,6 +521,7 @@ export default function SchedulingManagement() {
                                     onEdit={(req: DemoRequest) => { setEditingRequest(req); setIsEditModalOpen(true); }}
                                     onDelete={confirmDelete}
                                     onSendEmail={(req) => handleSendInvite(req)}
+                                    t={t}
                                 />
                             )}
                         </div>
@@ -528,6 +536,7 @@ export default function SchedulingManagement() {
                     onSendInvite={handleSendInvite}
                     sendingInvite={sendingInvite}
                     supabase={supabase}
+                    t={t}
                 />
 
                 <DeleteConfirmationModal
@@ -535,6 +544,7 @@ export default function SchedulingManagement() {
                     request={requestToDelete}
                     onClose={() => setIsDeleteModalOpen(false)}
                     onConfirm={() => requestToDelete && handleDeleteRequest(requestToDelete.id)}
+                    t={t}
                 />
 
                 <ScheduleConfirmationModal
@@ -543,18 +553,22 @@ export default function SchedulingManagement() {
                     sendingInvite={sendingInvite}
                     onClose={() => setIsSchedulingConfirmOpen(false)}
                     onConfirm={() => schedulingConfirmData && handleSchedule(schedulingConfirmData.request.id, schedulingConfirmData.slot)}
+                    dateLocale={dateLocale}
+                    t={t}
                 />
             </div>
         </div>
     );
 }
 
-function MonthView({ currentDate, scheduledRequests, onSelectDate, onDelete, onEdit }: {
+function MonthView({ currentDate, scheduledRequests, onSelectDate, onDelete, onEdit, dateLocale, t }: {
     currentDate: Date,
     scheduledRequests: DemoRequest[],
     onSelectDate: (d: Date) => void,
     onDelete: (req: DemoRequest) => void,
-    onEdit: (req: DemoRequest) => void
+    onEdit: (req: DemoRequest) => void,
+    dateLocale: any,
+    t: any
 }) {
     const monthStart = startOfMonth(currentDate);
     const monthEnd = endOfMonth(monthStart);
@@ -565,7 +579,7 @@ function MonthView({ currentDate, scheduledRequests, onSelectDate, onDelete, onE
     let days = [];
     let day = startDate;
 
-    const daysOfWeek = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    const daysOfWeek = t('common.daysShort', { returnObjects: true }) || ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
     while (day <= endDate) {
         for (let i = 0; i < 7; i++) {
@@ -618,7 +632,7 @@ function MonthView({ currentDate, scheduledRequests, onSelectDate, onDelete, onE
     return (
         <div className="min-w-[800px]">
             <div className="grid grid-cols-7 border-b border-slate-100 dark:border-slate-800">
-                {daysOfWeek.map(d => (
+                {daysOfWeek.map((d: string) => (
                     <div key={d} className="py-4 text-center text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
                         {d}
                     </div>
@@ -629,7 +643,7 @@ function MonthView({ currentDate, scheduledRequests, onSelectDate, onDelete, onE
     );
 }
 
-function DayView({ currentDate, scheduledRequests, selectedRequest, onSchedule, onUpdateStatus, onEdit, onDelete, onSendEmail }: {
+function DayView({ currentDate, scheduledRequests, selectedRequest, onSchedule, onUpdateStatus, onEdit, onDelete, onSendEmail, t }: {
     currentDate: Date,
     scheduledRequests: DemoRequest[],
     selectedRequest: DemoRequest | null,
@@ -637,7 +651,8 @@ function DayView({ currentDate, scheduledRequests, selectedRequest, onSchedule, 
     onUpdateStatus: (id: string, s: DemoRequest['status'] | 'reschedule') => void,
     onEdit: (req: DemoRequest) => void,
     onDelete: (req: DemoRequest) => void,
-    onSendEmail: (req: DemoRequest) => Promise<boolean>
+    onSendEmail: (req: DemoRequest) => Promise<boolean>,
+    t: any
 }) {
     // 30 minute intervals from 08:00 to 20:00
     const timeSlots: Date[] = [];
@@ -673,7 +688,7 @@ function DayView({ currentDate, scheduledRequests, selectedRequest, onSchedule, 
                             >
                                 {selectedRequest && (
                                     <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-indigo-600 text-white px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-xl">
-                                        Agendar às {format(slot, 'HH:mm')}
+                                        {t('management.master.scheduling.calendar.tooltips.scheduleAt', { time: format(slot, 'HH:mm') })}
                                     </div>
                                 )}
                             </button>
@@ -706,44 +721,44 @@ function DayView({ currentDate, scheduledRequests, selectedRequest, onSchedule, 
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); onSendEmail(req); }}
                                                         className="p-1.5 text-indigo-500 hover:text-indigo-600 transition-colors bg-indigo-50 dark:bg-indigo-500/10 rounded-lg"
-                                                        title="Enviar E-mail de Convite"
+                                                        title={t('management.master.scheduling.actions.sendInvite')}
                                                     >
                                                         <Send size={16} />
                                                     </button>
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); onEdit(req); }}
                                                         className="p-1.5 text-slate-400 hover:text-indigo-600 transition-colors"
-                                                        title="Editar Agendamento"
+                                                        title={t('management.master.scheduling.actions.edit')}
                                                     >
                                                         <Pencil size={16} />
                                                     </button>
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); onUpdateStatus(req.id, 'attended'); }}
                                                         className="px-3 py-1 bg-emerald-500 text-white rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-colors shadow-sm"
-                                                        title="Marcar como Atendido"
+                                                        title={t('management.master.scheduling.actions.markAttended')}
                                                     >
-                                                        Atendido
+                                                        {t('management.master.scheduling.actions.attended')}
                                                     </button>
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); onUpdateStatus(req.id, 'reschedule'); }}
                                                         className="px-3 py-1 bg-amber-500 text-white rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-amber-600 transition-colors shadow-sm"
-                                                        title="Voltar para Pendentes"
+                                                        title={t('management.master.scheduling.actions.backPending')}
                                                     >
-                                                        Remarcar
+                                                        {t('management.master.scheduling.actions.reschedule')}
                                                     </button>
                                                 </>
                                             )}
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); onUpdateStatus(req.id, 'canceled'); }}
                                                 className="p-1 text-slate-400 hover:text-rose-500 transition-colors"
-                                                title="Cancelar"
+                                                title={t('management.master.scheduling.actions.cancel')}
                                             >
                                                 <AlertCircle size={10} />
                                             </button>
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); onDelete(req); }}
                                                 className="p-1 text-slate-400 hover:text-rose-500 transition-colors"
-                                                title="Excluir"
+                                                title={t('management.master.scheduling.actions.delete')}
                                             >
                                                 <Trash2 size={10} />
                                             </button>
@@ -759,11 +774,12 @@ function DayView({ currentDate, scheduledRequests, selectedRequest, onSchedule, 
     );
 }
 
-function DeleteConfirmationModal({ isOpen, request, onClose, onConfirm }: {
+function DeleteConfirmationModal({ isOpen, request, onClose, onConfirm, t }: {
     isOpen: boolean,
     request: DemoRequest | null,
     onClose: () => void,
-    onConfirm: () => void
+    onConfirm: () => void,
+    t: any
 }) {
     if (!request) return null;
 
@@ -787,22 +803,22 @@ function DeleteConfirmationModal({ isOpen, request, onClose, onConfirm }: {
                         <div className="w-16 h-16 bg-rose-50 dark:bg-rose-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
                             <Trash2 size={32} className="text-rose-500" />
                         </div>
-                        <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tight mb-2">Confirmar Exclusão</h3>
+                        <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tight mb-2">{t('management.master.scheduling.delete.title')}</h3>
                         <p className="text-sm font-bold text-slate-500 dark:text-slate-400 leading-relaxed mb-8">
-                            Você tem certeza que deseja excluir o agendamento de <span className="text-indigo-600 font-black">{request.full_name}</span>? Esta ação não pode ser desfeita.
+                            {t('management.master.scheduling.delete.message', { name: request.full_name })}
                         </p>
                         <div className="flex gap-4">
                             <button
                                 onClick={onClose}
                                 className="flex-1 px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all border border-slate-100 dark:border-slate-700"
                             >
-                                Cancelar
+                                {t('management.master.scheduling.delete.cancel')}
                             </button>
                             <button
                                 onClick={onConfirm}
                                 className="flex-1 px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white bg-rose-500 hover:bg-rose-600 transition-all shadow-xl shadow-rose-500/20"
                             >
-                                Excluir Lead
+                                {t('management.master.scheduling.delete.confirm')}
                             </button>
                         </div>
                     </motion.div>
@@ -812,12 +828,14 @@ function DeleteConfirmationModal({ isOpen, request, onClose, onConfirm }: {
     );
 }
 
-function ScheduleConfirmationModal({ isOpen, data, sendingInvite, onClose, onConfirm }: {
+function ScheduleConfirmationModal({ isOpen, data, sendingInvite, onClose, onConfirm, dateLocale, t }: {
     isOpen: boolean,
     data: { request: DemoRequest, slot: Date } | null,
     sendingInvite: boolean,
     onClose: () => void,
-    onConfirm: () => void
+    onConfirm: () => void,
+    dateLocale: any,
+    t: any
 }) {
     if (!data) return null;
 
@@ -841,16 +859,16 @@ function ScheduleConfirmationModal({ isOpen, data, sendingInvite, onClose, onCon
                         <div className="w-20 h-20 bg-indigo-50 dark:bg-indigo-500/10 rounded-[2rem] flex items-center justify-center mx-auto mb-8 animate-bounce">
                             <CalendarIcon size={40} className="text-indigo-600" />
                         </div>
-                        <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tight mb-4">Confirmar Agendamento?</h3>
+                        <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tight mb-4">{t('management.master.scheduling.scheduleConfirm.title')}</h3>
                         <div className="space-y-4 mb-10">
                             <p className="text-sm font-bold text-slate-500 dark:text-slate-400">
-                                Você está confirmando a demonstração para:
+                                {t('management.master.scheduling.scheduleConfirm.message')}
                             </p>
                             <div className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-2xl border border-slate-100 dark:border-slate-700/50">
                                 <h4 className="text-lg font-black text-indigo-600 uppercase tracking-tight mb-1">{data.request.full_name}</h4>
                                 <div className="flex items-center justify-center gap-2 text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                                     <Clock size={12} />
-                                    <span>{format(data.slot, "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}</span>
+                                    <span>{format(data.slot, `dd '${t('management.master.scheduling.scheduleConfirm.at')}' MMMM '${t('management.master.scheduling.scheduleConfirm.at')}' HH:mm`, { locale: dateLocale })}</span>
                                 </div>
                             </div>
                         </div>
@@ -859,14 +877,14 @@ function ScheduleConfirmationModal({ isOpen, data, sendingInvite, onClose, onCon
                                 onClick={onClose}
                                 className="flex-1 px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all border border-slate-100 dark:border-slate-700"
                             >
-                                Não, Voltar
+                                {t('management.master.scheduling.scheduleConfirm.no')}
                             </button>
                             <button
                                 onClick={onConfirm}
                                 disabled={sendingInvite}
                                 className="flex-1 px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white bg-indigo-600 hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-500/30 disabled:opacity-50 disabled:cursor-wait"
                             >
-                                {sendingInvite ? 'Salvando...' : 'Sim, Confirmar'}
+                                {sendingInvite ? t('management.master.scheduling.scheduleConfirm.saving') : t('management.master.scheduling.scheduleConfirm.yes')}
                             </button>
                         </div>
                     </motion.div>
@@ -883,14 +901,15 @@ function isSameSlot(d1: Date, d2: Date) {
         (Math.floor(d1.getMinutes() / 30) === Math.floor(d2.getMinutes() / 30));
 }
 
-function EditModal({ isOpen, request, onClose, onSave, onSendInvite, sendingInvite, supabase }: {
+function EditModal({ isOpen, request, onClose, onSave, onSendInvite, sendingInvite, supabase, t }: {
     isOpen: boolean,
     request: DemoRequest | null,
     onClose: () => void,
     onSave: (updated: Partial<DemoRequest>) => void,
     onSendInvite: (req: DemoRequest, overrides?: Partial<DemoRequest>) => Promise<boolean>,
     sendingInvite: boolean,
-    supabase: any
+    supabase: any,
+    t: any
 }) {
     const defaultZoomLink = 'https://us05web.zoom.us/j/82942209745?pwd=atP3XpfEnyDnxxzbc7ZbyWDj57hEVg.1';
     const [formData, setFormData] = useState<Partial<DemoRequest>>({});
@@ -929,8 +948,8 @@ function EditModal({ isOpen, request, onClose, onSave, onSendInvite, sendingInvi
                     >
                         <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/30">
                             <div>
-                                <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tight">Editar Agendamento</h3>
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Lead: {request.full_name}</p>
+                                <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tight">{t('management.master.scheduling.editModal.title')}</h3>
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">{t('management.master.scheduling.editModal.leadLabel', { name: request.full_name })}</p>
                             </div>
                             <button onClick={onClose} className="p-2 text-slate-400 hover:text-rose-500 transition-colors bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
                                 <X size={20} />
@@ -940,7 +959,7 @@ function EditModal({ isOpen, request, onClose, onSave, onSendInvite, sendingInvi
                         <div className="p-8 space-y-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
                             <div className="grid grid-cols-2 gap-6">
                                 <div className="space-y-1.5 col-span-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Nome Completo</label>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">{t('management.master.scheduling.editModal.fields.name')}</label>
                                     <input
                                         type="text"
                                         value={formData.full_name || ''}
@@ -950,7 +969,7 @@ function EditModal({ isOpen, request, onClose, onSave, onSendInvite, sendingInvi
                                 </div>
 
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Email</label>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">{t('management.master.scheduling.editModal.fields.email')}</label>
                                     <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700/50 flex items-center gap-3">
                                         <Mail size={16} className="text-indigo-500" />
                                         <input
@@ -963,7 +982,7 @@ function EditModal({ isOpen, request, onClose, onSave, onSendInvite, sendingInvi
                                 </div>
 
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">WhatsApp</label>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">{t('management.master.scheduling.editModal.fields.whatsapp')}</label>
                                     <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700/50 flex items-center gap-3">
                                         <Sparkles size={16} className="text-emerald-500" />
                                         <input
@@ -976,7 +995,7 @@ function EditModal({ isOpen, request, onClose, onSave, onSendInvite, sendingInvi
                                 </div>
 
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Tamanho da Equipe</label>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">{t('management.master.scheduling.editModal.fields.teamSize')}</label>
                                     <input
                                         type="text"
                                         value={formData.team_size || ''}
@@ -987,7 +1006,7 @@ function EditModal({ isOpen, request, onClose, onSave, onSendInvite, sendingInvi
                             </div>
 
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Link da Reunião (Zoom, Teams, etc)</label>
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">{t('management.master.scheduling.editModal.fields.meetingLink')}</label>
                                 <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl focus-within:border-indigo-500 transition-all shadow-inner">
                                     <div className="flex items-center p-4 gap-3">
                                         <LinkIcon size={20} className="text-slate-400 focus-within:text-indigo-500" />
@@ -995,7 +1014,7 @@ function EditModal({ isOpen, request, onClose, onSave, onSendInvite, sendingInvi
                                             type="text"
                                             value={formData.meeting_link || ''}
                                             onChange={(e) => setFormData({ ...formData, meeting_link: e.target.value })}
-                                            placeholder="https://zoom.us/j/..."
+                                            placeholder={t('management.master.scheduling.editModal.fields.meetingPlaceholder')}
                                             className="bg-transparent border-none outline-none text-sm font-bold w-full dark:text-white"
                                         />
                                     </div>
@@ -1008,20 +1027,20 @@ function EditModal({ isOpen, request, onClose, onSave, onSendInvite, sendingInvi
                                 onClick={onClose}
                                 className="px-6 py-3 text-xs font-black uppercase tracking-widest text-slate-500 hover:text-slate-700"
                             >
-                                Cancelar
+                                {t('management.master.scheduling.editModal.actions.cancel')}
                             </button>
                             <button
                                 onClick={handleInvite}
                                 disabled={sendingInvite || !formData.meeting_link}
                                 className="px-6 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-indigo-600 rounded-2xl text-xs font-black uppercase tracking-widest shadow-sm hover:shadow-md transition-all flex items-center gap-2 disabled:opacity-50"
                             >
-                                {sendingInvite ? 'Enviando...' : <><Send size={14} /> Enviar Convite</>}
+                                {sendingInvite ? t('management.master.scheduling.editModal.actions.sending') : <><Send size={14} /> {t('management.master.scheduling.editModal.actions.sendInvite')}</>}
                             </button>
                             <button
                                 onClick={() => onSave(formData)}
                                 className="px-8 py-3 bg-indigo-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-indigo-500/20 hover:bg-indigo-700 transition-all"
                             >
-                                Salvar Alterações
+                                {t('management.master.scheduling.editModal.actions.save')}
                             </button>
                         </div>
                     </motion.div>

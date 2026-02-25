@@ -13,6 +13,8 @@ import { useRouter } from 'next/navigation';
 import { AuthModal } from '@/components/auth-modal';
 import { createMasterClient } from '@/lib/supabase/master';
 import { UserMenu } from '@/components/ui/user-menu';
+import { useTranslation } from '@/contexts/language-context';
+import { LanguageSelector } from '@/components/ui/language-selector';
 
 const Logo = () => (
     <div className="bg-indigo-600/10 p-2 rounded-lg flex items-center justify-center text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400">
@@ -21,6 +23,7 @@ const Logo = () => (
 );
 
 export default function ScriptorLanding() {
+    const { t } = useTranslation();
     const { theme, setTheme, resolvedTheme } = useTheme();
     const router = useRouter();
     const [mounted, setMounted] = useState(false);
@@ -73,24 +76,25 @@ export default function ScriptorLanding() {
                     </div>
 
                     <div className="hidden md:flex items-center gap-8">
-                        <Link href="/" className="text-base font-bold text-branding-gradient hover:opacity-80 transition-all">Portal</Link>
-                        <a href="#top" className="text-sm font-bold text-slate-800 dark:text-white">Início</a>
-                        <a href="#vision" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">Visão</a>
-                        <a href="#features" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">Funcionalidades</a>
-                        <a href="#ux" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">Diferencial</a>
+                        <Link href="/" className="text-base font-bold text-branding-gradient hover:opacity-80 transition-all">{t('pricingPage.nav.portal')}</Link>
+                        <a href="#top" className="text-sm font-bold text-slate-800 dark:text-white">{t('landingPages.scriptor.nav.home')}</a>
+                        <a href="#vision" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">{t('landingPages.scriptor.nav.vision')}</a>
+                        <a href="#features" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">{t('landingPages.scriptor.nav.features')}</a>
+                        <a href="#ux" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">{t('landingPages.scriptor.nav.ux')}</a>
                     </div>
 
                     <div className="flex items-center gap-4">
                         <button onClick={toggleTheme} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all text-slate-600 dark:text-slate-400">
                             {resolvedTheme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
                         </button>
+                        <LanguageSelector />
                         {currentUser === undefined ? (
                             <div className="w-24 h-10 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl" />
                         ) : currentUser ? (
                             <UserMenu user={currentUser} supabase={createMasterClient()} />
                         ) : hasAccess ? (
                             <Link href="/?login=true" className="hidden sm:flex items-center gap-2 font-bold px-4 py-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all">
-                                <LogOut size={18} /> Entrar
+                                <LogOut size={18} /> {t('nav.login')}
                             </Link>
                         ) : null}
                         {(hasAccess || currentUser) && (
@@ -98,7 +102,7 @@ export default function ScriptorLanding() {
                                 onClick={() => setIsAuthModalOpen(true)}
                                 className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold shadow-xl shadow-indigo-600/20 hover:scale-105 transition-all text-sm"
                             >
-                                Teste Grátis
+                                {t('landingPages.scriptor.hero.cta1')}
                             </button>
                         )}
                     </div>
@@ -110,15 +114,18 @@ export default function ScriptorLanding() {
                 <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16 relative z-10">
                     <div className="flex-1 text-left">
                         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-xs font-black uppercase tracking-widest mb-8 animate-fade-in">
-                            <Sparkles size={14} className="animate-pulse" /> IA Documental Generativa
+                            <Sparkles size={14} className="animate-pulse" /> {t('landingPages.scriptor.hero.badge')}
                         </div>
                         <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-8 leading-[1.05] text-slate-900 dark:text-white">
-                            A inteligência que <br />
-                            <span className="text-branding-gradient">redige, revisa</span> e <br />
-                            protege.
+                            {t('landingPages.scriptor.hero.title').split(' ').map((word: string, i: number, arr: string[]) => {
+                                if (word.toLowerCase() === 'redige,' || word.toLowerCase() === 'revisa' || word.toLowerCase() === 'drafts,' || word.toLowerCase() === 'reviews,') {
+                                    return <React.Fragment key={i}><span className="text-branding-gradient">{word}</span> </React.Fragment>
+                                }
+                                return word + ' '
+                            })}
                         </h1>
                         <p className="text-xl text-slate-500 dark:text-slate-400 max-w-xl mb-12 leading-relaxed font-medium">
-                            O fim da "Síndrome da Página em Branco". Transforme horas de redação e revisão em minutos com seu co-piloto jurídico alimentado por IA.
+                            {t('landingPages.scriptor.hero.subtitle')}
                         </p>
                         <div className="flex flex-col sm:flex-row items-center gap-4">
                             {(hasAccess || currentUser) && (
@@ -126,11 +133,11 @@ export default function ScriptorLanding() {
                                     onClick={() => setIsAuthModalOpen(true)}
                                     className="w-full sm:w-auto bg-indigo-600 text-white px-10 py-4 rounded-[1.5rem] font-bold text-lg shadow-2xl shadow-indigo-600/40 hover:scale-105 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
                                 >
-                                    Começar Teste Grátis <ArrowRight size={20} />
+                                    {t('landingPages.scriptor.hero.cta1')} <ArrowRight size={20} />
                                 </button>
                             )}
                             <a href="#vision" className="w-full sm:w-auto px-10 py-4 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 font-bold text-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-center text-slate-600 dark:text-slate-300">
-                                Saiba mais
+                                {t('landingPages.scriptor.hero.cta2')}
                             </a>
                         </div>
                     </div>
@@ -145,7 +152,7 @@ export default function ScriptorLanding() {
                                         <div className="w-3 h-3 rounded-full bg-slate-200 dark:bg-slate-800" />
                                         <div className="w-3 h-3 rounded-full bg-slate-200 dark:bg-slate-800" />
                                     </div>
-                                    <div className="text-[10px] font-black tracking-widest text-slate-300 uppercase">Scriptor PRO Editor</div>
+                                    <div className="text-[10px] font-black tracking-widest text-slate-300 uppercase">{t('landingPages.scriptor.mockup.title')}</div>
                                     <div className="w-3" />
                                 </div>
                                 <div className="p-10 flex-1 bg-white dark:bg-slate-950 space-y-6">
@@ -159,14 +166,14 @@ export default function ScriptorLanding() {
                                     <div className="bg-indigo-600/5 dark:bg-indigo-500/10 border border-indigo-600/20 rounded-2xl p-6 relative group">
                                         <div className="flex items-center gap-2 mb-3">
                                             <Sparkles size={14} className="text-indigo-600 animate-pulse" />
-                                            <span className="text-[10px] font-black uppercase text-indigo-600 tracking-wider">IA Co-piloto sugerindo...</span>
+                                            <span className="text-[10px] font-black uppercase text-indigo-600 tracking-wider">{t('landingPages.scriptor.mockup.pilot')}</span>
                                         </div>
                                         <div className="space-y-2">
                                             <div className="h-3 w-full bg-indigo-600/10 rounded animate-pulse" />
                                             <div className="h-3 w-2/3 bg-indigo-600/10 rounded animate-pulse" />
                                         </div>
                                         <div className="absolute -right-4 -bottom-4 bg-indigo-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
-                                            TAB p/ Aceitar
+                                            {t('landingPages.scriptor.mockup.accept')}
                                         </div>
                                     </div>
                                 </div>
@@ -189,10 +196,10 @@ export default function ScriptorLanding() {
                     <div className="flex flex-col lg:flex-row items-center gap-16">
                         <div className="flex-1 grid grid-cols-2 gap-4">
                             {[
-                                { label: 'Tempo de Redação', val: '-80%', color: 'text-indigo-600', icon: Zap },
-                                { label: 'Cláusulas Abusivas', val: '142', color: 'text-rose-500', icon: AlertTriangle },
-                                { label: 'Assinaturas Hoje', val: '15', color: 'text-emerald-500', icon: CheckCircle2 },
-                                { label: 'Pesquisa Global', val: 'ms', color: 'text-slate-500', icon: Search }
+                                { label: t('landingPages.scriptor.stats.drafting'), val: '-80%', color: 'text-indigo-600', icon: Zap },
+                                { label: t('landingPages.scriptor.stats.clauses'), val: '142', color: 'text-rose-500', icon: AlertTriangle },
+                                { label: t('landingPages.scriptor.stats.signatures'), val: '15', color: 'text-emerald-500', icon: CheckCircle2 },
+                                { label: t('landingPages.scriptor.stats.search'), val: 'ms', color: 'text-slate-500', icon: Search }
                             ].map((stat, i) => (
                                 <div key={i} className="bg-white dark:bg-slate-900 p-8 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none hover:scale-105 transition-transform group">
                                     <div className={`w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform ${stat.color}`}>
@@ -205,14 +212,17 @@ export default function ScriptorLanding() {
                         </div>
                         <div className="flex-1 space-y-8 text-left">
                             <h2 className="text-4xl md:text-5xl font-black leading-tight tracking-tighter text-slate-900 dark:text-white uppercase">
-                                Mais do que um editor. <br />
-                                Uma <span className="text-branding-gradient">mente jurídica</span> ao seu lado.
+                                {t('landingPages.scriptor.vision.title').split(' ').map((word: string, i: number) => (
+                                    <React.Fragment key={i}>
+                                        {word.toLowerCase() === 'mente' || word.toLowerCase() === 'jurídica' || word.toLowerCase() === 'legal' || word.toLowerCase() === 'mind' ? <span className="text-branding-gradient">{word}</span> : word}{' '}
+                                    </React.Fragment>
+                                ))}
                             </h2>
                             <p className="text-xl text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
-                                O Scriptor PRO não substitui a sua estratégia, ele a potencializa. Desenvolvemos um ecossistema documental inteligente que lê, compreende o contexto e sugere as melhores práticas jurídicas.
+                                {t('landingPages.scriptor.vision.desc1')}
                             </p>
                             <p className="text-lg text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
-                                Concentre sua energia no intelecto da tese, enquanto nossos algoritmos cuidam da formatação, da revisão e da caça aos riscos ocultos.
+                                {t('landingPages.scriptor.vision.desc2')}
                             </p>
                         </div>
                     </div>
@@ -223,34 +233,34 @@ export default function ScriptorLanding() {
             <section id="features" className="py-32 px-6">
                 <div className="max-w-7xl mx-auto">
                     <div className="text-center mb-20 max-w-3xl mx-auto">
-                        <span className="text-indigo-600 dark:text-indigo-400 font-black tracking-[0.2em] uppercase text-sm">Tecnologia Documental</span>
-                        <h2 className="text-5xl font-black mt-4 text-slate-900 dark:text-white uppercase tracking-tighter">Funcionalidades de Elite</h2>
-                        <p className="text-xl text-slate-500 dark:text-slate-400 mt-4 leading-relaxed font-medium">Ferramentas criadas para bancas e departamentos que exigem produtividade máxima.</p>
+                        <span className="text-indigo-600 dark:text-indigo-400 font-black tracking-[0.2em] uppercase text-sm">{t('landingPages.scriptor.features.category')}</span>
+                        <h2 className="text-5xl font-black mt-4 text-slate-900 dark:text-white uppercase tracking-tighter">{t('landingPages.scriptor.features.title')}</h2>
+                        <p className="text-xl text-slate-500 dark:text-slate-400 mt-4 leading-relaxed font-medium">{t('landingPages.scriptor.features.subtitle')}</p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                         {[
                             {
-                                title: 'Gerador de Peças e Contratos (IA)',
-                                desc: 'Acelere a sua produção. Nossa IA analisa o contexto do seu caso e redige minutas, contestações e contratos automaticamente.',
+                                title: t('landingPages.scriptor.features.items.generator.title'),
+                                desc: t('landingPages.scriptor.features.items.generator.desc'),
                                 icon: Sparkles,
                                 color: 'bg-indigo-500/10 text-indigo-500'
                             },
                             {
-                                title: 'Auditoria de Risco em Contratos (IA)',
-                                desc: 'Nunca mais deixe uma "pegadinha" passar despercebida. Identifique instantaneamente cláusulas abusivas e pontos de atenção.',
+                                title: t('landingPages.scriptor.features.items.auditor.title'),
+                                desc: t('landingPages.scriptor.features.items.auditor.desc'),
                                 icon: ShieldCheck,
                                 color: 'bg-rose-500/10 text-rose-500'
                             },
                             {
-                                title: 'Repositório Inteligente (GED)',
-                                desc: 'O fim das pastas perdidas. Armazene modelos e arquivos em um cofre digital seguro com total conformidade com a LGPD.',
+                                title: t('landingPages.scriptor.features.items.repository.title'),
+                                desc: t('landingPages.scriptor.features.items.repository.desc'),
                                 icon: Cloud,
                                 color: 'bg-emerald-500/10 text-emerald-500'
                             },
                             {
-                                title: 'Assinatura Digital Nativa',
-                                desc: 'Feche negócios sem plataformas terceiras. Envie documentos para assinatura pelo celular com validade jurídica garantida.',
+                                title: t('landingPages.scriptor.features.items.signature.title'),
+                                desc: t('landingPages.scriptor.features.items.signature.desc'),
                                 icon: FileText,
                                 color: 'bg-violet-500/10 text-violet-500'
                             }
@@ -264,7 +274,7 @@ export default function ScriptorLanding() {
                                     {f.desc}
                                 </p>
                                 <button className="text-sm font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-2 hover:gap-3 transition-all">
-                                    Saiba mais <ChevronRight size={16} />
+                                    {t('landingPages.scriptor.features.cta')} <ChevronRight size={16} />
                                 </button>
                             </div>
                         ))}
@@ -277,17 +287,20 @@ export default function ScriptorLanding() {
                 <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-20 relative z-10">
                     <div className="flex-1 space-y-10">
                         <h2 className="text-5xl md:text-6xl font-black leading-tight tracking-tighter uppercase mb-6">
-                            Seu ambiente de <br />
-                            <span className="text-branding-gradient">foco absoluto.</span>
+                            {t('landingPages.scriptor.ux.title').split(' ').map((word: string, i: number) => (
+                                <React.Fragment key={i}>
+                                    {word.toLowerCase() === 'foco' || word.toLowerCase() === 'absoluto.' || word.toLowerCase() === 'absolute' || word.toLowerCase() === 'focus.' ? <span className="text-branding-gradient">{word}</span> : word}{' '}
+                                </React.Fragment>
+                            ))}
                         </h2>
                         <p className="text-xl text-slate-300 leading-relaxed font-medium">
-                            A tecnologia só é boa quando não atrapalha. Projetamos o SCRIPTOR PRO com um design minimalista para proteger a sua concentração. Mantenha-se no Flow do início ao fim da sua redação.
+                            {t('landingPages.scriptor.ux.subtitle')}
                         </p>
                         <div className="space-y-6">
                             {[
-                                { title: 'IA Contextual', desc: 'Ela sugere, você aprova. O controle é sempre seu.', icon: Sparkles },
-                                { title: 'Versionamento Seguro', desc: 'Restaure versões anteriores com um clique.', icon: History },
-                                { title: 'Busca Global', desc: 'Encontre palavras em milhares de PDFs em milissegundos.', icon: Search }
+                                { title: t('landingPages.scriptor.ux.items.contextual.title'), desc: t('landingPages.scriptor.ux.items.contextual.desc'), icon: Sparkles },
+                                { title: t('landingPages.scriptor.ux.items.versioning.title'), desc: t('landingPages.scriptor.ux.items.versioning.desc'), icon: History },
+                                { title: t('landingPages.scriptor.ux.items.search.title'), desc: t('landingPages.scriptor.ux.items.search.desc'), icon: Search }
                             ].map((item, i) => (
                                 <div key={i} className="flex gap-4 items-start p-6 bg-white/5 rounded-3xl border border-white/10 hover:bg-white/10 transition-colors">
                                     <item.icon className="text-indigo-400 shrink-0 mt-1" size={24} />
@@ -335,10 +348,14 @@ export default function ScriptorLanding() {
             <section className="py-32 px-6 text-center">
                 <div className="max-w-4xl mx-auto">
                     <h2 className="text-5xl md:text-6xl font-black mb-8 text-slate-900 dark:text-white leading-tight">
-                        Pronto para multiplicar a sua <span className="text-branding-gradient">capacidade de produção?</span>
+                        {t('landingPages.scriptor.finalCta.title').split(' ').map((word: string, i: number) => (
+                            <React.Fragment key={i}>
+                                {word.toLowerCase() === 'capacidade' || word.toLowerCase() === 'produção?' || word.toLowerCase() === 'production' || word.toLowerCase() === 'capacity?' ? <span className="text-branding-gradient">{word}</span> : word}{' '}
+                            </React.Fragment>
+                        ))}
                     </h2>
                     <p className="text-xl text-slate-500 dark:text-slate-400 mb-12 leading-relaxed max-w-2xl mx-auto font-medium">
-                        Seja operando sozinho como um Super ChatGPT Jurídico ou integrado perfeitamente ao Ecossistema Veritum, o Scriptor PRO é a vantagem injusta do seu escritório.
+                        {t('landingPages.scriptor.finalCta.subtitle')}
                     </p>
                     {(hasAccess || currentUser) && (
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
@@ -346,18 +363,18 @@ export default function ScriptorLanding() {
                                 onClick={() => setIsAuthModalOpen(true)}
                                 className="w-full sm:w-auto bg-indigo-600 text-white px-12 py-5 rounded-[2.5rem] font-black text-xl shadow-2xl shadow-indigo-600/40 hover:scale-105 hover:bg-indigo-700 transition-all cursor-pointer"
                             >
-                                Começar Agora - É Grátis
+                                {t('landingPages.scriptor.finalCta.button1')}
                             </button>
                             <Link
                                 href="/pricing"
                                 className="w-full sm:w-auto px-12 py-5 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 font-bold text-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
                             >
-                                Ver Planos de Assinatura
+                                {t('landingPages.scriptor.finalCta.button2')}
                             </Link>
                         </div>
                     )}
                     <p className="mt-8 text-sm text-slate-400 font-bold uppercase tracking-widest">
-                        Sem cartão de crédito • Configuração rápida
+                        {t('landingPages.scriptor.finalCta.footer')}
                     </p>
                 </div>
             </section>
@@ -374,7 +391,7 @@ export default function ScriptorLanding() {
                                 </span>
                             </div>
                             <p className="text-slate-500 dark:text-slate-400 font-medium max-w-xs text-center md:text-left">
-                                A tecnologia de quem advoga no estado da arte.
+                                {t('landingPages.scriptor.footer.slogan')}
                             </p>
                         </div>
 

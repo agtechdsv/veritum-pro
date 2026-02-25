@@ -6,12 +6,31 @@ import { User, AccessGroup, ModuleId, Role } from '@/types';
 import { createMasterClient } from '@/lib/supabase/master';
 import { createUserDirectly, updateUserDirectly, deleteUserDirectly } from '@/app/actions/user-actions';
 import { toast } from '../ui/toast';
+import { useTranslation } from '@/contexts/language-context';
 
 interface Props {
     currentUser: User;
 }
 
 const UserManagement: React.FC<Props> = ({ currentUser }) => {
+    const { t } = useTranslation();
+
+    const getRoleTranslation = (roleName: string) => {
+        if (!roleName) return '';
+        const lowerRole = roleName.toLowerCase();
+        if (lowerRole.includes('master')) return t('management.users.roles.master');
+        if (lowerRole.includes('administrador') || lowerRole.includes('admin')) {
+            if (lowerRole.includes('sócio')) return t('management.users.roles.partnerAdmin');
+            return t('management.users.roles.admin');
+        }
+        if (lowerRole.includes('operador')) return t('management.users.roles.operator');
+        if (lowerRole.includes('estagiário')) return t('management.users.roles.intern');
+        if (lowerRole.includes('paralegal')) return t('management.users.roles.paralegal');
+        if (lowerRole.includes('sênior')) return t('management.users.roles.senior');
+        if (lowerRole.includes('coordenador')) return t('management.users.roles.coordinator');
+        if (lowerRole.includes('financeiro')) return t('management.users.roles.financial');
+        return roleName;
+    };
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [showAddModal, setShowAddModal] = useState(false);
@@ -234,11 +253,11 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                 .in('id', selectedUserIds);
 
             if (error) throw error;
-            toast.success(`${selectedUserIds.length} usuários ${active ? 'ativados' : 'desativados'} com sucesso.`);
+            toast.success(t('management.users.toast.bulkStatusSuccess', { count: selectedUserIds.length, status: active ? t('management.users.active').toLowerCase() : t('management.users.inactive').toLowerCase() }));
             setSelectedUserIds([]);
             fetchUsers();
         } catch (err: any) {
-            toast.error('Erro ao processar ação em massa.');
+            toast.error(t('management.users.toast.bulkError'));
         } finally {
             setBulkLoading(false);
         }
@@ -246,18 +265,18 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
 
     const handleBulkDelete = async () => {
         if (selectedUserIds.length === 0) return;
-        if (!confirm(`Tem certeza que deseja excluir ${selectedUserIds.length} usuários? Esta ação é irreversível.`)) return;
+        if (!confirm(t('management.users.bulk.confirmDelete', { count: selectedUserIds.length }))) return;
 
         setBulkLoading(true);
         try {
             const deletePromises = selectedUserIds.map(id => deleteUserDirectly(id));
             await Promise.all(deletePromises);
 
-            toast.success(`${selectedUserIds.length} usuários removidos com sucesso.`);
+            toast.success(t('management.users.toast.bulkDeleteSuccess', { count: selectedUserIds.length }));
             setSelectedUserIds([]);
             fetchUsers();
         } catch (err: any) {
-            toast.error('Erro ao excluir usuários.');
+            toast.error(t('management.users.toast.bulkError'));
         } finally {
             setBulkLoading(false);
         }
@@ -272,12 +291,12 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
         e.preventDefault();
 
         if (!isSuperAdmin) {
-            toast.error('Apenas usuários do grupo Sócio-Administrativo podem cadastrar novos integrantes.');
+            toast.error(t('management.users.toast.superAdminOnly'));
             return;
         }
 
         if (currentUser.role === 'Operador' && formData.role === 'Administrador') {
-            toast.error('Operadores não podem atribuir nível Admin.');
+            toast.error(t('management.users.toast.operatorRestriction'));
             return;
         }
 
@@ -285,19 +304,19 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
             if (editingUser) {
                 // Check if user is allowed to edit this specific user
                 if (!isSuperAdmin && editingUser.id !== currentUser.id) {
-                    toast.error('Você só pode editar o seu próprio perfil.');
+                    toast.error(t('management.users.toast.selfEditOnly'));
                     return;
                 }
                 const result = await updateUserDirectly(editingUser.id, formData);
                 if (!result.success) throw new Error(result.error);
-                toast.success('Usuário atualizado com sucesso!');
+                toast.success(t('management.users.toast.successEdit'));
             } else {
                 const parentUserId = currentUser.role === 'Master' ? selectedClientId : (currentUser.parent_user_id || currentUser.id);
                 // When Master assigns to another Master account, make sure we aren't creating a cyclic loop
                 const finalParentUserId = parentUserId === currentUser.id && formData.role === 'Master' ? null : parentUserId;
                 const result = await createUserDirectly(formData, finalParentUserId as string);
                 if (!result.success) throw new Error(result.error);
-                toast.success('Usuário cadastrado com sucesso!');
+                toast.success(t('management.users.toast.successAdd'));
             }
 
             setShowAddModal(false);
@@ -305,7 +324,7 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
             fetchUsers();
             setFormData({ name: '', email: '', username: '', password: '', role: 'Operador', plan_id: '', access_group_id: '' });
         } catch (err: any) {
-            toast.error(err.message || 'Erro ao processar usuário');
+            toast.error(err.message || t('management.users.toast.errorProcess'));
         }
     };
 
@@ -317,17 +336,17 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                 .eq('id', user.id);
 
             if (error) throw error;
-            toast.success(`Usuário ${user.active ? 'desativado' : 'ativado'} com sucesso!`);
+            toast.success(t('management.users.toast.statusSuccess', { status: user.active ? t('management.users.inactive').toLowerCase() : t('management.users.active').toLowerCase() }));
             fetchUsers();
         } catch (err: any) {
-            toast.error('Erro ao alterar status');
+            toast.error(t('management.users.toast.errorProcess'));
         }
     };
 
     const handleDeleteUser = async () => {
         if (!userToDelete) return;
         if (!isSuperAdmin) {
-            toast.error('Ação não autorizada.');
+            toast.error(t('management.users.toast.unauthorized'));
             return;
         }
         try {
@@ -335,10 +354,10 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
             if (!result.success) throw new Error(result.error);
 
             fetchUsers();
-            toast.success('Usuário removido com sucesso.');
+            toast.success(t('management.users.toast.successDelete'));
             setUserToDelete(null);
         } catch (err: any) {
-            toast.error(err.message || 'Erro ao excluir usuário.');
+            toast.error(err.message || t('management.users.toast.deleteError'));
         }
     };
 
@@ -360,8 +379,8 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
         <div className="space-y-8 animate-in fade-in duration-700">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Gestão de Usuários</h1>
-                    <p className="text-slate-500 dark:text-slate-400 font-medium tracking-tight uppercase text-xs">Administre quem acessa seu ecossistema.</p>
+                    <h1 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">{t('management.users.title')}</h1>
+                    <p className="text-slate-500 dark:text-slate-400 font-medium tracking-tight uppercase text-xs">{t('management.users.subtitle')}</p>
                 </div>
                 <div className="flex items-center gap-4">
                     {currentUser.role === 'Master' && (
@@ -373,8 +392,8 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                     value={selectedClientId}
                                     onChange={e => setSelectedClientId(e.target.value)}
                                 >
-                                    <option value={currentUser.id}>Master (Meus Usuários)</option>
-                                    <optgroup label="Sócio-Administradores Privados">
+                                    <option value={currentUser.id}>{t('management.users.masterFilter.self')}</option>
+                                    <optgroup label={t('management.users.masterFilter.clients')}>
                                         {clients.map(c => (
                                             <option key={c.id} value={c.id}>🏢 {c.name} ({c.username})</option>
                                         ))}
@@ -393,7 +412,7 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                             }}
                             className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold shadow-xl shadow-indigo-600/20 hover:scale-105 transition-all flex items-center gap-2 cursor-pointer"
                         >
-                            <UserPlus size={20} /> Novo Usuário
+                            <UserPlus size={20} /> {t('management.users.newUser')}
                         </button>
                     )}
                 </div>
@@ -402,11 +421,11 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
             {/* Filters */}
             <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-wrap gap-6 items-end">
                 <div className="flex-1 min-w-[300px] space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Buscar Integrante</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">{t('management.users.searchLabel')}</label>
                     <div className="relative">
                         <Mail className="absolute left-5 top-4.5 text-slate-300" size={18} />
                         <input
-                            placeholder="Nome ou e-mail..."
+                            placeholder={t('management.users.searchPlaceholder')}
                             className="w-full pl-14 pr-4 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all"
                             value={filters.search}
                             onChange={e => setFilters({ ...filters, search: e.target.value })}
@@ -415,30 +434,30 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                 </div>
 
                 <div className="w-44 space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Role/Nível</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">{t('management.users.roleLabel')}</label>
                     <select
                         className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-indigo-600 outline-none appearance-none cursor-pointer capitalize"
                         value={filters.role}
                         onChange={e => setFilters({ ...filters, role: e.target.value })}
                     >
-                        <option value="all">Todos</option>
-                        <option value="Master">Master</option>
-                        <option value="Administrador">Administrador</option>
-                        <option value="Operador">Operador</option>
-                        <option value="Estagiário">Estagiário</option>
+                        <option value="all">{t('management.users.allRoles')}</option>
+                        <option value="Master">{t('management.users.roles.master')}</option>
+                        <option value="Administrador">{t('management.users.roles.admin')}</option>
+                        <option value="Operador">{t('management.users.roles.operator')}</option>
+                        <option value="Estagiário">{t('management.users.roles.intern')}</option>
                     </select>
                 </div>
 
                 <div className="w-44 space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Status</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">{t('management.users.statusLabel')}</label>
                     <select
                         className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-indigo-600 outline-none appearance-none cursor-pointer"
                         value={filters.status}
                         onChange={e => setFilters({ ...filters, status: e.target.value })}
                     >
-                        <option value="all">Filtro Status</option>
-                        <option value="active">Ativos</option>
-                        <option value="inactive">Inativos</option>
+                        <option value="all">{t('management.users.statusLabel')}</option>
+                        <option value="active">{t('management.users.active')}</option>
+                        <option value="inactive">{t('management.users.inactive')}</option>
                     </select>
                 </div>
             </div>
@@ -449,13 +468,13 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                     <div className="bg-indigo-600 text-white p-6 rounded-3xl flex items-center justify-between shadow-2xl animate-in slide-in-from-bottom-6 group">
                         <div className="flex items-center gap-4 ml-4">
                             <CheckSquare className="text-indigo-200" size={24} />
-                            <span className="font-black text-lg uppercase tracking-tight">{selectedUserIds.length} selecionados</span>
+                            <span className="font-black text-lg uppercase tracking-tight">{t('management.users.bulk.selected', { count: selectedUserIds.length })}</span>
                         </div>
                         <div className="flex items-center gap-3">
-                            <button onClick={() => handleBulkStatus(true)} className="px-5 py-3 bg-white/10 hover:bg-white/20 rounded-xl text-[10px] font-black uppercase transition-all">Ativar</button>
-                            <button onClick={() => handleBulkStatus(false)} className="px-5 py-3 bg-white/10 hover:bg-white/20 rounded-xl text-[10px] font-black uppercase transition-all">Desativar</button>
+                            <button onClick={() => handleBulkStatus(true)} className="px-5 py-3 bg-white/10 hover:bg-white/20 rounded-xl text-[10px] font-black uppercase transition-all">{t('management.users.bulk.activate')}</button>
+                            <button onClick={() => handleBulkStatus(false)} className="px-5 py-3 bg-white/10 hover:bg-white/20 rounded-xl text-[10px] font-black uppercase transition-all">{t('management.users.bulk.deactivate')}</button>
                             <button onClick={handleBulkDelete} className="px-5 py-3 bg-rose-500 hover:bg-rose-600 rounded-xl text-[10px] font-black uppercase transition-all flex items-center gap-2">
-                                <Trash2 size={16} /> Excluir
+                                <Trash2 size={16} /> {t('management.users.bulk.delete')}
                             </button>
                         </div>
                     </div>
@@ -476,20 +495,20 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                             </th>
                             <th className="px-4 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer group" onClick={() => handleSort('name')}>
                                 <div className="flex items-center gap-1 group-hover:text-indigo-600 transition-colors uppercase">
-                                    Integrante {sortConfig?.key === 'name' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                                    {t('management.users.table.member')} {sortConfig?.key === 'name' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                                 </div>
                             </th>
-                            <th className="px-4 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Grupo de Acesso</th>
-                            <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center" onClick={() => handleSort('role')}>Role</th>
-                            <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Status</th>
-                            <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Controles</th>
+                            <th className="px-4 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('management.users.table.accessGroup')}</th>
+                            <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center" onClick={() => handleSort('role')}>{t('management.users.table.role')}</th>
+                            <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">{t('management.users.table.status')}</th>
+                            <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">{t('management.users.table.controls')}</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
                         {loading ? (
-                            <tr><td colSpan={6} className="py-20 text-center text-slate-300 font-bold uppercase tracking-widest opacity-50">Sincronizando Ecossistema...</td></tr>
+                            <tr><td colSpan={6} className="py-20 text-center text-slate-300 font-bold uppercase tracking-widest opacity-50">{t('management.users.table.syncing')}</td></tr>
                         ) : paginatedUsers.length === 0 ? (
-                            <tr><td colSpan={6} className="py-20 text-center text-slate-400 font-bold italic opacity-30">Nenhum integrante encontrado.</td></tr>
+                            <tr><td colSpan={6} className="py-20 text-center text-slate-400 font-bold italic opacity-30">{t('management.users.table.noUser')}</td></tr>
                         ) : paginatedUsers.map(u => (
                             <tr key={u.id} className={`hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-all ${selectedUserIds.includes(u.id) ? 'bg-indigo-50/30 dark:bg-indigo-950/10' : ''}`}>
                                 <td className="px-8 py-6 text-center">
@@ -517,11 +536,11 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                         <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800 rounded-xl w-fit">
                                             <Shield size={12} className="text-indigo-600 dark:text-indigo-400" />
                                             <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase">
-                                                {accessGroups.find(g => g.id === u.access_group_id)?.name || (loading ? 'Carregando...' : 'Não Encontrado')}
+                                                {accessGroups.find(g => g.id === u.access_group_id)?.name || (loading ? t('common.loading') : 'Não Encontrado')}
                                             </span>
                                         </div>
                                     ) : (
-                                        <span className="text-[10px] text-slate-300 font-bold uppercase tracking-widest italic opacity-50">Sem Grupo</span>
+                                        <span className="text-[10px] text-slate-300 font-bold uppercase tracking-widest italic opacity-50">{t('management.users.table.noGroup')}</span>
                                     )}
                                 </td>
                                 <td className="px-8 py-6 text-center">
@@ -532,13 +551,13 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                                     u.role?.includes('Financeiro') ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40' :
                                                         'bg-slate-100 text-slate-500 dark:bg-slate-800'
                                         }`}>
-                                        {u.role}
+                                        {getRoleTranslation(u.role)}
                                     </span>
                                 </td>
                                 <td className="px-8 py-6 text-center">
                                     <div className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase inline-flex items-center gap-1.5 ${u.active ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20' : 'bg-slate-100 text-slate-400 dark:bg-slate-800'}`}>
                                         <div className={`w-1.5 h-1.5 rounded-full ${u.active ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
-                                        {u.active ? 'Ativo' : 'Inativo'}
+                                        {u.active ? t('management.users.active') : t('management.users.inactive')}
                                     </div>
                                 </td>
                                 <td className="px-8 py-6 text-right">
@@ -546,15 +565,15 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                         {isSuperAdmin || currentUser.id === u.id ? (
                                             <>
                                                 {isSuperAdmin && (
-                                                    <button onClick={() => handleToggleStatus(u)} className={`p-2 rounded-xl transition-all ${u.active ? 'text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20' : 'text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}`} title="Alternar Status"><Radio size={20} /></button>
+                                                    <button onClick={() => handleToggleStatus(u)} className={`p-2 rounded-xl transition-all ${u.active ? 'text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20' : 'text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}`} title={t('management.users.table.tooltips.toggleStatus')}><Radio size={20} /></button>
                                                 )}
-                                                <button onClick={() => openEditModal(u)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all" title="Editar"><FileEdit size={20} /></button>
+                                                <button onClick={() => openEditModal(u)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all" title={t('management.users.table.tooltips.edit')}><FileEdit size={20} /></button>
                                                 {currentUser.id !== u.id && isSuperAdmin && (
-                                                    <button onClick={() => setUserToDelete(u)} className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all" title="Excluir"><Trash2 size={20} /></button>
+                                                    <button onClick={() => setUserToDelete(u)} className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all" title={t('management.users.table.tooltips.delete')}><Trash2 size={20} /></button>
                                                 )}
                                             </>
                                         ) : (
-                                            <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest italic flex items-center justify-end px-2">Apenas Leitura</div>
+                                            <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest italic flex items-center justify-end px-2">{t('management.users.table.readOnly')}</div>
                                         )}
                                     </div>
                                 </td>
@@ -565,7 +584,7 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
 
                 {/* Pagination */}
                 <div className="bg-slate-50/50 dark:bg-slate-800/20 px-10 py-6 flex items-center justify-between border-t border-slate-100 dark:border-slate-800">
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Página {currentPage} de {totalPages || 1}</p>
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t('management.users.table.page', { current: currentPage, total: totalPages || 1 })}</p>
                     <div className="flex gap-2">
                         <button disabled={currentPage === 1} onClick={() => setCurrentPage(1)} className="p-2 text-slate-400 hover:text-indigo-600 disabled:opacity-20 transition-all"><ChevronsLeft size={20} /></button>
                         <button disabled={currentPage === 1} onClick={() => setCurrentPage(prev => prev - 1)} className="p-2 text-slate-400 hover:text-indigo-600 disabled:opacity-20 transition-all"><ChevronLeft size={20} /></button>
@@ -584,26 +603,26 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                 <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/40 rounded-[1.5rem] flex items-center justify-center text-indigo-600 dark:text-indigo-400 mx-auto mb-4">
                                     <UserPlus size={32} />
                                 </div>
-                                <h2 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">{editingUser ? 'Atualizar Dados' : 'Novo Integrante'}</h2>
-                                <p className="text-sm text-slate-500 font-medium uppercase tracking-tight">Configure as credenciais e o nível de acesso.</p>
+                                <h2 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">{editingUser ? t('management.users.modal.editTitle') : t('management.users.modal.addTitle')}</h2>
+                                <p className="text-sm text-slate-500 font-medium uppercase tracking-tight">{t('management.users.modal.subtitle')}</p>
                             </div>
 
                             <form onSubmit={handleSaveUser} className="space-y-5">
                                 <div className="relative">
                                     <UserIcon className="absolute left-5 top-5 text-slate-400" size={20} />
-                                    <input ref={nameRef} required placeholder="Nome Completo" className="w-full pl-14 pr-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl font-bold focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white shadow-sm" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                                    <input ref={nameRef} required placeholder={t('management.users.modal.name')} className="w-full pl-14 pr-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl font-bold focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white shadow-sm" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
                                 </div>
                                 <div className="relative">
                                     <Mail className="absolute left-5 top-5 text-slate-400" size={20} />
-                                    <input required type="email" placeholder="E-mail / Login" disabled={!!editingUser} className="w-full pl-14 pr-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl font-bold focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white shadow-sm disabled:opacity-50" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value, username: e.target.value })} />
+                                    <input required type="email" placeholder={t('management.users.modal.email')} disabled={!!editingUser} className="w-full pl-14 pr-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl font-bold focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white shadow-sm disabled:opacity-50" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value, username: e.target.value })} />
                                 </div>
                                 <div className="relative">
                                     <Lock className="absolute left-5 top-5 text-slate-400" size={20} />
-                                    <input required={!editingUser} type="password" placeholder={editingUser ? "Trocar Senha (Opcional)" : "Senha Inicial"} className="w-full pl-14 pr-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl font-bold focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white shadow-sm" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} />
+                                    <input required={!editingUser} type="password" placeholder={editingUser ? t('management.users.modal.passwordEdit') : t('management.users.modal.password')} className="w-full pl-14 pr-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl font-bold focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white shadow-sm" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} />
                                 </div>
 
                                 <div className="space-y-1.5 pb-2">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Cargo / Função Corporativa</label>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">{t('management.users.modal.role')}</label>
                                     <div className="relative">
                                         <Briefcase className="absolute left-5 top-5 text-slate-400" size={20} />
                                         <select
@@ -620,7 +639,7 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                                 });
                                             }}
                                         >
-                                            <option value="" disabled>Selecione um Cargo...</option>
+                                            <option value="" disabled>{t('management.users.modal.selectRole')}</option>
                                             {/* Dynamic groupings based on Access Groups */}
                                             {accessGroups.map(group => {
                                                 const groupRoles = roles.filter(r => r.access_group_id === group.id);
@@ -634,8 +653,8 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                                 );
                                             })}
                                             {currentUser?.role === 'Master' && (
-                                                <optgroup label="Sistema Global">
-                                                    <option value="Master">Super Master (Deus)</option>
+                                                <optgroup label={t('management.users.modal.globalSystem')}>
+                                                    <option value="Master">{t('management.users.modal.godMode')}</option>
                                                 </optgroup>
                                             )}
                                         </select>
@@ -643,22 +662,22 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                     </div>
                                     {!isSuperAdmin && editingUser && (
                                         <p className="text-[9px] font-black uppercase tracking-widest text-amber-500 mt-2 ml-2 italic">
-                                            Apenas administradores podem alterar cargos e permissões.
+                                            {t('management.users.modal.roleRestriction')}
                                         </p>
                                     )}
                                     {formData.access_group_id && formData.role !== 'Master' && (
                                         <div className="flex items-center gap-2 mt-3 ml-2 px-3 py-2 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800 rounded-xl w-fit animate-in fade-in slide-in-from-top-2">
                                             <Shield size={14} className="text-indigo-600 dark:text-indigo-400" />
                                             <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
-                                                Permissões herdadas do Grupo: {accessGroups.find(g => g.id === formData.access_group_id)?.name}
+                                                {t('management.users.modal.inherited', { name: accessGroups.find(g => g.id === formData.access_group_id)?.name })}
                                             </span>
                                         </div>
                                     )}
                                 </div>
 
                                 <div className="flex gap-4 pt-6">
-                                    <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 px-8 py-5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-[1.5rem] font-black uppercase tracking-widest hover:bg-slate-200 transition-all text-xs">Fechar</button>
-                                    <button type="submit" className="flex-[2] px-8 py-5 bg-indigo-600 text-white rounded-[1.5rem] font-black uppercase tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-600/30 transition-all text-xs">{editingUser ? 'Salvar Edição' : 'Finalizar Cadastro'}</button>
+                                    <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 px-8 py-5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-[1.5rem] font-black uppercase tracking-widest hover:bg-slate-200 transition-all text-xs">{t('management.users.modal.close')}</button>
+                                    <button type="submit" className="flex-[2] px-8 py-5 bg-indigo-600 text-white rounded-[1.5rem] font-black uppercase tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-600/30 transition-all text-xs">{editingUser ? t('management.users.modal.submitEdit') : t('management.users.modal.submitAdd')}</button>
                                 </div>
                             </form>
                         </div>
@@ -674,11 +693,11 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                             <div className="w-20 h-20 bg-rose-100 dark:bg-rose-900/30 rounded-3xl flex items-center justify-center text-rose-600 dark:text-rose-400 mx-auto mb-6">
                                 <ShieldAlert size={40} />
                             </div>
-                            <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-2 uppercase tracking-tighter">Excluir?</h2>
-                            <p className="text-sm text-slate-500 font-medium mb-10 leading-relaxed uppercase tracking-tight">Remover acesso de <span className="font-black text-slate-800 dark:text-white underline">{userToDelete.name}</span>?</p>
+                            <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-2 uppercase tracking-tighter">{t('management.users.delete.title')}</h2>
+                            <p className="text-sm text-slate-500 font-medium mb-10 leading-relaxed uppercase tracking-tight">{t('management.users.delete.message', { name: userToDelete.name })}</p>
                             <div className="flex flex-col gap-3">
-                                <button onClick={handleDeleteUser} className="w-full bg-rose-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-rose-600/20 hover:bg-rose-700 transition-all text-xs">Sim, Remover Acesso</button>
-                                <button onClick={() => setUserToDelete(null)} className="w-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-200 transition-all text-xs">Cancelar</button>
+                                <button onClick={handleDeleteUser} className="w-full bg-rose-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-rose-600/20 hover:bg-rose-700 transition-all text-xs">{t('management.users.delete.confirm')}</button>
+                                <button onClick={() => setUserToDelete(null)} className="w-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-200 transition-all text-xs">{t('management.users.delete.cancel')}</button>
                             </div>
                         </div>
                     </div>

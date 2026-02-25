@@ -25,10 +25,12 @@ import { EmailSettingsManager } from '@/components/modules/email-config';
 import { ModuleId } from '@/types';
 import { BASE_SUITE_ITEMS } from '@/utils/module-meta';
 import { GitBranch, FileEdit, DollarSign, BarChart3, MessageSquare, ShieldAlert, Users, Settings, Crown, Calendar as CalendarIcon, Mail, Shield, Zap, User as UserIcon } from 'lucide-react';
+import { useTranslation } from '@/contexts/language-context';
 
 export default function DynamicModulePage() {
     const { module } = useParams();
     const { user, preferences, planPermissions, credentials, onUpdateUser, onUpdatePrefs, onModuleChange, activeSuites, groupPermissions, allFeatures } = useModule();
+    const { t } = useTranslation();
 
     if (!user || !preferences) return null;
 
@@ -121,9 +123,9 @@ export default function DynamicModulePage() {
         }).map(bs => ({ ...bs, isLocked: false }));
 
     const adminItems = [
-        { id: ModuleId.USERS, label: 'Gestão de Usuários', icon: Users, color: 'text-slate-500' },
-        { id: ModuleId.ACCESS_GROUPS, label: 'Grupos de Acesso', icon: Shield, color: 'text-indigo-600' },
-        { id: ModuleId.SETTINGS, label: 'Configurações', icon: Settings, color: 'text-slate-500' },
+        { id: ModuleId.USERS, label: t('management.users.title'), icon: Users, color: 'text-slate-500' },
+        { id: ModuleId.ACCESS_GROUPS, label: t('management.accessGroups.title'), icon: Shield, color: 'text-indigo-600' },
+        { id: ModuleId.SETTINGS, label: t('management.settings.title'), icon: Settings, color: 'text-slate-500' },
     ];
 
     const filteredAdminItems = adminItems.filter(item => {
@@ -134,12 +136,12 @@ export default function DynamicModulePage() {
     });
 
     const masterItems = [
-        { id: ModuleId.SUITES, label: 'Gestão de Módulos', icon: Crown, color: 'text-amber-500' },
-        { id: ModuleId.PLANS, label: 'Gestão de Planos', icon: DollarSign, color: 'text-indigo-500' },
-        { id: ModuleId.SCHEDULING, label: 'Agendamentos', icon: CalendarIcon, color: 'text-rose-500' },
-        { id: ModuleId.EMAIL_CONFIG, label: 'Gestão de E-mails', icon: Mail, color: 'text-cyan-500' },
-        { id: ModuleId.TEAM, label: 'Gestão de Equipe', icon: Users, color: 'text-indigo-600' },
-        { id: ModuleId.PERSONS, label: 'CRM de Clientes', icon: UserIcon, color: 'text-emerald-600' },
+        { id: ModuleId.SUITES, label: t('management.master.modules.title'), icon: Crown, color: 'text-amber-500' },
+        { id: ModuleId.PLANS, label: t('management.master.plans.title'), icon: DollarSign, color: 'text-indigo-500' },
+        { id: ModuleId.SCHEDULING, label: t('management.master.scheduling.title'), icon: CalendarIcon, color: 'text-rose-500' },
+        { id: ModuleId.EMAIL_CONFIG, label: t('management.master.email.title'), icon: Mail, color: 'text-cyan-500' },
+        { id: ModuleId.TEAM, label: t('management.master.team.title'), icon: Users, color: 'text-indigo-600' },
+        { id: ModuleId.PERSONS, label: t('management.master.crm.title'), icon: UserIcon, color: 'text-emerald-600' },
     ];
 
     switch (moduleToRender) {
@@ -166,8 +168,8 @@ export default function DynamicModulePage() {
             return (
                 <div className="flex flex-col items-center justify-center h-full text-slate-400">
                     <div className="p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-xl text-center">
-                        <h3 className="text-2xl font-bold mb-2 text-slate-800 dark:text-white">Módulo {moduleToRender}</h3>
-                        <p>Este módulo não foi encontrado ou está em manutenção.</p>
+                        <h3 className="text-2xl font-bold mb-2 text-slate-800 dark:text-white">{t('modules.notInPlan')}</h3>
+                        <p>{t('common.error')}: {moduleToRender}</p>
                     </div>
                 </div>
             );

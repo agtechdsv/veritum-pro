@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { createMasterClient } from '@/lib/supabase/master'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { registerPublicUser, resetTemporaryPassword } from '@/app/actions/user-actions';
+import { useTranslation } from '@/contexts/language-context';
 
 interface Props {
     isOpen: boolean;
@@ -20,7 +21,7 @@ const Logo = () => (
     </div>
 );
 
-const PasswordStrength = ({ password }: { password: string }) => {
+const PasswordStrength = ({ password, t }: { password: string, t: any }) => {
     const checks = {
         length: password.length >= 6,
         upper: /[A-Z]/.test(password),
@@ -32,11 +33,11 @@ const PasswordStrength = ({ password }: { password: string }) => {
     const strength = Object.values(checks).filter(Boolean).length;
 
     const getStrengthLabel = () => {
-        if (!password) return { label: 'AUSENTE', color: 'text-slate-500' };
-        if (strength <= 2) return { label: 'MUITO FRACA', color: 'text-rose-500' };
-        if (strength <= 3) return { label: 'FRACA', color: 'text-amber-500' };
-        if (strength <= 4) return { label: 'MODERADA', color: 'text-indigo-500' };
-        return { label: 'FORTE', color: 'text-emerald-500' };
+        if (!password) return { label: t('auth.strength.empty'), color: 'text-slate-500' };
+        if (strength <= 2) return { label: t('auth.strength.veryWeak'), color: 'text-rose-500' };
+        if (strength <= 3) return { label: t('auth.strength.weak'), color: 'text-amber-500' };
+        if (strength <= 4) return { label: t('auth.strength.moderate'), color: 'text-indigo-500' };
+        return { label: t('auth.strength.strong'), color: 'text-emerald-500' };
     };
 
     const { label, color } = getStrengthLabel();
@@ -44,7 +45,7 @@ const PasswordStrength = ({ password }: { password: string }) => {
     return (
         <div className="p-6 rounded-3xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 mt-4">
             <div className="flex justify-between items-center mb-4">
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Força da Senha</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">{t('auth.strength.title')}</span>
                 <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${color}`}>{label}</span>
             </div>
 
@@ -62,11 +63,11 @@ const PasswordStrength = ({ password }: { password: string }) => {
 
             <div className="grid grid-cols-2 gap-y-3 gap-x-4">
                 {[
-                    { key: 'length', label: '6+ Caracteres' },
-                    { key: 'upper', label: 'Letra Maiúscula' },
-                    { key: 'lower', label: 'Letra Minúscula' },
-                    { key: 'number', label: 'Número' },
-                    { key: 'symbol', label: 'Símbolo (!@#$)' }
+                    { key: 'length', label: t('auth.strength.checks.length') },
+                    { key: 'upper', label: t('auth.strength.checks.upper') },
+                    { key: 'lower', label: t('auth.strength.checks.lower') },
+                    { key: 'number', label: t('auth.strength.checks.number') },
+                    { key: 'symbol', label: t('auth.strength.checks.symbol') }
                 ].map((crit) => (
                     <div key={crit.key} className="flex items-center gap-2">
                         {checks[crit.key as keyof typeof checks] ? (
@@ -89,6 +90,7 @@ const PasswordStrength = ({ password }: { password: string }) => {
 
 export function AuthModal({ isOpen, onClose, mode }: Props) {
     const { theme } = useTheme()
+    const { t } = useTranslation()
     const [currentMode, setCurrentMode] = useState<'login' | 'register' | 'force-reset'>(mode);
     const [loading, setLoading] = useState(false);
     const [userId, setUserId] = useState<string | null>(null);
@@ -173,7 +175,7 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
 
                     if (profile && !profile.active) {
                         await supabase.auth.signOut();
-                        throw new Error('Esta conta está inativa. Entre em contato com o suporte.');
+                        throw new Error(t('auth.errors.inactive'));
                     }
 
                     if (profile?.force_password_reset) {
@@ -210,7 +212,7 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
             }
         } catch (err: any) {
             console.error('Auth error:', err);
-            setError(err.message || 'Erro ao processar autenticação');
+            setError(err.message || t('auth.errors.default'));
         } finally {
             setLoading(false);
         }
@@ -221,12 +223,12 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
         if (!userId) return;
 
         if (password !== confirmPassword) {
-            setError('As senhas não conferem');
+            setError(t('auth.errors.passwordsDoNotMatch'));
             return;
         }
 
         if (password.length < 6) {
-            setError('A senha deve ter pelo menos 6 caracteres');
+            setError(t('auth.errors.passwordTooShort'));
             return;
         }
 
@@ -240,7 +242,7 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
             // Success! Proceed to dashboard
             window.location.href = '/veritum';
         } catch (err: any) {
-            setError(err.message || 'Erro ao redefinir senha');
+            setError(err.message || t('auth.errors.resetError'));
             setLoading(false);
         }
     };
@@ -309,7 +311,7 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
             }
         } catch (error: any) {
             console.error('Login error:', error);
-            setError(error.message || 'Erro no login Google');
+            setError(error.message || t('auth.errors.googleError'));
             setLoading(false);
         }
     };
@@ -318,7 +320,7 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="sm:max-w-lg p-0 bg-transparent border-none shadow-none">
                 <div className={`relative w-full p-6 pt-10 rounded-[2.5rem] shadow-2xl border transition-colors ${theme === 'dark' ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-                    <DialogTitle className="sr-only">{currentMode === 'login' ? 'Login' : 'Cadastro'}</DialogTitle>
+                    <DialogTitle className="sr-only">{currentMode === 'login' ? t('auth.signIn') : t('auth.signUp')}</DialogTitle>
                     <button onClick={onClose} className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                         <X size={20} />
                     </button>
@@ -328,14 +330,14 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                             <Logo />
                         </div>
                         <h2 className="text-3xl font-black tracking-tight mb-2 dark:text-white text-slate-900">
-                            {currentMode === 'login' ? 'Bem-vindo de volta' :
-                                currentMode === 'register' ? 'Crie sua conta' :
-                                    'Redefinir Senha'}
+                            {currentMode === 'login' ? t('auth.loginTitle') :
+                                currentMode === 'register' ? t('auth.registerTitle') :
+                                    t('auth.resetTitle')}
                         </h2>
                         <p className="text-slate-500 dark:text-slate-400">
-                            {currentMode === 'login' ? <>Acesse seu ecossistema jurídico <span className="text-branding-gradient">PRO</span>.</> :
-                                currentMode === 'register' ? 'Junte-se a centenas de escritórios modernos.' :
-                                    'Sua senha provisória expirou. Crie uma nova agora.'}
+                            {currentMode === 'login' ? t('auth.loginSubtitle') :
+                                currentMode === 'register' ? t('auth.registerSubtitle') :
+                                    t('auth.resetSubtitle')}
                         </p>
                     </div>
 
@@ -365,12 +367,12 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                                             d="M12 4.8c1.7 0 3.3.6 4.6 1.8l3.4-3.4C17.9 1.2 15.2 0 12 0 7.4 0 3.3 2.4 1.3 6.3l3.8 3.3c1-2.9 3.7-4.8 6.9-4.8z"
                                         />
                                     </svg>
-                                    {loading ? 'Processando...' : 'Continuar com Google'}
+                                    {loading ? t('common.loading') : t('auth.googleLogin')}
                                 </button>
 
                                 <div className="relative">
                                     <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200 dark:border-slate-800"></div></div>
-                                    <div className="relative flex justify-center text-xs uppercase"><span className={`px-4 font-bold tracking-widest ${theme === 'dark' ? 'bg-slate-900 text-slate-500' : 'bg-white text-slate-400'}`}>Ou com e-mail</span></div>
+                                    <div className="relative flex justify-center text-xs uppercase"><span className={`px-4 font-bold tracking-widest ${theme === 'dark' ? 'bg-slate-900 text-slate-500' : 'bg-white text-slate-400'}`}>{t('auth.hasAccount').split('?')[1].trim()}</span></div>
                                 </div>
                             </>
                         )}
@@ -388,7 +390,7 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                                     <input
                                         required
                                         type={showPassword ? "text" : "password"}
-                                        placeholder="Sua nova senha"
+                                        placeholder={t('auth.newPasswordPlaceholder')}
                                         className="w-full pl-12 pr-12 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 dark:text-white"
                                         value={password}
                                         onChange={e => setPassword(e.target.value)}
@@ -407,25 +409,25 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                                     <input
                                         required
                                         type={showPassword ? "text" : "password"}
-                                        placeholder="Confirmar nova senha"
+                                        placeholder={t('auth.confirmNewPasswordPlaceholder')}
                                         className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 dark:text-white"
                                         value={confirmPassword}
                                         onChange={e => setConfirmPassword(e.target.value)}
                                     />
                                 </div>
 
-                                <PasswordStrength password={password} />
+                                <PasswordStrength password={password} t={t} />
 
                                 <button
                                     type="submit"
                                     disabled={loading || password !== confirmPassword || password.length < 6}
                                     className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-2xl shadow-indigo-600/40 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                                 >
-                                    {loading ? 'Redefinindo...' : 'Redefinir Senha e Entrar'} <ArrowRight size={20} />
+                                    {loading ? t('common.loading') : t('auth.resetTitle')} <ArrowRight size={20} />
                                 </button>
 
                                 {password && confirmPassword && password !== confirmPassword && (
-                                    <p className="text-[10px] text-rose-500 font-bold uppercase tracking-wider text-center">Senhas não conferem</p>
+                                    <p className="text-[10px] text-rose-500 font-bold uppercase tracking-wider text-center">{t('auth.errors.passwordsDoNotMatch')}</p>
                                 )}
                             </form>
                         ) : (
@@ -436,7 +438,7 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                                         <input
                                             ref={nameRef}
                                             required
-                                            placeholder="Nome Completo"
+                                            placeholder={t('management.users.modal.name')}
                                             className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 dark:text-white"
                                             value={name}
                                             onChange={e => setName(e.target.value)}
@@ -449,7 +451,7 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                                         ref={emailRef}
                                         required
                                         type="email"
-                                        placeholder="E-mail profissional"
+                                        placeholder={t('auth.emailLabel')}
                                         className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 dark:text-white"
                                         value={email}
                                         onChange={e => setEmail(e.target.value)}
@@ -460,7 +462,7 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                                     <input
                                         required
                                         type={showPassword ? "text" : "password"}
-                                        placeholder={currentMode === 'register' ? "Criar senha" : "Sua senha"}
+                                        placeholder={t('auth.passwordLabel')}
                                         className="w-full pl-12 pr-12 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 dark:text-white"
                                         value={password}
                                         onChange={e => setPassword(e.target.value)}
@@ -481,14 +483,14 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                                             <input
                                                 required
                                                 type={showPassword ? "text" : "password"}
-                                                placeholder="Confirmar senha"
+                                                placeholder={t('auth.confirmPasswordLabel')}
                                                 className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 dark:text-white"
                                                 value={confirmPassword}
                                                 onChange={e => setConfirmPassword(e.target.value)}
                                             />
                                         </div>
 
-                                        <PasswordStrength password={password} />
+                                        <PasswordStrength password={password} t={t} />
                                     </>
                                 )}
 
@@ -497,23 +499,23 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                                     disabled={loading || (currentMode === 'register' && (password !== confirmPassword || password.length < 6))}
                                     className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-2xl shadow-indigo-600/40 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                                 >
-                                    {loading ? 'Aguarde...' : (currentMode === 'login' ? 'Entrar Agora' : 'Finalizar Cadastro')} <ArrowRight size={20} />
+                                    {loading ? t('common.loading') : (currentMode === 'login' ? t('auth.loginButton') : t('auth.registerButton'))} <ArrowRight size={20} />
                                 </button>
 
                                 {currentMode === 'register' && password && confirmPassword && password !== confirmPassword && (
-                                    <p className="text-[10px] text-rose-500 font-bold uppercase tracking-wider text-center">Senhas não conferem</p>
+                                    <p className="text-[10px] text-rose-500 font-bold uppercase tracking-wider text-center">{t('auth.errors.passwordsDoNotMatch')}</p>
                                 )}
                             </form>
                         )}
 
                         {currentMode !== 'force-reset' && (
                             <p className="text-center text-sm text-slate-500">
-                                {currentMode === 'login' ? 'Ainda não tem conta?' : 'Já possui uma conta?'}
+                                {currentMode === 'login' ? t('auth.noAccount').split('?')[0] + '?' : t('auth.hasAccount').split('?')[0] + '?'}
                                 <button
                                     onClick={() => setCurrentMode(currentMode === 'login' ? 'register' : 'login')}
                                     className="ml-2 text-indigo-600 font-bold hover:underline"
                                 >
-                                    {currentMode === 'login' ? 'Cadastre-se' : 'Entrar'}
+                                    {currentMode === 'login' ? t('auth.signUp') : t('auth.signIn')}
                                 </button>
                             </p>
                         )}

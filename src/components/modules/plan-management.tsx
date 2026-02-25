@@ -4,6 +4,7 @@ import {
     Package, ShieldCheck, RefreshCw, AlertTriangle, DollarSign,
     Zap, Sparkles, LayoutGrid, Layers, Settings, Radio, Database
 } from 'lucide-react';
+import { useTranslation } from '@/contexts/language-context';
 import { Plan, Credentials, Suite, PlanPermission, Feature } from '@/types';
 import { createMasterClient } from '@/lib/supabase/master';
 import { GeminiService } from '@/services/gemini';
@@ -19,6 +20,7 @@ const US_FLAG = "https://flagcdn.com/w40/us.png";
 const ES_FLAG = "https://flagcdn.com/w40/es.png";
 
 const PlanManagement: React.FC<Props> = ({ credentials }) => {
+    const { t } = useTranslation();
     const [plans, setPlans] = useState<Plan[]>([]);
     const [loading, setLoading] = useState(true);
     const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
@@ -123,7 +125,7 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
                 : await createPlan(planData);
 
             if (!result.success || !result.plan) {
-                throw new Error(result.error || 'Falha ao salvar o plano (dados não retornados)');
+                throw new Error(result.error || t('management.master.plans.toast.errorProcess'));
             }
 
             const savedPlan = result.plan;
@@ -134,7 +136,7 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
                 }
             }
 
-            toast.success(editingPlan ? 'Plano e permissões atualizados!' : 'Plano criado com sucesso!');
+            toast.success(editingPlan ? t('management.master.plans.toast.successUpdate') : t('management.master.plans.toast.successCreate'));
 
             if (!editingPlan) {
                 setEditingPlan(null);
@@ -144,7 +146,7 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
             }
             fetchPlans();
         } catch (err: any) {
-            toast.error(err.message || 'Erro ao salvar plano');
+            toast.error(err.message || t('management.master.plans.toast.errorSave'));
         }
     };
 
@@ -199,10 +201,10 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
         try {
             const result = await togglePlanActive(plan.id, !plan.active);
             if (!result.success) throw new Error(result.error);
-            toast.success(`Plano ${plan.active ? 'desativado' : 'ativado'} com sucesso!`);
+            toast.success(t('management.master.plans.toast.statusSuccess', { status: plan.active ? t('management.master.plans.table.inactive').toLowerCase() : t('management.master.plans.table.active').toLowerCase() }));
             fetchPlans();
         } catch (err: any) {
-            toast.error('Erro ao alterar status: ' + err.message);
+            toast.error(t('management.master.plans.toast.errorStatus', { error: err.message }));
         }
     };
 
@@ -214,7 +216,7 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
             setPlanToDelete(null);
             fetchPlans();
         } catch (err: any) {
-            alert('Erro ao excluir: ' + err.message);
+            alert(t('management.master.plans.toast.errorDelete', { error: err.message }));
         }
     };
 
@@ -235,7 +237,7 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
 
     const handleTranslate = async () => {
         if (!formData.short_desc?.[activeLang]) {
-            toast.error('Preencha a Bio Curta para traduzir.');
+            toast.error(t('management.master.plans.toast.fillBio'));
             return;
         }
 
@@ -265,9 +267,9 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
                 features: newFeatures as any
             });
 
-            toast.success('Tradução baseada em IA concluída!');
+            toast.success(t('management.master.plans.toast.successTranslate'));
         } catch (err: any) {
-            toast.error('Erro na tradução: ' + err.message);
+            toast.error(t('management.master.plans.toast.errorTranslate', { error: err.message }));
         } finally {
             setIsTranslating(false);
         }
@@ -289,8 +291,8 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
         <div className="space-y-8 animate-in fade-in duration-500 pb-20">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tight">Gestão de Planos</h1>
-                    <p className="text-slate-500 dark:text-slate-400 font-medium italic">Configure os pacotes e preços do Veritum Pro.</p>
+                    <h1 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tight">{t('management.master.plans.title')}</h1>
+                    <p className="text-slate-500 dark:text-slate-400 font-medium italic">{t('management.master.plans.subtitle')}</p>
                 </div>
                 <div className="flex bg-white dark:bg-slate-900 p-1 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
                     {(['all', 'individual', 'combo'] as const).map(f => (
@@ -299,7 +301,7 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
                             onClick={() => setFilter(f)}
                             className={`px-4 py-2 rounded-xl text-xs font-bold uppercase transition-all ${filter === f ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}
                         >
-                            {f === 'all' ? 'Todos' : f === 'individual' ? 'Individuais' : 'Combos'}
+                            {f === 'all' ? t('management.master.plans.filters.all') : f === 'individual' ? t('management.master.plans.filters.individual') : t('management.master.plans.filters.combo')}
                         </button>
                     ))}
                 </div>
@@ -309,7 +311,7 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
                 {/* Table Column (List) - Left side, narrower */}
                 <div className="w-full lg:w-[30%] bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden min-h-[600px] sticky top-8">
                     <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Listagem</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('management.master.plans.listTitle')}</span>
                         <div className="flex gap-2 text-[10px] font-bold">
                             <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-amber-500" /></span>
                             <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-slate-300" /></span>
@@ -318,9 +320,9 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
                     <table className="w-full text-left">
                         <thead className="bg-slate-50/50 dark:bg-slate-800/30">
                             <tr>
-                                <th className="px-4 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">Ordem</th>
-                                <th className="px-4 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">Plano</th>
-                                <th className="px-4 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Ação</th>
+                                <th className="px-4 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('management.master.plans.table.order')}</th>
+                                <th className="px-4 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('management.master.plans.table.plan')}</th>
+                                <th className="px-4 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">{t('management.master.plans.table.action')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -343,7 +345,7 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
                                             <button
                                                 onClick={() => handleToggleStatus(p)}
                                                 className={`p-1.5 rounded-lg transition-all shadow-sm ${p.active ? 'text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30' : 'text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50'}`}
-                                                title={p.active ? 'Plano Ativo' : 'Plano Inativo'}
+                                                title={p.active ? t('management.master.plans.table.active') : t('management.master.plans.table.inactive')}
                                             >
                                                 <Radio size={14} className={p.active ? 'fill-emerald-500/20' : ''} />
                                             </button>
@@ -375,10 +377,10 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
                                 <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
                                     {editingPlan ? (
                                         <span className="flex items-center gap-2">
-                                            <span className="opacity-40 font-black">Editando:</span>
-                                            <span className="text-indigo-600 dark:text-indigo-400">{formData.name || 'Sem Nome'}</span>
+                                            <span className="opacity-40 font-black">{t('management.master.plans.form.edit')}</span>
+                                            <span className="text-indigo-600 dark:text-indigo-400">{formData.name || t('management.master.plans.form.noName')}</span>
                                         </span>
-                                    ) : 'Novo Plano'}
+                                    ) : t('management.master.plans.form.add')}
                                 </h2>
                                 <div className="flex items-center gap-2 mt-1">
                                     <button
@@ -386,14 +388,14 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
                                         onClick={() => setActiveTab('details')}
                                         className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md transition-all ${activeTab === 'details' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-indigo-600'}`}
                                     >
-                                        Detalhes
+                                        {t('management.master.plans.form.tabs.details')}
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => setActiveTab('permissions')}
                                         className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md transition-all ${activeTab === 'permissions' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-indigo-600'}`}
                                     >
-                                        Permissões
+                                        {t('management.master.plans.form.tabs.permissions')}
                                     </button>
                                 </div>
                             </div>
@@ -405,13 +407,13 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
                                         onClick={handleSave}
                                         className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all text-[10px] font-black uppercase tracking-widest shadow-sm shadow-indigo-600/20"
                                     >
-                                        <ShieldCheck size={14} /> Salvar Alterações
+                                        <ShieldCheck size={14} /> {t('management.master.plans.form.saveChanges')}
                                     </button>
                                     <button
                                         onClick={() => { setEditingPlan(null); setFormData(initialFormData); setPlanPermissions([]); }}
                                         className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all text-[10px] font-black uppercase tracking-widest shadow-sm"
                                     >
-                                        <X size={14} /> Cancelar Seleção
+                                        <X size={14} /> {t('management.master.plans.form.cancelSelection')}
                                     </button>
                                 </>
                             ) : (
@@ -419,7 +421,7 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
                                     onClick={handleSave}
                                     className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all text-[10px] font-black uppercase tracking-widest shadow-sm shadow-indigo-600/20"
                                 >
-                                    <Plus size={14} /> Criar Plano
+                                    <Plus size={14} /> {t('management.master.plans.form.create')}
                                 </button>
                             )}
                         </div>
@@ -431,7 +433,7 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="space-y-4">
                                         <div className="space-y-1.5">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Nome do Plano</label>
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{t('management.master.plans.form.name')}</label>
                                             <div className="relative group">
                                                 <Package className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" size={18} />
                                                 <input
@@ -446,7 +448,7 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
 
                                         <div className="space-y-1.5">
                                             <div className="flex items-center justify-between ml-1">
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Descrição Curta</label>
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('management.master.plans.form.shortDesc')}</label>
                                                 <div className="flex gap-1">
                                                     {(['pt', 'en', 'es'] as const).map(l => (
                                                         <button
@@ -464,7 +466,7 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
                                                 <Sparkles className="absolute left-4 top-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors shadow-sm" size={18} />
                                                 <textarea
                                                     className="w-full pl-12 pr-12 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl text-xs font-medium focus:ring-2 focus:ring-indigo-600 outline-none dark:text-white resize-none min-h-[80px]"
-                                                    placeholder="Breve slogan ou diferencial do plano..."
+                                                    placeholder={t('management.master.plans.form.shortDescPlaceholder')}
                                                     value={formData.short_desc?.[activeLang] || ''}
                                                     onChange={e => setFormData({ ...formData, short_desc: { ...formData.short_desc!, [activeLang]: e.target.value } })}
                                                 />
@@ -473,7 +475,7 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
                                                     onClick={handleTranslate}
                                                     disabled={isTranslating}
                                                     className="absolute right-4 bottom-4 p-2 bg-indigo-600 text-white rounded-lg hover:bg-slate-800 transition-all disabled:opacity-50 shadow-lg shadow-indigo-600/20"
-                                                    title="Traduzir via Gemini IA"
+                                                    title={t('management.master.plans.form.translateIA')}
                                                 >
                                                     {isTranslating ? <RefreshCw size={14} className="animate-spin" /> : <Zap size={14} />}
                                                 </button>
@@ -484,7 +486,7 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
                                     <div className="space-y-4">
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="space-y-1.5">
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Preço Mensal (R$)</label>
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{t('management.master.plans.form.monthlyPrice')}</label>
                                                 <input
                                                     type="number"
                                                     className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-indigo-600 outline-none dark:text-white transition-all shadow-sm"
@@ -493,7 +495,7 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
                                                 />
                                             </div>
                                             <div className="space-y-1.5">
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Desconto (%)</label>
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{t('management.master.plans.form.discount')}</label>
                                                 <input
                                                     type="number"
                                                     className="w-full px-4 py-4 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-800/50 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none text-emerald-600 transition-all shadow-sm"
@@ -505,7 +507,7 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
 
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="space-y-1.5">
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Preço Anual (R$)</label>
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{t('management.master.plans.form.yearlyPrice')}</label>
                                                 <input
                                                     type="number"
                                                     className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-indigo-600 outline-none dark:text-white transition-all shadow-sm"
@@ -514,7 +516,7 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
                                                 />
                                             </div>
                                             <div className="space-y-1.5">
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Desconto (%)</label>
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{t('management.master.plans.form.discount')}</label>
                                                 <input
                                                     type="number"
                                                     className="w-full px-4 py-4 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-800/50 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none text-emerald-600 transition-all shadow-sm"
@@ -527,13 +529,13 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Funcionalidades Básicas (Bullet Points)</label>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{t('management.master.plans.form.basicFeatures')}</label>
                                     <div className="relative group">
                                         <LayoutGrid className="absolute left-4 top-4 text-slate-400 group-focus-within:text-indigo-600" size={18} />
                                         <textarea
                                             rows={4}
                                             className="w-full px-12 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl text-xs font-medium focus:ring-2 focus:ring-indigo-600 outline-none dark:text-white resize-none shadow-sm"
-                                            placeholder="Uma funcionalidade por linha..."
+                                            placeholder={t('management.master.plans.form.featuresPlaceholder')}
                                             value={formData.features?.[activeLang]?.join('\n') || ''}
                                             onChange={e => setFormData({ ...formData, features: { ...formData.features!, [activeLang]: e.target.value.split('\n').filter(l => l.trim() !== '') } })}
                                         />
@@ -545,21 +547,21 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
                                         <label className="relative inline-flex items-center cursor-pointer">
                                             <input type="checkbox" className="sr-only peer" checked={formData.recommended} onChange={e => setFormData({ ...formData, recommended: e.target.checked })} />
                                             <div className="w-9 h-5 bg-slate-300 rounded-full peer peer-checked:bg-amber-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full shadow-inner"></div>
-                                            <span className="ml-3 text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-400">Plano Recomendado</span>
+                                            <span className="ml-3 text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-400">{t('management.master.plans.form.recommended')}</span>
                                         </label>
                                     </div>
                                     <div className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-700 hover:border-emerald-200 transition-colors shadow-sm">
                                         <label className="relative inline-flex items-center cursor-pointer">
                                             <input type="checkbox" className="sr-only peer" checked={formData.active} onChange={e => setFormData({ ...formData, active: e.target.checked })} />
                                             <div className="w-9 h-5 bg-slate-300 rounded-full peer peer-checked:bg-emerald-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full shadow-inner"></div>
-                                            <span className="ml-3 text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-400">Ativo para Venda</span>
+                                            <span className="ml-3 text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-400">{t('management.master.plans.form.activeSale')}</span>
                                         </label>
                                     </div>
                                     <div className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-700 hover:border-indigo-200 transition-colors shadow-sm">
                                         <label className="relative inline-flex items-center cursor-pointer">
                                             <input type="checkbox" className="sr-only peer" checked={formData.is_combo} onChange={e => setFormData({ ...formData, is_combo: e.target.checked })} />
                                             <div className="w-9 h-5 bg-slate-300 rounded-full peer peer-checked:bg-indigo-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full shadow-inner"></div>
-                                            <span className="ml-3 text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-400">Plano Combo</span>
+                                            <span className="ml-3 text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-400">{t('management.master.plans.form.comboPlan')}</span>
                                         </label>
                                     </div>
                                 </div>
@@ -568,10 +570,10 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
                             <div className="space-y-4 animate-in slide-in-from-right-4 duration-300">
                                 <div className="p-6 bg-indigo-50 dark:bg-indigo-900/20 rounded-3xl border border-indigo-100 dark:border-indigo-800 shadow-sm">
                                     <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-600 mb-1 flex items-center gap-2">
-                                        <ShieldCheck size={14} /> Controle de Acesso Granular
+                                        <ShieldCheck size={14} /> {t('management.master.plans.form.granularTitle')}
                                     </h4>
                                     <p className="text-[9px] text-indigo-600/70 font-medium leading-relaxed italic">
-                                        Selecione quais suítes e funcionalidades específicas estarão liberadas neste plano.
+                                        {t('management.master.plans.form.granularDesc')}
                                     </p>
                                 </div>
 
@@ -616,10 +618,10 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
                                                                     'bg-slate-200 dark:bg-slate-800 text-slate-400'
                                                             }`}
                                                         title={
-                                                            isAll ? "Clique para desmarcar tudo" :
-                                                                isDbMatch ? "Dados Originais (Clique para marcar tudo)" :
-                                                                    isNone ? "Vazio (Clique para restaurar originais)" :
-                                                                        "Seleção Parcial (Clique para marcar tudo)"
+                                                            isAll ? t('management.master.plans.form.tooltips.uncheckAll') :
+                                                                isDbMatch ? t('management.master.plans.form.tooltips.originalData') :
+                                                                    isNone ? t('management.master.plans.form.tooltips.empty') :
+                                                                        t('management.master.plans.form.tooltips.partial')
                                                         }
                                                     >
                                                         {
@@ -674,14 +676,14 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
                             <AlertTriangle size={40} />
                         </div>
                         <div className="space-y-2">
-                            <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Excluir Plano?</h3>
+                            <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">{t('management.master.plans.delete.title')}</h3>
                             <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
-                                Você removerá <span className="font-bold text-slate-800 dark:text-slate-200">"{planToDelete.name}"</span> das opções de venda.
+                                {t('management.master.plans.delete.message', { name: planToDelete.name })}
                             </p>
                         </div>
                         <div className="flex gap-4 pt-4">
-                            <button onClick={() => setPlanToDelete(null)} className="flex-1 px-6 py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl font-black uppercase text-xs">Não</button>
-                            <button onClick={handleDelete} className="flex-1 px-6 py-4 bg-rose-600 text-white rounded-2xl font-black uppercase text-xs shadow-xl shadow-rose-600/20">Sim, Excluir</button>
+                            <button onClick={() => setPlanToDelete(null)} className="flex-1 px-6 py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl font-black uppercase text-xs">{t('management.master.plans.delete.no')}</button>
+                            <button onClick={handleDelete} className="flex-1 px-6 py-4 bg-rose-600 text-white rounded-2xl font-black uppercase text-xs shadow-xl shadow-rose-600/20">{t('management.master.plans.delete.confirm')}</button>
                         </div>
                     </div>
                 </div>

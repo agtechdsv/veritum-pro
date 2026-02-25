@@ -13,6 +13,8 @@ import Link from 'next/link';
 import { AuthModal } from '@/components/auth-modal';
 import { createMasterClient } from '@/lib/supabase/master';
 import { UserMenu } from '@/components/ui/user-menu';
+import { useTranslation } from '@/contexts/language-context';
+import { LanguageSelector } from '@/components/ui/language-selector';
 
 const Logo = () => (
     <div className="bg-indigo-600/10 p-2 rounded-lg flex items-center justify-center text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400">
@@ -21,6 +23,7 @@ const Logo = () => (
 );
 
 export default function SentinelLanding() {
+    const { t } = useTranslation();
     const { theme, setTheme, resolvedTheme } = useTheme();
     const router = useRouter();
     const [mounted, setMounted] = useState(false);
@@ -73,24 +76,25 @@ export default function SentinelLanding() {
                     </div>
 
                     <div className="hidden md:flex items-center gap-8">
-                        <Link href="/" className="text-base font-bold text-branding-gradient hover:opacity-80 transition-all">Portal</Link>
-                        <a href="#top" className="text-sm font-bold text-slate-800 dark:text-white">Início</a>
-                        <a href="#vision" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">Visão</a>
-                        <a href="#features" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">Funcionalidades</a>
-                        <a href="#ux" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">Diferencial</a>
+                        <Link href="/" className="text-base font-bold text-branding-gradient hover:opacity-80 transition-all">{t('pricingPage.nav.portal')}</Link>
+                        <a href="#top" className="text-sm font-bold text-slate-800 dark:text-white">{t('landingPages.sentinel.nav.home')}</a>
+                        <a href="#vision" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">{t('landingPages.sentinel.nav.vision')}</a>
+                        <a href="#features" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">{t('landingPages.sentinel.nav.features')}</a>
+                        <a href="#ux" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">{t('landingPages.sentinel.nav.ux')}</a>
                     </div>
 
                     <div className="flex items-center gap-4">
                         <button onClick={toggleTheme} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all text-slate-600 dark:text-slate-400">
                             {resolvedTheme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
                         </button>
+                        <LanguageSelector />
                         {currentUser === undefined ? (
                             <div className="w-24 h-10 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl" />
                         ) : currentUser ? (
                             <UserMenu user={currentUser} supabase={createMasterClient()} />
                         ) : hasAccess ? (
                             <Link href="/?login=true" className="hidden sm:flex items-center gap-2 font-bold px-4 py-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all">
-                                <LogOut size={18} /> Entrar
+                                <LogOut size={18} /> {t('nav.login')}
                             </Link>
                         ) : null}
                         {(hasAccess || currentUser) && (
@@ -98,7 +102,7 @@ export default function SentinelLanding() {
                                 onClick={() => setIsAuthModalOpen(true)}
                                 className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold shadow-xl shadow-indigo-600/20 hover:scale-105 transition-all text-sm"
                             >
-                                Teste Grátis
+                                {t('landingPages.sentinel.hero.cta1')}
                             </button>
                         )}
                     </div>
@@ -110,15 +114,18 @@ export default function SentinelLanding() {
                 <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16 relative z-10">
                     <div className="flex-1 text-left">
                         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-xs font-black uppercase tracking-widest mb-8 animate-fade-in">
-                            <Sparkles size={14} className="animate-pulse" /> Inteligência Jurídica Ativa
+                            <Sparkles size={14} className="animate-pulse" /> {t('landingPages.sentinel.hero.badge')}
                         </div>
                         <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-8 leading-[1.05] text-slate-900 dark:text-white">
-                            Aja antes da <br />
-                            <span className="text-branding-gradient">citação oficial.</span> <br />
-                            O radar definitivo.
+                            {t('landingPages.sentinel.hero.title').split(' ').map((word: string, i: number, arr: string[]) => {
+                                if (word.toLowerCase() === 'citação' || word.toLowerCase() === 'oficial.' || word.toLowerCase() === 'summons.' || word.toLowerCase() === 'official.') {
+                                    return <React.Fragment key={i}><span className="text-branding-gradient">{word}</span> </React.Fragment>
+                                }
+                                return word + ' '
+                            })}
                         </h1>
                         <p className="text-xl text-slate-500 dark:text-slate-400 max-w-xl mb-12 leading-relaxed">
-                            Monitore publicações, intimações e descubra novos processos no momento da distribuição. O Sentinel PRO varre o Brasil inteiro para que você nunca mais tenha medo de perder um prazo ou sofrer uma revelia.
+                            {t('landingPages.sentinel.hero.subtitle')}
                         </p>
                         <div className="flex flex-col sm:flex-row items-center gap-4">
                             {(hasAccess || currentUser) && (
@@ -126,15 +133,15 @@ export default function SentinelLanding() {
                                     onClick={() => setIsAuthModalOpen(true)}
                                     className="w-full sm:w-auto bg-indigo-600 text-white px-10 py-4 rounded-[1.5rem] font-bold text-lg shadow-2xl shadow-indigo-600/40 hover:scale-105 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
                                 >
-                                    Começar Teste Grátis <ArrowRight size={20} />
+                                    {t('landingPages.sentinel.hero.cta1')} <ArrowRight size={20} />
                                 </button>
                             )}
                             <a href="#pricing" onClick={(e) => { e.preventDefault(); router.push('/#pricing'); }} className="w-full sm:w-auto px-10 py-4 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 font-bold text-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-center text-slate-600 dark:text-slate-300">
-                                Conhecer Planos
+                                {t('landingPages.sentinel.hero.cta2')}
                             </a>
                         </div>
                         <p className="mt-8 text-sm font-bold text-slate-400 dark:text-slate-500 flex items-center gap-2">
-                            <Check size={16} className="text-emerald-500" /> Junte-se a advogados que deixaram de buscar processos manualmente.
+                            <Check size={16} className="text-emerald-500" /> {t('landingPages.sentinel.hero.check')}
                         </p>
                     </div>
 
@@ -148,23 +155,23 @@ export default function SentinelLanding() {
                                         <div className="w-3 h-3 rounded-full bg-amber-500/20 border border-amber-500" />
                                         <div className="w-3 h-3 rounded-full bg-emerald-500/20 border border-emerald-500" />
                                     </div>
-                                    <div className="text-[10px] font-black tracking-widest text-slate-400 uppercase">Sentinel PRO Cockpit</div>
+                                    <div className="text-[10px] font-black tracking-widest text-slate-400 uppercase">{t('landingPages.sentinel.mockup.title')}</div>
                                     <div className="w-3" />
                                 </div>
                                 <div className="p-8 flex-1 space-y-6">
                                     <div className="flex items-center justify-between">
                                         <div className="h-6 w-32 bg-slate-100 dark:bg-slate-800 rounded-lg" />
                                         <div className="px-3 py-1 bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-[10px] font-black rounded-full animate-pulse">
-                                            12 ALERTAS DE CRISE
+                                            {t('landingPages.sentinel.mockup.alerts')}
                                         </div>
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="h-28 bg-indigo-600/5 rounded-2xl border border-indigo-600/10 p-4 flex flex-col justify-end">
-                                            <div className="text-[10px] font-bold text-indigo-600 mb-1">INTIMAÇÕES HOJE</div>
+                                            <div className="text-[10px] font-bold text-indigo-600 mb-1">{t('landingPages.sentinel.mockup.stats.intimations')}</div>
                                             <div className="text-3xl font-black text-slate-800 dark:text-white">42</div>
                                         </div>
                                         <div className="h-28 bg-emerald-600/5 rounded-2xl border border-emerald-600/10 p-4 flex flex-col justify-end">
-                                            <div className="text-[10px] font-bold text-emerald-600 mb-1">TEMPO SALVO</div>
+                                            <div className="text-[10px] font-bold text-emerald-600 mb-1">{t('landingPages.sentinel.mockup.stats.timeSaved')}</div>
                                             <div className="text-3xl font-black text-slate-800 dark:text-white">18h</div>
                                         </div>
                                     </div>
@@ -203,13 +210,17 @@ export default function SentinelLanding() {
             <section id="vision" className="py-32 px-6 bg-slate-50 dark:bg-slate-950/40 transition-colors relative overflow-hidden">
                 <div className="max-w-4xl mx-auto text-center relative z-10">
                     <h2 className="text-4xl md:text-5xl font-black mb-8 text-slate-900 dark:text-white uppercase tracking-tighter">
-                        O seu "Cockpit" de <span className="text-branding-gradient">Vigilância Jurídica.</span>
+                        {t('landingPages.sentinel.vision.title').split(' ').map((word: string, i: number) => (
+                            <React.Fragment key={i}>
+                                {word.toLowerCase() === '"cockpit"' || word.toLowerCase() === 'vigilância' || word.toLowerCase() === 'jurídica.' || word.toLowerCase() === 'legal' || word.toLowerCase() === 'surveillance' ? <span className="text-branding-gradient">{word}</span> : word}{' '}
+                            </React.Fragment>
+                        ))}
                     </h2>
                     <p className="text-xl md:text-2xl text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
-                        O Sentinel PRO não é apenas um buscador, é o sensor de riscos do ecossistema Veritum. Processamos milhares de publicações e movimentações processuais por dia, filtrando o ruído e entregando apenas o que é estritamente relevante para você e seus clientes.
+                        {t('landingPages.sentinel.vision.subtitle')}
                     </p>
                     <div className="mt-12 p-8 bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-xl border border-slate-100 dark:border-slate-800 text-lg text-slate-600 dark:text-slate-300">
-                        Com um painel visual limpo e inteligente, agrupamos as informações para que você saiba exatamente onde sua atenção é necessária hoje, reduzindo a fadiga de olhar para dezenas de telas.
+                        {t('landingPages.sentinel.vision.box')}
                     </div>
                 </div>
             </section>
@@ -218,8 +229,8 @@ export default function SentinelLanding() {
             <section id="features" className="py-32 px-6">
                 <div className="max-w-7xl mx-auto">
                     <div className="text-center mb-20">
-                        <span className="text-indigo-600 dark:text-indigo-400 font-black tracking-[0.2em] uppercase text-sm">Tecnologia Proativa</span>
-                        <h2 className="text-5xl font-black mt-4 text-slate-900 dark:text-white uppercase tracking-tighter">Funcionalidades Sugeridas</h2>
+                        <span className="text-indigo-600 dark:text-indigo-400 font-black tracking-[0.2em] uppercase text-sm">{t('landingPages.sentinel.features.category')}</span>
+                        <h2 className="text-5xl font-black mt-4 text-slate-900 dark:text-white uppercase tracking-tighter">{t('landingPages.sentinel.features.title')}</h2>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
@@ -229,9 +240,9 @@ export default function SentinelLanding() {
                                 <Search size={32} />
                             </div>
                             <div className="flex-1">
-                                <h3 className="text-2xl font-black mb-3 text-slate-900 dark:text-white tracking-tight">Antecipe-se à Revelia</h3>
+                                <h3 className="text-2xl font-black mb-3 text-slate-900 dark:text-white tracking-tight">{t('landingPages.sentinel.features.items.revelia.title')}</h3>
                                 <p className="text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
-                                    Não espere o oficial de justiça bater à porta. Nossos robôs detectam novas ações no exato momento do peticionamento (distribuição). Receba alertas de processos até 30 dias antes da citação oficial.
+                                    {t('landingPages.sentinel.features.items.revelia.desc')}
                                 </p>
                             </div>
                         </div>
@@ -242,9 +253,9 @@ export default function SentinelLanding() {
                                 <Bell size={32} />
                             </div>
                             <div className="flex-1">
-                                <h3 className="text-2xl font-black mb-3 text-slate-900 dark:text-white tracking-tight">Zero Prazos Perdidos</h3>
+                                <h3 className="text-2xl font-black mb-3 text-slate-900 dark:text-white tracking-tight">{t('landingPages.sentinel.features.items.zeroDeadlines.title')}</h3>
                                 <p className="text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
-                                    Esqueça a busca manual. O Sentinel PRO varre automaticamente os Diários Oficiais, DJEN e os tribunais do país. Receba alertas inteligentes de intimações e movimentações em tempo real.
+                                    {t('landingPages.sentinel.features.items.zeroDeadlines.desc')}
                                 </p>
                             </div>
                         </div>
@@ -255,9 +266,9 @@ export default function SentinelLanding() {
                                 <Globe size={32} />
                             </div>
                             <div className="flex-1">
-                                <h3 className="text-2xl font-black mb-3 text-slate-900 dark:text-white tracking-tight">Proteja a Reputação do Cliente</h3>
+                                <h3 className="text-2xl font-black mb-3 text-slate-900 dark:text-white tracking-tight">{t('landingPages.sentinel.features.items.reputation.title')}</h3>
                                 <p className="text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
-                                    A vigilância vai além dos tribunais. Monitore marcas em jornais, portais de notícias e órgãos de defesa do consumidor (Procon, Consumidor.gov). Atue como um escudo corporativo proativo.
+                                    {t('landingPages.sentinel.features.items.reputation.desc')}
                                 </p>
                             </div>
                         </div>
@@ -268,9 +279,9 @@ export default function SentinelLanding() {
                                 <BarChart3 size={32} />
                             </div>
                             <div className="flex-1">
-                                <h3 className="text-2xl font-black mb-3 text-slate-900 dark:text-white tracking-tight">Inteligência que lê por você</h3>
+                                <h3 className="text-2xl font-black mb-3 text-slate-900 dark:text-white tracking-tight">{t('landingPages.sentinel.features.items.aiIntelligence.title')}</h3>
                                 <p className="text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
-                                    Nossa IA lê publicações e classifica o conteúdo instantaneamente. indicadores visuais (como vermelho para Risco Alto) ajudam você a priorizar urgências em um segundo.
+                                    {t('landingPages.sentinel.features.items.aiIntelligence.desc')}
                                 </p>
                             </div>
                         </div>
@@ -283,19 +294,17 @@ export default function SentinelLanding() {
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-16 relative z-10">
                     <div className="flex-1 space-y-8">
                         <h2 className="text-5xl font-black tracking-tighter uppercase leading-tight">
-                            Uma interface que <br />
-                            <span className="text-branding-gradient">pensa como um advogado.</span>
+                            {t('landingPages.sentinel.ux.title').split(' ').map((word: string, i: number) => (
+                                <React.Fragment key={i}>
+                                    {word.toLowerCase() === 'pensa' || word.toLowerCase() === 'advogado.' || word.toLowerCase() === 'thinks' || word.toLowerCase() === 'lawyer.' ? <span className="text-branding-gradient">{word}</span> : word}{' '}
+                                </React.Fragment>
+                            ))}
                         </h2>
                         <p className="text-xl text-slate-300 leading-relaxed font-medium">
-                            Ferramentas complexas atrasam o seu trabalho. Projetamos o Sentinel PRO para garantir foco total. Sem "muralhas de dados", você visualiza gráficos limpos, navegação intuitiva e alertas codificados por cores que evitam erros.
+                            {t('landingPages.sentinel.ux.subtitle')}
                         </p>
                         <ul className="space-y-4">
-                            {[
-                                "Foco total: Menos cliques, mais resultados.",
-                                "Alertas por cores: Priorização instantânea.",
-                                "Resumos por IA: Deixe a leitura densa para nós.",
-                                "Ação rápida: Transforme alertas em tarefas com um clique."
-                            ].map((text, i) => (
+                            {((t('landingPages.sentinel.ux.list') as unknown) as string[]).map((text: string, i: number) => (
                                 <li key={i} className="flex items-center gap-3 font-bold text-slate-200">
                                     <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 border border-emerald-500/30">
                                         <Check size={14} />
@@ -308,19 +317,19 @@ export default function SentinelLanding() {
                     <div className="flex-1 grid grid-cols-2 gap-4">
                         <div className="aspect-square bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 p-6 flex flex-col justify-center items-center text-center gap-4 hover:bg-white/10 transition-colors">
                             <Eye size={40} className="text-indigo-400" />
-                            <span className="font-bold text-sm">Visão 360º</span>
+                            <span className="font-bold text-sm">{t('landingPages.sentinel.ux.grid.vision')}</span>
                         </div>
                         <div className="aspect-square bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 p-6 flex flex-col justify-center items-center text-center gap-4 hover:bg-white/10 transition-colors">
                             <ShieldCheck size={40} className="text-emerald-400" />
-                            <span className="font-bold text-sm">Segurança Total</span>
+                            <span className="font-bold text-sm">{t('landingPages.sentinel.ux.grid.security')}</span>
                         </div>
                         <div className="aspect-square bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 p-6 flex flex-col justify-center items-center text-center gap-4 hover:bg-white/10 transition-colors">
                             <Zap size={40} className="text-amber-400" />
-                            <span className="font-bold text-sm">Ação Instantânea</span>
+                            <span className="font-bold text-sm">{t('landingPages.sentinel.ux.grid.action')}</span>
                         </div>
                         <div className="aspect-square bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 p-6 flex flex-col justify-center items-center text-center gap-4 hover:bg-white/10 transition-colors">
                             <ZapOff size={40} className="text-rose-400" />
-                            <span className="font-bold text-sm">Fim do Stress</span>
+                            <span className="font-bold text-sm">{t('landingPages.sentinel.ux.grid.stress')}</span>
                         </div>
                     </div>
                 </div>
@@ -332,10 +341,14 @@ export default function SentinelLanding() {
             <section className="py-32 px-6 text-center">
                 <div className="max-w-3xl mx-auto">
                     <h2 className="text-5xl md:text-6xl font-black mb-8 text-slate-900 dark:text-white leading-tight">
-                        Pronto para nunca mais se preocupar com <span className="text-branding-gradient">Publicações?</span>
+                        {t('landingPages.sentinel.finalCta.title').split(' ').map((word: string, i: number) => (
+                            <React.Fragment key={i}>
+                                {word.toLowerCase() === 'publicações?' || word.toLowerCase() === 'publications?' ? <span className="text-branding-gradient">{word}</span> : word}{' '}
+                            </React.Fragment>
+                        ))}
                     </h2>
                     <p className="text-xl text-slate-500 dark:text-slate-400 mb-12 leading-relaxed">
-                        O Sentinel PRO é brilhante sozinho, mas é imbatível no Ecossistema Veritum. Junte-se a centenas de escritórios que elevaram sua segurança operacional.
+                        {t('landingPages.sentinel.finalCta.subtitle')}
                     </p>
                     {(hasAccess || currentUser) && (
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
@@ -343,18 +356,18 @@ export default function SentinelLanding() {
                                 onClick={() => setIsAuthModalOpen(true)}
                                 className="w-full sm:w-auto bg-indigo-600 text-white px-12 py-5 rounded-[2rem] font-bold text-xl shadow-2xl shadow-indigo-600/40 hover:scale-105 hover:bg-indigo-700 transition-all cursor-pointer"
                             >
-                                Começar Agora - É Grátis
+                                {t('landingPages.sentinel.finalCta.button1')}
                             </button>
                             <Link
                                 href="/pricing"
                                 className="w-full sm:w-auto px-12 py-5 rounded-[2rem] border border-slate-200 dark:border-slate-800 font-bold text-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
                             >
-                                Ver Planos de Assinatura
+                                {t('landingPages.sentinel.finalCta.button2')}
                             </Link>
                         </div>
                     )}
                     <p className="mt-8 text-sm text-slate-400 font-bold uppercase tracking-widest">
-                        Sem cartão de crédito • Configuração rápida
+                        {t('landingPages.sentinel.finalCta.footer')}
                     </p>
                 </div>
             </section>
@@ -371,7 +384,7 @@ export default function SentinelLanding() {
                                 </span>
                             </div>
                             <p className="text-slate-500 dark:text-slate-400 font-medium max-w-xs text-center md:text-left">
-                                O radar proativo de quem não aceita o risco da revelia.
+                                {t('landingPages.sentinel.footer.slogan')}
                             </p>
                         </div>
 

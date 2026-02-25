@@ -15,13 +15,15 @@ interface CardProps {
 
 import { Lock } from 'lucide-react';
 import { toast } from '../../ui/toast';
+import { useTranslation } from '@/contexts/language-context';
 
 export const DashboardCard: React.FC<CardProps> = ({ title, description, subtitle, icon: Icon, color, onClick, isLocked }) => {
+    const { t } = useTranslation();
     return (
         <button
             onClick={() => {
                 if (isLocked) {
-                    toast.error('Este módulo não faz parte do seu plano atual.');
+                    toast.error(t('dashboard.moduleLocked') || 'Este módulo não faz parte do seu plano atual.');
                     return;
                 }
                 onClick();
@@ -32,7 +34,7 @@ export const DashboardCard: React.FC<CardProps> = ({ title, description, subtitl
             {!isLocked && <div className={`absolute -right-8 -top-8 w-32 h-32 rounded-full opacity-0 group-hover:opacity-10 transition-all duration-700 blur-3xl ${color.replace('text-', 'bg-')}`} />}
 
             {isLocked && (
-                <div className="absolute top-6 right-6 p-2 bg-amber-100 dark:bg-amber-900/30 text-amber-600 rounded-xl animate-in fade-in zoom-in duration-300 z-10" title="Módulo não incluído no seu plano">
+                <div className="absolute top-6 right-6 p-2 bg-amber-100 dark:bg-amber-900/30 text-amber-600 rounded-xl animate-in fade-in zoom-in duration-300 z-10" title={t('dashboard.moduleLocked') || "Módulo não incluído no seu plano"}>
                     <Lock size={20} />
                 </div>
             )}
@@ -64,12 +66,12 @@ export const DashboardCard: React.FC<CardProps> = ({ title, description, subtitl
 
                 {isLocked && (
                     <p className="text-[10px] font-black uppercase text-amber-600 dark:text-amber-500 tracking-widest italic text-center">
-                        Este módulo não faz parte do seu plano atual.
+                        {t('dashboard.moduleLocked') || 'Este módulo não faz parte do seu plano atual.'}
                     </p>
                 )}
 
                 <div className={`flex items-center gap-2 text-xs font-black uppercase tracking-widest transition-all transform translate-x-[-10px] group-hover:translate-x-0 ${isLocked ? 'text-amber-600' : 'text-indigo-600 dark:text-indigo-400 opacity-0 group-hover:opacity-100'}`}>
-                    {isLocked ? 'Adquirir Módulo' : 'Acessar Módulo'} <ChevronRight size={14} />
+                    {isLocked ? (t('dashboard.acquireModule') || 'Adquirir Módulo') : (t('dashboard.accessModule') || 'Acessar Módulo')} <ChevronRight size={14} />
                 </div>
             </div>
         </button>

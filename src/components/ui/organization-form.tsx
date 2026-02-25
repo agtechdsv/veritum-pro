@@ -5,12 +5,14 @@ import { Organization } from '@/types';
 import { Building2, Mail, Phone, Globe, MapPin, Hash, Save, Camera } from 'lucide-react';
 import { createMasterClient } from '@/lib/supabase/master';
 import { toast } from './toast';
+import { useTranslation } from '@/contexts/language-context';
 
 interface OrganizationFormProps {
     adminId: string;
 }
 
 const OrganizationForm: React.FC<OrganizationFormProps> = ({ adminId }) => {
+    const { t } = useTranslation();
     const [org, setOrg] = useState<Organization | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -32,7 +34,7 @@ const OrganizationForm: React.FC<OrganizationFormProps> = ({ adminId }) => {
             setOrg(data || { admin_id: adminId, company_name: '' } as Organization);
         } catch (err) {
             console.error('Error fetching organization:', err);
-            toast.error('Erro ao carregar dados do escritório.');
+            toast.error(t('management.organization.toast.fetchError'));
         } finally {
             setLoading(false);
         }
@@ -91,7 +93,7 @@ const OrganizationForm: React.FC<OrganizationFormProps> = ({ adminId }) => {
             const data = await response.json();
 
             if (data.erro) {
-                toast.error('CEP não encontrado.');
+                toast.error(t('management.organization.toast.cepError'));
                 return;
             }
 
@@ -107,7 +109,7 @@ const OrganizationForm: React.FC<OrganizationFormProps> = ({ adminId }) => {
             }
         } catch (err) {
             console.error('Error fetching CEP:', err);
-            toast.error('Erro ao buscar CEP.');
+            toast.error(t('management.organization.toast.cepFetchError'));
         }
     };
 
@@ -123,10 +125,10 @@ const OrganizationForm: React.FC<OrganizationFormProps> = ({ adminId }) => {
                 });
 
             if (error) throw error;
-            toast.success('Dados do escritório salvos com sucesso!');
+            toast.success(t('management.organization.toast.saveSuccess'));
         } catch (err) {
             console.error('Error saving organization:', err);
-            toast.error('Erro ao salvar dados.');
+            toast.error(t('management.organization.toast.saveError'));
         } finally {
             setSaving(false);
         }
@@ -135,6 +137,7 @@ const OrganizationForm: React.FC<OrganizationFormProps> = ({ adminId }) => {
     if (loading) return (
         <div className="flex items-center justify-center p-12">
             <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+            <span className="ml-4 text-xs font-black uppercase tracking-widest text-slate-400">{t('common.loading')}</span>
         </div>
     );
 
@@ -146,31 +149,31 @@ const OrganizationForm: React.FC<OrganizationFormProps> = ({ adminId }) => {
                 {/* Basic Info */}
                 <div className="space-y-4">
                     <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                        <Building2 size={16} /> Identificação
+                        <Building2 size={16} /> {t('management.organization.identification')}
                     </h3>
 
                     <div>
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Razão Social</label>
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">{t('management.organization.companyName')}</label>
                         <input
                             value={org.company_name}
                             onChange={e => setOrg({ ...org, company_name: e.target.value })}
                             className="w-full px-4 py-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none font-bold transition-all placeholder:text-slate-300 dark:placeholder:text-slate-700"
-                            placeholder="Nome Oficial da Empresa"
+                            placeholder={t('management.organization.companyNamePlaceholder')}
                         />
                     </div>
 
                     <div>
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Nome Fantasia</label>
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">{t('management.organization.tradingName')}</label>
                         <input
                             value={org.trading_name || ''}
                             onChange={e => setOrg({ ...org, trading_name: e.target.value })}
                             className="w-full px-4 py-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none font-bold transition-all placeholder:text-slate-300 dark:placeholder:text-slate-700"
-                            placeholder="Nome de Marca"
+                            placeholder={t('management.organization.tradingNamePlaceholder')}
                         />
                     </div>
 
                     <div>
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">CNPJ</label>
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">{t('management.organization.cnpj')}</label>
                         <input
                             value={org.cnpj || ''}
                             onChange={e => setOrg({ ...org, cnpj: maskCNPJ(e.target.value) })}
@@ -183,7 +186,7 @@ const OrganizationForm: React.FC<OrganizationFormProps> = ({ adminId }) => {
                 {/* Contact & Logo */}
                 <div className="space-y-4">
                     <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                        <Camera size={16} /> Logo & Marcas
+                        <Camera size={16} /> {t('management.organization.logo')}
                     </h3>
 
                     <div className="flex items-start gap-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-slate-800">
@@ -201,24 +204,24 @@ const OrganizationForm: React.FC<OrganizationFormProps> = ({ adminId }) => {
                             </label>
                         </div>
                         <div className="flex-1 space-y-1">
-                            <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Logotipo do Escritório</p>
-                            <p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold leading-tight">Será usado em cabeçalhos de documentos e relatórios.</p>
+                            <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">{t('management.organization.logoTitle')}</p>
+                            <p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold leading-tight">{t('management.organization.logoDesc')}</p>
                         </div>
                     </div>
 
                     <div>
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">E-mail Comercial</label>
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">{t('management.organization.email')}</label>
                         <input
                             value={org.email || ''}
                             onChange={e => setOrg({ ...org, email: e.target.value })}
                             className="w-full px-4 py-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none font-bold transition-all placeholder:text-slate-300 dark:placeholder:text-slate-700"
-                            placeholder="contato@escritorio.com"
+                            placeholder={t('management.organization.emailPlaceholder')}
                         />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Telefone</label>
+                            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">{t('management.organization.phone')}</label>
                             <input
                                 value={org.phone || ''}
                                 onChange={e => setOrg({ ...org, phone: maskPhone(e.target.value) })}
@@ -227,7 +230,7 @@ const OrganizationForm: React.FC<OrganizationFormProps> = ({ adminId }) => {
                             />
                         </div>
                         <div>
-                            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Site</label>
+                            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">{t('management.organization.website')}</label>
                             <input
                                 value={org.website || ''}
                                 onChange={e => setOrg({ ...org, website: e.target.value })}
@@ -242,12 +245,12 @@ const OrganizationForm: React.FC<OrganizationFormProps> = ({ adminId }) => {
             {/* Address */}
             <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
                 <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                    <MapPin size={16} /> Endereço Sede
+                    <MapPin size={16} /> {t('management.organization.address')}
                 </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">CEP (Busca Automática)</label>
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">{t('management.organization.zip')}</label>
                         <input
                             value={org.address_zip || ''}
                             onChange={e => {
@@ -260,7 +263,7 @@ const OrganizationForm: React.FC<OrganizationFormProps> = ({ adminId }) => {
                         />
                     </div>
                     <div className="md:col-span-2">
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Logradouro (Rua/Av)</label>
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">{t('management.organization.street')}</label>
                         <input
                             value={org.address_street || ''}
                             onChange={e => setOrg({ ...org, address_street: e.target.value })}
@@ -271,7 +274,7 @@ const OrganizationForm: React.FC<OrganizationFormProps> = ({ adminId }) => {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Número</label>
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">{t('management.organization.number')}</label>
                         <input
                             value={org.address_number || ''}
                             onChange={e => setOrg({ ...org, address_number: e.target.value })}
@@ -279,7 +282,7 @@ const OrganizationForm: React.FC<OrganizationFormProps> = ({ adminId }) => {
                         />
                     </div>
                     <div>
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Complemento</label>
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">{t('management.organization.complement')}</label>
                         <input
                             value={org.address_complement || ''}
                             onChange={e => setOrg({ ...org, address_complement: e.target.value })}
@@ -287,7 +290,7 @@ const OrganizationForm: React.FC<OrganizationFormProps> = ({ adminId }) => {
                         />
                     </div>
                     <div>
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Bairro</label>
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">{t('management.organization.neighborhood')}</label>
                         <input
                             value={org.address_neighborhood || ''}
                             onChange={e => setOrg({ ...org, address_neighborhood: e.target.value })}
@@ -298,7 +301,7 @@ const OrganizationForm: React.FC<OrganizationFormProps> = ({ adminId }) => {
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="md:col-span-3">
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Cidade</label>
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">{t('management.organization.city')}</label>
                         <input
                             value={org.address_city || ''}
                             onChange={e => setOrg({ ...org, address_city: e.target.value })}
@@ -306,7 +309,7 @@ const OrganizationForm: React.FC<OrganizationFormProps> = ({ adminId }) => {
                         />
                     </div>
                     <div>
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">UF</label>
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">{t('management.organization.state')}</label>
                         <input
                             value={org.address_state || ''}
                             onChange={e => setOrg({ ...org, address_state: e.target.value.toUpperCase().slice(0, 2) })}
@@ -323,7 +326,7 @@ const OrganizationForm: React.FC<OrganizationFormProps> = ({ adminId }) => {
                     disabled={saving}
                     className="px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-indigo-600/20 hover:bg-indigo-700 transition-all flex items-center gap-3 disabled:opacity-50 active:scale-95"
                 >
-                    {saving ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <><Save size={20} /> Salvar Escritório</>}
+                    {saving ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <><Save size={20} /> {t('management.organization.save')}</>}
                 </button>
             </div>
         </div>

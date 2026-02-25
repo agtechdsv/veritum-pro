@@ -7,6 +7,7 @@ import { Suite, Credentials } from '@/types';
 import { createMasterClient } from '@/lib/supabase/master';
 import { GeminiService } from '@/services/gemini';
 import { toast } from '../ui/toast';
+import { useTranslation } from '@/contexts/language-context';
 
 interface Props {
     credentials: Credentials;
@@ -17,6 +18,7 @@ const US_FLAG = "https://flagcdn.com/w40/us.png";
 const ES_FLAG = "https://flagcdn.com/w40/es.png";
 
 const SuiteManagement: React.FC<Props> = ({ credentials }) => {
+    const { t } = useTranslation();
     const [suites, setSuites] = useState<Suite[]>([]);
     const [loading, setLoading] = useState(true);
     const [editingSuite, setEditingSuite] = useState<Suite | null>(null);
@@ -64,20 +66,20 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
                     .update(formData)
                     .eq('id', editingSuite.id);
                 if (error) throw error;
-                toast.success('Módulo atualizado com sucesso!');
+                toast.success(t('management.master.suites.toast.successUpdate'));
             } else {
                 const { error } = await supabase
                     .from('suites')
                     .insert([{ ...formData, order_index: suites.length }]);
                 if (error) throw error;
-                toast.success('Módulo criado com sucesso!');
+                toast.success(t('management.master.suites.toast.successCreate'));
             }
 
             setEditingSuite(null);
             setFormData(initialFormData);
             fetchSuites();
         } catch (err: any) {
-            toast.error(err.message || 'Erro ao salvar módulo');
+            toast.error(t('management.master.suites.toast.errorSave'));
         }
     };
 
@@ -90,7 +92,7 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
             if (error) throw error;
             fetchSuites();
         } catch (err: any) {
-            alert('Erro ao alterar status: ' + err.message);
+            toast.error(t('management.master.suites.toast.errorStatus', { error: err.message }));
         }
     };
 
@@ -102,7 +104,7 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
             setSuiteToDelete(null);
             fetchSuites();
         } catch (err: any) {
-            alert('Erro ao excluir: ' + err.message);
+            toast.error(t('management.master.suites.toast.errorDelete', { error: err.message }));
         }
     };
 
@@ -123,12 +125,12 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
 
     const handleTranslate = async () => {
         if (!formData.short_desc?.[activeLang]) {
-            toast.error('Preencha ao menos a Bio Curta para traduzir.');
+            toast.error(t('management.master.suites.toast.fillBio'));
             return;
         }
 
         if (!credentials.geminiKey) {
-            toast.error('Chave do Gemini não configurada. Por favor, adicione sua API Key nas Configurações.');
+            toast.error(t('management.master.suites.toast.noGemini'));
             return;
         }
 
@@ -161,9 +163,9 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
                 features: newFeatures as any
             });
 
-            toast.success('Tradução baseada em IA concluída!');
+            toast.success(t('management.master.suites.toast.successTranslate'));
         } catch (err: any) {
-            toast.error('Erro na tradução: ' + err.message);
+            toast.error(t('management.master.suites.toast.errorTranslate', { error: err.message }));
         } finally {
             setIsTranslating(false);
         }
@@ -189,8 +191,8 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
         <div className="space-y-8 animate-in fade-in duration-500">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tight">Gestão de Módulos</h1>
-                    <p className="text-slate-500 dark:text-slate-400 font-medium italic">Configure a vitrine do seu ecossistema jurídico.</p>
+                    <h1 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tight">{t('management.master.suites.title')}</h1>
+                    <p className="text-slate-500 dark:text-slate-400 font-medium italic">{t('management.master.suites.subtitle')}</p>
                 </div>
             </div>
 
@@ -198,14 +200,14 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
                 {/* Table Column - Left (Narrower) */}
                 <div className="w-full lg:w-[30%] bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden min-h-[600px] sticky top-8 flex flex-col">
                     <div className="p-6 border-b border-slate-100 dark:border-slate-800">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Listagem de Módulos</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('management.master.suites.listTitle')}</span>
                     </div>
                     <table className="w-full text-left">
                         <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
                             <tr>
-                                <th className="px-4 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest">Ordem</th>
-                                <th className="px-4 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest">Módulo</th>
-                                <th className="px-4 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Ações</th>
+                                <th className="px-4 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('management.master.suites.table.order')}</th>
+                                <th className="px-4 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('management.master.suites.table.module')}</th>
+                                <th className="px-4 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">{t('management.master.suites.table.actions')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -234,7 +236,7 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
                                             <button
                                                 onClick={() => handleToggleStatus(s)}
                                                 className={`p-1.5 transition-all duration-200 rounded-lg cursor-pointer ${s.active ? 'text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30' : 'text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50'}`}
-                                                title={s.active ? 'Módulo Visível' : 'Módulo Oculto'}
+                                                title={s.active ? t('management.master.suites.table.visible') : t('management.master.suites.table.hidden')}
                                             >
                                                 <Radio size={16} className={s.active ? 'fill-emerald-500/20' : ''} />
                                             </button>
@@ -259,7 +261,7 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
                     {suites.length === 0 && (
                         <div className="flex-1 flex flex-col items-center justify-center p-10 opacity-20">
                             <Package size={48} />
-                            <p className="font-black uppercase tracking-widest mt-4 text-[10px]">Nenhum módulo ativo</p>
+                            <p className="font-black uppercase tracking-widest mt-4 text-[10px]">{t('management.master.suites.table.noActive')}</p>
                         </div>
                     )}
                 </div>
@@ -274,9 +276,9 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
                                 </div>
                                 <div>
                                     <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
-                                        {editingSuite ? 'Editar Módulo' : 'Novo Módulo'}
+                                        {editingSuite ? t('management.master.suites.form.edit') : t('management.master.suites.form.add')}
                                     </h2>
-                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Metadata do Ecossistema</p>
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{t('management.master.suites.form.metadata')}</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
@@ -286,10 +288,10 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
                                             onClick={handleSave}
                                             className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all text-[10px] font-black uppercase tracking-widest shadow-sm shadow-indigo-600/20"
                                         >
-                                            <ShieldCheck size={16} /> Salvar Alterações
+                                            <ShieldCheck size={16} /> {t('management.master.suites.form.saveChanges')}
                                         </button>
                                         <button onClick={cancelEdit} className="flex items-center gap-2 px-4 py-2 text-slate-400 hover:text-rose-500 transition-colors bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm font-black uppercase text-[10px] tracking-widest">
-                                            <X size={16} /> Cancelar Seleção
+                                            <X size={16} /> {t('management.master.suites.form.cancelSelection')}
                                         </button>
                                     </>
                                 ) : (
@@ -297,7 +299,7 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
                                         onClick={handleSave}
                                         className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all text-[10px] font-black uppercase tracking-widest shadow-sm shadow-indigo-600/20"
                                     >
-                                        <Plus size={16} /> Publicar Módulo
+                                        <Plus size={16} /> {t('management.master.suites.form.publish')}
                                     </button>
                                 )}
                             </div>
@@ -306,7 +308,7 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
                         <form onSubmit={handleSave} className="p-8 space-y-6">
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Key Identificadora</label>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{t('management.master.suites.form.idKey')}</label>
                                     <input
                                         required
                                         placeholder="EX: VOX_KEY"
@@ -316,7 +318,7 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
                                     />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Nome Principal</label>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{t('management.master.suites.form.mainName')}</label>
                                     <input
                                         required
                                         placeholder="EX: Vox Clientis"
@@ -353,13 +355,13 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
                                         className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-all disabled:opacity-50"
                                     >
                                         <RefreshCw size={12} className={isTranslating ? 'animate-spin' : ''} />
-                                        {isTranslating ? 'Traduzindo...' : 'Traduzir via IA'}
+                                        {isTranslating ? t('management.master.suites.form.translating') : t('management.master.suites.form.translateIA')}
                                     </button>
                                 </div>
 
                                 <div className="space-y-4">
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Bio Curta ({activeLang.toUpperCase()})</label>
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{t('management.master.suites.form.shortBio')} ({activeLang.toUpperCase()})</label>
                                         <input
                                             className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-medium focus:ring-2 focus:ring-indigo-600 outline-none dark:text-white"
                                             value={formData.short_desc?.[activeLang] || ''}
@@ -367,7 +369,7 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
                                         />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Detalhes do Card ({activeLang.toUpperCase()})</label>
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{t('management.master.suites.form.cardDetails')} ({activeLang.toUpperCase()})</label>
                                         <textarea
                                             rows={2}
                                             className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-medium focus:ring-2 focus:ring-indigo-600 outline-none dark:text-white resize-none"
@@ -376,7 +378,7 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
                                         />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Recursos / Features ({activeLang.toUpperCase()})</label>
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{t('management.master.suites.form.features')} ({activeLang.toUpperCase()})</label>
                                         <textarea
                                             rows={3}
                                             placeholder="Item 1&#10;Item 2"
@@ -389,7 +391,7 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
                             </div>
 
                             <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-slate-800">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Código SVG do Ícone</label>
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{t('management.master.suites.form.iconSvg')}</label>
                                 <textarea
                                     rows={3}
                                     placeholder="<svg>...</svg>"
@@ -403,7 +405,7 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
                                 <label className="relative inline-flex items-center cursor-pointer">
                                     <input type="checkbox" className="sr-only peer" checked={formData.active} onChange={e => setFormData({ ...formData, active: e.target.checked })} />
                                     <div className="w-9 h-5 bg-slate-300 rounded-full peer peer-checked:bg-emerald-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div>
-                                    <span className="ml-3 text-[11px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-400">Ativa no Portal</span>
+                                    <span className="ml-3 text-[11px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-400">{t('management.master.suites.form.activePortal')}</span>
                                 </label>
                             </div>
 
@@ -421,9 +423,9 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
                             <AlertTriangle size={40} />
                         </div>
                         <div className="space-y-2">
-                            <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Confirmar Exclusão</h3>
+                            <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">{t('management.master.suites.delete.title')}</h3>
                             <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
-                                Você está prestes a remover permanentemente o módulo <span className="font-bold text-slate-800 dark:text-center text-slate-200">"{suiteToDelete.name}"</span> do ecossistema. Esta ação não pode ser desfeita.
+                                {t('management.master.suites.delete.message', { name: suiteToDelete.name })}
                             </p>
                         </div>
                         <div className="flex gap-4 pt-4">
@@ -431,13 +433,13 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
                                 onClick={() => setSuiteToDelete(null)}
                                 className="flex-1 px-6 py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-slate-200 transition-all"
                             >
-                                Cancelar
+                                {t('management.master.suites.delete.cancel')}
                             </button>
                             <button
                                 onClick={handleDelete}
                                 className="flex-1 px-6 py-4 bg-rose-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-rose-600/20 hover:scale-[1.02] active:scale-95 transition-all"
                             >
-                                Sim, Excluir
+                                {t('management.master.suites.delete.confirm')}
                             </button>
                         </div>
                     </div>

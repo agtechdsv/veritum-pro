@@ -14,6 +14,8 @@ import { useRouter } from 'next/navigation';
 import { AuthModal } from '@/components/auth-modal';
 import { createMasterClient } from '@/lib/supabase/master';
 import { UserMenu } from '@/components/ui/user-menu';
+import { useTranslation } from '@/contexts/language-context';
+import { LanguageSelector } from '@/components/ui/language-selector';
 
 const Logo = () => (
     <div className="bg-emerald-600/10 p-2 rounded-lg flex items-center justify-center text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">
@@ -22,6 +24,7 @@ const Logo = () => (
 );
 
 export default function ValoremLanding() {
+    const { t } = useTranslation();
     const { theme, setTheme, resolvedTheme } = useTheme();
     const router = useRouter();
     const [mounted, setMounted] = useState(false);
@@ -74,24 +77,25 @@ export default function ValoremLanding() {
                     </div>
 
                     <div className="hidden md:flex items-center gap-8">
-                        <Link href="/" className="text-base font-bold text-branding-gradient hover:opacity-80 transition-all">Portal</Link>
-                        <a href="#top" className="text-sm font-bold text-slate-800 dark:text-white">Início</a>
-                        <a href="#vision" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-emerald-600 transition-colors">Visão</a>
-                        <a href="#features" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-emerald-600 transition-colors">Funcionalidades</a>
-                        <a href="#ux" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-emerald-600 transition-colors">Diferencial</a>
+                        <Link href="/" className="text-base font-bold text-branding-gradient hover:opacity-80 transition-all">{t('pricingPage.nav.portal')}</Link>
+                        <a href="#top" className="text-sm font-bold text-slate-800 dark:text-white">{t('landingPages.valorem.nav.home')}</a>
+                        <a href="#vision" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-emerald-600 transition-colors">{t('landingPages.valorem.nav.vision')}</a>
+                        <a href="#features" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-emerald-600 transition-colors">{t('landingPages.valorem.nav.features')}</a>
+                        <a href="#ux" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-emerald-600 transition-colors">{t('landingPages.valorem.nav.ux')}</a>
                     </div>
 
                     <div className="flex items-center gap-4">
                         <button onClick={toggleTheme} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all text-slate-600 dark:text-slate-400">
                             {resolvedTheme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
                         </button>
+                        <LanguageSelector />
                         {currentUser === undefined ? (
                             <div className="w-24 h-10 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl" />
                         ) : currentUser ? (
                             <UserMenu user={currentUser} supabase={createMasterClient()} />
                         ) : hasAccess ? (
                             <Link href="/?login=true" className="hidden sm:flex items-center gap-2 font-bold px-4 py-2 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-xl transition-all">
-                                <LogOut size={18} /> Entrar
+                                <LogOut size={18} /> {t('nav.login')}
                             </Link>
                         ) : null}
                         {(hasAccess || currentUser) && (
@@ -99,7 +103,7 @@ export default function ValoremLanding() {
                                 onClick={() => setIsAuthModalOpen(true)}
                                 className="bg-emerald-600 text-white px-6 py-2.5 rounded-xl font-bold shadow-xl shadow-emerald-600/20 hover:scale-105 transition-all text-sm"
                             >
-                                Teste Grátis
+                                {t('landingPages.valorem.hero.cta1')}
                             </button>
                         )}
                     </div>
@@ -111,14 +115,18 @@ export default function ValoremLanding() {
                 <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16 relative z-10">
                     <div className="flex-1 text-left">
                         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-xs font-black uppercase tracking-widest mb-8 animate-fade-in">
-                            <Banknote size={14} className="animate-pulse" /> Inteligência Financeira Jurídica
+                            <Banknote size={14} className="animate-pulse" /> {t('landingPages.valorem.hero.badge')}
                         </div>
                         <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-8 leading-[1.05] text-slate-900 dark:text-white">
-                            Sua saúde financeira <br />
-                            em <span className="text-branding-gradient">piloto automático.</span>
+                            {t('landingPages.valorem.hero.title').split(' ').map((word: string, i: number) => {
+                                if (word.toLowerCase() === 'piloto' || word.toLowerCase() === 'automático.' || word.toLowerCase() === 'autopilot.' || word.toLowerCase() === 'on') {
+                                    return <React.Fragment key={i}><span className="text-branding-gradient">{word}</span> </React.Fragment>
+                                }
+                                return word + ' '
+                            })}
                         </h1>
                         <p className="text-xl text-slate-500 dark:text-slate-400 max-w-xl mb-12 leading-relaxed font-medium">
-                            Receba seus honorários sem burocracia. Diga adeus às planilhas confusas e à inadimplência. O Valorem PRO resolve cálculos judiciais e automatiza cobranças.
+                            {t('landingPages.valorem.hero.subtitle')}
                         </p>
                         <div className="flex flex-col sm:flex-row items-center gap-4">
                             {(hasAccess || currentUser) && (
@@ -126,11 +134,11 @@ export default function ValoremLanding() {
                                     onClick={() => setIsAuthModalOpen(true)}
                                     className="w-full sm:w-auto bg-emerald-600 text-white px-10 py-4 rounded-[1.5rem] font-bold text-lg shadow-2xl shadow-emerald-600/40 hover:scale-105 hover:bg-emerald-700 transition-all flex items-center justify-center gap-2"
                                 >
-                                    Começar Teste Grátis <ArrowRight size={20} />
+                                    {t('landingPages.valorem.hero.cta1')} <ArrowRight size={20} />
                                 </button>
                             )}
                             <a href="#vision" className="w-full sm:w-auto px-10 py-4 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 font-bold text-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-center text-slate-600 dark:text-slate-300">
-                                Saiba mais
+                                {t('landingPages.valorem.hero.cta2')}
                             </a>
                         </div>
                     </div>
@@ -143,7 +151,7 @@ export default function ValoremLanding() {
                                 <div className="bg-white dark:bg-slate-950 rounded-[2rem] overflow-hidden border border-slate-200 dark:border-slate-800 aspect-[4/3] flex flex-col p-8">
                                     <div className="flex justify-between items-end mb-8">
                                         <div>
-                                            <div className="text-[10px] font-black tracking-widest text-slate-400 uppercase mb-1">Receita Mensal</div>
+                                            <div className="text-[10px] font-black tracking-widest text-slate-400 uppercase mb-1">{t('landingPages.valorem.mockup.monthly')}</div>
                                             <div className="text-3xl font-black text-emerald-500">R$ 142.500,00</div>
                                         </div>
                                         <div className="flex gap-2">
@@ -177,11 +185,11 @@ export default function ValoremLanding() {
                                             <QrCode size={64} className="text-slate-900 dark:text-white" />
                                         </div>
                                         <div className="text-center">
-                                            <div className="text-[8px] font-black uppercase text-emerald-500 mb-1">Pagamento via PIX</div>
+                                            <div className="text-[8px] font-black uppercase text-emerald-500 mb-1">{t('landingPages.valorem.mockup.pix')}</div>
                                             <div className="text-xs font-black text-slate-900 dark:text-white">R$ 2.450,00</div>
                                         </div>
                                         <div className="w-full h-8 bg-emerald-500 rounded-xl flex items-center justify-center text-[10px] font-bold text-white shadow-lg shadow-emerald-500/20">
-                                            Pagar Agora
+                                            {t('landingPages.valorem.mockup.pay')}
                                         </div>
                                     </div>
                                 </div>
@@ -204,10 +212,10 @@ export default function ValoremLanding() {
                     <div className="flex flex-col lg:flex-row items-center gap-16">
                         <div className="flex-1 grid grid-cols-2 gap-4">
                             {[
-                                { label: 'Receitas no Mês', val: '+42%', color: 'text-emerald-500', icon: TrendingUp },
-                                { label: 'Inadimplência', val: '-65%', color: 'text-rose-500', icon: AlertCircle },
-                                { label: 'Provisão de Risco', val: 'R$ 2.4M', color: 'text-emerald-600', icon: Scale },
-                                { label: 'Liquidez Hoje', val: 'Alta', color: 'text-indigo-500', icon: BarChart3 }
+                                { label: t('landingPages.valorem.stats.revenue'), val: '+42%', color: 'text-emerald-500', icon: TrendingUp },
+                                { label: t('landingPages.valorem.stats.overdue'), val: '-65%', color: 'text-rose-500', icon: AlertCircle },
+                                { label: t('landingPages.valorem.stats.provision'), val: 'R$ 2.4M', color: 'text-emerald-600', icon: Scale },
+                                { label: t('landingPages.valorem.stats.liquidity'), val: t('landingPages.valorem.stats.liquidityVal'), color: 'text-indigo-500', icon: BarChart3 }
                             ].map((stat, i) => (
                                 <div key={i} className="bg-white dark:bg-slate-900 p-8 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none hover:scale-105 transition-transform group">
                                     <div className={`w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform ${stat.color}`}>
@@ -220,14 +228,18 @@ export default function ValoremLanding() {
                         </div>
                         <div className="flex-1 space-y-8 text-left">
                             <h2 className="text-4xl md:text-5xl font-black leading-tight tracking-tighter text-slate-900 dark:text-white uppercase">
-                                Pare de cobrar clientes. <br />
-                                Deixe o sistema fazer <span className="text-branding-gradient">isso por você.</span>
+                                {t('landingPages.valorem.vision.title').split(' ').map((word: string, i: number) => {
+                                    if (word.toLowerCase() === 'isso' || word.toLowerCase() === 'por' || word.toLowerCase() === 'você.' || word.toLowerCase() === 'for' || word.toLowerCase() === 'you.') {
+                                        return <React.Fragment key={i}><span className="text-branding-gradient">{word}</span> </React.Fragment>
+                                    }
+                                    return word + ' '
+                                })}
                             </h2>
                             <p className="text-xl text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
-                                O Valorem PRO foi desenhado para quem advoga e não quer perder tempo com tarefas burocráticas de tesouraria. Saiba exatamente quem pagou, quem está devendo e qual é a projeção de faturamento do trimestre.
+                                {t('landingPages.valorem.vision.desc')}
                             </p>
                             <div className="p-6 bg-emerald-600/5 rounded-2xl border border-emerald-600/10 italic text-emerald-600 dark:text-emerald-400 font-bold">
-                                "Uma visão em tempo real, do centavo ao milhão, sem precisar ser um especialista em finanças."
+                                {t('landingPages.valorem.vision.quote')}
                             </div>
                         </div>
                     </div>
@@ -238,34 +250,34 @@ export default function ValoremLanding() {
             <section id="features" className="py-32 px-6">
                 <div className="max-w-7xl mx-auto">
                     <div className="text-center mb-20 max-w-3xl mx-auto">
-                        <span className="text-emerald-600 dark:text-emerald-400 font-black tracking-[0.2em] uppercase text-sm">Tecnologia Financeira</span>
-                        <h2 className="text-5xl font-black mt-4 text-slate-900 dark:text-white uppercase tracking-tighter">Funcionalidades de Elite</h2>
-                        <p className="text-xl text-slate-500 dark:text-slate-400 mt-4 leading-relaxed font-medium">Ferramentas criadas para garantir a rentabilidade e a transparência do seu negócio.</p>
+                        <span className="text-emerald-600 dark:text-emerald-400 font-black tracking-[0.2em] uppercase text-sm">{t('landingPages.valorem.features.category')}</span>
+                        <h2 className="text-5xl font-black mt-4 text-slate-900 dark:text-white uppercase tracking-tighter">{t('landingPages.valorem.features.title')}</h2>
+                        <p className="text-xl text-slate-500 dark:text-slate-400 mt-4 leading-relaxed font-medium">{t('landingPages.valorem.features.subtitle')}</p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                         {[
                             {
-                                title: 'Gestão Financeira Inteligente',
-                                desc: 'Assuma o controle total. Gerencie honorários, custas e fluxo de caixa. Vincule cada despesa diretamente ao processo do cliente.',
+                                title: t('landingPages.valorem.features.items.management.title'),
+                                desc: t('landingPages.valorem.features.items.management.desc'),
                                 icon: Receipt,
                                 color: 'bg-emerald-500/10 text-emerald-500'
                             },
                             {
-                                title: 'Emissão de Boletos e PIX Integrado',
-                                desc: 'Profissionalize suas cobranças. Gere QR Codes PIX e boletos com lembretes automáticos e baixa instantânea no sistema.',
+                                title: t('landingPages.valorem.features.items.billing.title'),
+                                desc: t('landingPages.valorem.features.items.billing.desc'),
                                 icon: CreditCard,
                                 color: 'bg-indigo-500/10 text-indigo-500'
                             },
                             {
-                                title: 'Integração PJe-Calc e Atualizações',
-                                desc: 'Fim da dor de cabeça com cálculos judiciais. Importe dados governamentais e atualize valores com índices monetários reais.',
+                                title: t('landingPages.valorem.features.items.calc.title'),
+                                desc: t('landingPages.valorem.features.items.calc.desc'),
                                 icon: FileSpreadsheet,
                                 color: 'bg-rose-500/10 text-rose-500'
                             },
                             {
-                                title: 'Provisionamento e Relatórios de Contingência',
-                                desc: 'A visão exigida por grandes diretorias. Calcule provisões de risco e monitore valores retidos em depósitos judiciais.',
+                                title: t('landingPages.valorem.features.items.reports.title'),
+                                desc: t('landingPages.valorem.features.items.reports.desc'),
                                 icon: PieChart,
                                 color: 'bg-amber-500/10 text-amber-500'
                             }
@@ -279,7 +291,7 @@ export default function ValoremLanding() {
                                     {f.desc}
                                 </p>
                                 <button className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-2 hover:gap-3 transition-all">
-                                    Saiba mais <ChevronRight size={16} />
+                                    {t('landingPages.valorem.features.cta')} <ChevronRight size={16} />
                                 </button>
                             </div>
                         ))}
@@ -292,17 +304,21 @@ export default function ValoremLanding() {
                 <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-20 relative z-10">
                     <div className="flex-1 space-y-10">
                         <h2 className="text-5xl md:text-6xl font-black leading-tight tracking-tighter uppercase mb-6">
-                            Finanças traduzidas <br />
-                            para o seu <span className="text-branding-gradient">idioma.</span>
+                            {t('landingPages.valorem.ux.title').split(' ').map((word: string, i: number) => {
+                                if (word.toLowerCase() === 'idioma.' || word.toLowerCase() === 'language.' || word.toLowerCase() === 'your') {
+                                    return <React.Fragment key={i}><span className="text-branding-gradient">{word}</span> </React.Fragment>
+                                }
+                                return word + ' '
+                            })}
                         </h2>
                         <p className="text-xl text-slate-300 leading-relaxed font-medium">
-                            Você é de humanas, e nós entendemos isso. Em vez de telas repletas de jargões contábeis, o Valorem PRO usa gráficos visuais e ícones intuitivos.
+                            {t('landingPages.valorem.ux.subtitle')}
                         </p>
                         <div className="space-y-6">
                             {[
-                                { title: 'Conciliação Visual', desc: 'Cores que indicam imediatamente o que está pago, atrasado ou pendente.', icon: CheckCircle2 },
-                                { title: 'Rateio Descomplicado', desc: 'Divisão automática de honorários entre sócios e parceiros.', icon: Users2 },
-                                { title: 'Exportação Transparente', desc: 'Exporte relatórios para o seu contador com apenas um clique.', icon: FileOutput }
+                                { title: t('landingPages.valorem.ux.items.conciliation.title'), desc: t('landingPages.valorem.ux.items.conciliation.desc'), icon: CheckCircle2 },
+                                { title: t('landingPages.valorem.ux.items.sharing.title'), desc: t('landingPages.valorem.ux.items.sharing.desc'), icon: Users2 },
+                                { title: t('landingPages.valorem.ux.items.export.title'), desc: t('landingPages.valorem.ux.items.export.desc'), icon: FileOutput }
                             ].map((item, i) => (
                                 <div key={i} className="flex gap-4 items-start p-6 bg-white/5 rounded-3xl border border-white/10 hover:bg-white/10 transition-colors">
                                     <item.icon className="text-emerald-400 shrink-0 mt-1" size={24} />
@@ -326,17 +342,17 @@ export default function ValoremLanding() {
                                 <div className="flex gap-2">
                                     <div className="flex-1 h-32 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 flex flex-col items-center justify-center gap-2">
                                         <div className="text-2xl font-black text-emerald-400">85%</div>
-                                        <div className="text-[8px] font-black uppercase text-slate-500">Eficiência</div>
+                                        <div className="text-[8px] font-black uppercase text-slate-500">{t('landingPages.valorem.mockup.efficiency')}</div>
                                     </div>
                                     <div className="flex-1 h-32 bg-white/5 rounded-2xl border border-white/10 flex flex-col items-center justify-center gap-2">
                                         <div className="text-2xl font-black text-white">$4.2k</div>
-                                        <div className="text-[8px] font-black uppercase text-slate-500">Hoje</div>
+                                        <div className="text-[8px] font-black uppercase text-slate-500">{t('landingPages.valorem.mockup.today')}</div>
                                     </div>
                                 </div>
                             </div>
                             <div className="flex gap-4">
-                                <div className="h-12 flex-1 bg-emerald-500 text-white rounded-2xl flex items-center justify-center font-bold text-xs">PIX Direto</div>
-                                <div className="h-12 flex-1 bg-white/10 text-white rounded-2xl flex items-center justify-center font-bold text-xs border border-white/10">Boleto</div>
+                                <div className="h-12 flex-1 bg-emerald-500 text-white rounded-2xl flex items-center justify-center font-bold text-xs">{t('landingPages.valorem.mockup.direct')}</div>
+                                <div className="h-12 flex-1 bg-white/10 text-white rounded-2xl flex items-center justify-center font-bold text-xs border border-white/10">{t('landingPages.valorem.mockup.boleto')}</div>
                             </div>
                         </div>
                     </div>
@@ -347,10 +363,15 @@ export default function ValoremLanding() {
             <section className="py-32 px-6 text-center">
                 <div className="max-w-4xl mx-auto">
                     <h2 className="text-5xl md:text-6xl font-black mb-8 text-slate-900 dark:text-white leading-tight">
-                        Pronto para lucrar mais e se <span className="text-branding-gradient">preocupar menos?</span>
+                        {t('landingPages.valorem.finalCta.title').split(' ').map((word: string, i: number) => {
+                            if (word.toLowerCase() === 'preocupar' || word.toLowerCase() === 'menos?' || word.toLowerCase() === 'worry' || word.toLowerCase() === 'less?') {
+                                return <React.Fragment key={i}><span className="text-branding-gradient">{word}</span> </React.Fragment>
+                            }
+                            return word + ' '
+                        })}
                     </h2>
                     <p className="text-xl text-slate-500 dark:text-slate-400 mb-12 leading-relaxed max-w-2xl mx-auto font-medium">
-                        Integrado perfeitamente ao Nexus PRO, o Valorem garante que todo o seu trabalho jurídico seja devidamente registrado, cobrado e recebido.
+                        {t('landingPages.valorem.finalCta.subtitle')}
                     </p>
                     {(hasAccess || currentUser) && (
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
@@ -358,18 +379,18 @@ export default function ValoremLanding() {
                                 onClick={() => setIsAuthModalOpen(true)}
                                 className="w-full sm:w-auto bg-emerald-600 text-white px-12 py-5 rounded-[2.5rem] font-black text-xl shadow-2xl shadow-emerald-600/40 hover:scale-105 hover:bg-emerald-700 transition-all cursor-pointer"
                             >
-                                Começar Agora - É Grátis
+                                {t('landingPages.valorem.finalCta.button1')}
                             </button>
                             <Link
                                 href="/pricing"
                                 className="w-full sm:w-auto px-12 py-5 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 font-bold text-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
                             >
-                                Ver Planos de Assinatura
+                                {t('landingPages.valorem.finalCta.button2')}
                             </Link>
                         </div>
                     )}
                     <p className="mt-8 text-sm text-slate-400 font-bold uppercase tracking-widest">
-                        Sem cartão de crédito • Configuração em 2 minutos
+                        {t('landingPages.valorem.finalCta.footer')}
                     </p>
                 </div>
             </section>
@@ -386,7 +407,7 @@ export default function ValoremLanding() {
                                 </span>
                             </div>
                             <p className="text-slate-500 dark:text-slate-400 font-medium max-w-xs text-center md:text-left">
-                                O controle financeiro de quem advoga com previsibilidade.
+                                {t('landingPages.valorem.footer.slogan')}
                             </p>
                         </div>
 

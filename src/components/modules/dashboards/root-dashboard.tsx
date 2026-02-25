@@ -5,6 +5,8 @@ import { ModuleId } from '@/types';
 import { DashboardCard } from './shared-dashboard-ui';
 import { Boxes, Settings2, Crown } from 'lucide-react';
 
+import { useTranslation } from '@/contexts/language-context';
+
 interface Props {
     onModuleChange: (id: ModuleId) => void;
     userRole: string;
@@ -12,6 +14,7 @@ interface Props {
 }
 
 const RootDashboard: React.FC<Props> = ({ onModuleChange, userRole, userGroupName }) => {
+    const { t } = useTranslation();
     const isAdmin = userRole === 'Master' || ['Administrador', 'Sócio-Administrador', 'Sócio Administrador'].includes(userRole);
     const superAdminGroups = ['Sócio-Administrativo', 'Sócio-Administrador', 'Sócio Administrador'];
     const isSuperAdmin = userRole === 'Master' || (userGroupName && superAdminGroups.some(g => userGroupName.includes(g)));
@@ -22,22 +25,22 @@ const RootDashboard: React.FC<Props> = ({ onModuleChange, userRole, userGroupNam
     const groups = [
         {
             id: ModuleId.DASHBOARD_SUITES,
-            title: 'Módulos',
-            description: 'Acesse as ferramentas inteligentes do ecossistema Veritum Pro.',
+            title: t('dashboard.groups.modules.title'),
+            description: t('dashboard.groups.modules.desc'),
             icon: Boxes,
             color: 'text-indigo-600'
         },
         ...(canSeeAdminArea ? [{
             id: ModuleId.DASHBOARD_ADMIN,
-            title: 'Administração',
-            description: 'Gerencie usuários, permissões e configurações do sistema.',
+            title: t('dashboard.groups.admin.title'),
+            description: t('dashboard.groups.admin.desc'),
             icon: Settings2,
             color: 'text-slate-600'
         }] : []),
         ...(userRole === 'Master' ? [{
             id: ModuleId.DASHBOARD_MASTER,
-            title: 'Master',
-            description: 'Configurações de infraestrutura, módulos e planos comerciais.',
+            title: t('dashboard.groups.master.title'),
+            description: t('dashboard.groups.master.desc'),
             icon: Crown,
             color: 'text-amber-600'
         }] : [])
@@ -47,10 +50,10 @@ const RootDashboard: React.FC<Props> = ({ onModuleChange, userRole, userGroupNam
         <div className="space-y-12 animate-in fade-in zoom-in duration-700">
             <div>
                 <h1 className="text-5xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">
-                    Bem-vindo ao <span className="text-branding-gradient">Veritum Pro</span>
+                    {t('dashboard.welcome')} <span className="text-branding-gradient">{t('dashboard.veritumPro')}</span>
                 </h1>
                 <p className="text-xl text-slate-500 dark:text-slate-400 font-medium italic mt-4 max-w-2xl">
-                    Selecione uma área para começar a explorar o ecossistema jurídico modular.
+                    {t('dashboard.intro')}
                 </p>
             </div>
 

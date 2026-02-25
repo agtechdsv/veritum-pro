@@ -3,12 +3,15 @@ import React, { useState, useEffect } from 'react';
 import { Person, Credentials } from '@/types';
 import { Plus, Search, User, Mail, Phone, MapPin, Briefcase, FileText, ChevronDown, ChevronUp, Save, Trash2, Key, Info, Pencil, XCircle } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
+import { useTranslation } from '@/contexts/language-context';
+import { toast } from '@/components/ui/toast';
 
 interface Props {
     credentials: Credentials;
 }
 
 const PersonManagement: React.FC<Props> = ({ credentials }) => {
+    const { t } = useTranslation();
     const [persons, setPersons] = useState<Person[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -50,7 +53,7 @@ const PersonManagement: React.FC<Props> = ({ credentials }) => {
         const cnpjRegex = /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/;
 
         if (!cpfRegex.test(doc) && !cnpjRegex.test(doc)) {
-            alert('Formato de Documento Inválido! Use 000.000.000-00 ou 00.000.000/0000-00');
+            toast.error(t('management.master.persons.validations.invalidDocument'));
             return;
         }
 
@@ -67,23 +70,26 @@ const PersonManagement: React.FC<Props> = ({ credentials }) => {
                     .insert([editingPerson]);
                 if (error) throw error;
             }
+            toast.success(t('management.master.persons.toasts.saveSuccess'));
             setIsModalOpen(false);
             setEditingPerson(null);
             setExpandedFields(false);
             fetchPersons();
         } catch (error) {
             console.error('Error saving person:', error);
-            alert('Erro ao salvar: Verifique se o CPF/CNPJ já existe ou se os campos estão corretos.');
+            toast.error(t('management.master.persons.toasts.saveError'));
         }
     };
 
     const handleSoftDelete = async (id: string) => {
-        if (!window.confirm('Tem certeza que deseja ocultar este cadastro? O dado permanecerá no servidor para recuperação.')) return;
+        if (!window.confirm(t('management.master.persons.confirmations.softDelete'))) return;
         try {
             await supabase.from('persons').update({ deleted_at: new Date().toISOString() }).eq('id', id);
+            toast.success(t('management.master.persons.toasts.deleteSuccess'));
             fetchPersons();
         } catch (err) {
             console.error('Error deleting person:', err);
+            toast.error(t('management.master.persons.toasts.deleteError'));
         }
     };
 
@@ -96,14 +102,14 @@ const PersonManagement: React.FC<Props> = ({ credentials }) => {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-xl font-bold text-slate-800 dark:text-white">CRM - Clientes e Pessoas</h2>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">Repositório central de dados estruturados para processos e IA.</p>
+                    <h2 className="text-xl font-bold text-slate-800 dark:text-white">{t('management.master.persons.title')}</h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">{t('management.master.persons.subtitle')}</p>
                 </div>
                 <button
                     onClick={() => { setEditingPerson({ person_type: 'Cliente' }); setIsModalOpen(true); }}
                     className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-2.5 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2 border border-slate-800 dark:border-slate-100"
                 >
-                    <Plus size={18} /> Novo Cadastro CRM
+                    <Plus size={18} /> {t('management.master.persons.newEntry')}
                 </button>
             </div>
 
@@ -112,23 +118,23 @@ const PersonManagement: React.FC<Props> = ({ credentials }) => {
                     <Search className="absolute left-3 top-3 text-slate-400" size={18} />
                     <input
                         type="text"
-                        placeholder="Buscar por nome ou CPF/CNPJ..."
+                        placeholder={t('management.master.persons.searchPlaceholder')}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
                     />
                 </div>
                 <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-sm">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Base de Dados CRM</span>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('management.master.persons.stats.label')}</span>
                     <span className="text-2xl font-black text-indigo-600">{persons.length}</span>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {loading ? (
-                    <div className="col-span-full py-12 text-center text-slate-400">Carregando CRM...</div>
+                    <div className="col-span-full py-12 text-center text-slate-400">{t('management.master.persons.table.loading')}</div>
                 ) : filteredPersons.length === 0 ? (
-                    <div className="col-span-full py-12 text-center text-slate-400">Nenhuma pessoa cadastrada.</div>
+                    <div className="col-span-full py-12 text-center text-slate-400">{t('management.master.persons.table.empty')}</div>
                 ) : filteredPersons.map(person => (
                     <div key={person.id} className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
                         <div className="flex items-start justify-between mb-4">
@@ -136,7 +142,7 @@ const PersonManagement: React.FC<Props> = ({ credentials }) => {
                                 person.person_type === 'Advogado Adverso' ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 border border-rose-100 dark:border-rose-800' :
                                     'bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700'
                                 }`}>
-                                {person.person_type}
+                                {t(`management.master.persons.types.${person.person_type}`)}
                             </span>
                             <button
                                 onClick={() => { setEditingPerson(person); setIsModalOpen(true); }}
@@ -151,11 +157,11 @@ const PersonManagement: React.FC<Props> = ({ credentials }) => {
                         <div className="space-y-2">
                             <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm">
                                 <Mail size={14} className="text-slate-300" />
-                                <span className="truncate">{person.email || 'N/A'}</span>
+                                <span className="truncate">{person.email || t('common.notApplicable')}</span>
                             </div>
                             <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm">
                                 <Phone size={14} className="text-slate-300" />
-                                <span>{person.phone || 'N/A'}</span>
+                                <span>{person.phone || t('common.notApplicable')}</span>
                             </div>
                         </div>
 
@@ -170,7 +176,7 @@ const PersonManagement: React.FC<Props> = ({ credentials }) => {
                     <div className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 max-h-[90vh] flex flex-col">
                         <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
                             <h3 className="text-xl font-bold text-slate-800 dark:text-white">
-                                {editingPerson?.id ? 'Editar Cadastro' : 'Novo Cadastro CRM'}
+                                {editingPerson?.id ? t('management.master.persons.modal.titles.edit') : t('management.master.persons.modal.titles.new')}
                             </h3>
                             <button onClick={() => { setIsModalOpen(false); setExpandedFields(false); }} className="text-slate-400 hover:text-slate-600 transition-colors">
                                 <XCircle size={24} />
@@ -179,7 +185,7 @@ const PersonManagement: React.FC<Props> = ({ credentials }) => {
                         <form onSubmit={handleSave} className="p-8 space-y-6 overflow-y-auto">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="md:col-span-2">
-                                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Tipo de Classificação</label>
+                                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 px-1">{t('management.master.persons.modal.sections.classification')}</label>
                                     <div className="flex flex-wrap gap-2">
                                         {['Cliente', 'Reclamado', 'Testemunha', 'Preposto', 'Advogado Adverso'].map(type => (
                                             <button
@@ -191,52 +197,52 @@ const PersonManagement: React.FC<Props> = ({ credentials }) => {
                                                     : 'bg-white dark:bg-slate-950 text-slate-500 border-slate-200 dark:border-slate-800 hover:border-indigo-300'
                                                     }`}
                                             >
-                                                {type}
+                                                {t(`management.master.persons.types.${type}`)}
                                             </button>
                                         ))}
                                     </div>
                                 </div>
 
                                 <div className="md:col-span-2">
-                                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">Nome Completo / Razão Social</label>
+                                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">{t('management.master.persons.modal.fields.name')}</label>
                                     <input
                                         required
                                         value={editingPerson?.full_name || ''}
                                         onChange={e => setEditingPerson({ ...editingPerson, full_name: e.target.value })}
                                         className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white font-medium"
-                                        placeholder="Ex: Pedro de Alcântara ou Empresa Ltda"
+                                        placeholder={t('management.master.persons.modal.fields.namePlaceholder')}
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">CPF / CNPJ (Somente Números)</label>
+                                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">{t('management.master.persons.modal.fields.document')}</label>
                                     <input
                                         required
                                         value={editingPerson?.document || ''}
                                         onChange={e => setEditingPerson({ ...editingPerson, document: e.target.value })}
                                         className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white font-medium font-mono"
-                                        placeholder="000.000.000-00"
+                                        placeholder={t('management.master.persons.modal.fields.documentPlaceholder')}
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">WhatsApp / Telefone</label>
+                                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">{t('management.master.persons.modal.fields.phone')}</label>
                                     <input
                                         value={editingPerson?.phone || ''}
                                         onChange={e => setEditingPerson({ ...editingPerson, phone: e.target.value })}
                                         className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white font-medium"
-                                        placeholder="+55 (11) 9..."
+                                        placeholder={t('management.master.persons.modal.fields.phonePlaceholder')}
                                     />
                                 </div>
 
                                 <div className="md:col-span-2">
-                                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">E-mail Principal</label>
+                                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">{t('management.master.persons.modal.fields.email')}</label>
                                     <input
                                         type="email"
                                         value={editingPerson?.email || ''}
                                         onChange={e => setEditingPerson({ ...editingPerson, email: e.target.value })}
                                         className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white font-medium"
-                                        placeholder="contato@cliente.com"
+                                        placeholder={t('management.master.persons.modal.fields.emailPlaceholder')}
                                     />
                                 </div>
                             </div>
@@ -249,14 +255,14 @@ const PersonManagement: React.FC<Props> = ({ credentials }) => {
                                     className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 text-xs font-black uppercase tracking-widest hover:bg-indigo-50 dark:hover:bg-indigo-900/40 px-3 py-2 rounded-lg transition-all"
                                 >
                                     {expandedFields ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                                    {expandedFields ? 'Esconder Campos Avançados' : 'Ver Detalhes Avançados (RG, Endereço, Histórico)'}
+                                    {expandedFields ? t('management.master.persons.modal.sections.hideAdvanced') : t('management.master.persons.modal.sections.advanced')}
                                 </button>
 
                                 {expandedFields && (
                                     <div className="mt-6 p-6 bg-slate-50 dark:bg-slate-800/50 rounded-[2rem] border border-slate-100 dark:border-slate-800 space-y-6 animate-in slide-in-from-top-4 duration-300">
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
-                                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">RG</label>
+                                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">{t('management.master.persons.modal.fields.rg')}</label>
                                                 <input
                                                     value={editingPerson?.rg || ''}
                                                     onChange={e => setEditingPerson({ ...editingPerson, rg: e.target.value })}
@@ -264,7 +270,7 @@ const PersonManagement: React.FC<Props> = ({ credentials }) => {
                                                 />
                                             </div>
                                             <div>
-                                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">CEP</label>
+                                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">{t('management.master.persons.modal.fields.cep')}</label>
                                                 <input
                                                     value={editingPerson?.address?.cep || ''}
                                                     onChange={e => setEditingPerson({ ...editingPerson, address: { ...editingPerson?.address, cep: e.target.value } })}
@@ -274,7 +280,7 @@ const PersonManagement: React.FC<Props> = ({ credentials }) => {
                                         </div>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div>
-                                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">Estado Civil</label>
+                                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">{t('management.master.persons.modal.fields.maritalStatus')}</label>
                                                 <input
                                                     value={editingPerson?.legal_data?.marital_status || ''}
                                                     onChange={e => setEditingPerson({ ...editingPerson, legal_data: { ...editingPerson?.legal_data, marital_status: e.target.value } })}
@@ -282,7 +288,7 @@ const PersonManagement: React.FC<Props> = ({ credentials }) => {
                                                 />
                                             </div>
                                             <div>
-                                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">Profissão</label>
+                                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">{t('management.master.persons.modal.fields.profession')}</label>
                                                 <input
                                                     value={editingPerson?.legal_data?.profession || ''}
                                                     onChange={e => setEditingPerson({ ...editingPerson, legal_data: { ...editingPerson?.legal_data, profession: e.target.value } })}
@@ -291,13 +297,13 @@ const PersonManagement: React.FC<Props> = ({ credentials }) => {
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">Histórico de Funções / Notas</label>
+                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">{t('management.master.persons.modal.fields.history')}</label>
                                             <textarea
                                                 rows={3}
                                                 value={editingPerson?.legal_data?.history || ''}
                                                 onChange={e => setEditingPerson({ ...editingPerson, legal_data: { ...editingPerson?.legal_data, history: e.target.value } })}
                                                 className="w-full px-4 py-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-1 focus:ring-indigo-500 font-medium text-sm resize-none"
-                                                placeholder="Detalhes relevantes para o processo trabalhista/cível..."
+                                                placeholder={t('management.master.persons.modal.fields.historyPlaceholder')}
                                             />
                                         </div>
                                     </div>
@@ -305,16 +311,16 @@ const PersonManagement: React.FC<Props> = ({ credentials }) => {
                             </div>
 
                             <div className="pt-4 flex gap-3 shrink-0">
-                                <button type="button" onClick={() => { setIsModalOpen(false); setExpandedFields(false); }} className="flex-1 px-4 py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl font-bold hover:bg-slate-200 transition-all">Cancelar</button>
+                                <button type="button" onClick={() => { setIsModalOpen(false); setExpandedFields(false); }} className="flex-1 px-4 py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl font-bold hover:bg-slate-200 transition-all">{t('management.master.persons.modal.actions.cancel')}</button>
                                 <button type="submit" className="flex-[2] px-4 py-3 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-700 shadow-xl shadow-indigo-600/30 transition-all flex items-center justify-center gap-2">
-                                    <Save size={18} /> {editingPerson?.id ? 'Atualizar Registro' : 'Salvar no CRM'}
+                                    <Save size={18} /> {editingPerson?.id ? t('management.master.persons.modal.actions.update') : t('management.master.persons.modal.actions.save')}
                                 </button>
                             </div>
                         </form>
                     </div>
-                </div>
+                </div >
             )}
-        </div>
+        </div >
     );
 };
 

@@ -12,6 +12,8 @@ import { useRouter } from 'next/navigation';
 import { AuthModal } from '@/components/auth-modal';
 import { createMasterClient } from '@/lib/supabase/master';
 import { UserMenu } from '@/components/ui/user-menu';
+import { useTranslation } from '@/contexts/language-context';
+import { LanguageSelector } from '@/components/ui/language-selector';
 
 const Logo = () => (
     <div className="bg-indigo-600/10 p-2 rounded-lg flex items-center justify-center text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400">
@@ -20,6 +22,7 @@ const Logo = () => (
 );
 
 export default function NexusLanding() {
+    const { t } = useTranslation();
     const { theme, setTheme, resolvedTheme } = useTheme();
     const router = useRouter();
     const [mounted, setMounted] = useState(false);
@@ -72,24 +75,25 @@ export default function NexusLanding() {
                     </div>
 
                     <div className="hidden md:flex items-center gap-8">
-                        <Link href="/" className="text-base font-bold text-branding-gradient hover:opacity-80 transition-all">Portal</Link>
-                        <a href="#top" className="text-sm font-bold text-slate-800 dark:text-white">Início</a>
-                        <a href="#vision" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">Visão</a>
-                        <a href="#features" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">Funcionalidades</a>
-                        <a href="#ux" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">Diferencial</a>
+                        <Link href="/" className="text-base font-bold text-branding-gradient hover:opacity-80 transition-all">{t('pricingPage.nav.portal')}</Link>
+                        <a href="#top" className="text-sm font-bold text-slate-800 dark:text-white">{t('landingPages.nexus.nav.home')}</a>
+                        <a href="#vision" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">{t('landingPages.nexus.nav.vision')}</a>
+                        <a href="#features" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">{t('landingPages.nexus.nav.features')}</a>
+                        <a href="#ux" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">{t('landingPages.nexus.nav.ux')}</a>
                     </div>
 
                     <div className="flex items-center gap-4">
                         <button onClick={toggleTheme} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all text-slate-600 dark:text-slate-400">
                             {resolvedTheme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
                         </button>
+                        <LanguageSelector />
                         {currentUser === undefined ? (
                             <div className="w-24 h-10 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl" />
                         ) : currentUser ? (
                             <UserMenu user={currentUser} supabase={createMasterClient()} />
                         ) : hasAccess ? (
                             <Link href="/?login=true" className="hidden sm:flex items-center gap-2 font-bold px-4 py-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all">
-                                <LogOut size={18} /> Entrar
+                                <LogOut size={18} /> {t('nav.login')}
                             </Link>
                         ) : null}
                         {(hasAccess || currentUser) && (
@@ -97,7 +101,7 @@ export default function NexusLanding() {
                                 onClick={() => setIsAuthModalOpen(true)}
                                 className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold shadow-xl shadow-indigo-600/20 hover:scale-105 transition-all text-sm"
                             >
-                                Teste Grátis
+                                {t('landingPages.nexus.hero.cta1')}
                             </button>
                         )}
                     </div>
@@ -109,15 +113,18 @@ export default function NexusLanding() {
                 <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16 relative z-10">
                     <div className="flex-1 text-left">
                         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-xs font-black uppercase tracking-widest mb-8 animate-fade-in">
-                            <Zap size={14} className="animate-pulse" /> Gestão de Alta Performance
+                            <Zap size={14} className="animate-pulse" /> {t('landingPages.nexus.hero.badge')}
                         </div>
                         <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-8 leading-[1.05] text-slate-900 dark:text-white">
-                            A central de <br />
-                            <span className="text-branding-gradient">comando</span> do seu <br />
-                            escritório.
+                            {t('landingPages.nexus.hero.title').split(' ').map((word: string, i: number, arr: string[]) => {
+                                if (word.toLowerCase() === 'comando' || word.toLowerCase() === 'command') {
+                                    return <React.Fragment key={i}><span className="text-branding-gradient">{word}</span> </React.Fragment>
+                                }
+                                return word + ' '
+                            })}
                         </h1>
                         <p className="text-xl text-slate-500 dark:text-slate-400 max-w-xl mb-12 leading-relaxed font-medium">
-                            Onde o caos se transforma em clareza. Centralize processos, prazos e equipe em um único painel inteligente. O Nexus PRO elimina planilhas e automatiza a sua rotina.
+                            {t('landingPages.nexus.hero.subtitle')}
                         </p>
                         <div className="flex flex-col sm:flex-row items-center gap-4">
                             {(hasAccess || currentUser) && (
@@ -125,11 +132,11 @@ export default function NexusLanding() {
                                     onClick={() => setIsAuthModalOpen(true)}
                                     className="w-full sm:w-auto bg-indigo-600 text-white px-10 py-4 rounded-[1.5rem] font-bold text-lg shadow-2xl shadow-indigo-600/40 hover:scale-105 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
                                 >
-                                    Começar Teste Grátis <ArrowRight size={20} />
+                                    {t('landingPages.nexus.hero.cta1')} <ArrowRight size={20} />
                                 </button>
                             )}
                             <a href="#vision" className="w-full sm:w-auto px-10 py-4 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 font-bold text-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-center text-slate-600 dark:text-slate-300">
-                                Saiba mais
+                                {t('landingPages.nexus.hero.cta2')}
                             </a>
                         </div>
                     </div>
@@ -144,7 +151,7 @@ export default function NexusLanding() {
                                         <div className="w-3 h-3 rounded-full bg-slate-200 dark:bg-slate-800" />
                                         <div className="w-3 h-3 rounded-full bg-slate-200 dark:bg-slate-800" />
                                     </div>
-                                    <div className="text-[10px] font-black tracking-widest text-slate-400 uppercase">Nexus PRO Kanban</div>
+                                    <div className="text-[10px] font-black tracking-widest text-slate-400 uppercase">{t('landingPages.nexus.mockup.title')}</div>
                                     <div className="w-3" />
                                 </div>
                                 <div className="p-6 flex-1 bg-slate-50/50 dark:bg-slate-900/30 overflow-hidden">
@@ -152,7 +159,7 @@ export default function NexusLanding() {
                                         {/* Column 1: A Fazer */}
                                         <div className="space-y-3">
                                             <div className="flex items-center justify-between px-2 mb-4">
-                                                <span className="text-[10px] font-black uppercase text-slate-400">A Fazer (12)</span>
+                                                <span className="text-[10px] font-black uppercase text-slate-400">{t('landingPages.nexus.mockup.columns.todo')}</span>
                                                 <div className="w-4 h-4 rounded-full bg-indigo-600/10 flex items-center justify-center text-indigo-600 text-[8px] font-bold">+</div>
                                             </div>
                                             <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-2">
@@ -168,7 +175,7 @@ export default function NexusLanding() {
                                         {/* Column 2: Em Andamento */}
                                         <div className="space-y-3">
                                             <div className="flex items-center justify-between px-2 mb-4">
-                                                <span className="text-[10px] font-black uppercase text-slate-400">Em Andamento (5)</span>
+                                                <span className="text-[10px] font-black uppercase text-slate-400">{t('landingPages.nexus.mockup.columns.doing')}</span>
                                             </div>
                                             <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm border-l-4 border-l-indigo-500 space-y-2">
                                                 <div className="h-2 w-20 bg-indigo-500/20 rounded" />
@@ -182,7 +189,7 @@ export default function NexusLanding() {
                                         {/* Column 3: Concluído */}
                                         <div className="space-y-3">
                                             <div className="flex items-center justify-between px-2 mb-4">
-                                                <span className="text-[10px] font-black uppercase text-slate-400">Concluído (84)</span>
+                                                <span className="text-[10px] font-black uppercase text-slate-400">{t('landingPages.nexus.mockup.columns.done')}</span>
                                             </div>
                                             <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm opacity-60 space-y-2">
                                                 <div className="h-2 w-10 bg-emerald-500/20 rounded" />
@@ -210,10 +217,10 @@ export default function NexusLanding() {
                     <div className="flex flex-col lg:flex-row items-center gap-16">
                         <div className="flex-1 grid grid-cols-2 gap-4">
                             {[
-                                { label: 'Prazos Hoje', val: '12', color: 'text-rose-500', icon: Clock },
-                                { label: 'Tarefas Concluídas', val: '84', color: 'text-emerald-500', icon: CheckCircle2 },
-                                { label: 'Produtividade', val: '+35%', color: 'text-indigo-500', icon: BarChart3 },
-                                { label: 'Colaboradores', val: '18', color: 'text-slate-500', icon: Users }
+                                { label: t('landingPages.nexus.vision.stats.deadlines'), val: '12', color: 'text-rose-500', icon: Clock },
+                                { label: t('landingPages.nexus.vision.stats.tasks'), val: '84', color: 'text-emerald-500', icon: CheckCircle2 },
+                                { label: t('landingPages.nexus.vision.stats.productivity'), val: '+35%', color: 'text-indigo-500', icon: BarChart3 },
+                                { label: t('landingPages.nexus.vision.stats.members'), val: '18', color: 'text-slate-500', icon: Users }
                             ].map((stat, i) => (
                                 <div key={i} className="bg-white dark:bg-slate-900 p-8 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none hover:scale-105 transition-transform group">
                                     <div className={`w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform ${stat.color}`}>
@@ -226,13 +233,17 @@ export default function NexusLanding() {
                         </div>
                         <div className="flex-1 space-y-8">
                             <h2 className="text-4xl md:text-5xl font-black leading-tight tracking-tighter text-slate-900 dark:text-white uppercase">
-                                Gestão que acompanha o seu <span className="text-branding-gradient">ritmo.</span>
+                                {t('landingPages.nexus.vision.title').split(' ').map((word: string, i: number) => (
+                                    <React.Fragment key={i}>
+                                        {word.toLowerCase() === 'ritmo.' || word.toLowerCase() === 'pace.' ? <span className="text-branding-gradient">{word}</span> : word}{' '}
+                                    </React.Fragment>
+                                ))}
                             </h2>
                             <p className="text-xl text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
-                                O Nexus PRO é o coração operacional do ecossistema Veritum. Desenhado para reduzir a carga cognitiva da sua equipe, ele reúne todas as pontas soltas da advocacia em um fluxo de trabalho claro e intuitivo.
+                                {t('landingPages.nexus.vision.subtitle')}
                             </p>
                             <div className="p-6 bg-indigo-600/5 rounded-2xl border border-indigo-600/10 italic text-indigo-600 dark:text-indigo-400 font-bold">
-                                "Saiba exatamente quem está fazendo o quê, em qual prazo e com qual prioridade."
+                                {t('landingPages.nexus.vision.quote')}
                             </div>
                         </div>
                     </div>
@@ -243,34 +254,34 @@ export default function NexusLanding() {
             <section id="features" className="py-32 px-6">
                 <div className="max-w-7xl mx-auto">
                     <div className="text-center mb-20 max-w-3xl mx-auto">
-                        <span className="text-indigo-600 dark:text-indigo-400 font-black tracking-[0.2em] uppercase text-sm">Tecnologia Operacional</span>
-                        <h2 className="text-5xl font-black mt-4 text-slate-900 dark:text-white uppercase tracking-tighter">Funcionalidades de Alto Nível</h2>
-                        <p className="text-xl text-slate-500 dark:text-slate-400 mt-4 leading-relaxed font-medium">Ferramentas criadas para escritórios que não têm tempo a perder.</p>
+                        <span className="text-indigo-600 dark:text-indigo-400 font-black tracking-[0.2em] uppercase text-sm">{t('landingPages.nexus.features.category')}</span>
+                        <h2 className="text-5xl font-black mt-4 text-slate-900 dark:text-white uppercase tracking-tighter">{t('landingPages.nexus.features.title')}</h2>
+                        <p className="text-xl text-slate-500 dark:text-slate-400 mt-4 leading-relaxed font-medium">{t('landingPages.nexus.features.subtitle')}</p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                         {[
                             {
-                                title: 'Gestão de Processos e Prazos (Kanban)',
-                                desc: 'Transforme a ansiedade em controle. Acompanhe processos, audiências e tarefas em um mural Kanban totalmente visual.',
+                                title: t('landingPages.nexus.features.items.kanban.title'),
+                                desc: t('landingPages.nexus.features.items.kanban.desc'),
                                 icon: Kanban,
                                 color: 'bg-rose-500/10 text-rose-500'
                             },
                             {
-                                title: 'Workflows Avançados e Automação',
-                                desc: 'Delegue no piloto automático. Crie fluxos de trabalho inteligentes que distribuem tarefas para a sua equipe automaticamente.',
+                                title: t('landingPages.nexus.features.items.automation.title'),
+                                desc: t('landingPages.nexus.features.items.automation.desc'),
                                 icon: Workflow,
                                 color: 'bg-indigo-500/10 text-indigo-500'
                             },
                             {
-                                title: 'Gestão de Ativos e Bens em Litígio',
-                                desc: 'Tenha o mapa completo da execução. Controle certidões, matrículas, frotas e imóveis atrelados a processos jurídicos.',
+                                title: t('landingPages.nexus.features.items.assets.title'),
+                                desc: t('landingPages.nexus.features.items.assets.desc'),
                                 icon: Building2,
                                 color: 'bg-emerald-500/10 text-emerald-500'
                             },
                             {
-                                title: 'Controle Societário e Ciclo de Vida',
-                                desc: 'Domine o consultivo corporativo. Gerencie contratos não-financeiros, procurações e atos societários com alertas automáticos.',
+                                title: t('landingPages.nexus.features.items.corporate.title'),
+                                desc: t('landingPages.nexus.features.items.corporate.desc'),
                                 icon: FileText,
                                 color: 'bg-violet-500/10 text-violet-500'
                             }
@@ -284,7 +295,7 @@ export default function NexusLanding() {
                                     {f.desc}
                                 </p>
                                 <button className="text-sm font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-2 hover:gap-3 transition-all">
-                                    Saiba mais <ChevronRight size={16} />
+                                    {t('landingPages.nexus.hero.cta2')} <ChevronRight size={16} />
                                 </button>
                             </div>
                         ))}
@@ -297,25 +308,28 @@ export default function NexusLanding() {
                 <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-20 relative z-10">
                     <div className="flex-1 space-y-10">
                         <h2 className="text-5xl md:text-6xl font-black leading-tight tracking-tighter uppercase mb-6">
-                            Design pensado para o seu <br />
-                            <span className="text-branding-gradient">Flow de trabalho.</span>
+                            {t('landingPages.nexus.ux.title').split(' ').map((word: string, i: number) => (
+                                <React.Fragment key={i}>
+                                    {word.toLowerCase() === 'trabalho.' || word.toLowerCase() === 'workflow.' ? <span className="text-branding-gradient">{word}</span> : word}{' '}
+                                </React.Fragment>
+                            ))}
                         </h2>
                         <p className="text-xl text-slate-300 leading-relaxed font-medium">
-                            Diga adeus aos sistemas travados e difíceis de aprender. O Nexus PRO foi criado sob rigorosos princípios de design centrado no usuário. Menos cliques, zero distrações e foco total no que importa.
+                            {t('landingPages.nexus.ux.subtitle')}
                         </p>
                         <div className="flex flex-col gap-6">
                             <div className="flex gap-4 items-start p-6 bg-white/5 rounded-3xl border border-white/10 hover:bg-white/10 transition-colors">
                                 <MousePointer2 className="text-emerald-400 shrink-0 mt-1" />
                                 <div>
-                                    <h4 className="font-black text-lg mb-1 uppercase tracking-tight">Divulgação Progressiva</h4>
-                                    <p className="text-slate-400 text-sm font-medium">Você visualiza o painel macro e acessa os detalhes apenas quando precisa.</p>
+                                    <h4 className="font-black text-lg mb-1 uppercase tracking-tight">{t('landingPages.nexus.ux.items.progressive.title')}</h4>
+                                    <p className="text-slate-400 text-sm font-medium">{t('landingPages.nexus.ux.items.progressive.desc')}</p>
                                 </div>
                             </div>
                             <div className="flex gap-4 items-start p-6 bg-white/5 rounded-3xl border border-white/10 hover:bg-white/10 transition-colors">
                                 <ShieldCheck className="text-indigo-400 shrink-0 mt-1" />
                                 <div>
-                                    <h4 className="font-black text-lg mb-1 uppercase tracking-tight">Interface Sem Ruído</h4>
-                                    <p className="text-slate-400 text-sm font-medium">Elimine ferramentas complexas que atrasam sua equipe. O foco é seu aliado.</p>
+                                    <h4 className="font-black text-lg mb-1 uppercase tracking-tight">{t('landingPages.nexus.ux.items.noise.title')}</h4>
+                                    <p className="text-slate-400 text-sm font-medium">{t('landingPages.nexus.ux.items.noise.desc')}</p>
                                 </div>
                             </div>
                         </div>
@@ -330,11 +344,11 @@ export default function NexusLanding() {
                                 <div className="grid grid-cols-2 gap-6 pt-6">
                                     <div className="h-32 bg-white/10 rounded-3xl border border-white/10 flex flex-col items-center justify-center gap-2">
                                         <div className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center"><CheckCircle2 size={24} /></div>
-                                        <span className="text-xs font-black uppercase text-slate-400">Eficiência</span>
+                                        <span className="text-xs font-black uppercase text-slate-400">{t('landingPages.nexus.ux.efficiency')}</span>
                                     </div>
                                     <div className="h-32 bg-white/10 rounded-3xl border border-white/10 flex flex-col items-center justify-center gap-2">
                                         <div className="w-10 h-10 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center"><Zap size={24} /></div>
-                                        <span className="text-xs font-black uppercase text-slate-400">Automação</span>
+                                        <span className="text-xs font-black uppercase text-slate-400">{t('landingPages.nexus.ux.automation')}</span>
                                     </div>
                                 </div>
                                 <div className="h-1 bg-white/10 w-full rounded-full" />
@@ -350,10 +364,14 @@ export default function NexusLanding() {
             <section className="py-32 px-6 text-center">
                 <div className="max-w-4xl mx-auto">
                     <h2 className="text-5xl md:text-6xl font-black mb-8 text-slate-900 dark:text-white leading-tight">
-                        Pronto para revolucionar a sua <span className="text-branding-gradient">gestão jurídica?</span>
+                        {t('landingPages.nexus.finalCta.title').split(' ').map((word: string, i: number) => (
+                            <React.Fragment key={i}>
+                                {word.toLowerCase() === 'jurídica?' || word.toLowerCase() === 'management?' ? <span className="text-branding-gradient">{word}</span> : word}{' '}
+                            </React.Fragment>
+                        ))}
                     </h2>
                     <p className="text-xl text-slate-500 dark:text-slate-400 mb-12 leading-relaxed max-w-2xl mx-auto font-medium">
-                        O Nexus PRO é a base sólida da sua operação e se conecta de forma nativa às outras inteligências do Ecossistema Veritum.
+                        {t('landingPages.nexus.finalCta.subtitle')}
                     </p>
                     {(hasAccess || currentUser) && (
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
@@ -361,18 +379,18 @@ export default function NexusLanding() {
                                 onClick={() => setIsAuthModalOpen(true)}
                                 className="w-full sm:w-auto bg-indigo-600 text-white px-12 py-5 rounded-[2.5rem] font-black text-xl shadow-2xl shadow-indigo-600/40 hover:scale-105 hover:bg-indigo-700 transition-all cursor-pointer"
                             >
-                                Começar Agora - É Grátis
+                                {t('landingPages.nexus.finalCta.button1')}
                             </button>
                             <Link
                                 href="/pricing"
                                 className="w-full sm:w-auto px-12 py-5 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 font-bold text-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
                             >
-                                Ver Planos de Assinatura
+                                {t('landingPages.nexus.finalCta.button2')}
                             </Link>
                         </div>
                     )}
                     <p className="mt-8 text-sm text-slate-400 font-bold uppercase tracking-widest">
-                        Sem cartão de crédito • Configuração em 2 minutos
+                        {t('landingPages.nexus.finalCta.footer')}
                     </p>
                 </div>
             </section>
@@ -389,7 +407,7 @@ export default function NexusLanding() {
                                 </span>
                             </div>
                             <p className="text-slate-500 dark:text-slate-400 font-medium max-w-xs text-center md:text-left">
-                                A central de comando de quem advoga com estratégia.
+                                {t('landingPages.nexus.footer.slogan')}
                             </p>
                         </div>
 

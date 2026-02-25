@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { User, UserPreferences, ModuleId, Credentials } from '@/types';
 import { createMasterClient } from '@/lib/supabase/master';
+import { useTranslation } from '@/contexts/language-context';
 
 interface ModuleContextType {
     user: User | null;
@@ -44,6 +45,7 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
     const router = useRouter();
     const pathname = usePathname();
     const supabase = createMasterClient();
+    const { t } = useTranslation();
 
     useEffect(() => {
         const checkUser = async () => {
@@ -285,7 +287,7 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
             <div className="h-screen w-full flex items-center justify-center bg-slate-950">
                 <div className="flex flex-col items-center gap-4">
                     <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-white font-medium animate-pulse">Carregando Ecossistema...</p>
+                    <p className="text-white font-medium animate-pulse">{t('common.loadingEcosystem') || 'Carregando Ecossistema...'}</p>
                 </div>
             </div>
         );

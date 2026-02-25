@@ -1,0 +1,106 @@
+[
+  {
+    "feature_key": "cognitio_dashboards",
+    "display_name": "Dashboards Analíticos"
+  },
+  {
+    "feature_key": "cognitio_magistrados",
+    "display_name": "Perfil de Magistrados"
+  },
+  {
+    "feature_key": "cognitio_preditiva",
+    "display_name": "Análise Preditiva (IA)"
+  },
+  {
+    "feature_key": "intelligence_golden_alerts",
+    "display_name": "Golden Alerts"
+  },
+  {
+    "feature_key": "intelligence_matcher",
+    "display_name": "Semantic Matcher"
+  },
+  {
+    "feature_key": "nexus_controle_societario",
+    "display_name": "Controle Societário"
+  },
+  {
+    "feature_key": "nexus_gestao_ativos",
+    "display_name": "Gestão de Ativos e Bens"
+  },
+  {
+    "feature_key": "nexus_gestao_equipe",
+    "display_name": "Gestão de Equipe e Workspace"
+  },
+  {
+    "feature_key": "nexus_gestao_pessoas",
+    "display_name": "Gestão de Pessoas (CRM Básico)"
+  },
+  {
+    "feature_key": "nexus_gestao_prazos",
+    "display_name": "Gestão de Processos e Prazos"
+  },
+  {
+    "feature_key": "nexus_workflows",
+    "display_name": "Workflows Avançados"
+  },
+  {
+    "feature_key": "scriptor_assinatura",
+    "display_name": "Assinatura Digital"
+  },
+  {
+    "feature_key": "scriptor_auditoria_risco",
+    "display_name": "Auditoria de Risco (IA)"
+  },
+  {
+    "feature_key": "scriptor_ged",
+    "display_name": "Repositório de Documentos (GED)"
+  },
+  {
+    "feature_key": "scriptor_gerador_ia",
+    "display_name": "Gerador de Peças (IA)"
+  },
+  {
+    "feature_key": "sentinel_analise_sentimento",
+    "display_name": "Análise de Sentimento (IA)"
+  },
+  {
+    "feature_key": "sentinel_captura_antecipada",
+    "display_name": "Captura Antecipada"
+  },
+  {
+    "feature_key": "sentinel_clipping_midia",
+    "display_name": "Clipping Inteligente"
+  },
+  {
+    "feature_key": "sentinel_diarios",
+    "display_name": "Monitoramento de Diários"
+  },
+  {
+    "feature_key": "valorem_boletos_pix",
+    "display_name": "Emissão de Boletos e PIX"
+  },
+  {
+    "feature_key": "valorem_financeiro",
+    "display_name": "Gestão Financeira"
+  },
+  {
+    "feature_key": "valorem_pjecalc",
+    "display_name": "Integração PJe-Calc e Atualizações"
+  },
+  {
+    "feature_key": "valorem_provisionamento",
+    "display_name": "Relatórios de Contingência"
+  },
+  {
+    "feature_key": "vox_portal",
+    "display_name": "Portal do Cliente"
+  },
+  {
+    "feature_key": "vox_traducao_ia",
+    "display_name": "Tradução de Juridiquês (IA)"
+  },
+  {
+    "feature_key": "vox_whatsapp",
+    "display_name": "Automação de WhatsApp"
+  }
+]

@@ -3,6 +3,7 @@
 import React from 'react';
 import { ModuleId } from '@/types';
 import { DashboardCard } from './shared-dashboard-ui';
+import { useTranslation } from '@/contexts/language-context';
 
 interface Props {
     items: any[];
@@ -10,14 +11,17 @@ interface Props {
 }
 
 const MasterDashboard: React.FC<Props> = ({ items, onModuleChange }) => {
+    const { t } = useTranslation();
     return (
         <div className="space-y-12 animate-in fade-in duration-700">
             <div>
                 <h1 className="text-4xl font-black text-slate-800 dark:text-white uppercase tracking-tight">
-                    Painel <span className="text-branding-gradient">Master</span>
+                    {t('dashboard.masterTitle').split('Master').map((part: string, i: number) =>
+                        i === 0 ? <React.Fragment key={i}>{part}</React.Fragment> : <span key={i} className="text-branding-gradient">{t('dashboard.groups.master.title')}</span>
+                    )}
                 </h1>
                 <p className="text-slate-500 dark:text-slate-400 font-medium italic mt-2">
-                    Configurações estruturais de módulos e planos comerciais.
+                    {t('dashboard.masterSubtitle')}
                 </p>
             </div>
 
@@ -27,11 +31,11 @@ const MasterDashboard: React.FC<Props> = ({ items, onModuleChange }) => {
                         key={item.id}
                         title={item.label}
                         description={
-                            item.id === ModuleId.SUITES ? "Configuração estrutural de módulos, chaves de API e disponibilização no ecossistema." :
-                                item.id === ModuleId.PLANS ? "Criação e edição de planos comerciais, preços, descontos e vinculação de permissões." :
-                                    item.id === ModuleId.SCHEDULING ? "Gestão de leads, agendamentos de demonstrações VIP e calendário de vendas." :
-                                        item.id === ModuleId.EMAIL_CONFIG ? "Configuração de aliases SMTP (FROM) por departamento e localização (JSONB)." :
-                                            `Ajustes estruturais de ${item.label.toLowerCase()}.`
+                            item.id === ModuleId.SUITES ? t('dashboard.masterSuitesDesc') :
+                                item.id === ModuleId.PLANS ? t('dashboard.masterPlansDesc') :
+                                    item.id === ModuleId.SCHEDULING ? t('dashboard.masterSchedDesc') :
+                                        item.id === ModuleId.EMAIL_CONFIG ? t('dashboard.masterEmailDesc') :
+                                            t('dashboard.masterGenericDesc', { name: item.label.toLowerCase() })
                         }
                         icon={item.icon}
                         color={item.color}

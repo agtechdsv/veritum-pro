@@ -16,6 +16,8 @@ import Link from 'next/link'
 import { AnimatePresence } from 'framer-motion'
 import { UserMenu } from '@/components/ui/user-menu'
 import { getModuleMeta } from '@/utils/module-meta';
+import { useTranslation } from '@/contexts/language-context';
+import { LanguageSelector } from '@/components/ui/language-selector';
 
 interface Suite {
     id: string;
@@ -66,6 +68,7 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
     const [groupPermissions, setGroupPermissions] = useState<any[]>([]);
     const [allFeatures, setAllFeatures] = useState<any[]>([]);
     const [hasAccess, setHasAccess] = useState(false);
+    const { locale, t } = useTranslation();
     const searchParams = useSearchParams();
     const router = useRouter();
     const supabase = createMasterClient();
@@ -237,20 +240,17 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                     </div>
 
                     <div className="hidden md:flex items-center gap-8">
-                        <a href="#" className="font-medium hover:text-indigo-600 transition-colors text-slate-800 dark:text-white">Início</a>
-                        <a href="#modules" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">Módulos</a>
-                        <a href="#pricing" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">Planos</a>
-                        <Link href="/historia" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">Nossa História</Link>
+                        <a href="#" className="font-medium hover:text-indigo-600 transition-colors text-slate-800 dark:text-white">{t('nav.home')}</a>
+                        <a href="#modules" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">{t('nav.modules')}</a>
+                        <a href="#pricing" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">{t('nav.pricing')}</a>
+                        <Link href="/historia" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">{t('nav.story')}</Link>
                     </div>
 
                     <div className="flex items-center gap-4">
                         <button onClick={toggleTheme} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all text-slate-600 dark:text-slate-400">
                             {resolvedTheme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
                         </button>
-                        <div className="flex items-center gap-1 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full cursor-pointer text-slate-600 dark:text-slate-400 transition-all">
-                            <Globe size={20} />
-                            <span className="text-xs font-bold">PT</span>
-                        </div>
+                        <LanguageSelector />
 
                         {currentUser === undefined ? (
                             <div className="w-32 h-10 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-full" />
@@ -261,17 +261,17 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                                     className="hidden sm:flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-bold text-sm shadow-xl shadow-indigo-600/20 transition-all hover:scale-105"
                                 >
                                     <LayoutDashboard size={18} />
-                                    Painel Veritum
+                                    {t('nav.dashboard')}
                                 </Link>
                                 <UserMenu user={currentUser} supabase={supabase} />
                             </div>
                         ) : hasAccess ? (
                             <>
                                 <button onClick={() => openAuth('login')} className="hidden sm:flex items-center gap-2 font-semibold px-4 py-2 hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300 cursor-pointer">
-                                    <LogIn size={18} /> Entrar
+                                    <LogIn size={18} /> {t('nav.login')}
                                 </button>
                                 <button onClick={() => openAuth('register')} className="bg-indigo-600 text-white px-6 py-2.5 rounded-full font-bold shadow-xl shadow-indigo-600/20 hover:scale-105 transition-all flex items-center gap-2 cursor-pointer">
-                                    <UserPlus size={18} /> Começar Grátis
+                                    <UserPlus size={18} /> {t('nav.register')}
                                 </button>
                             </>
                         ) : null}
@@ -283,21 +283,19 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
             <section className="relative pt-44 pb-32 px-6 overflow-hidden bg-white dark:bg-slate-950 transition-colors duration-300">
                 <div className="max-w-7xl mx-auto text-center relative z-10">
                     <h1 className="text-6xl md:text-8xl font-black tracking-tight mb-8 leading-[1.1] text-slate-900 dark:text-white">
-                        O Ecossistema <span className="text-branding-gradient">Jurídico</span> <br className="hidden lg:block" />
-                        Modular & Inteligente
+                        {t('hero.title')} <span className="text-branding-gradient">{t('hero.titleAccent')}</span>
                     </h1>
                     <p className="text-xl text-slate-500 dark:text-slate-400 max-w-3xl mx-auto mb-12 leading-relaxed">
-                        Uma arquitetura BYODB (Bring Your Own Database) completa para escritórios de alta performance.
-                        Seu dado, sua infraestrutura, nossos módulos inteligentes.
+                        {t('hero.subtitle')}
                     </p>
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                         {(hasAccess || currentUser) && (
                             <button onClick={() => openAuth('register')} className="w-full sm:w-auto bg-indigo-600 text-white px-10 py-4 rounded-[2rem] font-bold text-lg shadow-2xl shadow-indigo-600/40 hover:scale-105 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 cursor-pointer">
-                                Começar Agora <ArrowRight size={20} />
+                                {t('hero.ctaPrimary')} <ArrowRight size={20} />
                             </button>
                         )}
                         <Link href="/pricing" className="w-full sm:w-auto px-10 py-4 rounded-[2rem] border border-slate-200 dark:border-slate-800 font-bold text-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-center cursor-pointer">
-                            Ver planos e preços
+                            {t('hero.ctaSecondary')}
                         </Link>
                     </div>
                 </div>
@@ -311,8 +309,8 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
             <section id="modules" className="py-32 px-6 bg-slate-50 dark:bg-slate-950 transition-colors duration-300 border-y border-slate-100 dark:border-slate-900">
                 <div className="max-w-7xl mx-auto">
                     <div className="text-center mb-20">
-                        <h2 className="text-4xl font-bold mb-4 text-slate-900 dark:text-white">Módulos Especializados</h2>
-                        <p className="text-slate-500 dark:text-slate-400">Arquitetura modular projetada para o ciclo de vida jurídico completo.</p>
+                        <h2 className="text-4xl font-bold mb-4 text-slate-900 dark:text-white">{t('modules.title')}</h2>
+                        <p className="text-slate-500 dark:text-slate-400">{t('modules.subtitle')}</p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -363,7 +361,7 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                                     return (
                                         <div key={suite.id} className={`relative bg-white dark:bg-slate-900 p-8 rounded-[2rem] border border-slate-200 dark:border-slate-800 hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 group flex flex-col ${isLocked ? 'opacity-75 grayscale-[0.5]' : ''}`}>
                                             {isLocked && (
-                                                <div className="absolute top-6 right-6 p-2 bg-amber-100 dark:bg-amber-900/30 text-amber-600 rounded-xl" title="Módulo não incluído no seu plano">
+                                                <div className="absolute top-6 right-6 p-2 bg-amber-100 dark:bg-amber-900/30 text-amber-600 rounded-xl" title={t('modules.notInPlan')}>
                                                     <Lock size={20} />
                                                 </div>
                                             )}
@@ -381,15 +379,15 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                                                 )}
                                             </h3>
                                             <h4 className="text-indigo-600 dark:text-indigo-400 text-sm font-bold versalete mb-4">
-                                                {suite.short_desc?.pt || ''}
+                                                {suite.short_desc?.[locale] || suite.short_desc?.pt || ''}
                                             </h4>
                                             <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-6 flex-grow">
-                                                {suite.detailed_desc?.pt || ''}
+                                                {suite.detailed_desc?.[locale] || suite.detailed_desc?.pt || ''}
                                             </p>
 
                                             {isLocked && (
                                                 <p className="text-[10px] font-black uppercase text-amber-600 dark:text-amber-500 mb-4 tracking-widest italic text-center">
-                                                    Este módulo não faz parte do seu plano atual.
+                                                    {t('modules.notInPlan')}
                                                 </p>
                                             )}
 
@@ -406,7 +404,7 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                                                 }}
                                                 className={`font-bold text-sm flex items-center gap-1 group-hover:gap-2 transition-all mt-auto cursor-pointer ${isLocked ? 'text-amber-600 dark:text-amber-500' : 'text-indigo-600 dark:text-indigo-400'}`}
                                             >
-                                                {isLocked ? 'Adquirir Módulo' : (showLearnMore ? 'Saiba mais' : 'Acessar Módulo')} <ChevronRight size={16} />
+                                                {isLocked ? t('modules.acquire') : (showLearnMore ? t('modules.learnMore') : t('modules.access'))} <ChevronRight size={16} />
                                             </button>
                                         </div>
                                     );
@@ -428,35 +426,37 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                 <div className="max-w-7xl mx-auto">
                     <div className="text-center mb-20 max-w-3xl mx-auto">
                         <h2 className="text-4xl md:text-5xl font-black mb-6 text-slate-900 dark:text-white uppercase tracking-tighter">
-                            Planos que acompanham o <span className="text-branding-gradient">seu crescimento.</span>
+                            {t('pricing.title').split('crescimento').map((part: string, i: number) =>
+                                i === 0 ? <React.Fragment key={i}>{part}</React.Fragment> : <span key={i} className="text-branding-gradient">crescimento.</span>
+                            )}
                         </h2>
                         <p className="text-xl text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
-                            Nós não vendemos apenas software, entregamos a arquitetura exata para o seu momento na advocacia.
+                            {t('pricing.subtitle')}
                         </p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
                         {[
                             {
-                                title: 'START',
-                                desc: 'Para advogados autônomos e novos escritórios que precisam organizar a casa e parar de perder prazos.',
+                                title: t('pricing.plans.start.title'),
+                                desc: t('pricing.plans.start.desc'),
                                 icon: Briefcase,
                                 color: 'text-blue-500',
                                 badge: null
                             },
                             {
-                                title: 'GROWTH',
-                                desc: 'Para escritórios em crescimento que exigem automação de tarefas e Inteligência Artificial para ganhar escala.',
+                                title: t('pricing.plans.growth.title'),
+                                desc: t('pricing.plans.growth.desc'),
                                 icon: Zap,
                                 color: 'text-indigo-600',
-                                badge: 'Mais Popular'
+                                badge: t('pricing.plans.growth.badge')
                             },
                             {
-                                title: 'STRATEGY',
-                                desc: 'Para departamentos jurídicos corporativos que tomam decisões baseadas em Jurimetria e dados profundos.',
+                                title: t('pricing.plans.strategy.title'),
+                                desc: t('pricing.plans.strategy.desc'),
                                 icon: BarChart3,
                                 color: 'text-emerald-500',
-                                badge: 'Enterprise'
+                                badge: t('pricing.plans.strategy.badge')
                             }
                         ].map((card, i) => (
                             <div key={i} className="relative p-10 bg-slate-50/50 dark:bg-slate-900/30 rounded-[3rem] border border-slate-100 dark:border-slate-800 hover:bg-white dark:hover:bg-slate-900 transition-all duration-300 group flex flex-col items-center text-center">
@@ -481,7 +481,7 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                             href="/pricing"
                             className="inline-flex items-center gap-3 bg-indigo-600 text-white px-12 py-5 rounded-[2.5rem] font-black text-xl shadow-2xl shadow-indigo-600/40 hover:scale-105 hover:bg-indigo-700 transition-all uppercase tracking-tight"
                         >
-                            Comparar Planos e Valores <ArrowRight size={24} />
+                            {t('pricing.compare')} <ArrowRight size={24} />
                         </Link>
                     </div>
                 </div>
@@ -495,7 +495,7 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                         <span className="font-extrabold text-2xl tracking-tighter text-slate-900 dark:text-white">VERITUM <span className="text-branding-gradient">PRO</span></span>
                     </div>
                     <p className="text-sm text-slate-400 dark:text-slate-500 font-medium">
-                        Desenvolvido por AgTech | LegalTech de Alta Performance © 2024 Todos os direitos reservados.
+                        {locale === 'pt' ? 'Desenvolvido por AgTech | LegalTech de Alta Performance © 2024 Todos os direitos reservados.' : 'Developed by AgTech | High Performance LegalTech © 2024 All rights reserved.'}
                     </p>
                     <div className="flex gap-6">
                         <Link
@@ -503,14 +503,14 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                             onClick={(e) => { e.preventDefault(); openLegal('privacy'); }}
                             className="text-sm text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer"
                         >
-                            Privacidade
+                            {t('common.privacy')}
                         </Link>
                         <Link
                             href="/terms"
                             onClick={(e) => { e.preventDefault(); openLegal('terms'); }}
                             className="text-sm text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer"
                         >
-                            Termos
+                            {t('common.terms')}
                         </Link>
                     </div>
                 </div>

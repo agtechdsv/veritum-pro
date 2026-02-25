@@ -35,6 +35,8 @@ import SuiteManagement from './modules/suite-management';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
 import { ToastContainer, toast } from './ui/toast';
+import { useTranslation } from '@/contexts/language-context';
+import { LanguageSelector } from './ui/language-selector';
 import SuiteDashboard from './modules/dashboards/suite-dashboard';
 import AdminDashboard from './modules/dashboards/admin-dashboard';
 import MasterDashboard from './modules/dashboards/master-dashboard';
@@ -64,6 +66,7 @@ const Logo = () => (
 );
 
 export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModule, activeSuites = [], planPermissions = [], groupPermissions = [], allFeatures = [], onModuleChange, onLogout, onUpdateUser, onUpdatePrefs, children }) => {
+    const { t } = useTranslation();
     // BYODB Shadow Provisioning: Ensure user exists in Tenant DB
     React.useEffect(() => {
         const provisionShadowUser = async () => {
@@ -130,18 +133,18 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
     const isSuperAdmin = user.role === 'Master' || isSocioAdminRole || isSocioAdminGroup;
 
     const adminItems = [
-        { id: ModuleId.USERS, label: 'Gestão de Usuários', icon: Users, color: 'text-slate-500' },
-        { id: ModuleId.ACCESS_GROUPS, label: 'Grupos de Acesso', icon: Shield, color: 'text-indigo-600' },
-        { id: ModuleId.SETTINGS, label: 'Configurações', icon: Settings, color: 'text-slate-500' },
+        { id: ModuleId.USERS, label: t('management.users.menu'), icon: Users, color: 'text-slate-500' },
+        { id: ModuleId.ACCESS_GROUPS, label: t('management.access.menu'), icon: Shield, color: 'text-indigo-600' },
+        { id: ModuleId.SETTINGS, label: t('management.settings.menu'), icon: Settings, color: 'text-slate-500' },
     ];
 
     const masterItems = [
-        { id: ModuleId.SUITES, label: 'Gestão de Módulos', icon: Crown, color: 'text-amber-500' },
-        { id: ModuleId.PLANS, label: 'Gestão de Planos', icon: DollarSign, color: 'text-indigo-500' },
-        { id: ModuleId.SCHEDULING, label: 'Agendamentos', icon: CalendarIcon, color: 'text-rose-500' },
-        { id: ModuleId.EMAIL_CONFIG, label: 'Gestão de E-mails', icon: Mail, color: 'text-cyan-500' },
-        { id: ModuleId.TEAM, label: 'Gestão de Equipe', icon: Users, color: 'text-indigo-600' },
-        { id: ModuleId.PERSONS, label: 'CRM de Clientes', icon: UserIcon, color: 'text-emerald-600' },
+        { id: ModuleId.SUITES, label: t('management.master.suites.menu'), icon: Crown, color: 'text-amber-500' },
+        { id: ModuleId.PLANS, label: t('management.master.plans.menu'), icon: DollarSign, color: 'text-indigo-500' },
+        { id: ModuleId.SCHEDULING, label: t('management.master.scheduling.menu'), icon: CalendarIcon, color: 'text-rose-500' },
+        { id: ModuleId.EMAIL_CONFIG, label: t('management.master.email.menu'), icon: Mail, color: 'text-cyan-500' },
+        { id: ModuleId.TEAM, label: t('management.master.team.menu'), icon: Users, color: 'text-indigo-600' },
+        { id: ModuleId.PERSONS, label: t('management.master.persons.menu'), icon: UserIcon, color: 'text-emerald-600' },
     ];
 
     const isAdmin = user.role === 'Master' || ['Administrador', 'Sócio-Administrador', 'Sócio Administrador'].includes(user.role);
@@ -227,7 +230,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
         if (isCoreModule) {
             const isAllowedCore = suiteItems.some(si => normalize(si.id) === currentNormalized);
             if (!isAllowedCore) {
-                toast.error('Seu plano ou nível de acesso não permite visualizar este módulo.');
+                toast.error(t('modules.notInPlan'));
                 onModuleChange(ModuleId.DASHBOARD_ROOT);
                 return;
             }
@@ -255,7 +258,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
         // 3. Checa se é módulo Master
         const isMasterModule = masterItems.some(mi => normalize(mi.id) === currentNormalized);
         if (isMasterModule) {
-            toast.error('Acesso negado. Restrito ao Master.');
+            toast.error(t('dashboard.masterSubtitle')); // Or a specific restricted message
             onModuleChange(ModuleId.DASHBOARD_ROOT);
             return;
         }
@@ -345,7 +348,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                     className="group flex items-center gap-2 px-3 mb-4 w-full text-left cursor-pointer overflow-hidden"
                                 >
                                     <div className={`w-1 h-3 rounded-full transition-all ${normalize(activeModule).includes('dashboard_suites') || suiteItems.some(i => normalize(i.id) === normalize(activeModule)) ? 'bg-indigo-600 h-5' : 'bg-slate-300 group-hover:bg-indigo-400'}`} />
-                                    <h3 className={`text-[10px] font-black uppercase tracking-widest transition-colors whitespace-nowrap ${normalize(activeModule).includes('dashboard_suites') || suiteItems.some(i => normalize(i.id) === normalize(activeModule)) ? 'text-indigo-600' : 'text-slate-400 group-hover:text-slate-600'}`}>Módulos</h3>
+                                    <h3 className={`text-[10px] font-black uppercase tracking-widest transition-colors whitespace-nowrap ${normalize(activeModule).includes('dashboard_suites') || suiteItems.some(i => normalize(i.id) === normalize(activeModule)) ? 'text-indigo-600' : 'text-slate-400 group-hover:text-slate-600'}`}>{t('dashboard.groups.modules.title')}</h3>
                                 </motion.button>
                             )}
                         </AnimatePresence>
@@ -356,7 +359,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                     onClick={(e) => {
                                         if (item.isLocked) {
                                             e.preventDefault();
-                                            toast.error('Este módulo não faz parte do seu plano atual.');
+                                            toast.error(t('modules.notInPlan'));
                                         }
                                     }}
                                     className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 cursor-pointer ${item.isLocked ? 'opacity-50 grayscale' : ''} ${normalize(activeModule) === normalize(item.id)
@@ -407,7 +410,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                     className="group flex items-center gap-2 px-3 mb-4 w-full text-left cursor-pointer overflow-hidden"
                                 >
                                     <div className={`w-1 h-3 rounded-full transition-all ${normalize(activeModule).includes('dashboard_admin') || filteredAdminItems.some(i => i.id === activeModule) ? 'bg-indigo-600 h-5' : 'bg-slate-300 group-hover:bg-indigo-400'}`} />
-                                    <h3 className={`text-[10px] font-black uppercase tracking-widest transition-colors whitespace-nowrap ${normalize(activeModule).includes('dashboard_admin') || filteredAdminItems.some(i => i.id === activeModule) ? 'text-indigo-600' : 'text-slate-400 group-hover:text-slate-600'}`}>Administração</h3>
+                                    <h3 className={`text-[10px] font-black uppercase tracking-widest transition-colors whitespace-nowrap ${normalize(activeModule).includes('dashboard_admin') || filteredAdminItems.some(i => i.id === activeModule) ? 'text-indigo-600' : 'text-slate-400 group-hover:text-slate-600'}`}>{t('dashboard.groups.admin.title')}</h3>
                                 </motion.button>
                             )}
                         </AnimatePresence>
@@ -457,7 +460,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                             className="group flex items-center gap-2 px-3 mb-4 w-full text-left cursor-pointer overflow-hidden"
                                         >
                                             <div className={`w-1 h-3 rounded-full transition-all ${normalize(activeModule).includes('dashboard_master') || masterItems.some(i => i.id === activeModule) ? 'bg-amber-500 h-5' : 'bg-slate-300 group-hover:bg-amber-400'}`} />
-                                            <h3 className={`text-[10px] font-black uppercase tracking-widest transition-colors whitespace-nowrap ${normalize(activeModule).includes('dashboard_master') || masterItems.some(i => i.id === activeModule) ? 'text-amber-600' : 'text-slate-400 group-hover:text-slate-600'}`}>Master</h3>
+                                            <h3 className={`text-[10px] font-black uppercase tracking-widest transition-colors whitespace-nowrap ${normalize(activeModule).includes('dashboard_master') || masterItems.some(i => i.id === activeModule) ? 'text-amber-600' : 'text-slate-400 group-hover:text-slate-600'}`}>{t('dashboard.groups.master.title')}</h3>
                                         </motion.button>
                                     )}
                                 </AnimatePresence>
@@ -525,21 +528,21 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                             onClick={() => onModuleChange(ModuleId.DASHBOARD_SUITES)}
                                             className={`${normalize(activeModule) === 'dashboard_suites' ? 'text-slate-800 dark:text-white font-black' : 'text-slate-400 hover:text-indigo-600'} transition-colors cursor-pointer`}
                                         >
-                                            Módulos
+                                            {t('nav.modules')}
                                         </button>
                                     ) : filteredAdminItems.some(i => i.id === activeModule) || normalize(activeModule) === 'dashboard_admin' ? (
                                         <button
                                             onClick={() => onModuleChange(ModuleId.DASHBOARD_ADMIN)}
                                             className={`${normalize(activeModule) === 'dashboard_admin' ? 'text-slate-800 dark:text-white font-black' : 'text-slate-400 hover:text-indigo-600'} transition-colors cursor-pointer`}
                                         >
-                                            Administração
+                                            {t('nav.admin')}
                                         </button>
                                     ) : (
                                         <button
                                             onClick={() => onModuleChange(ModuleId.DASHBOARD_MASTER)}
                                             className={`${normalize(activeModule) === 'dashboard_master' ? 'text-slate-800 dark:text-white font-black' : 'text-slate-400 hover:text-indigo-600'} transition-colors cursor-pointer`}
                                         >
-                                            Master
+                                            {t('nav.master')}
                                         </button>
                                     )}
                                 </>
@@ -568,15 +571,17 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                 onUpdatePrefs({ ...preferences, theme: newTheme });
                             }}
                             className="p-2 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all cursor-pointer"
-                            title={theme === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
+                            title={theme === 'dark' ? t('common.switchToLight') || 'Mudar para tema claro' : t('common.switchToDark') || 'Mudar para tema escuro'}
                         >
                             {theme === 'dark' ? <Sun size={22} /> : <Moon size={22} />}
                         </button>
 
+                        <LanguageSelector />
+
                         <div className="hidden lg:flex relative items-center">
                             <Search className="absolute left-3 text-slate-400 dark:text-slate-500" size={16} />
                             <input
-                                placeholder="Busca global..."
+                                placeholder={t('common.search') || 'Busca global...'}
                                 className="pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm w-64 focus:ring-2 focus:ring-indigo-600 outline-none dark:text-white text-slate-800 transition-colors"
                             />
                         </div>
@@ -617,7 +622,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                                 className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-left cursor-pointer"
                                             >
                                                 <UserIcon size={18} className="text-indigo-600" />
-                                                Meu Perfil
+                                                {t('userMenu.profile')}
                                             </button>
                                             <div className="h-px bg-slate-100 dark:bg-slate-800 mx-2 my-1" />
                                             <button
@@ -625,7 +630,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                                 className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-all text-left cursor-pointer"
                                             >
                                                 <LogOut size={18} />
-                                                Sair do Ecossistema
+                                                {t('userMenu.logout')}
                                             </button>
                                         </motion.div>
                                     )}

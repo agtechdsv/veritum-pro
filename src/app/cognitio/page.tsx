@@ -13,6 +13,8 @@ import { useRouter } from 'next/navigation';
 import { AuthModal } from '@/components/auth-modal';
 import { createMasterClient } from '@/lib/supabase/master';
 import { UserMenu } from '@/components/ui/user-menu';
+import { useTranslation } from '@/contexts/language-context';
+import { LanguageSelector } from '@/components/ui/language-selector';
 
 const Logo = () => (
     <div className="bg-blue-600/10 p-2 rounded-lg flex items-center justify-center text-blue-600 dark:bg-blue-500/20 dark:text-blue-400">
@@ -21,6 +23,7 @@ const Logo = () => (
 );
 
 export default function CognitioLanding() {
+    const { t } = useTranslation();
     const { theme, setTheme, resolvedTheme } = useTheme();
     const router = useRouter();
     const [mounted, setMounted] = useState(false);
@@ -73,24 +76,25 @@ export default function CognitioLanding() {
                     </div>
 
                     <div className="hidden md:flex items-center gap-8">
-                        <Link href="/" className="text-base font-bold text-branding-gradient hover:opacity-80 transition-all">Portal</Link>
-                        <a href="#top" className="text-sm font-bold text-slate-800 dark:text-white">Início</a>
-                        <a href="#vision" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-blue-600 transition-colors">Visão</a>
-                        <a href="#features" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-blue-600 transition-colors">Funcionalidades</a>
-                        <a href="#ux" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-blue-600 transition-colors">Diferencial</a>
+                        <Link href="/" className="text-base font-bold text-branding-gradient hover:opacity-80 transition-all">{t('pricingPage.nav.portal')}</Link>
+                        <a href="#top" className="text-sm font-bold text-slate-800 dark:text-white">{t('landingPages.cognitio.nav.home')}</a>
+                        <a href="#vision" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-blue-600 transition-colors">{t('landingPages.cognitio.nav.vision')}</a>
+                        <a href="#features" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-blue-600 transition-colors">{t('landingPages.cognitio.nav.features')}</a>
+                        <a href="#ux" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-blue-600 transition-colors">{t('landingPages.cognitio.nav.ux')}</a>
                     </div>
 
                     <div className="flex items-center gap-4">
                         <button onClick={toggleTheme} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all text-slate-600 dark:text-slate-400">
                             {resolvedTheme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
                         </button>
+                        <LanguageSelector />
                         {currentUser === undefined ? (
                             <div className="w-24 h-10 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl" />
                         ) : currentUser ? (
                             <UserMenu user={currentUser} supabase={createMasterClient()} />
                         ) : hasAccess ? (
                             <Link href="/?login=true" className="hidden sm:flex items-center gap-2 font-bold px-4 py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all">
-                                <LogOut size={18} /> Entrar
+                                <LogOut size={18} /> {t('nav.login')}
                             </Link>
                         ) : null}
                         {(hasAccess || currentUser) && (
@@ -98,7 +102,7 @@ export default function CognitioLanding() {
                                 onClick={() => setIsAuthModalOpen(true)}
                                 className="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold shadow-xl shadow-blue-600/20 hover:scale-105 transition-all text-sm"
                             >
-                                Agendar Demonstração
+                                {t('landingPages.cognitio.hero.cta1')}
                             </button>
                         )}
                     </div>
@@ -110,14 +114,18 @@ export default function CognitioLanding() {
                 <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16 relative z-10">
                     <div className="flex-1 text-left">
                         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-black uppercase tracking-widest mb-8 animate-fade-in">
-                            <Target size={14} className="animate-pulse" /> Inteligência Jurídica Preditiva
+                            <Target size={14} className="animate-pulse" /> {t('landingPages.cognitio.hero.badge')}
                         </div>
                         <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-8 leading-[1.05] text-slate-900 dark:text-white">
-                            O olhar estratégico <br />
-                            que a sua <span className="text-branding-gradient">diretoria exige.</span>
+                            {t('landingPages.cognitio.hero.title').split(' ').map((word: string, i: number) => {
+                                if (word.toLowerCase() === 'diretoria' || word.toLowerCase() === 'exige.' || word.toLowerCase() === 'board' || word.toLowerCase() === 'requires.') {
+                                    return <React.Fragment key={i}><span className="text-branding-gradient">{word}</span> </React.Fragment>
+                                }
+                                return word + ' '
+                            })}
                         </h1>
                         <p className="text-xl text-slate-500 dark:text-slate-400 max-w-xl mb-12 leading-relaxed font-medium">
-                            Advocacia guiada por dados. Transforme dados complexos em previsibilidade financeira e decisões de alto impacto para seu departamento ou banca.
+                            {t('landingPages.cognitio.hero.subtitle')}
                         </p>
                         <div className="flex flex-col sm:flex-row items-center gap-4">
                             {(hasAccess || currentUser) && (
@@ -125,11 +133,11 @@ export default function CognitioLanding() {
                                     onClick={() => setIsAuthModalOpen(true)}
                                     className="w-full sm:w-auto bg-blue-600 text-white px-10 py-4 rounded-[1.5rem] font-bold text-lg shadow-2xl shadow-blue-600/40 hover:scale-105 hover:bg-blue-700 transition-all flex items-center justify-center gap-2 uppercase tracking-tight"
                                 >
-                                    Agendar Demonstração <ArrowRight size={20} />
+                                    {t('landingPages.cognitio.hero.cta1')} <ArrowRight size={20} />
                                 </button>
                             )}
                             <a href="#vision" className="w-full sm:w-auto px-10 py-4 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 font-bold text-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-center text-slate-600 dark:text-slate-300">
-                                Saiba mais
+                                {t('landingPages.cognitio.hero.cta2')}
                             </a>
                         </div>
                     </div>
@@ -141,9 +149,9 @@ export default function CognitioLanding() {
                                 <div className="bg-white dark:bg-slate-950 rounded-[2.5rem] overflow-hidden border border-slate-200 dark:border-slate-800 aspect-[4/3] flex flex-col p-8">
                                     <div className="grid grid-cols-3 gap-4 mb-8">
                                         {[
-                                            { label: 'KPI Global', val: '94.2%', sub: '+3.1%', color: 'text-emerald-500' },
-                                            { label: 'Risco Ativo', val: 'R$ 12M', sub: '-12%', color: 'text-rose-500' },
-                                            { label: 'Sentenças', val: '1.2k', sub: 'Hoje', color: 'text-blue-500' }
+                                            { label: t('landingPages.cognitio.mockup.kpiGlobal'), val: '94.2%', sub: '+3.1%', color: 'text-emerald-500' },
+                                            { label: t('landingPages.cognitio.mockup.activeRisk'), val: 'R$ 12M', sub: '-12%', color: 'text-rose-500' },
+                                            { label: t('landingPages.cognitio.mockup.sentences'), val: t('landingPages.cognitio.mockup.sentencesValue'), sub: t('landingPages.cognitio.mockup.sentencesSub'), color: 'text-blue-500' }
                                         ].map((kpi, i) => (
                                             <div key={i} className="p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
                                                 <div className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2">{kpi.label}</div>
@@ -154,7 +162,7 @@ export default function CognitioLanding() {
                                     </div>
                                     <div className="flex-1 space-y-4">
                                         <div className="flex items-center justify-between mb-2">
-                                            <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Análise de Êxito por Tribunal</div>
+                                            <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('landingPages.cognitio.mockup.analysisTitle')}</div>
                                             <div className="flex gap-1">
                                                 <div className="w-2 h-2 rounded-full bg-blue-500" />
                                                 <div className="w-2 h-2 rounded-full bg-emerald-500" />
@@ -194,10 +202,10 @@ export default function CognitioLanding() {
                     <div className="flex flex-col lg:flex-row items-center gap-16">
                         <div className="flex-1 grid grid-cols-2 gap-4">
                             {[
-                                { label: 'Taxa de Êxito', val: '72%', color: 'text-emerald-500', icon: Target },
-                                { label: 'Risco Mitigado', val: 'R$ 8.5M', color: 'text-blue-600', icon: ShieldCheck },
-                                { label: 'Tempo Médio', val: '14 Meses', color: 'text-indigo-500', icon: Zap },
-                                { label: 'Previsibilidade', val: 'Alta', color: 'text-blue-500', icon: Brain }
+                                { label: t('landingPages.cognitio.stats.successRate'), val: '72%', color: 'text-emerald-500', icon: Target },
+                                { label: t('landingPages.cognitio.stats.mitigatedRisk'), val: 'R$ 8.5M', color: 'text-blue-600', icon: ShieldCheck },
+                                { label: t('landingPages.cognitio.stats.avgTime'), val: t('landingPages.cognitio.stats.avgTimeVal'), color: 'text-indigo-500', icon: Zap },
+                                { label: t('landingPages.cognitio.stats.predictability'), val: t('landingPages.cognitio.stats.predictabilityVal'), color: 'text-blue-500', icon: Brain }
                             ].map((stat, i) => (
                                 <div key={i} className="bg-white dark:bg-slate-900 p-8 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none hover:scale-105 transition-transform group">
                                     <div className={`w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform ${stat.color}`}>
@@ -210,14 +218,18 @@ export default function CognitioLanding() {
                         </div>
                         <div className="flex-1 space-y-8 text-left">
                             <h2 className="text-4xl md:text-5xl font-black leading-tight tracking-tighter text-slate-900 dark:text-white uppercase">
-                                Pare de advogar no escuro. <br />
-                                A intuição cede <span className="text-branding-gradient">lugar à precisão.</span>
+                                {t('landingPages.cognitio.vision.title').split(' ').map((word: string, i: number) => {
+                                    if (word.toLowerCase() === 'lugar' || word.toLowerCase() === 'à' || word.toLowerCase() === 'precisão.' || word.toLowerCase() === 'to' || word.toLowerCase() === 'precision.') {
+                                        return <React.Fragment key={i}><span className="text-branding-gradient">{word}</span> </React.Fragment>
+                                    }
+                                    return word + ' '
+                                })}
                             </h2>
                             <p className="text-xl text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
-                                Grandes bancas e departamentos jurídicos corporativos não podem depender de "achismos". O Cognitio PRO lê o histórico de milhares de decisões para que você saiba quando é mais vantajoso um acordo ou o litígio.
+                                {t('landingPages.cognitio.vision.desc')}
                             </p>
                             <div className="p-6 bg-blue-600/5 rounded-2xl border border-blue-600/10 italic text-blue-600 dark:text-blue-400 font-bold">
-                                "Tenha o raio-x completo da sua operação na palma da mão e preste contas à diretoria com segurança absoluta."
+                                {t('landingPages.cognitio.vision.quote')}
                             </div>
                         </div>
                     </div>
@@ -228,34 +240,34 @@ export default function CognitioLanding() {
             <section id="features" className="py-32 px-6">
                 <div className="max-w-7xl mx-auto">
                     <div className="text-center mb-20 max-w-3xl mx-auto">
-                        <span className="text-blue-600 dark:text-blue-400 font-black tracking-[0.2em] uppercase text-sm">Tecnologia Analítica</span>
-                        <h2 className="text-5xl font-black mt-4 text-slate-900 dark:text-white uppercase tracking-tighter">Funcionalidades de Elite</h2>
-                        <p className="text-xl text-slate-500 dark:text-slate-400 mt-4 leading-relaxed font-medium">Ferramentas criadas para sócios e diretores que precisam de respostas rápidas e exatas.</p>
+                        <span className="text-blue-600 dark:text-blue-400 font-black tracking-[0.2em] uppercase text-sm">{t('landingPages.cognitio.features.category')}</span>
+                        <h2 className="text-5xl font-black mt-4 text-slate-900 dark:text-white uppercase tracking-tighter">{t('landingPages.cognitio.features.title')}</h2>
+                        <p className="text-xl text-slate-500 dark:text-slate-400 mt-4 leading-relaxed font-medium">{t('landingPages.cognitio.features.subtitle')}</p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                         {[
                             {
-                                title: 'Dashboards e BI Jurídico',
-                                desc: 'Visualize a performance de toda a operação em painéis interativos. Identifique gargalos e métricas de produtividade em tempo real.',
+                                title: t('landingPages.cognitio.features.items.bi.title'),
+                                desc: t('landingPages.cognitio.features.items.bi.desc'),
                                 icon: LayoutDashboard,
                                 color: 'bg-blue-500/10 text-blue-500'
                             },
                             {
-                                title: 'Análise Preditiva de Desfechos (IA)',
-                                desc: 'Nossa IA cruza dados de jurisprudência e histórico processual para calcular a probabilidade de ganho antes mesmo do protocolo.',
+                                title: t('landingPages.cognitio.features.items.predictive.title'),
+                                desc: t('landingPages.cognitio.features.items.predictive.desc'),
                                 icon: Brain,
                                 color: 'bg-emerald-500/10 text-emerald-500'
                             },
                             {
-                                title: 'Raio-X de Magistrados e Comarcas',
-                                desc: 'Conheça a mente de quem vai julgar. Relatórios detalhados sobre como cada tribunal costuma decidir em temas específicos.',
+                                title: t('landingPages.cognitio.features.items.judges.title'),
+                                desc: t('landingPages.cognitio.features.items.judges.desc'),
                                 icon: Scale,
                                 color: 'bg-indigo-500/10 text-indigo-500'
                             },
                             {
-                                title: 'Visão Corporativa e Provisionamento',
-                                desc: 'Acompanhe custos por filial ou projeto. Descubra quais setores enfrentam maior litigiosidade e atue preventivamente.',
+                                title: t('landingPages.cognitio.features.items.corporate.title'),
+                                desc: t('landingPages.cognitio.features.items.corporate.desc'),
                                 icon: Building2,
                                 color: 'bg-slate-500/10 text-slate-500'
                             }
@@ -269,7 +281,7 @@ export default function CognitioLanding() {
                                     {f.desc}
                                 </p>
                                 <button className="text-sm font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2 hover:gap-3 transition-all">
-                                    Saiba mais <ChevronRight size={16} />
+                                    {t('landingPages.cognitio.features.cta')} <ChevronRight size={16} />
                                 </button>
                             </div>
                         ))}
@@ -282,17 +294,21 @@ export default function CognitioLanding() {
                 <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-20 relative z-10">
                     <div className="flex-1 space-y-10">
                         <h2 className="text-5xl md:text-6xl font-black leading-tight tracking-tighter uppercase mb-6">
-                            O fim da <br />
-                            <span className="text-branding-gradient">"Parede de Números".</span>
+                            {t('landingPages.cognitio.ux.title').split(' ').map((word: string, i: number) => {
+                                if (word.toLowerCase() === '"parede' || word.toLowerCase() === 'de' || word.toLowerCase() === 'números".' || word.toLowerCase() === '"wall' || word.toLowerCase() === 'of' || word.toLowerCase() === 'numbers".') {
+                                    return <React.Fragment key={i}><span className="text-branding-gradient">{word}</span> </React.Fragment>
+                                }
+                                return word + ' '
+                            })}
                         </h2>
                         <p className="text-xl text-slate-300 leading-relaxed font-medium">
-                            Executivos não têm tempo para decifrar planilhas. Projetamos o Cognitio PRO com as melhores práticas de visualização para decisões rápidas.
+                            {t('landingPages.cognitio.ux.subtitle')}
                         </p>
                         <div className="space-y-6">
                             {[
-                                { title: 'Divulgação Progressiva', desc: 'Cenário macro limpo com possibilidade de aprofundamento total em um clique.', icon: MousePointer2 },
-                                { title: 'Destaque de Tendências', desc: 'Gráficos codificados por cores que indicam riscos e oportunidades instantaneamente.', icon: TrendingUp },
-                                { title: 'Exportação Executiva', desc: 'Gere relatórios visuais perfeitos para apresentações em segundos.', icon: Presentation }
+                                { title: t('landingPages.cognitio.ux.items.disclosure.title'), desc: t('landingPages.cognitio.ux.items.disclosure.desc'), icon: MousePointer2 },
+                                { title: t('landingPages.cognitio.ux.items.trends.title'), desc: t('landingPages.cognitio.ux.items.trends.desc'), icon: TrendingUp },
+                                { title: t('landingPages.cognitio.ux.items.export.title'), desc: t('landingPages.cognitio.ux.items.export.desc'), icon: Presentation }
                             ].map((item, i) => (
                                 <div key={i} className="flex gap-4 items-start p-6 bg-white/5 rounded-3xl border border-white/10 hover:bg-white/10 transition-colors">
                                     <item.icon className="text-blue-400 shrink-0 mt-1" size={24} />
@@ -334,10 +350,15 @@ export default function CognitioLanding() {
             <section className="py-32 px-6 text-center">
                 <div className="max-w-4xl mx-auto">
                     <h2 className="text-5xl md:text-6xl font-black mb-8 text-slate-900 dark:text-white leading-tight">
-                        Pronto para liderar com <span className="text-branding-gradient">inteligência de dados?</span>
+                        {t('landingPages.cognitio.finalCta.title').split(' ').map((word: string, i: number) => {
+                            if (word.toLowerCase() === 'inteligência' || word.toLowerCase() === 'de' || word.toLowerCase() === 'dados?' || word.toLowerCase() === 'data' || word.toLowerCase() === 'intelligence?') {
+                                return <React.Fragment key={i}><span className="text-branding-gradient">{word}</span> </React.Fragment>
+                            }
+                            return word + ' '
+                        })}
                     </h2>
                     <p className="text-xl text-slate-500 dark:text-slate-400 mb-12 leading-relaxed max-w-2xl mx-auto font-medium">
-                        Ideal para bancas estruturadas e corporações que buscam excelência, previsibilidade e rentabilidade em sua operação jurídica.
+                        {t('landingPages.cognitio.finalCta.subtitle')}
                     </p>
                     {(hasAccess || currentUser) && (
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
@@ -345,13 +366,13 @@ export default function CognitioLanding() {
                                 onClick={() => setIsAuthModalOpen(true)}
                                 className="w-full sm:w-auto bg-blue-600 text-white px-12 py-5 rounded-[2.5rem] font-black text-xl shadow-2xl shadow-blue-600/40 hover:scale-105 hover:bg-blue-700 transition-all cursor-pointer uppercase tracking-tight"
                             >
-                                Agendar Demonstração Exclusiva
+                                {t('landingPages.cognitio.finalCta.button1')}
                             </button>
                             <Link
                                 href="/pricing"
                                 className="w-full sm:w-auto px-12 py-5 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 font-bold text-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-sans uppercase tracking-tight"
                             >
-                                Ver Planos de Assinatura
+                                {t('landingPages.cognitio.finalCta.button2')}
                             </Link>
                         </div>
                     )}
@@ -370,7 +391,7 @@ export default function CognitioLanding() {
                                 </span>
                             </div>
                             <p className="text-slate-500 dark:text-slate-400 font-medium max-w-xs text-center md:text-left">
-                                A tecnologia de quem dita as regras do jogo.
+                                {t('landingPages.cognitio.footer.slogan')}
                             </p>
                         </div>
 

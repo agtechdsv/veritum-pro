@@ -13,6 +13,8 @@ import { useRouter } from 'next/navigation';
 import { AuthModal } from '@/components/auth-modal';
 import { createMasterClient } from '@/lib/supabase/master';
 import { UserMenu } from '@/components/ui/user-menu';
+import { useTranslation } from '@/contexts/language-context';
+import { LanguageSelector } from '@/components/ui/language-selector';
 
 const Logo = () => (
     <div className="bg-indigo-600/10 p-2 rounded-lg flex items-center justify-center text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400">
@@ -27,6 +29,7 @@ const WhatsAppIcon = () => (
 );
 
 export default function VoxLanding() {
+    const { t } = useTranslation();
     const { theme, setTheme, resolvedTheme } = useTheme();
     const router = useRouter();
     const [mounted, setMounted] = useState(false);
@@ -79,24 +82,25 @@ export default function VoxLanding() {
                     </div>
 
                     <div className="hidden md:flex items-center gap-8">
-                        <Link href="/" className="text-base font-bold text-branding-gradient hover:opacity-80 transition-all">Portal</Link>
-                        <a href="#top" className="text-sm font-bold text-slate-800 dark:text-white">Início</a>
-                        <a href="#vision" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">Visão</a>
-                        <a href="#features" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">Funcionalidades</a>
-                        <a href="#ux" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">Diferencial</a>
+                        <Link href="/" className="text-base font-bold text-branding-gradient hover:opacity-80 transition-all">{t('pricingPage.nav.portal')}</Link>
+                        <a href="#top" className="text-sm font-bold text-slate-800 dark:text-white">{t('landingPages.vox.nav.home')}</a>
+                        <a href="#vision" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">{t('landingPages.vox.nav.vision')}</a>
+                        <a href="#features" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">{t('landingPages.vox.nav.features')}</a>
+                        <a href="#ux" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">{t('landingPages.vox.nav.ux')}</a>
                     </div>
 
                     <div className="flex items-center gap-4">
                         <button onClick={toggleTheme} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all text-slate-600 dark:text-slate-400">
                             {resolvedTheme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
                         </button>
+                        <LanguageSelector />
                         {currentUser === undefined ? (
                             <div className="w-24 h-10 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl" />
                         ) : currentUser ? (
                             <UserMenu user={currentUser} supabase={createMasterClient()} />
                         ) : hasAccess ? (
                             <Link href="/?login=true" className="hidden sm:flex items-center gap-2 font-bold px-4 py-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all">
-                                <LogOut size={18} /> Entrar
+                                <LogOut size={18} /> {t('nav.login')}
                             </Link>
                         ) : null}
                         {(hasAccess || currentUser) && (
@@ -104,7 +108,7 @@ export default function VoxLanding() {
                                 onClick={() => setIsAuthModalOpen(true)}
                                 className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold shadow-xl shadow-indigo-600/20 hover:scale-105 transition-all text-sm"
                             >
-                                Teste Grátis
+                                {t('landingPages.vox.hero.cta1')}
                             </button>
                         )}
                     </div>
@@ -116,14 +120,18 @@ export default function VoxLanding() {
                 <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16 relative z-10">
                     <div className="flex-1 text-left">
                         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-xs font-black uppercase tracking-widest mb-8 animate-fade-in">
-                            <Sparkles size={14} className="animate-pulse" /> Atendimento Padrão Ouro
+                            <Sparkles size={14} className="animate-pulse" /> {t('landingPages.vox.hero.badge')}
                         </div>
                         <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-8 leading-[1.05] text-slate-900 dark:text-white">
-                            O fim da pergunta: <br />
-                            <span className="text-branding-gradient">"Doutor, como está o meu caso?"</span>
+                            {t('landingPages.vox.hero.title').split(' ').map((word: string, i: number) => {
+                                if (word.toLowerCase() === '"doutor,' || word.toLowerCase() === 'como' || word.toLowerCase() === 'está' || word.toLowerCase() === 'o' || word.toLowerCase() === 'meu' || word.toLowerCase() === 'caso?"' || word.toLowerCase() === '"doctor,' || word.toLowerCase() === 'how' || word.toLowerCase() === 'is' || word.toLowerCase() === 'my' || word.toLowerCase() === 'case' || word.toLowerCase() === 'doing?"') {
+                                    return <React.Fragment key={i}><span className="text-branding-gradient">{word}</span> </React.Fragment>
+                                }
+                                return word + ' '
+                            })}
                         </h1>
                         <p className="text-xl text-slate-500 dark:text-slate-400 max-w-xl mb-12 leading-relaxed font-medium">
-                            Comunicação jurídica sem interrupções. Automatize seu atendimento com integração ao WhatsApp e Inteligência Artificial. Fidelize com transparência absoluta.
+                            {t('landingPages.vox.hero.subtitle')}
                         </p>
                         <div className="flex flex-col sm:flex-row items-center gap-4">
                             {(hasAccess || currentUser) && (
@@ -131,11 +139,11 @@ export default function VoxLanding() {
                                     onClick={() => setIsAuthModalOpen(true)}
                                     className="w-full sm:w-auto bg-indigo-600 text-white px-10 py-4 rounded-[1.5rem] font-bold text-lg shadow-2xl shadow-indigo-600/40 hover:scale-105 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
                                 >
-                                    Começar Teste Grátis <ArrowRight size={20} />
+                                    {t('landingPages.vox.hero.cta1')} <ArrowRight size={20} />
                                 </button>
                             )}
                             <a href="#vision" className="w-full sm:w-auto px-10 py-4 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 font-bold text-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-center text-slate-600 dark:text-slate-300">
-                                Saiba mais
+                                {t('landingPages.vox.hero.cta2')}
                             </a>
                         </div>
                     </div>
@@ -149,22 +157,22 @@ export default function VoxLanding() {
                                     <div className="h-14 bg-[#075E54] dark:bg-slate-900 flex items-center px-4 gap-3 text-white">
                                         <div className="w-8 h-8 rounded-full bg-slate-200" />
                                         <div className="flex-1">
-                                            <div className="text-[10px] font-bold">Veritum Automations</div>
-                                            <div className="text-[8px] opacity-80">online</div>
+                                            <div className="text-[10px] font-bold">{t('landingPages.vox.mockup.title1')}</div>
+                                            <div className="text-[8px] opacity-80">{t('landingPages.vox.mockup.status')}</div>
                                         </div>
                                     </div>
                                     <div className="flex-1 p-4 space-y-4">
                                         <div className="bg-white dark:bg-slate-900 p-3 rounded-2xl rounded-tl-none shadow-sm text-[10px] text-slate-800 dark:text-slate-200 max-w-[85%] animate-fade-in-up">
-                                            <p className="font-bold mb-1">Olá João! 👋</p>
-                                            <p>O juiz deu andamento no seu caso hoje. Em palavras simples, isso significa que entramos na fase final para a sentença.</p>
-                                            <div className="text-[8px] text-slate-400 text-right mt-1">10:45</div>
+                                            <p className="font-bold mb-1">{t('landingPages.vox.mockup.msg1')}</p>
+                                            <p>{t('landingPages.vox.mockup.msg2')}</p>
+                                            <div className="text-[8px] text-slate-400 text-right mt-1">{t('landingPages.vox.mockup.time')}</div>
                                         </div>
                                         <div className="bg-indigo-100 dark:bg-indigo-900/40 p-3 rounded-2xl rounded-tl-none shadow-sm text-[10px] text-indigo-900 dark:text-indigo-200 max-w-[85%] border border-indigo-200 dark:border-indigo-800/50 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
                                             <div className="flex items-center gap-1 mb-1">
                                                 <Sparkles size={8} className="text-indigo-600" />
-                                                <span className="font-bold">Tradutor IA:</span>
+                                                <span className="font-bold">{t('landingPages.vox.mockup.aiLabel')}</span>
                                             </div>
-                                            <p>Não se preocupe, o processo está seguindo o cronograma esperado. Próximo passo: Audiência de Instrução.</p>
+                                            <p>{t('landingPages.vox.mockup.msg3')}</p>
                                         </div>
                                     </div>
                                     <div className="h-12 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex items-center px-4 gap-2">
@@ -176,10 +184,10 @@ export default function VoxLanding() {
 
                             {/* Floating Stats */}
                             <div className="absolute top-1/4 -right-10 bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 animate-bounce" style={{ animationDuration: '3s' }}>
-                                <div className="text-[10px] font-black uppercase text-emerald-500 mb-1">Clietne Feliz</div>
+                                <div className="text-[10px] font-black uppercase text-emerald-500 mb-1">{t('landingPages.vox.mockup.clientBanner')}</div>
                                 <div className="flex items-center gap-2">
                                     <Heart size={16} className="text-rose-500 fill-rose-500" />
-                                    <span className="text-lg font-black text-slate-900 dark:text-white">98%</span>
+                                    <span className="text-lg font-black text-slate-900 dark:text-white">{t('landingPages.vox.mockup.percentage')}</span>
                                 </div>
                             </div>
                         </div>
@@ -201,10 +209,10 @@ export default function VoxLanding() {
                     <div className="flex flex-col lg:flex-row items-center gap-16">
                         <div className="flex-1 grid grid-cols-2 gap-4">
                             {[
-                                { label: 'Mensagens Enviadas', val: '1.240', color: 'text-indigo-600', icon: Bell },
-                                { label: 'Tempo Salvo', val: '45h', color: 'text-emerald-500', icon: Zap },
-                                { label: 'Satisfação', val: '98%', color: 'text-rose-500', icon: Heart },
-                                { label: 'Disponibilidade', val: '24/7', color: 'text-blue-500', icon: Globe }
+                                { label: t('landingPages.vox.vision.stats.messages'), val: t('landingPages.vox.vision.stats.messagesVal'), color: 'text-indigo-600', icon: Bell },
+                                { label: t('landingPages.vox.vision.stats.timeSaved'), val: t('landingPages.vox.vision.stats.timeSavedVal'), color: 'text-emerald-500', icon: Zap },
+                                { label: t('landingPages.vox.vision.stats.satisfaction'), val: t('landingPages.vox.vision.stats.satisfactionVal'), color: 'text-rose-500', icon: Heart },
+                                { label: t('landingPages.vox.vision.stats.availability'), val: t('landingPages.vox.vision.stats.availabilityVal'), color: 'text-blue-500', icon: Globe }
                             ].map((stat, i) => (
                                 <div key={i} className="bg-white dark:bg-slate-900 p-8 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none hover:scale-105 transition-transform group">
                                     <div className={`w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform ${stat.color}`}>
@@ -217,14 +225,17 @@ export default function VoxLanding() {
                         </div>
                         <div className="flex-1 space-y-8 text-left">
                             <h2 className="text-4xl md:text-5xl font-black leading-tight tracking-tighter text-slate-900 dark:text-white uppercase">
-                                Atendimento de excelência <br />
-                                em <span className="text-branding-gradient">piloto automático.</span>
+                                {t('landingPages.vox.vision.title').split(' ').map((word: string, i: number) => (
+                                    <React.Fragment key={i}>
+                                        {word.toLowerCase() === 'piloto' || word.toLowerCase() === 'automático.' || word.toLowerCase() === 'autopilot.' ? <span className="text-branding-gradient">{word}</span> : word}{' '}
+                                    </React.Fragment>
+                                ))}
                             </h2>
                             <p className="text-xl text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
-                                A maior causa de insatisfação dos clientes jurídicos é a falta de comunicação. O Vox Clientis preenche essa lacuna atuando como o seu gerente de relacionamento 24 horas por dia.
+                                {t('landingPages.vox.vision.desc1')}
                             </p>
                             <p className="text-lg text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
-                                Compartilhe o progresso das ações de forma ágil e proativa, garantindo que o seu cliente se sinta seguro e o seu WhatsApp pessoal continue livre de cobranças.
+                                {t('landingPages.vox.vision.desc2')}
                             </p>
                         </div>
                     </div>
@@ -235,34 +246,34 @@ export default function VoxLanding() {
             <section id="features" className="py-32 px-6">
                 <div className="max-w-7xl mx-auto">
                     <div className="text-center mb-20 max-w-3xl mx-auto">
-                        <span className="text-indigo-600 dark:text-indigo-400 font-black tracking-[0.2em] uppercase text-sm">Tecnologia de Relacionamento</span>
-                        <h2 className="text-5xl font-black mt-4 text-slate-900 dark:text-white uppercase tracking-tighter">Funcionalidades de Elite</h2>
-                        <p className="text-xl text-slate-500 dark:text-slate-400 mt-4 leading-relaxed font-medium">Ferramentas criadas para escritórios que valorizam e profissionalizam a experiência do cliente.</p>
+                        <span className="text-indigo-600 dark:text-indigo-400 font-black tracking-[0.2em] uppercase text-sm">{t('landingPages.vox.features.category')}</span>
+                        <h2 className="text-5xl font-black mt-4 text-slate-900 dark:text-white uppercase tracking-tighter">{t('landingPages.vox.features.title')}</h2>
+                        <p className="text-xl text-slate-500 dark:text-slate-400 mt-4 leading-relaxed font-medium">{t('landingPages.vox.features.subtitle')}</p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                         {[
                             {
-                                title: 'Tradutor de Juridiquês (IA)',
-                                desc: 'Nossa IA lê o andamento processual e o traduz automaticamente para uma linguagem simples e empática para o seu cliente.',
+                                title: t('landingPages.vox.features.items.translator.title'),
+                                desc: t('landingPages.vox.features.items.translator.desc'),
                                 icon: Sparkles,
                                 color: 'bg-indigo-500/10 text-indigo-500'
                             },
                             {
-                                title: 'Automação de WhatsApp',
-                                desc: 'Envie atualizações de processos, lembretes de audiência e links para pagamento diretamente para o canal preferido do cliente.',
+                                title: t('landingPages.vox.features.items.automation.title'),
+                                desc: t('landingPages.vox.features.items.automation.desc'),
                                 icon: Smartphone,
                                 color: 'bg-emerald-500/10 text-emerald-500'
                             },
                             {
-                                title: 'Portal Exclusivo do Cliente',
-                                desc: 'Ofereça um portal web seguro com a sua identidade visual para consulta de status, documentos e dúvidas básicas.',
+                                title: t('landingPages.vox.features.items.portal.title'),
+                                desc: t('landingPages.vox.features.items.portal.desc'),
                                 icon: LayoutDashboard,
                                 color: 'bg-blue-500/10 text-blue-500'
                             },
                             {
-                                title: 'Comunicação Proativa',
-                                desc: 'Informe antes de ser perguntado. O sistema dispara notificações automáticas sempre que algo relevante acontece no processo.',
+                                title: t('landingPages.vox.features.items.proactive.title'),
+                                desc: t('landingPages.vox.features.items.proactive.desc'),
                                 icon: Bell,
                                 color: 'bg-violet-500/10 text-violet-500'
                             }
@@ -276,7 +287,7 @@ export default function VoxLanding() {
                                     {f.desc}
                                 </p>
                                 <button className="text-sm font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-2 hover:gap-3 transition-all">
-                                    Saiba mais <ChevronRight size={16} />
+                                    {t('landingPages.vox.features.cta')} <ChevronRight size={16} />
                                 </button>
                             </div>
                         ))}
@@ -289,17 +300,20 @@ export default function VoxLanding() {
                 <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-20 relative z-10">
                     <div className="flex-1 space-y-10">
                         <h2 className="text-5xl md:text-6xl font-black leading-tight tracking-tighter uppercase mb-6">
-                            A transparência que <br />
-                            gera <span className="text-branding-gradient">indicações.</span>
+                            {t('landingPages.vox.ux.title').split(' ').map((word: string, i: number) => (
+                                <React.Fragment key={i}>
+                                    {word.toLowerCase() === 'indicações.' || word.toLowerCase() === 'referrals.' ? <span className="text-branding-gradient">{word}</span> : word}{' '}
+                                </React.Fragment>
+                            ))}
                         </h2>
                         <p className="text-xl text-slate-300 leading-relaxed font-medium">
-                            Projetamos o Vox Clientis com uma interface inclusiva e acolhedora não apenas para você, mas principalmente para o consumidor final.
+                            {t('landingPages.vox.ux.subtitle')}
                         </p>
                         <div className="space-y-6">
                             {[
-                                { title: 'Fronteiras Profissionais', desc: 'O cliente acessa o Portal dele; o seu time trabalha no Nexus. Cada um no seu espaço.', icon: Shield },
-                                { title: 'Acessibilidade Universal', desc: 'Telas simples, fontes legíveis e linguagem clara para qualquer perfil de cliente.', icon: UserCheck },
-                                { title: 'Notificações Proativas', desc: 'Acabe com a ansiedade. Mantenha o cliente informado em tempo real.', icon: Zap }
+                                { title: t('landingPages.vox.ux.items.boundaries.title'), desc: t('landingPages.vox.ux.items.boundaries.desc'), icon: Shield },
+                                { title: t('landingPages.vox.ux.items.accessibility.title'), desc: t('landingPages.vox.ux.items.accessibility.desc'), icon: UserCheck },
+                                { title: t('landingPages.vox.ux.items.notifications.title'), desc: t('landingPages.vox.ux.items.notifications.desc'), icon: Zap }
                             ].map((item, i) => (
                                 <div key={i} className="flex gap-4 items-start p-6 bg-white/5 rounded-3xl border border-white/10 hover:bg-white/10 transition-colors">
                                     <item.icon className="text-indigo-400 shrink-0 mt-1" size={24} />
@@ -328,8 +342,8 @@ export default function VoxLanding() {
                                     <div className="h-2 w-[80%] bg-white/5 rounded-full" />
                                 </div>
                                 <div className="pt-4 border-t border-white/5 flex justify-between">
-                                    <div className="h-8 w-24 bg-indigo-500/20 rounded-lg flex items-center justify-center text-[8px] font-black text-indigo-400 uppercase">Chat Online</div>
-                                    <div className="h-8 w-24 bg-emerald-500/20 rounded-lg flex items-center justify-center text-[8px] font-black text-emerald-400 uppercase">Ver Processo</div>
+                                    <div className="h-8 w-24 bg-indigo-500/20 rounded-lg flex items-center justify-center text-[8px] font-black text-indigo-400 uppercase">{t('landingPages.vox.ux.mockupLabels.chat')}</div>
+                                    <div className="h-8 w-24 bg-emerald-500/20 rounded-lg flex items-center justify-center text-[8px] font-black text-emerald-400 uppercase">{t('landingPages.vox.ux.mockupLabels.process')}</div>
                                 </div>
                             </div>
                         </div>
@@ -341,10 +355,14 @@ export default function VoxLanding() {
             <section className="py-32 px-6 text-center">
                 <div className="max-w-4xl mx-auto">
                     <h2 className="text-5xl md:text-6xl font-black mb-8 text-slate-900 dark:text-white leading-tight">
-                        Pronto para elevar o nível do <span className="text-branding-gradient">seu atendimento?</span>
+                        {t('landingPages.vox.finalCta.title').split(' ').map((word: string, i: number) => (
+                            <React.Fragment key={i}>
+                                {word.toLowerCase() === 'atendimento?' || word.toLowerCase() === 'service?' ? <span className="text-branding-gradient">{word}</span> : word}{' '}
+                            </React.Fragment>
+                        ))}
                     </h2>
                     <p className="text-xl text-slate-500 dark:text-slate-400 mb-12 leading-relaxed max-w-2xl mx-auto font-medium">
-                        Integrado nativamente ao Sentinel e ao Nexus, o Vox Clientis fecha o ciclo perfeito da sua operação: o sistema vigia, você executa, e o cliente é informado.
+                        {t('landingPages.vox.finalCta.subtitle')}
                     </p>
                     {(hasAccess || currentUser) && (
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
@@ -352,18 +370,18 @@ export default function VoxLanding() {
                                 onClick={() => setIsAuthModalOpen(true)}
                                 className="w-full sm:w-auto bg-indigo-600 text-white px-12 py-5 rounded-[2.5rem] font-black text-xl shadow-2xl shadow-indigo-600/40 hover:scale-105 hover:bg-indigo-700 transition-all cursor-pointer"
                             >
-                                Começar Agora - É Grátis
+                                {t('landingPages.vox.finalCta.button1')}
                             </button>
                             <Link
                                 href="/pricing"
                                 className="w-full sm:w-auto px-12 py-5 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 font-bold text-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
                             >
-                                Ver Planos de Assinatura
+                                {t('landingPages.vox.finalCta.button2')}
                             </Link>
                         </div>
                     )}
                     <p className="mt-8 text-sm text-slate-400 font-bold uppercase tracking-widest">
-                        Sem cartão de crédito • Configuração em 2 minutos
+                        {t('landingPages.vox.finalCta.footer')}
                     </p>
                 </div>
             </section>
@@ -380,7 +398,7 @@ export default function VoxLanding() {
                                 </span>
                             </div>
                             <p className="text-slate-500 dark:text-slate-400 font-medium max-w-xs text-center md:text-left">
-                                A tecnologia de quem advoga com empatia e profissionalismo.
+                                {t('landingPages.vox.footer.slogan')}
                             </p>
                         </div>
 

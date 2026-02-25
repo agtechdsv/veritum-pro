@@ -3,6 +3,7 @@
 import React from 'react';
 import { ArrowLeft, FileText, Scale } from 'lucide-react';
 import Link from 'next/link';
+import { useTranslation } from '@/contexts/language-context';
 
 const Logo = () => (
     <div className="bg-indigo-600/10 p-2 rounded-lg flex items-center justify-center text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400">
@@ -11,6 +12,7 @@ const Logo = () => (
 );
 
 export default function TermsPage() {
+    const { t } = useTranslation();
     return (
         <div className="min-h-screen bg-white text-slate-900 dark:bg-slate-950 dark:text-white transition-colors duration-500">
             <div className="fixed top-1/4 left-0 w-96 h-96 bg-indigo-400/10 blur-[120px] rounded-full pointer-events-none"></div>
@@ -23,7 +25,7 @@ export default function TermsPage() {
                         <span className="font-extrabold text-2xl tracking-tighter text-slate-900 dark:text-white">VERITUM <span className="text-branding-gradient">PRO</span></span>
                     </Link>
                     <Link href="/" className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-indigo-600 transition-colors">
-                        <ArrowLeft size={16} /> Voltar ao Início
+                        <ArrowLeft size={16} /> {t('common.backToHome')}
                     </Link>
                 </div>
             </nav>
@@ -34,19 +36,21 @@ export default function TermsPage() {
                         <FileText size={32} />
                     </div>
                     <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-4 text-slate-900 dark:text-white">
-                        Termos de <span className="text-branding-gradient">Serviço</span>
+                        {t('staticPages.terms.title').split('Terms').length > 1 ?
+                            <>Terms of <span className="text-branding-gradient">Service</span></> :
+                            <>Termos de <span className="text-branding-gradient">Serviço</span></>}
                     </h1>
-                    <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-sm">Atualizado em Fevereiro 2024</p>
+                    <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-sm">{t('staticPages.terms.updatedAt')}</p>
                 </div>
 
                 <div className="prose prose-slate dark:prose-invert max-w-none text-slate-600 dark:text-slate-300 leading-loose space-y-8">
                     <section>
-                        <p className="text-lg">Bem-vindo ao <strong className="text-branding-gradient">Veritum Pro</strong>, o ecossistema jurídico modular de alta performance.</p>
+                        <p className="text-lg">{t('staticPages.terms.intro')}</p>
                     </section>
 
                     <section>
-                        <h2 className="text-2xl font-bold text-slate-800 dark:text-white">1. Aceitação dos Termos</h2>
-                        <p>Ao acessar este aplicativo, você concorda em cumprir estes termos de serviço e todas as leis aplicáveis ao exercício da advocacia e proteção de dados (LGPD).</p>
+                        <h2 className="text-2xl font-bold text-slate-800 dark:text-white">{t('staticPages.terms.section1Title')}</h2>
+                        <p>{t('staticPages.terms.section1Content')}</p>
                     </section>
                 </div>
             </main>
