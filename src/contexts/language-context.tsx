@@ -3,8 +3,9 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { pt } from '@/locales/pt';
 import { en } from '@/locales/en';
+import { es } from '@/locales/es';
 
-type Locale = 'pt' | 'en';
+type Locale = 'pt' | 'en' | 'es';
 type Translations = typeof pt;
 
 interface LanguageContextType {
@@ -13,7 +14,7 @@ interface LanguageContextType {
     t: (key: string, variables?: Record<string, any>) => any;
 }
 
-const translations: Record<Locale, Translations> = { pt, en };
+const translations: Record<Locale, Translations> = { pt, en, es };
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
@@ -23,7 +24,7 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
 
     useEffect(() => {
         const savedLocale = localStorage.getItem('veritum-locale') as Locale;
-        if (savedLocale && (savedLocale === 'pt' || savedLocale === 'en')) {
+        if (savedLocale && (['pt', 'en', 'es'].includes(savedLocale))) {
             setLocaleState(savedLocale);
         }
         setIsLoaded(true);

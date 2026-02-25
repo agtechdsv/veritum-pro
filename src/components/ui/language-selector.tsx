@@ -7,6 +7,7 @@ import { useTranslation } from '@/contexts/language-context';
 
 const BR_FLAG = "https://flagcdn.com/w40/br.png";
 const US_FLAG = "https://flagcdn.com/w40/us.png";
+const ES_FLAG = "https://flagcdn.com/w40/es.png";
 
 export const LanguageSelector: React.FC = () => {
     const { locale, setLocale, t } = useTranslation();
@@ -15,6 +16,7 @@ export const LanguageSelector: React.FC = () => {
     const languages = [
         { id: 'pt', label: 'Português', flag: BR_FLAG },
         { id: 'en', label: 'English', flag: US_FLAG },
+        { id: 'es', label: 'Español', flag: ES_FLAG },
     ];
 
     const currentLang = languages.find(l => l.id === locale) || languages[0];
