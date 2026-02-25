@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { Shield, Plus, Trash2, CheckCircle2, XCircle, Layout, Filter, Scale, FileEdit, DollarSign, BarChart3, MessageSquare, ShieldAlert, ChevronRight, Check, ChevronDown, Database, Layers, Package, Wand2, Sparkles, Lock, Briefcase, X } from 'lucide-react';
+import { Shield, Plus, Trash2, CheckCircle2, XCircle, Layout, Filter, Scale, FileEdit, DollarSign, BarChart3, MessageSquare, ShieldAlert, ChevronRight, Check, ChevronDown, Database, Layers, Package, Wand2, Sparkles, Lock, Briefcase, X, RefreshCw } from 'lucide-react';
 import { AccessGroup, GroupPermission, User, ModuleId, Suite, Feature, GroupTemplate, Role } from '@/types';
 import { createMasterClient } from '@/lib/supabase/master';
 import { toast } from '../ui/toast';
@@ -12,8 +12,12 @@ interface Props {
     currentUser: User;
 }
 
+const BR_FLAG = "https://flagcdn.com/w40/br.png";
+const US_FLAG = "https://flagcdn.com/w40/us.png";
+const ES_FLAG = "https://flagcdn.com/w40/es.png";
+
 const AccessManagement: React.FC<Props> = ({ currentUser }) => {
-    const { t } = useTranslation();
+    const { t, locale } = useTranslation();
     const { planPermissions } = useModule();
     const [groups, setGroups] = useState<AccessGroup[]>([]);
     const [loading, setLoading] = useState(true);
@@ -33,8 +37,11 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
     const [roles, setRoles] = useState<Role[]>([]);
     const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
     const [showRoleModal, setShowRoleModal] = useState(false);
-    const [editingRole, setEditingRole] = useState<{ id?: string, name: string }>({ name: '' });
+    const [editingRole, setEditingRole] = useState<{ id?: string, name: string, name_loc?: any }>({ name: '', name_loc: { pt: '', en: '', es: '' } });
     const [isRoleSelectOpen, setIsRoleSelectOpen] = useState(false);
+
+    const [activeLang, setActiveLang] = useState<'pt' | 'en' | 'es'>('pt');
+    const [isTranslating, setIsTranslating] = useState(false);
 
     // Master Client Filter State
     const [clients, setClients] = useState<User[]>([]);
@@ -188,38 +195,116 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
 
     const handleOpenModal = async (group?: AccessGroup) => {
         if (group) {
-            setEditingGroup(group);
+            setEditingGroup({
+                ...group,
+                name_loc: group.name_loc || { pt: group.name, en: group.name, es: group.name }
+            });
             await fetchGroupPermissions(group.id);
             setSelectedRoleIds(roles.filter(r => r.access_group_id === group.id).map(r => r.id));
         } else {
-            setEditingGroup({ name: '' });
+            setEditingGroup({ name: '', name_loc: { pt: '', en: '', es: '' } });
             setSelectedFeatureIds([]);
             setSelectedRoleIds([]);
             setExpandedSuites([]);
         }
+        setActiveLang('pt');
         setIsModalOpen(true);
+    };
+
+    const handleTranslateGroup = async () => {
+        if (!editingGroup?.name_loc?.[activeLang] || !editingGroup.name_loc[activeLang].trim()) {
+            toast.error(t('management.access.toast.fillName') || 'Preencha o nome do grupo antes de traduzir.');
+            return;
+        }
+
+        setIsTranslating(true);
+        try {
+            const payload: any = {
+                groupName: editingGroup.name_loc[activeLang].trim(),
+                roles: {}
+            };
+
+            selectedRoleIds.forEach(id => {
+                const r = roles.find(r => r.id === id);
+                if (r && r.name_loc?.[activeLang]) {
+                    payload.roles[r.id] = r.name_loc[activeLang];
+                }
+            });
+
+            const targetLangs = (['pt', 'en', 'es'] as const).filter(l => l !== activeLang);
+
+            const response = await fetch('/api/ai/translate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ payload, targetLangs })
+            });
+
+            if (!response.ok) throw new Error('Translation API failed');
+            const translations = await response.json();
+
+            // apply translations to group
+            const newNameLoc = { ...editingGroup.name_loc } as any;
+            Object.keys(translations).forEach(lang => {
+                if (translations[lang].groupName) newNameLoc[lang] = translations[lang].groupName;
+            });
+            setEditingGroup({ ...editingGroup, name_loc: newNameLoc });
+
+            // apply translations to local roles state (persisted when group is saved)
+            const updatedRoles = [...roles];
+            Object.keys(translations).forEach(lang => {
+                const transRoles = translations[lang].roles;
+                if (transRoles) {
+                    selectedRoleIds.forEach(id => {
+                        if (transRoles[id]) {
+                            const idx = updatedRoles.findIndex(r => r.id === id);
+                            if (idx !== -1) {
+                                updatedRoles[idx] = {
+                                    ...updatedRoles[idx],
+                                    name_loc: {
+                                        ...(updatedRoles[idx].name_loc || { pt: updatedRoles[idx].name, en: updatedRoles[idx].name, es: updatedRoles[idx].name }),
+                                        [lang]: transRoles[id]
+                                    }
+                                };
+                            }
+                        }
+                    });
+                }
+            });
+            setRoles(updatedRoles);
+
+            toast.success(t('management.access.toast.successTranslate') || 'Tradução com IA concluída com sucesso!');
+        } catch (err: any) {
+            console.error(err);
+            toast.error(t('management.access.toast.errorTranslate') || 'Erro ao traduzir. Verifique a API Key.');
+        } finally {
+            setIsTranslating(false);
+        }
     };
 
     const handleSaveGroup = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!editingGroup?.name) return;
+        const baseName = editingGroup?.name_loc?.['pt'] || editingGroup?.name;
+        if (!baseName) return;
 
         // Validar duplicidade local antes de tentar salvar
         const isDuplicate = groups.some(g =>
-            g.name.toLowerCase() === editingGroup.name?.toLowerCase() && g.id !== editingGroup.id
+            g.name.toLowerCase() === baseName.toLowerCase() && g.id !== editingGroup?.id
         );
 
         if (isDuplicate) {
-            toast.error(t('management.access.toast.duplicate', { name: editingGroup.name }));
+            toast.error(t('management.access.toast.duplicate', { name: baseName }));
             return;
         }
 
         try {
-            let groupId = editingGroup.id;
+            let groupId = editingGroup?.id;
 
             if (groupId) {
                 // Update Group Name
-                const { error: groupError } = await supabase.from('access_groups').update({ name: editingGroup.name }).eq('id', groupId);
+                const { error: groupError } = await supabase.from('access_groups').update({
+                    name: baseName,
+                    name_loc: editingGroup?.name_loc
+                }).eq('id', groupId);
                 if (groupError) throw groupError;
                 toast.success(t('management.access.toast.successName'));
             } else {
@@ -227,7 +312,8 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                 const newGroupAdminId = currentUser.role === 'Master' ? selectedClientId : currentUser.id;
                 const { data: newGroup, error: groupError } = await supabase.from('access_groups').insert({
                     admin_id: newGroupAdminId,
-                    name: editingGroup.name
+                    name: baseName,
+                    name_loc: editingGroup?.name_loc
                 }).select().single();
 
                 if (groupError) throw groupError;
@@ -251,8 +337,18 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
 
             // Sync Roles
             if (selectedRoleIds.length > 0) {
-                const { error: roleErr } = await supabase.from('roles').update({ access_group_id: groupId }).in('id', selectedRoleIds);
-                if (roleErr) throw roleErr;
+                for (const roleId of selectedRoleIds) {
+                    const localRole = roles.find(r => r.id === roleId);
+                    if (localRole) {
+                        const roleBaseName = localRole.name_loc?.['pt'] || localRole.name;
+                        const { error: roleUpdErr } = await supabase.from('roles').update({
+                            access_group_id: groupId,
+                            name: roleBaseName,
+                            name_loc: localRole.name_loc || { pt: localRole.name, en: localRole.name, es: localRole.name }
+                        }).eq('id', roleId);
+                        if (roleUpdErr) throw roleUpdErr;
+                    }
+                }
             }
             // Remove roles that were associated but are no longer selected
             const removedRoleIds = roles.filter(r => r.access_group_id === groupId && !selectedRoleIds.includes(r.id)).map(r => r.id);
@@ -261,14 +357,14 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                 if (rmErr) throw rmErr;
             }
 
-            toast.success(editingGroup.id ? t('management.access.toast.successSave') : t('management.access.toast.successCreate'));
+            toast.success(editingGroup?.id ? t('management.access.toast.successSave') : t('management.access.toast.successCreate'));
             setIsModalOpen(false);
             fetchGroups(); // This will also update allPermissions
             fetchRoles();
         } catch (error: any) {
             console.error('Save error:', error);
             if (error.code === '23505') {
-                toast.error(t('management.access.toast.duplicate', { name: editingGroup.name }));
+                toast.error(t('management.access.toast.duplicate', { name: editingGroup?.name || '' }));
             } else {
                 toast.error(t('management.access.toast.errorSave'));
             }
@@ -277,9 +373,10 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
 
     const handleSaveRole = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!editingRole.name.trim()) return;
+        const baseRoleName = editingRole.name_loc?.['pt'] || editingRole.name;
+        if (!baseRoleName.trim()) return;
 
-        const roleName = editingRole.name.trim();
+        const roleName = baseRoleName.trim();
 
         // Check duplicate within the same admin context
         if (roles.some(r => r.name.toLowerCase() === roleName.toLowerCase() && r.id !== editingRole.id)) {
@@ -290,7 +387,10 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
         try {
             if (editingRole.id) {
                 // Update
-                const { error } = await supabase.from('roles').update({ name: roleName }).eq('id', editingRole.id);
+                const { error } = await supabase.from('roles').update({
+                    name: roleName,
+                    name_loc: editingRole.name_loc
+                }).eq('id', editingRole.id);
                 if (error) throw error;
                 toast.success(t('management.access.toast.successRoleEdit'));
             } else {
@@ -298,6 +398,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                 const newRoleAdminId = currentUser.role === 'Master' ? selectedClientId : (currentUser.parent_user_id || currentUser.id);
                 const { data, error } = await supabase.from('roles').insert({
                     name: roleName,
+                    name_loc: editingRole.name_loc,
                     admin_id: newRoleAdminId,
                     access_group_id: editingGroup?.id || null
                 }).select().single();
@@ -312,7 +413,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
             }
 
             setShowRoleModal(false);
-            setEditingRole({ name: '' });
+            setEditingRole({ name: '', name_loc: { pt: '', en: '', es: '' } });
             fetchRoles();
         } catch (error: any) {
             console.error('Error saving role:', error);
@@ -476,7 +577,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                 </button>
                             </div>
                         </div>
-                        <h3 className="text-xl font-black text-slate-800 dark:text-white mb-2 uppercase tracking-tight">{group.name}</h3>
+                        <h3 className="text-xl font-black text-slate-800 dark:text-white mb-2 uppercase tracking-tight">{group.name_loc?.[locale as keyof typeof group.name_loc] || group.name_loc?.['pt'] || group.name}</h3>
 
                         <p className="text-[10px] text-slate-400 font-bold mb-6 uppercase tracking-widest opacity-60">{t('management.access.created', { date: new Date(group.created_at!).toLocaleDateString(t('common.locale_date') === 'en-US' ? 'en-US' : 'pt-BR') })}</p>
 
@@ -512,9 +613,9 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                                 {isActive ? (
                                                     activeFeatures.map(f => (
                                                         <div key={f.id} className="flex items-center gap-1.5">
-                                                            <div className="w-1 h-1 rounded-full bg-emerald-500" />
-                                                            <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 truncate">
-                                                                {t(`management.features.${f.feature_key}`) !== `management.features.${f.feature_key}` ? t(`management.features.${f.feature_key}`) : f.display_name}
+                                                            <div className="w-1 h-1 rounded-full bg-emerald-500 shrink-0" />
+                                                            <span className="text-[10px] font-bold text-slate-300 dark:text-slate-700 leading-tight">
+                                                                {f.display_name?.[locale as keyof typeof f.display_name] || f.display_name?.['pt'] || f.feature_key}
                                                             </span>
                                                         </div>
                                                     ))
@@ -547,14 +648,49 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                         <form onSubmit={handleSaveGroup} className="flex-1 flex flex-col min-h-0">
                             {/* Header and Templates (Fixed) */}
                             <div className="space-y-8 mb-8">
+                                {/* Header and Translation */}
+                                <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center gap-2">
+                                        {(['pt', 'en', 'es'] as const).map(lang => (
+                                            <button
+                                                key={lang}
+                                                type="button"
+                                                onClick={() => setActiveLang(lang)}
+                                                className={`w-8 h-8 rounded-full overflow-hidden border-2 transition-all p-0.5 hover:scale-110 active:scale-95 ${activeLang === lang ? 'border-indigo-600 shadow-lg shadow-indigo-600/20' : 'border-transparent opacity-40 hover:opacity-100'}`}
+                                                title={lang.toUpperCase()}
+                                            >
+                                                <img
+                                                    src={lang === 'pt' ? BR_FLAG : lang === 'en' ? US_FLAG : ES_FLAG}
+                                                    alt={lang}
+                                                    className="w-full h-full object-cover rounded-full"
+                                                />
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={handleTranslateGroup}
+                                        disabled={isTranslating}
+                                        className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-all disabled:opacity-50"
+                                    >
+                                        <RefreshCw size={12} className={isTranslating ? 'animate-spin' : ''} />
+                                        {isTranslating ? (t('management.access.modal.translating') || 'Traduzindo...') : (t('management.access.modal.translateIA') || 'Traduzir com IA')}
+                                    </button>
+                                </div>
                                 <div className="space-y-2">
                                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">{t('management.access.modal.groupName')}</label>
                                     <input
                                         required
                                         placeholder={t('management.access.modal.groupNamePlaceholder')}
                                         className="w-full px-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white font-bold shadow-sm"
-                                        value={editingGroup?.name || ''}
-                                        onChange={e => setEditingGroup({ ...editingGroup, name: e.target.value })}
+                                        value={editingGroup?.name_loc?.[activeLang] || ''}
+                                        onChange={e => setEditingGroup({
+                                            ...editingGroup,
+                                            name_loc: {
+                                                ...(editingGroup?.name_loc || { pt: '', en: '', es: '' }),
+                                                [activeLang]: e.target.value
+                                            }
+                                        })}
                                     />
                                 </div>
 
@@ -623,7 +759,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                                     className="flex items-center gap-1.5 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-900 dark:text-indigo-100 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm"
                                                     onClick={(e) => e.stopPropagation()}
                                                 >
-                                                    {role.name}
+                                                    {role.name_loc?.[activeLang] || role.name}
                                                     <button
                                                         type="button"
                                                         onClick={() => setSelectedRoleIds(prev => prev.filter(rId => rId !== id))}
@@ -665,7 +801,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                                         return Object.keys(groupedRoles).map(groupId => {
                                                             const groupRoles = groupedRoles[groupId];
                                                             const group = groups.find(g => g.id === groupId);
-                                                            const groupName = group ? group.name : t('management.access.modal.others');
+                                                            const groupName = group ? (group.name_loc?.[activeLang] || group.name) : t('management.access.modal.others');
 
                                                             return (
                                                                 <div key={groupId} className="mb-2 last:mb-0">
@@ -694,7 +830,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                                                                         <div className={`flex items-center justify-center w-4 h-4 rounded border ${isSelected ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 dark:border-slate-700'}`}>
                                                                                             {isSelected && <Check size={10} strokeWidth={3} />}
                                                                                         </div>
-                                                                                        <span className={`text-xs font-semibold ${isSelected ? 'text-indigo-900 dark:text-indigo-100' : 'text-slate-600 dark:text-slate-300'}`}>{role.name}</span>
+                                                                                        <span className={`text-xs font-semibold ${isSelected ? 'text-indigo-900 dark:text-indigo-100' : 'text-slate-600 dark:text-slate-300'}`}>{role.name_loc?.[activeLang] || role.name}</span>
                                                                                     </div>
 
                                                                                     <button
@@ -786,11 +922,11 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                                                     </div>
                                                                     <div className="flex-1">
                                                                         <span className={`block text-xs font-black uppercase tracking-tight transition-colors ${isActive ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-300'}`}>
-                                                                            {f.display_name}
+                                                                            {f.display_name?.[locale as keyof typeof f.display_name] || f.display_name?.['pt'] || f.feature_key}
                                                                         </span>
-                                                                        {f.description && (
+                                                                        {f.description?.pt && (
                                                                             <span className={`text-[9px] font-bold normal-case block leading-relaxed mt-1 transition-opacity ${isActive ? 'opacity-100 text-emerald-600/80 dark:text-emerald-500/80' : 'opacity-60 text-slate-500 dark:text-slate-500'}`}>
-                                                                                {f.description}
+                                                                                {f.description?.[locale as keyof typeof f.description] || f.description?.['pt']}
                                                                             </span>
                                                                         )}
                                                                     </div>
@@ -866,13 +1002,36 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                         <p className="text-xs text-slate-500 font-medium mb-6 uppercase tracking-widest">{t('management.access.roleModal.subtitle') || 'Defina o nome da função'}</p>
 
                         <form onSubmit={handleSaveRole} className="space-y-4">
+                            <div className="flex items-center justify-center gap-2 mb-2">
+                                {(['pt', 'en', 'es'] as const).map(lang => (
+                                    <button
+                                        key={lang}
+                                        type="button"
+                                        onClick={() => setActiveLang(lang)}
+                                        className={`w-6 h-6 rounded-full overflow-hidden border-2 transition-all p-0.5 hover:scale-110 active:scale-95 ${activeLang === lang ? 'border-indigo-600 shadow-lg shadow-indigo-600/20' : 'border-transparent opacity-40 hover:opacity-100'}`}
+                                        title={lang.toUpperCase()}
+                                    >
+                                        <img
+                                            src={lang === 'pt' ? BR_FLAG : lang === 'en' ? US_FLAG : ES_FLAG}
+                                            alt={lang}
+                                            className="w-full h-full object-cover rounded-full"
+                                        />
+                                    </button>
+                                ))}
+                            </div>
                             <input
                                 required
                                 autoFocus
                                 placeholder={t('management.access.roleModal.namePlaceholder')}
                                 className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white font-bold text-center"
-                                value={editingRole.name}
-                                onChange={(e) => setEditingRole({ ...editingRole, name: e.target.value })}
+                                value={editingRole.name_loc?.[activeLang] || ''}
+                                onChange={(e) => setEditingRole({
+                                    ...editingRole,
+                                    name_loc: {
+                                        ...(editingRole.name_loc || { pt: '', en: '', es: '' }),
+                                        [activeLang]: e.target.value
+                                    }
+                                })}
                             />
 
                             <button type="submit" className="w-full bg-indigo-600 text-white py-4 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 transition-all text-xs">

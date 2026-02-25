@@ -3,7 +3,7 @@ import {
     Plus, Trash2, FileEdit, Check, X, ChevronUp, ChevronDown,
     Package, ShieldCheck, Globe, Radio, RefreshCw, AlertTriangle
 } from 'lucide-react';
-import { Suite, Credentials } from '@/types';
+import { Suite, Credentials, Feature } from '@/types';
 import { createMasterClient } from '@/lib/supabase/master';
 import { GeminiService } from '@/services/gemini';
 import { toast } from '../ui/toast';
@@ -38,6 +38,9 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
 
     const [formData, setFormData] = useState<Partial<Suite>>(initialFormData);
     const [activeLang, setActiveLang] = useState<'pt' | 'en' | 'es'>('pt');
+    const [activeTab, setActiveTab] = useState<'metadata' | 'features'>('metadata');
+    const [suiteFeatures, setSuiteFeatures] = useState<Partial<Feature>[]>([]);
+    const [deletedFeatureIds, setDeletedFeatureIds] = useState<string[]>([]);
     const supabase = createMasterClient();
     const gemini = new GeminiService(credentials.geminiKey);
 
@@ -60,26 +63,56 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
         if (e) e.preventDefault();
 
         try {
+            let savedSuiteId: string;
+
+            const { features: _f1, ...dataToUpdate } = formData as any;
+
             if (editingSuite) {
-                const { error } = await supabase
+                const { error, data } = await supabase
                     .from('suites')
-                    .update(formData)
-                    .eq('id', editingSuite.id);
+                    .update(dataToUpdate)
+                    .eq('id', editingSuite.id)
+                    .select()
+                    .single();
                 if (error) throw error;
+                savedSuiteId = editingSuite.id;
                 toast.success(t('management.master.suites.toast.successUpdate'));
             } else {
-                const { error } = await supabase
+                const { error, data } = await supabase
                     .from('suites')
-                    .insert([{ ...formData, order_index: suites.length }]);
+                    .insert([{ ...dataToUpdate, order_index: suites.length }])
+                    .select()
+                    .single();
                 if (error) throw error;
+                savedSuiteId = data.id;
                 toast.success(t('management.master.suites.toast.successCreate'));
+            }
+
+            // Deal with feature deletions
+            if (deletedFeatureIds.length > 0) {
+                await supabase.from('features').delete().in('id', deletedFeatureIds);
+            }
+
+            // Deal with feature upserts
+            if (savedSuiteId && suiteFeatures.length > 0) {
+                const featuresToUpsert = suiteFeatures.map(f => ({
+                    ...(f.id ? { id: f.id } : {}),
+                    suite_id: savedSuiteId,
+                    feature_key: f.feature_key,
+                    display_name: f.display_name,
+                    description: f.description
+                }));
+                const { error: featError } = await supabase.from('features').upsert(featuresToUpsert);
+                if (featError) throw featError;
             }
 
             setEditingSuite(null);
             setFormData(initialFormData);
+            setSuiteFeatures([]);
+            setDeletedFeatureIds([]);
             fetchSuites();
         } catch (err: any) {
-            toast.error(t('management.master.suites.toast.errorSave'));
+            toast.error(t('management.master.suites.toast.errorSave') || 'Erro crítico ao salvar o Módulo e/ou Funcionalidades. Tente novamente.');
         }
     };
 
@@ -140,7 +173,11 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
             const payload = {
                 short_desc: formData.short_desc![activeLang],
                 detailed_desc: formData.detailed_desc![activeLang],
-                features: formData.features![activeLang]
+                features: suiteFeatures.map(f => ({
+                    feature_key: f.feature_key || '',
+                    display_name: f.display_name?.[activeLang] || '',
+                    description: f.description?.[activeLang] || ''
+                }))
             };
 
             const targetLangs = (['pt', 'en', 'es'] as const).filter(l => l !== activeLang);
@@ -148,20 +185,37 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
 
             const newShortDesc = { ...formData.short_desc };
             const newDetailedDesc = { ...formData.detailed_desc };
-            const newFeatures = { ...formData.features };
+            const newSuiteFeatures = [...suiteFeatures];
 
             Object.keys(translations).forEach((lang: any) => {
                 newShortDesc[lang as 'pt' | 'en' | 'es'] = translations[lang].short_desc;
                 newDetailedDesc[lang as 'pt' | 'en' | 'es'] = translations[lang].detailed_desc;
-                newFeatures[lang as 'pt' | 'en' | 'es'] = translations[lang].features || [];
+
+                const translatedFeatures = translations[lang].features || [];
+                translatedFeatures.forEach((tFeat: any) => {
+                    const index = newSuiteFeatures.findIndex(f => f.feature_key === tFeat.feature_key);
+                    if (index !== -1) {
+                        newSuiteFeatures[index] = {
+                            ...newSuiteFeatures[index],
+                            display_name: {
+                                ...(newSuiteFeatures[index].display_name || { pt: '', en: '', es: '' }),
+                                [lang]: tFeat.display_name
+                            },
+                            description: {
+                                ...(newSuiteFeatures[index].description || { pt: '', en: '', es: '' }),
+                                [lang]: tFeat.description
+                            }
+                        };
+                    }
+                });
             });
 
             setFormData({
                 ...formData,
                 short_desc: newShortDesc as any,
-                detailed_desc: newDetailedDesc as any,
-                features: newFeatures as any
+                detailed_desc: newDetailedDesc as any
             });
+            setSuiteFeatures(newSuiteFeatures);
 
             toast.success(t('management.master.suites.toast.successTranslate'));
         } catch (err: any) {
@@ -171,14 +225,24 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
         }
     };
 
-    const openEdit = (suite: Suite) => {
+    const openEdit = async (suite: Suite) => {
         setEditingSuite(suite);
         setFormData(suite);
+        setActiveTab('metadata');
+        const { data } = await supabase.from('features').select('*').eq('suite_id', suite.id).order('feature_key');
+        if (data) {
+            setSuiteFeatures(data);
+        } else {
+            setSuiteFeatures([]);
+        }
+        setDeletedFeatureIds([]);
     };
 
     const cancelEdit = () => {
         setEditingSuite(null);
         setFormData(initialFormData);
+        setSuiteFeatures([]);
+        setDeletedFeatureIds([]);
     };
 
     if (loading && suites.length === 0) return (
@@ -223,7 +287,7 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
                                         <div className="flex items-center gap-3">
                                             <div
                                                 className="w-10 h-10 shrink-0 rounded-xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center text-indigo-600 shadow-sm transition-transform p-2"
-                                                dangerouslySetInnerHTML={{ __html: s.icon_svg || '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-package"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>' }}
+                                                dangerouslySetInnerHTML={{ __html: s.icon_svg || '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>' }}
                                             />
                                             <div className="min-w-0">
                                                 <span className="font-bold text-slate-800 dark:text-white block leading-tight text-[11px] truncate">{s.name}</span>
@@ -306,31 +370,8 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
                         </div>
 
                         <form onSubmit={handleSave} className="p-8 space-y-6">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{t('management.master.suites.form.idKey')}</label>
-                                    <input
-                                        required
-                                        placeholder="EX: VOX_KEY"
-                                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none dark:text-white transition-all uppercase"
-                                        value={formData.suite_key}
-                                        onChange={e => setFormData({ ...formData, suite_key: e.target.value.toUpperCase() })}
-                                    />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{t('management.master.suites.form.mainName')}</label>
-                                    <input
-                                        required
-                                        placeholder="EX: Vox Clientis"
-                                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none dark:text-white transition-all"
-                                        value={formData.name}
-                                        onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800">
-                                <div className="flex items-center justify-between">
+                            <div className="flex flex-col gap-4 border-b border-slate-200 dark:border-slate-800 pb-0">
+                                <div className="flex items-center justify-between mb-2">
                                     <div className="flex items-center gap-2">
                                         {(['pt', 'en', 'es'] as const).map(lang => (
                                             <button
@@ -358,56 +399,152 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
                                         {isTranslating ? t('management.master.suites.form.translating') : t('management.master.suites.form.translateIA')}
                                     </button>
                                 </div>
-
-                                <div className="space-y-4">
-                                    <div className="space-y-1.5">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{t('management.master.suites.form.shortBio')} ({activeLang.toUpperCase()})</label>
-                                        <input
-                                            className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-medium focus:ring-2 focus:ring-indigo-600 outline-none dark:text-white"
-                                            value={formData.short_desc?.[activeLang] || ''}
-                                            onChange={e => setFormData({ ...formData, short_desc: { ...formData.short_desc!, [activeLang]: e.target.value } })}
-                                        />
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{t('management.master.suites.form.cardDetails')} ({activeLang.toUpperCase()})</label>
-                                        <textarea
-                                            rows={2}
-                                            className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-medium focus:ring-2 focus:ring-indigo-600 outline-none dark:text-white resize-none"
-                                            value={formData.detailed_desc?.[activeLang] || ''}
-                                            onChange={e => setFormData({ ...formData, detailed_desc: { ...formData.detailed_desc!, [activeLang]: e.target.value } })}
-                                        />
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{t('management.master.suites.form.features')} ({activeLang.toUpperCase()})</label>
-                                        <textarea
-                                            rows={3}
-                                            placeholder="Item 1&#10;Item 2"
-                                            className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-medium focus:ring-2 focus:ring-indigo-600 outline-none dark:text-white resize-none"
-                                            value={formData.features?.[activeLang]?.join('\n') || ''}
-                                            onChange={e => setFormData({ ...formData, features: { ...formData.features!, [activeLang]: e.target.value.split('\n').filter(l => l.trim() !== '') } })}
-                                        />
-                                    </div>
+                                <div className="flex gap-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveTab('metadata')}
+                                        className={`pb-3 px-2 text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'metadata' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
+                                    >
+                                        Metadados
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveTab('features')}
+                                        className={`pb-3 px-2 text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'features' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
+                                    >
+                                        Funcionalidades
+                                    </button>
                                 </div>
                             </div>
 
-                            <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-slate-800">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{t('management.master.suites.form.iconSvg')}</label>
-                                <textarea
-                                    rows={3}
-                                    placeholder="<svg>...</svg>"
-                                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-[10px] font-mono focus:ring-2 focus:ring-indigo-600 outline-none dark:text-white resize-none"
-                                    value={formData.icon_svg}
-                                    onChange={e => setFormData({ ...formData, icon_svg: e.target.value })}
-                                />
-                            </div>
+                            {activeTab === 'metadata' && (
+                                <>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{t('management.master.suites.form.idKey')}</label>
+                                            <input
+                                                required
+                                                placeholder="EX: VOX_KEY"
+                                                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none dark:text-white transition-all uppercase"
+                                                value={formData.suite_key}
+                                                onChange={e => setFormData({ ...formData, suite_key: e.target.value.toUpperCase() })}
+                                            />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{t('management.master.suites.form.mainName')}</label>
+                                            <input
+                                                required
+                                                placeholder="EX: Vox Clientis"
+                                                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none dark:text-white transition-all"
+                                                value={formData.name}
+                                                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
 
-                            <div className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-700">
-                                <label className="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" className="sr-only peer" checked={formData.active} onChange={e => setFormData({ ...formData, active: e.target.checked })} />
-                                    <div className="w-9 h-5 bg-slate-300 rounded-full peer peer-checked:bg-emerald-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div>
-                                    <span className="ml-3 text-[11px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-400">{t('management.master.suites.form.activePortal')}</span>
-                                </label>
-                            </div>
+                                    <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800">
+
+                                        <div className="space-y-4">
+                                            <div className="space-y-1.5">
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{t('management.master.suites.form.shortBio')} ({activeLang.toUpperCase()})</label>
+                                                <input
+                                                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-medium focus:ring-2 focus:ring-indigo-600 outline-none dark:text-white"
+                                                    value={formData.short_desc?.[activeLang] || ''}
+                                                    onChange={e => setFormData({ ...formData, short_desc: { ...formData.short_desc!, [activeLang]: e.target.value } })}
+                                                />
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{t('management.master.suites.form.cardDetails')} ({activeLang.toUpperCase()})</label>
+                                                <textarea
+                                                    rows={2}
+                                                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-medium focus:ring-2 focus:ring-indigo-600 outline-none dark:text-white resize-none"
+                                                    value={formData.detailed_desc?.[activeLang] || ''}
+                                                    onChange={e => setFormData({ ...formData, detailed_desc: { ...formData.detailed_desc!, [activeLang]: e.target.value } })}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{t('management.master.suites.form.iconSvg')}</label>
+                                        <textarea
+                                            rows={3}
+                                            placeholder="<svg>...</svg>"
+                                            className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-[10px] font-mono focus:ring-2 focus:ring-indigo-600 outline-none dark:text-white resize-none"
+                                            value={formData.icon_svg}
+                                            onChange={e => setFormData({ ...formData, icon_svg: e.target.value })}
+                                        />
+                                    </div>
+
+                                    <div className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-700">
+                                        <label className="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" className="sr-only peer" checked={formData.active} onChange={e => setFormData({ ...formData, active: e.target.checked })} />
+                                            <div className="w-9 h-5 bg-slate-300 rounded-full peer peer-checked:bg-emerald-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div>
+                                            <span className="ml-3 text-[11px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-400">{t('management.master.suites.form.activePortal')}</span>
+                                        </label>
+                                    </div>
+                                </>
+                            )}
+
+                            {activeTab === 'features' && (
+                                <div className="space-y-4">
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {suiteFeatures.map((feat, idx) => (
+                                            <div key={idx} className="p-4 space-y-3 relative group bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl">
+                                                <button type="button" onClick={() => {
+                                                    const newFeats = [...suiteFeatures];
+                                                    const removed = newFeats.splice(idx, 1)[0];
+                                                    setSuiteFeatures(newFeats);
+                                                    if (removed.id) setDeletedFeatureIds([...deletedFeatureIds, removed.id]);
+                                                }} className="absolute top-4 right-4 text-slate-400 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100 bg-white dark:bg-slate-800 rounded-full p-1 shadow-sm border border-slate-200 dark:border-slate-700">
+                                                    <Trash2 size={14} />
+                                                </button>
+                                                <div className="space-y-1.5 w-11/12">
+                                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Feature Key</label>
+                                                    <input
+                                                        className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none dark:text-white uppercase"
+                                                        value={feat.feature_key || ''}
+                                                        onChange={e => {
+                                                            const newFeats = [...suiteFeatures];
+                                                            newFeats[idx].feature_key = e.target.value.toUpperCase();
+                                                            setSuiteFeatures(newFeats);
+                                                        }}
+                                                    />
+                                                </div>
+                                                <div className="space-y-1.5">
+                                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Nome ({activeLang.toUpperCase()})</label>
+                                                    <input
+                                                        className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs focus:ring-2 focus:ring-indigo-600 outline-none dark:text-white"
+                                                        value={feat.display_name?.[activeLang] || ''}
+                                                        onChange={e => {
+                                                            const newFeats = [...suiteFeatures];
+                                                            newFeats[idx].display_name = { ...(newFeats[idx].display_name || { pt: '', en: '', es: '' }), [activeLang]: e.target.value };
+                                                            setSuiteFeatures(newFeats);
+                                                        }}
+                                                    />
+                                                </div>
+                                                <div className="space-y-1.5">
+                                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Descrição ({activeLang.toUpperCase()})</label>
+                                                    <input
+                                                        className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs focus:ring-2 focus:ring-indigo-600 outline-none dark:text-white"
+                                                        value={feat.description?.[activeLang] || ''}
+                                                        onChange={e => {
+                                                            const newFeats = [...suiteFeatures];
+                                                            newFeats[idx].description = { ...(newFeats[idx].description || { pt: '', en: '', es: '' }), [activeLang]: e.target.value };
+                                                            setSuiteFeatures(newFeats);
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        ))}
+
+                                        <button type="button" onClick={() => setSuiteFeatures([...suiteFeatures, { feature_key: '', display_name: { pt: '', en: '', es: '' }, description: { pt: '', en: '', es: '' } }])} className="col-span-2 w-full p-4 flex items-center justify-center gap-2 text-indigo-600 font-bold text-xs border border-dashed border-indigo-200 dark:border-indigo-900/50 rounded-2xl bg-indigo-50/50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-all uppercase tracking-widest">
+                                            <Plus size={16} /> Adicionar Funcionalidade
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Submit button removed from bottom - moved to header */}
                         </form>

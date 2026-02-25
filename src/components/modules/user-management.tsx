@@ -13,7 +13,7 @@ interface Props {
 }
 
 const UserManagement: React.FC<Props> = ({ currentUser }) => {
-    const { t } = useTranslation();
+    const { t, locale } = useTranslation();
 
     const getRoleTranslation = (roleName: string) => {
         if (!roleName) return '';
@@ -536,7 +536,12 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                         <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800 rounded-xl w-fit">
                                             <Shield size={12} className="text-indigo-600 dark:text-indigo-400" />
                                             <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase">
-                                                {accessGroups.find(g => g.id === u.access_group_id)?.name || (loading ? t('common.loading') : 'Não Encontrado')}
+                                                {(() => {
+                                                    const group = accessGroups.find(g => g.id === u.access_group_id);
+                                                    if (!group) return loading ? t('common.loading') : 'Não Encontrado';
+                                                    // @ts-ignore - name_loc might be typed based on other updates, we safely fallback
+                                                    return group.name_loc?.[locale as any] || group.name_loc?.['pt'] || group.name;
+                                                })()}
                                             </span>
                                         </div>
                                     ) : (

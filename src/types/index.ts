@@ -26,6 +26,11 @@ export enum ModuleId {
 export interface AccessGroup {
     id: string;
     name: string;
+    name_loc?: {
+        pt: string;
+        en: string;
+        es: string;
+    };
     admin_id: string;
     created_at?: string;
 }
@@ -75,8 +80,16 @@ export interface Feature {
     id: string;
     feature_key: string;
     suite_id: string;
-    display_name: string;
-    description: string;
+    display_name: {
+        pt: string;
+        en: string;
+        es: string;
+    };
+    description: {
+        pt: string;
+        en: string;
+        es: string;
+    } | null;
     created_at?: string;
 }
 
@@ -116,6 +129,11 @@ export interface User {
 export interface Role {
     id: string;
     name: string;
+    name_loc?: {
+        pt: string;
+        en: string;
+        es: string;
+    };
     access_group_id: string;
     admin_id: string;
 }

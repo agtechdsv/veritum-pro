@@ -20,7 +20,7 @@ const US_FLAG = "https://flagcdn.com/w40/us.png";
 const ES_FLAG = "https://flagcdn.com/w40/es.png";
 
 const PlanManagement: React.FC<Props> = ({ credentials }) => {
-    const { t } = useTranslation();
+    const { t, locale } = useTranslation();
     const [plans, setPlans] = useState<Plan[]>([]);
     const [loading, setLoading] = useState(true);
     const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
@@ -648,8 +648,10 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
                                                                         {isFeatEnabled && <Check size={10} strokeWidth={4} />}
                                                                     </div>
                                                                     <div className="flex flex-col items-start text-left">
-                                                                        <span>{feature.display_name}</span>
-                                                                        {feature.description && <span className="text-[7px] lowercase opacity-60 normal-case leading-tight">{feature.description}</span>}
+                                                                        <span className={`block text-xs font-black uppercase tracking-tight transition-colors ${isFeatEnabled ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-300'}`}>
+                                                                            {feature.display_name?.[locale as keyof typeof feature.display_name] || feature.display_name?.pt || feature.feature_key}
+                                                                        </span>
+                                                                        {feature.description?.pt && <span className="text-[7px] lowercase opacity-60 normal-case leading-tight">{feature.description?.[locale as keyof typeof feature.description] || feature.description?.pt}</span>}
                                                                     </div>
                                                                 </button>
                                                             );

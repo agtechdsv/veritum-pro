@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     
     Rules:
     1. Return ONLY the translated JSON.
-    2. Keep the structure: { "lang_code": { "short_desc": "...", "detailed_desc": "...", "features": ["...", "..."] } }
+    2. Keep the EXACT SAME JSON structure for each language as the input payload you received. Return mapping: { "lang_code": { ...translated_payload } }
     3. Keep brand names: Sentinel, Nexus, Scriptor, Valorem, Cognitio, Vox.
     4. Translate everything else professionally for a legal context.`;
 
