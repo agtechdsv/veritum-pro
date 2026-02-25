@@ -43,9 +43,8 @@ const IntelligenceWidget: React.FC<Props> = ({ credentials, limit = 3, moduleCon
 
             if (error) throw error;
             setAlerts(data || []);
-        } catch (err) {
-            console.error('Error fetching dashboard alerts:', err);
-        } finally {
+        } catch (err: any) {
+            console.warn('Intelligence Module not fully initialized for this database (tables might be missing).', err.message || err.code || '');
             setLoading(false);
         }
     };

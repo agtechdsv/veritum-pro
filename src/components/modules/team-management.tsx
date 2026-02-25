@@ -34,9 +34,11 @@ const TeamManagement: React.FC<Props> = ({ credentials }) => {
 
             if (error) throw error;
             setMembers(data || []);
-        } catch (error) {
-            console.error('Error fetching members:', error);
-            toast.error(t('management.master.team.toasts.fetchError'));
+        } catch (error: any) {
+            console.warn('Team Module not fully initialized for this database (tables might be missing).', error.message || error.code || '');
+            if (error?.code !== '42P01') {
+                toast.error(t('management.master.team.toasts.fetchError') || 'Erro ao carregar equipe.');
+            }
         } finally {
             setLoading(false);
         }

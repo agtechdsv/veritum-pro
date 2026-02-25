@@ -1,7 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, UserPreferences } from '@/types';
-import { Database, Key, Globe, Save, ShieldCheck, AlertCircle, Building2 } from 'lucide-react';
+import { Database, Key, Globe, Save, ShieldCheck, AlertCircle, Building2, Crown, Zap, CheckCircle2, ArrowRight, FileText, Scale, DollarSign, Calendar, Search, Mic } from 'lucide-react';
 import { createMasterClient } from '@/lib/supabase/master';
 import { toast } from '../ui/toast';
 import OrganizationForm from '../ui/organization-form';
@@ -12,15 +12,22 @@ interface Props {
     preferences: UserPreferences;
     onUpdateUser: (u: User) => void;
     onUpdatePrefs: (p: UserPreferences) => void;
+    initialTab?: 'infra' | 'org' | 'plan';
 }
 
-const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs }) => {
+const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initialTab }) => {
     const { t } = useTranslation();
     const isRootAdmin = ['Master', 'Administrador', 'Sócio-Administrador', 'Sócio Administrador'].includes(user.role);
-    const [activeTab, setActiveTab] = useState<'infra' | 'org'>(isRootAdmin ? 'infra' : 'infra');
+    const [activeTab, setActiveTab] = useState<'infra' | 'org' | 'plan'>(initialTab || (isRootAdmin ? 'infra' : 'plan'));
     const [formPrefs, setFormPrefs] = useState(preferences);
     const [saving, setSaving] = useState(false);
     const supabase = createMasterClient();
+
+    useEffect(() => {
+        if (initialTab) {
+            setActiveTab(initialTab);
+        }
+    }, [initialTab]);
 
     const handleSavePrefs = async () => {
         setSaving(true);
@@ -74,6 +81,15 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs }) => 
                                 }`}
                         >
                             <Building2 size={14} /> {t('management.settings.tabs.org')}
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('plan')}
+                            className={`px-6 py-2.5 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all flex items-center gap-2 ${activeTab === 'plan'
+                                ? 'bg-white dark:bg-slate-800 text-amber-600 shadow-sm border border-slate-200 dark:border-slate-700'
+                                : 'text-slate-400 hover:text-slate-600 dark:hover:text-amber-500'
+                                }`}
+                        >
+                            <Crown size={14} /> Minha Assinatura
                         </button>
                     </div>
                 )}
@@ -168,6 +184,63 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs }) => 
 
                 {activeTab === 'org' && isRootAdmin && (
                     <OrganizationForm adminId={user.id} />
+                )}
+
+                {activeTab === 'plan' && (
+                    <div className="space-y-10 animate-in slide-in-from-right-8 duration-500">
+                        <section className="bg-amber-500 text-white p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden transition-all hover:shadow-amber-500/30">
+                            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+                                <div>
+                                    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/20 rounded-full mb-6">
+                                        <Crown size={14} className="text-amber-100" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-amber-50">Plano Atual</span>
+                                    </div>
+                                    <h3 className="text-5xl font-black uppercase tracking-tighter mb-2">{user.plan_name || 'Free Trial'}</h3>
+                                    <p className="text-amber-100 font-medium">Acesso total ao ecossistema habilitado no seu plano.</p>
+                                </div>
+                                <button
+                                    onClick={() => window.open('https://api.whatsapp.com/send?phone=YOUR_SALES_NUMBER', '_blank')}
+                                    className="bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-8 py-5 rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl hover:scale-105 transition-all flex items-center justify-center gap-3 w-full md:w-auto"
+                                >
+                                    <Zap size={18} className="text-amber-500" />
+                                    Fazer Upgrade
+                                </button>
+                            </div>
+                            <div className="absolute -right-20 -bottom-20 opacity-10 pointer-events-none">
+                                <Crown size={300} />
+                            </div>
+                        </section>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {[
+                                { title: 'Veritum Scriptor', desc: 'Gerador de Documentos e Petições IA.', icon: <FileText size={24} />, active: true },
+                                { title: 'Veritum Nexus', desc: 'Gestão Inteligente de Processos.', icon: <Scale size={24} />, active: true },
+                                { title: 'Veritum Valorem', desc: 'Dashboards Financeiros e Faturamento.', icon: <DollarSign size={24} />, active: false },
+                                { title: 'Voice Legal IA', desc: 'Comandos de Voz e Transcrição.', icon: <Mic size={24} />, active: false },
+                                { title: 'Controladoria IA', desc: 'Auditorias automatizadas CNJ.', icon: <Search size={24} />, active: false },
+                                { title: 'Veritum Planner', desc: 'CRM e Agendamentos Google Meet.', icon: <Calendar size={24} />, active: true },
+                            ].map((mod, idx) => (
+                                <div key={idx} className={`p-6 rounded-[2rem] border transition-all ${mod.active ? 'bg-white dark:bg-slate-900 border-emerald-200 dark:border-emerald-900/50 shadow-sm' : 'bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800 opacity-80'}`}>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className={`p-3 rounded-xl ${mod.active ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600' : 'bg-slate-200 dark:bg-slate-800 text-slate-400'}`}>
+                                            {mod.icon}
+                                        </div>
+                                        {mod.active ? (
+                                            <span className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 text-[9px] font-black uppercase tracking-widest rounded-full">
+                                                <CheckCircle2 size={12} /> Liberado
+                                            </span>
+                                        ) : (
+                                            <button onClick={() => toast.success(`Redirecionando para assinar o módulo ${mod.title}...`)} className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/40 hover:scale-105 transition-all cursor-pointer text-amber-600 text-[9px] font-black uppercase tracking-widest rounded-full border border-amber-200 dark:border-amber-800/50">
+                                                <ArrowRight size={12} /> Adquirir
+                                            </button>
+                                        )}
+                                    </div>
+                                    <h4 className={`text-sm font-black mb-1 ${mod.active ? 'text-slate-800 dark:text-white' : 'text-slate-500'}`}>{mod.title}</h4>
+                                    <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold leading-relaxed">{mod.desc}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 )}
             </div>
         </div>

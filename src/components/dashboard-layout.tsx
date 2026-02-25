@@ -34,6 +34,7 @@ import {
 import SuiteManagement from './modules/suite-management';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ToastContainer, toast } from './ui/toast';
 import { useTranslation } from '@/contexts/language-context';
 import { LanguageSelector } from './ui/language-selector';
@@ -66,7 +67,8 @@ const Logo = () => (
 );
 
 export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModule, activeSuites = [], planPermissions = [], groupPermissions = [], allFeatures = [], onModuleChange, onLogout, onUpdateUser, onUpdatePrefs, children }) => {
-    const { t } = useTranslation();
+    const { t, locale } = useTranslation();
+    const router = useRouter();
     // BYODB Shadow Provisioning: Ensure user exists in Tenant DB
     React.useEffect(() => {
         const provisionShadowUser = async () => {
@@ -593,8 +595,18 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
 
                         <div className="flex items-center gap-4 pl-6 border-l border-slate-100 dark:border-slate-800">
                             <div className="text-right hidden sm:block">
-                                <p className="text-sm font-bold text-slate-800 dark:text-white">{user.name}</p>
-                                <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">{user.role}</p>
+                                <p className="text-sm font-bold text-slate-800 dark:text-white flex items-center justify-end gap-2">
+                                    {user.name}
+                                    {user.plan_name && (
+                                        <button
+                                            onClick={() => router.push('/veritum/settings?tab=plan')}
+                                            className="px-2 py-0.5 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-[9px] uppercase tracking-widest rounded-md border border-amber-200 dark:border-amber-800 shadow-sm hover:scale-105 transition-all outline-none"
+                                        >
+                                            {user.plan_name}
+                                        </button>
+                                    )}
+                                </p>
+                                <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mt-0.5">{user.role}</p>
                             </div>
 
                             <div

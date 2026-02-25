@@ -11,19 +11,36 @@ interface CardProps {
     color: string;
     onClick: () => void;
     isLocked?: boolean;
+    onModuleChange?: (id: string) => void;
 }
 
 import { Lock } from 'lucide-react';
 import { toast } from '../../ui/toast';
 import { useTranslation } from '@/contexts/language-context';
 
-export const DashboardCard: React.FC<CardProps> = ({ title, description, subtitle, icon: Icon, color, onClick, isLocked }) => {
+export const DashboardCard: React.FC<CardProps> = ({ title, description, subtitle, icon: Icon, color, onClick, isLocked, onModuleChange }) => {
     const { t } = useTranslation();
     return (
         <button
             onClick={() => {
                 if (isLocked) {
-                    toast.error(t('dashboard.moduleLocked') || 'Este módulo não faz parte do seu plano atual.');
+                    toast.error(
+                        <div className="flex flex-col gap-2">
+                            <span className="font-bold text-sm">Este módulo requer assinatura!</span>
+                            <span className="text-xs opacity-80">Acesse Configurações {'>'} Minha Assinatura para fazer o upgrade, ou fale com nosso time comercial.</span>
+                            <div className="flex gap-2 mt-2">
+                                <a href="https://api.whatsapp.com/send?phone=YOUR_SALES_NUMBER" target="_blank" rel="noreferrer" className="text-[10px] font-black uppercase tracking-widest bg-white/20 hover:bg-white/30 text-white rounded-lg py-1.5 px-3 transition-all flex items-center gap-1">
+                                    <Lock size={12} /> Consultor
+                                </a>
+                                {onModuleChange && (
+                                    <button onClick={(e) => { e.stopPropagation(); onModuleChange('settings?tab=plan'); toast.dismissAll(); }} className="text-[10px] font-black uppercase tracking-widest bg-emerald-500 hover:bg-emerald-400 text-white rounded-lg py-1.5 px-3 transition-all flex items-center gap-1">
+                                        Assinar
+                                    </button>
+                                )}
+                            </div>
+                        </div>,
+                        { duration: 5000 }
+                    );
                     return;
                 }
                 onClick();

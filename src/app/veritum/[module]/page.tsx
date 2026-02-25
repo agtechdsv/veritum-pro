@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { useModule } from '../layout';
 import Sentinel from '@/components/modules/sentinel';
 import Nexus from '@/components/modules/nexus';
@@ -29,6 +29,8 @@ import { useTranslation } from '@/contexts/language-context';
 
 export default function DynamicModulePage() {
     const { module } = useParams();
+    const searchParams = useSearchParams();
+    const tabParam = searchParams.get('tab') as 'infra' | 'org' | 'plan' | null;
     const { user, preferences, planPermissions, credentials, onUpdateUser, onUpdatePrefs, onModuleChange, activeSuites, groupPermissions, allFeatures } = useModule();
     const { t } = useTranslation();
 
@@ -152,7 +154,7 @@ export default function DynamicModulePage() {
         case 'cognitio': return <Cognitio credentials={credentials} permissions={planPermissions.find(p => normalize(p.suite_key) === 'cognitio')} />;
         case 'vox': return <Vox credentials={credentials} permissions={planPermissions.find(p => normalize(p.suite_key) === 'vox')} />;
         case 'intelligence': return <IntelligenceHub credentials={credentials} permissions={planPermissions.find(p => normalize(p.suite_key) === 'intelligence')} />;
-        case 'settings': return <UserSettings user={user} preferences={preferences} onUpdateUser={onUpdateUser} onUpdatePrefs={onUpdatePrefs} />;
+        case 'settings': return <UserSettings user={user} preferences={preferences} onUpdateUser={onUpdateUser} onUpdatePrefs={onUpdatePrefs} initialTab={tabParam || undefined} />;
         case 'users': return <UserManagement currentUser={user} />;
         case 'suites': return <SuiteManagement credentials={credentials} />;
         case 'plans': return <PlanManagement credentials={credentials} />;

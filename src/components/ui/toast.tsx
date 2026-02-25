@@ -9,7 +9,7 @@ export type ToastType = 'success' | 'error' | 'info';
 interface ToastMessage {
     id: string;
     type: ToastType;
-    message: string;
+    message: string | React.ReactNode;
 }
 
 // Global state for toast (Simple Singleton Pattern)
@@ -22,19 +22,19 @@ const notify = () => {
 };
 
 export const toast = {
-    success: (msg: string) => {
+    success: (msg: string | React.ReactNode) => {
         const id = Math.random().toString(36).substring(2, 9);
         toasts = [...toasts, { id, type: 'success', message: msg }];
         notify();
         setTimeout(() => toast.dismiss(id), 5000);
     },
-    error: (msg: string) => {
+    error: (msg: string | React.ReactNode, options?: { duration?: number }) => {
         const id = Math.random().toString(36).substring(2, 9);
         toasts = [...toasts, { id, type: 'error', message: msg }];
         notify();
-        setTimeout(() => toast.dismiss(id), 6000);
+        setTimeout(() => toast.dismiss(id), options?.duration || 6000);
     },
-    info: (msg: string) => {
+    info: (msg: string | React.ReactNode) => {
         const id = Math.random().toString(36).substring(2, 9);
         toasts = [...toasts, { id, type: 'info', message: msg }];
         notify();
@@ -42,6 +42,10 @@ export const toast = {
     },
     dismiss: (id: string) => {
         toasts = toasts.filter(t => t.id !== id);
+        notify();
+    },
+    dismissAll: () => {
+        toasts = [];
         notify();
     }
 };
@@ -84,7 +88,7 @@ export const ToastContainer = () => {
                                 <p className="text-[11px] font-black uppercase tracking-widest mb-0.5">
                                     {t.type === 'success' ? 'Sucesso!' : t.type === 'error' ? 'Ops! Erro' : 'Informação'}
                                 </p>
-                                <p className="text-[13px] font-medium leading-snug">{t.message}</p>
+                                <div className="text-[13px] font-medium leading-snug">{t.message}</div>
                             </div>
                             <button
                                 onClick={() => toast.dismiss(t.id)}

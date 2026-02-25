@@ -44,8 +44,8 @@ const IntelligenceHub: React.FC<{ credentials: Credentials; permissions: any }> 
             const { data, error } = await query;
             if (error) throw error;
             setAlerts(data || []);
-        } catch (err) {
-            console.error('Error fetching intelligence alerts:', err);
+        } catch (err: any) {
+            console.warn('Intelligence Hub not fully initialized for this database (tables might be missing).', err.message || err.code || '');
         } finally {
             setLoading(false);
         }

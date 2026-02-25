@@ -58,7 +58,7 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
 
             const { data: profile, error: profileError } = await supabase
                 .from('users')
-                .select('*, access_groups(name)')
+                .select('*, access_groups(name), plans:plan_id(name)')
                 .eq('id', authUser.id)
                 .single();
 
@@ -87,7 +87,8 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
                 parent_user_id: profile?.parent_user_id || authUser.user_metadata.parent_user_id,
                 plan_id: profile?.plan_id || authUser.user_metadata.plan_id,
                 access_group_id: profile?.access_group_id || authUser.user_metadata.access_group_id,
-                access_group_name: accessGroupName
+                access_group_name: accessGroupName,
+                plan_name: profileData?.plans?.name || (Array.isArray(profileData?.plans) ? profileData?.plans[0]?.name : undefined)
             });
 
             // Fetch plan permissions with robust metadata fallback
@@ -117,7 +118,7 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
             } else if (parentId) {
                 const { data: parentProfile } = await supabase
                     .from('users')
-                    .select('plan_id')
+                    .select('plan_id, plans:plan_id(name)')
                     .eq('id', parentId)
                     .single();
 
@@ -141,6 +142,12 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
                         });
                         setPlanPermissions(Array.from(suiteMap.values()));
                     }
+
+                    const parentProfileData = parentProfile as any;
+                    setUser(prev => prev ? {
+                        ...prev,
+                        plan_name: parentProfileData?.plans?.name || (Array.isArray(parentProfileData?.plans) ? parentProfileData?.plans[0]?.name : undefined)
+                    } : prev);
                 }
             }
 
@@ -294,8 +301,8 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
     }
 
     const creds: Credentials = {
-        supabaseUrl: preferences?.custom_supabase_url || '',
-        supabaseAnonKey: preferences?.custom_supabase_key || '',
+        supabaseUrl: preferences?.custom_supabase_url || process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+        supabaseAnonKey: preferences?.custom_supabase_key || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
         geminiKey: preferences?.custom_gemini_key || process.env.NEXT_PUBLIC_GEMINI_API_KEY || '',
     };
 

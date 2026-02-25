@@ -37,8 +37,8 @@ const PersonManagement: React.FC<Props> = ({ credentials }) => {
 
             if (error) throw error;
             setPersons(data || []);
-        } catch (error) {
-            console.error('Error fetching persons:', error);
+        } catch (error: any) {
+            console.warn('CRM Module not fully initialized for this database (tables might be missing).', error.message || error.code || '');
         } finally {
             setLoading(false);
         }
