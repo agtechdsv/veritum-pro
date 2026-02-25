@@ -118,17 +118,24 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
         const fetchUser = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
-                const { data: profile } = await supabase
+                const { data: profile, error } = await supabase
                     .from('users')
-                    .select('name, avatar_url, role, plan_id, access_group_id, access_groups(name)')
+                    .select('name, avatar_url, role, plan_id, access_group_id, access_groups(name), plans:plan_id(name)')
                     .eq('id', user.id)
                     .single();
+
+                if (error) console.error("Error fetching user profile:", error);
 
                 if (profile) {
                     const profileData = profile as any;
                     const groupName = Array.isArray(profileData?.access_groups)
                         ? profileData.access_groups[0]?.name
                         : profileData?.access_groups?.name;
+
+                    const planName = profileData?.plans?.name || (Array.isArray(profileData?.plans) ? profileData?.plans[0]?.name : undefined);
+
+                    profileData.plan_name = planName;
+                    profileData.access_group_name = groupName;
 
                     setUserGroupName(groupName);
 
@@ -150,10 +157,14 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                     } else if (user.user_metadata?.parent_user_id) {
                         const { data: parent } = await supabase
                             .from('users')
-                            .select('plan_id')
+                            .select('plan_id, plans:plan_id(name)')
                             .eq('id', user.user_metadata.parent_user_id)
                             .single();
                         if (parent?.plan_id) {
+                            const parentData = parent as any;
+                            const inheritedPlanName = parentData?.plans?.name || (Array.isArray(parentData?.plans) ? parentData?.plans[0]?.name : undefined);
+                            profileData.plan_name = inheritedPlanName;
+
                             const { data: perms } = await supabase
                                 .from('plan_permissions')
                                 .select('features(suites(suite_key))')
@@ -243,7 +254,7 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                         <a href="#" className="font-medium hover:text-indigo-600 transition-colors text-slate-800 dark:text-white">{t('nav.home')}</a>
                         <a href="#modules" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">{t('nav.modules')}</a>
                         <a href="#pricing" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">{t('nav.pricing')}</a>
-                        <Link href="/historia" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">{t('nav.story')}</Link>
+                        <Link href="/history" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">{t('nav.story')}</Link>
                     </div>
 
                     <div className="flex items-center gap-4">
@@ -261,7 +272,7 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                                     className="hidden sm:flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-bold text-sm shadow-xl shadow-indigo-600/20 transition-all hover:scale-105"
                                 >
                                     <LayoutDashboard size={18} />
-                                    {t('nav.dashboard')}
+                                    Painel Pro
                                 </Link>
                                 <UserMenu user={currentUser} supabase={supabase} />
                             </div>

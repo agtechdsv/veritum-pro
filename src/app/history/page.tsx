@@ -13,7 +13,7 @@ const Logo = () => (
     </div>
 );
 
-export default function HistoriaPage() {
+export default function HistoryPage() {
     const { t } = useTranslation();
     const { theme, setTheme, resolvedTheme } = useTheme();
     const [mounted, setMounted] = useState(false);

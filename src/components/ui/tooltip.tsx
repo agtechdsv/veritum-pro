@@ -9,19 +9,68 @@ interface TooltipProps {
     content: string;
     delay?: number;
     enabled?: boolean;
+    side?: 'top' | 'bottom' | 'left' | 'right';
 }
 
-export const Tooltip: React.FC<TooltipProps> = ({ children, content, delay = 0.2, enabled = true }) => {
+export const Tooltip: React.FC<TooltipProps> = ({ children, content, delay = 0.2, enabled = true, side = 'right' }) => {
     const [isVisible, setIsVisible] = useState(false);
-    const [position, setPosition] = useState({ top: 0, left: 0 });
+    const [coords, setCoords] = useState({ top: 0, left: 0, transform: '' });
     const triggerRef = useRef<HTMLDivElement>(null);
+    const contentRef = useRef<HTMLDivElement>(null);
 
     const updatePosition = () => {
-        if (triggerRef.current) {
-            const rect = triggerRef.current.getBoundingClientRect();
-            setPosition({
+        if (!triggerRef.current) return;
+
+        const rect = triggerRef.current.getBoundingClientRect();
+        const padding = 12;
+        let finalSide = side;
+
+        // Approximate width if not measured yet
+        const tooltipWidth = contentRef.current?.offsetWidth || 200;
+
+        // Auto-flip Right to Bottom if hitting screen edge
+        if (side === 'right' && rect.right + tooltipWidth + padding > window.innerWidth) {
+            finalSide = 'bottom';
+        }
+
+        if (finalSide === 'right') {
+            setCoords({
                 top: rect.top + rect.height / 2,
                 left: rect.right + 10,
+                transform: 'translateY(-50%)'
+            });
+        } else if (finalSide === 'bottom') {
+            let left = rect.left + rect.width / 2;
+
+            // Boundary check: Right edge
+            if (left + tooltipWidth / 2 > window.innerWidth - padding) {
+                left = window.innerWidth - (tooltipWidth / 2) - padding;
+            }
+            // Boundary check: Left edge
+            if (left - tooltipWidth / 2 < padding) {
+                left = tooltipWidth / 2 + padding;
+            }
+
+            setCoords({
+                top: rect.bottom + 10,
+                left: left,
+                transform: 'translateX(-50%)'
+            });
+        } else if (finalSide === 'top') {
+            let left = rect.left + rect.width / 2;
+            if (left + tooltipWidth / 2 > window.innerWidth - padding) left = window.innerWidth - (tooltipWidth / 2) - padding;
+            if (left - tooltipWidth / 2 < padding) left = tooltipWidth / 2 + padding;
+
+            setCoords({
+                top: rect.top - 10,
+                left: left,
+                transform: 'translate(-50%, -100%)'
+            });
+        } else if (finalSide === 'left') {
+            setCoords({
+                top: rect.top + rect.height / 2,
+                left: rect.left - 10,
+                transform: 'translate(-100%, -50%)'
             });
         }
     };
@@ -29,13 +78,16 @@ export const Tooltip: React.FC<TooltipProps> = ({ children, content, delay = 0.2
     useEffect(() => {
         if (isVisible) {
             updatePosition();
+            // Re-run once after a short delay to account for measured width
+            const timer = setTimeout(updatePosition, 10);
             window.addEventListener('scroll', updatePosition, true);
             window.addEventListener('resize', updatePosition);
+            return () => {
+                clearTimeout(timer);
+                window.removeEventListener('scroll', updatePosition, true);
+                window.removeEventListener('resize', updatePosition);
+            };
         }
-        return () => {
-            window.removeEventListener('scroll', updatePosition, true);
-            window.removeEventListener('resize', updatePosition);
-        };
     }, [isVisible]);
 
     if (!enabled) return <>{children}</>;
@@ -52,20 +104,20 @@ export const Tooltip: React.FC<TooltipProps> = ({ children, content, delay = 0.2
                 <AnimatePresence>
                     {isVisible && (
                         <motion.div
-                            initial={{ opacity: 0, x: -10, scale: 0.95 }}
-                            animate={{ opacity: 1, x: 0, scale: 1 }}
-                            exit={{ opacity: 0, x: -5, scale: 0.95 }}
+                            ref={contentRef}
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
                             transition={{ duration: 0.15, delay: delay }}
                             style={{
                                 position: 'fixed',
-                                top: position.top,
-                                left: position.left,
-                                transform: 'translateY(-50%)'
+                                top: coords.top,
+                                left: coords.left,
+                                transform: coords.transform
                             }}
                             className="z-[999] whitespace-nowrap bg-slate-900 dark:bg-slate-800 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg shadow-2xl pointer-events-none border border-white/10"
                         >
                             {content}
-                            <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 border-y-4 border-y-transparent border-r-4 border-r-slate-900 dark:border-r-slate-800" />
                         </motion.div>
                     )}
                 </AnimatePresence>,
@@ -74,3 +126,5 @@ export const Tooltip: React.FC<TooltipProps> = ({ children, content, delay = 0.2
         </div>
     );
 };
+
+

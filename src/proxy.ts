@@ -31,10 +31,10 @@ export async function proxy(request: NextRequest) {
 
     // Define paths
     const path = request.nextUrl.pathname
-    const isPublicPath = path === '/' || path === '/login' || path === '/pricing' || path === '/historia' ||
+    const isPublicPath = path === '/' || path === '/login' || path === '/pricing' || path === '/history' ||
         path === '/privacy' || path === '/terms' || path === '/sitemap.xml' || path === '/robots.txt' ||
         path.startsWith('/auth') ||
-        ['/sentinel', '/nexus', '/scriptor', '/valorem', '/cognitio', '/vox'].includes(path)
+        ['/sentinel', '/nexus', '/scriptor', '/valorem', '/cognitio', '/vox', '/history'].includes(path)
     const isSetupPath = path === '/setup'
 
     // 1. If user is NOT logged in (Master DB)

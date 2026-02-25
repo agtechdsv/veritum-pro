@@ -1,11 +1,11 @@
-'use client'
-
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User as UserIcon, LogOut, ChevronDown } from 'lucide-react';
+import { User as UserIcon, LogOut, Laptop } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import ProfileModal from './profile-modal';
 import { useTranslation } from '@/contexts/language-context';
+import { Tooltip } from './tooltip';
+import { toast } from './toast';
 
 interface UserMenuProps {
     user: any;
@@ -21,52 +21,70 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, supabase }) => {
     const handleLogout = async () => {
         try {
             await supabase.auth.signOut();
-            router.push('/');
+            // Force a full page reload so middleware and all state are cleared
+            window.location.href = '/';
         } catch (error) {
             console.error('Erro ao sair:', error);
         }
     };
 
-    // Normalize user data (landing page user structure vs dashboard user structure might differ)
-    const displayName = user.full_name || user.profile?.name || user.user_metadata?.full_name || user.name || t('common.user');
-    const displayRole = user.role || user.profile?.role || t('common.user');
-    const avatarUrl = user.avatar_url || user.profile?.avatar_url || user.user_metadata?.avatar_url || user.user_metadata?.picture;
+    // Normalize data
+    const profile = user.profile || user;
+    const displayName = profile.name || user.user_metadata?.full_name || t('common.user');
+    const displayRole = profile.role || t('common.user');
+    const planName = profile.plan_name;
+    const avatarUrl = profile.avatar_url || user.user_metadata?.avatar_url || user.user_metadata?.picture;
+
+    const superAdminGroupsNames = ['Sócio-Administrativo', 'Sócio-Administrador', 'Sócio Administrador'];
+    const superAdminRoles = ['Sócio-Administrador', 'Sócio Administrador', 'Administrador', 'Sócio-Administrativo'];
+    const isSocioAdminRole = superAdminRoles.some(r => profile.role?.includes(r));
+    const isSocioAdminGroup = profile.access_group_name && superAdminGroupsNames.some(g => profile.access_group_name?.includes(g));
+    const isRootAdmin = profile.role === 'Master' || isSocioAdminRole || isSocioAdminGroup;
+
+    const handlePlanClick = () => {
+        if (isRootAdmin) {
+            router.push('/veritum/settings?tab=plan');
+        } else {
+            toast.error('Acesso restrito. Apenas administradores podem gerenciar o plano.');
+        }
+    };
 
     return (
         <>
-            <div className="relative" id="user-menu-root">
-                <button
-                    onClick={() => setIsOpen(!isOpen)}
-                    className="flex items-center gap-3 p-1.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all active:scale-95 group"
-                >
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-white font-black text-lg shadow-lg shadow-indigo-200 dark:shadow-indigo-900/20 group-hover:rotate-3 transition-transform">
-                        {displayName?.charAt(0) || 'U'}
+            <div className="flex items-center gap-4 pl-0 sm:pl-6 sm:border-l border-slate-200 dark:border-slate-800" id="user-menu-root">
+                <div className="text-right hidden sm:block">
+                    <div className="text-sm font-bold text-slate-800 dark:text-white flex items-center justify-end gap-2">
+                        {displayName}
+                        {planName && (
+                            <Tooltip content="Clique para fazer upgrade ou gerenciar seu plano" enabled={true} side="bottom">
+                                <button
+                                    onClick={handlePlanClick}
+                                    className="px-2 py-0.5 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-[9px] uppercase tracking-widest rounded-md border border-amber-200 dark:border-amber-800 shadow-sm hover:scale-105 transition-all outline-none cursor-pointer"
+                                >
+                                    {planName}
+                                </button>
+                            </Tooltip>
+                        )}
                     </div>
-                    <div className="hidden md:block text-left mr-2">
-                        <p className="text-sm font-black text-slate-800 dark:text-white leading-none mb-1">
-                            {displayName?.split(' ')[0]}
-                        </p>
-                        <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-                            {displayRole}
-                        </p>
-                    </div>
-                </button>
+                    <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mt-0.5">{displayRole}</p>
+                </div>
 
-                <AnimatePresence>
-                    {isOpen && (
-                        <>
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                onClick={() => setIsOpen(false)}
-                                className="fixed inset-0 z-40"
-                            />
+                <div
+                    className="relative group"
+                    onMouseEnter={() => setIsOpen(true)}
+                    onMouseLeave={() => setIsOpen(false)}
+                >
+                    <div className="w-12 h-12 rounded-2xl overflow-hidden border-2 border-indigo-100 dark:border-indigo-900/30 shadow-sm transition-all group-hover:scale-105 group-hover:border-indigo-500 cursor-pointer bg-white dark:bg-slate-800">
+                        <img src={avatarUrl || `https://ui-avatars.com/api/?name=${displayName}&background=6366f1&color=fff`} alt="Avatar" className="w-full h-full object-cover" />
+                    </div>
+
+                    <AnimatePresence>
+                        {isOpen && (
                             <motion.div
                                 initial={{ opacity: 0, y: 10, scale: 0.95 }}
                                 animate={{ opacity: 1, y: 0, scale: 1 }}
                                 exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                className="absolute right-0 mt-3 w-64 bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl shadow-indigo-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 overflow-hidden z-50 p-2"
+                                className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl py-2 z-[100] overflow-hidden"
                             >
                                 <div className="px-4 py-4 border-b border-slate-50 dark:border-slate-800 mb-2">
                                     <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">{t('management.users.menu')}</p>
@@ -92,9 +110,9 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, supabase }) => {
                                     {t('userMenu.logout')}
                                 </button>
                             </motion.div>
-                        </>
-                    )}
-                </AnimatePresence>
+                        )}
+                    </AnimatePresence>
+                </div>
             </div>
 
             <ProfileModal
@@ -113,3 +131,4 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, supabase }) => {
         </>
     );
 };
+

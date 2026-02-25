@@ -595,17 +595,25 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
 
                         <div className="flex items-center gap-4 pl-6 border-l border-slate-100 dark:border-slate-800">
                             <div className="text-right hidden sm:block">
-                                <p className="text-sm font-bold text-slate-800 dark:text-white flex items-center justify-end gap-2">
+                                <div className="text-sm font-bold text-slate-800 dark:text-white flex items-center justify-end gap-2">
                                     {user.name}
                                     {user.plan_name && (
-                                        <button
-                                            onClick={() => router.push('/veritum/settings?tab=plan')}
-                                            className="px-2 py-0.5 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-[9px] uppercase tracking-widest rounded-md border border-amber-200 dark:border-amber-800 shadow-sm hover:scale-105 transition-all outline-none"
-                                        >
-                                            {user.plan_name}
-                                        </button>
+                                        <Tooltip content="Clique para fazer upgrade ou gerenciar seu plano" enabled={true} side="left">
+                                            <button
+                                                onClick={() => {
+                                                    if (isSuperAdmin) {
+                                                        router.push('/veritum/settings?tab=plan');
+                                                    } else {
+                                                        toast.error('Acesso restrito. Apenas administradores podem gerenciar o plano.');
+                                                    }
+                                                }}
+                                                className="px-2 py-0.5 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-[9px] uppercase tracking-widest rounded-md border border-amber-200 dark:border-amber-800 shadow-sm hover:scale-105 transition-all outline-none"
+                                            >
+                                                {user.plan_name}
+                                            </button>
+                                        </Tooltip>
                                     )}
-                                </p>
+                                </div>
                                 <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mt-0.5">{user.role}</p>
                             </div>
 
