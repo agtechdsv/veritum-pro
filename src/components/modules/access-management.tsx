@@ -489,7 +489,24 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
         });
 
         setSelectedFeatureIds(allowedFeatures);
-        setEditingGroup(prev => ({ ...prev, name: template.name }));
+        const localTranslations: Record<string, { en: string, es: string }> = {
+            "Sócio-Administrador": { en: "Partner Administrator", es: "Socio Administrador" },
+            "Advogado Sênior / Coordenador": { en: "Senior Lawyer / Coordinator", es: "Abogado Senior / Coordinador" },
+            "Departamento Financeiro / Faturamento": { en: "Financial Department / Billing", es: "Departamento Financiero / Facturación" },
+            "Advogado Associado / Júnior": { en: "Associate / Junior Lawyer", es: "Abogado Asociado / Junior" },
+            "Secretariado / Recepção": { en: "Secretariat / Reception", es: "Secretariado / Recepción" },
+            "Controladoria Jurídica (Legal Ops)": { en: "Legal Controlling (Legal Ops)", es: "Controladoría Jurídica (Legal Ops)" },
+            "Estagiário / Paralegal": { en: "Intern / Paralegal", es: "Pasante / Paralegal" },
+            "Cliente (Acesso Externo B2B2C)": { en: "Client (External Access B2B2C)", es: "Cliente (Acceso Externo B2B2C)" }
+        };
+
+        const loc = localTranslations[template.name];
+
+        setEditingGroup(prev => ({
+            ...prev,
+            name: template.name,
+            name_loc: loc ? { pt: template.name, en: loc.en, es: loc.es } : { pt: template.name, en: template.name, es: template.name }
+        }));
 
         const hasBlockedFeatures = allowedFeatures.length < template.default_features.length;
 

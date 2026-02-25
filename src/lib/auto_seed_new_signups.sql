@@ -1,86 +1,86 @@
 -- ============================================================================
 -- VERITUM PRO: AUTO-SEED DE GRUPOS E CARGOS PARA NOVOS CLIENTES (MASTER)
 -- ============================================================================
--- Cria uma função que gera automaticamente os Grupos de Acesso (com permissões)
--- e os Cargos baseados nos Templates Globais para qualquer novo usuário
--- que assinar a plataforma organicamente.
--- Em seguida, anexa essa função ao trigger de novo usuário.
+-- Cria uma função que clona dinamicamente os Grupos de Acesso (com permissões)
+-- e os Cargos do usuário Master para qualquer novo Sócio-Administrador.
 -- ============================================================================
 
--- 1. Cria ou Atualiza a Função de Seeding do Workspace
 CREATE OR REPLACE FUNCTION public.seed_user_workspace(new_admin_id uuid)
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
+DECLARE
+    master_id uuid;
+    mg record;
+    new_group_id uuid;
 BEGIN
-    -- Se o usuário for um "Membro de Equipe" (tem parent_user_id), abortar.
-    -- Só criamos workspace root para donos de escritório (Master ou Administrador orgânico).
+    -- 1. Se o usuário for um "Membro de Equipe" (tem parent_user_id), não ganha workspace master local.
     IF EXISTS (SELECT 1 FROM public.users WHERE id = new_admin_id AND parent_user_id IS NOT NULL) THEN
         RETURN;
     END IF;
 
-    -- 1.1 Cadastra os 8 Access Groups atrelados a este novo admin
-    INSERT INTO "public"."access_groups" ("id", "name", "admin_id")
-    SELECT gen_random_uuid(), name, new_admin_id
-    FROM "public"."group_templates"
-    ON CONFLICT DO NOTHING;
+    -- 2. Descobre quem é o Master (Dono da plataforma)
+    SELECT id INTO master_id FROM public.users WHERE role = 'Master' LIMIT 1;
+    IF master_id IS NULL THEN
+        -- Fallback de segurança: pega o usuário fundador mais antigo do sistema
+        SELECT id INTO master_id FROM public.users ORDER BY created_at ASC LIMIT 1;
+    END IF;
 
-    -- 1.2 Atrela as Features exatas de cada Template para cada um dos Grupos gerados
-    INSERT INTO "public"."group_permissions" ("group_id", "feature_id")
-    SELECT g.id, unnest(t.default_features)
-    FROM "public"."access_groups" g
-    JOIN "public"."group_templates" t ON t.name = g.name
-    WHERE g.admin_id = new_admin_id
-    ON CONFLICT DO NOTHING;
+    -- 3. Prevenção: Se for a criação do próprio Master, não faz sentido ele clonar dele mesmo.
+    IF master_id = new_admin_id THEN
+        RETURN;
+    END IF;
 
-    -- 1.3 GERAR CARGOS (ROLES) VINCULADOS
-    -- GRUPO 1: Sócio-Administrador
-    INSERT INTO "public"."roles" (name, access_group_id, admin_id)
-    SELECT unnest(ARRAY['Sócio Administrador', 'Sócio Fundador', 'Diretor Jurídico', 'Gestor Geral']), id, new_admin_id
-    FROM "public"."access_groups" WHERE name = 'Sócio-Administrador' AND admin_id = new_admin_id;
+    -- 4. Inicia o Loop de clonagem (A Magia Dinâmica!)
+    -- Vamos varrer todos os Grupos de Acesso que pertencem ao Master.
+    FOR mg IN SELECT id, name, name_loc FROM public.access_groups WHERE admin_id = master_id LOOP
+        
+        -- 4.1 Clona o Grupo de Acesso para o novo admin, replicando `name_loc` com fallback.
+        INSERT INTO public.access_groups (id, name, name_loc, admin_id)
+        VALUES (
+            gen_random_uuid(), 
+            mg.name, 
+            coalesce(mg.name_loc, jsonb_build_object('pt', mg.name, 'en', mg.name, 'es', mg.name)), 
+            new_admin_id
+        )
+        RETURNING id INTO new_group_id;
 
-    -- GRUPO 2: Advogado Sênior / Coordenador
-    INSERT INTO "public"."roles" (name, access_group_id, admin_id)
-    SELECT unnest(ARRAY['Advogado Sênior', 'Coordenador Jurídico', 'Head de Área', 'Gestor Contencioso']), id, new_admin_id
-    FROM "public"."access_groups" WHERE name = 'Advogado Sênior / Coordenador' AND admin_id = new_admin_id;
+        -- 4.2 Clona as Permissões (Rules de Features) desse grupo recém-criado
+        INSERT INTO public.group_permissions (group_id, feature_id, can_access)
+        SELECT new_group_id, feature_id, can_access
+        FROM public.group_permissions
+        WHERE group_id = mg.id;
 
-    -- GRUPO 3: Advogado Associado / Júnior
-    INSERT INTO "public"."roles" (name, access_group_id, admin_id)
-    SELECT unnest(ARRAY['Advogado Associado', 'Advogado Júnior', 'Advogado Pleno', 'Advogado Trabalhista']), id, new_admin_id
-    FROM "public"."access_groups" WHERE name = 'Advogado Associado / Júnior' AND admin_id = new_admin_id;
+        -- 4.3 Clona os Cargos (Roles) que estavam amarrados especificamente a esse grupo no Master
+        INSERT INTO public.roles (id, name, name_loc, access_group_id, admin_id)
+        SELECT 
+            gen_random_uuid(), 
+            name, 
+            coalesce(name_loc, jsonb_build_object('pt', name, 'en', name, 'es', name)), 
+            new_group_id, 
+            new_admin_id
+        FROM public.roles
+        WHERE access_group_id = mg.id AND admin_id = master_id;
 
-    -- GRUPO 4: Estagiário / Paralegal
-    INSERT INTO "public"."roles" (name, access_group_id, admin_id)
-    SELECT unnest(ARRAY['Estagiário', 'Paralegal', 'Assistente Jurídico', 'Auxiliar Administrativo']), id, new_admin_id
-    FROM "public"."access_groups" WHERE name = 'Estagiário / Paralegal' AND admin_id = new_admin_id;
+    END LOOP;
 
-    -- GRUPO 5: Departamento Financeiro / Faturamento
-    INSERT INTO "public"."roles" (name, access_group_id, admin_id)
-    SELECT unnest(ARRAY['Gerente Financeiro', 'Analista Financeiro', 'Assistente de Faturamento', 'Auxiliar de Cobrança']), id, new_admin_id
-    FROM "public"."access_groups" WHERE name = 'Departamento Financeiro / Faturamento' AND admin_id = new_admin_id;
-
-    -- GRUPO 6: Controladoria Jurídica (Legal Ops)
-    INSERT INTO "public"."roles" (name, access_group_id, admin_id)
-    SELECT unnest(ARRAY['Controller Jurídico', 'Analista de Legal Ops', 'Analista de Dados Jurídicos', 'Engenheiro Jurídico']), id, new_admin_id
-    FROM "public"."access_groups" WHERE name = 'Controladoria Jurídica (Legal Ops)' AND admin_id = new_admin_id;
-
-    -- GRUPO 7: Secretariado / Recepção
-    INSERT INTO "public"."roles" (name, access_group_id, admin_id)
-    SELECT unnest(ARRAY['Secretária Executiva', 'Recepcionista', 'Assistente de Atendimento', 'Telefonista']), id, new_admin_id
-    FROM "public"."access_groups" WHERE name = 'Secretariado / Recepção' AND admin_id = new_admin_id;
-
-    -- GRUPO 8: Cliente (Acesso Externo B2B2C)
-    INSERT INTO "public"."roles" (name, access_group_id, admin_id)
-    SELECT unnest(ARRAY['Cliente (Pessoa Física)', 'Representante Legal (Empresa)']), id, new_admin_id
-    FROM "public"."access_groups" WHERE name = 'Cliente (Acesso Externo B2B2C)' AND admin_id = new_admin_id;
+    -- 5. Clona também eventuali Cargos (Roles) avulsos do Master que não têm um grupo de acesso amarrado.
+    INSERT INTO public.roles (id, name, name_loc, access_group_id, admin_id)
+    SELECT 
+        gen_random_uuid(), 
+        name, 
+        coalesce(name_loc, jsonb_build_object('pt', name, 'en', name, 'es', name)), 
+        null, 
+        new_admin_id
+    FROM public.roles
+    WHERE access_group_id IS NULL AND admin_id = master_id;
 
 END;
 $$;
 
 
 -- 2. Atualiza a Função HANDLE_NEW_USER (Gatilho Original de Criação de Conta)
--- Injetando a chamada da nossa função de Seed acima logo no final do fluxo.
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
 DECLARE
@@ -112,20 +112,18 @@ BEGIN
 
   update auth.users set raw_user_meta_data = coalesce(raw_user_meta_data, '{}'::jsonb) || jsonb_build_object('role', user_role, 'full_name', user_name, 'name', user_name, 'plan_id', user_plan_id, 'access_group_id', (new.raw_user_meta_data->>'access_group_id')) where id = new.id;
   
-  -- NOVIDADE: Chama o robô semeador de workspace (Grupos e Cargos baseados em template)
+  -- Roda a semeadeira dinâmica atualizada! (Clona Master)
   PERFORM public.seed_user_workspace(new.id);
 
-  -- VINCULA O PIONEIRO (ROOT) AO GRUPO DE SÓCIO-ADMINISTRADOR
+  -- VINCULA O PIONEIRO (ROOT) AO GRUPO DE SÓCIO-ADMINISTRADOR CLONADO
   if (new.raw_user_meta_data->>'parent_user_id') is null then
       select id into generated_group_id from public.access_groups where admin_id = new.id and name = 'Sócio-Administrador' limit 1;
       
       if generated_group_id is not null then
-          -- Atualiza o registro visível
           update public.users 
           set access_group_id = generated_group_id, role = 'Sócio Administrador'
           where id = new.id;
           
-          -- Sincroniza de volta no metadata do Auth
           update auth.users 
           set raw_user_meta_data = raw_user_meta_data || jsonb_build_object('access_group_id', generated_group_id, 'role', 'Sócio Administrador')
           where id = new.id;
