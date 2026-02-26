@@ -29,6 +29,7 @@ import {
 import { ptBR, enUS } from 'date-fns/locale';
 import { AuthModal } from '@/components/auth-modal';
 import { LegalModal } from '@/components/legal-modal';
+import { CompanyModal } from '@/components/company-modal';
 import { createMasterClient } from '@/lib/supabase/master';
 import { UserMenu } from '@/components/ui/user-menu';
 import { useTranslation } from '@/contexts/language-context';
@@ -51,6 +52,7 @@ export default function PricingPage() {
     const [hasAccess, setHasAccess] = useState(false);
     const [currentUser, setCurrentUser] = useState<any>(undefined);
     const [legalModal, setLegalModal] = useState({ isOpen: false, type: 'privacy' as 'privacy' | 'terms' });
+    const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
 
     const dateLocale = locale === 'en' ? enUS : ptBR;
 
@@ -240,11 +242,11 @@ export default function PricingPage() {
                     </div>
 
                     <div className="hidden md:flex items-center gap-8">
-                        <Link href="/" className="text-base font-bold text-branding-gradient hover:opacity-80 transition-all">{t('pricingPage.nav.portal')}</Link>
-                        <a href="#top" className="text-sm font-bold text-slate-800 dark:text-white">{t('pricingPage.nav.home')}</a>
-                        <a href="#modulos-avulsos" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">{t('pricingPage.nav.modules')}</a>
-                        <a href="#comparison" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">{t('pricingPage.nav.comparison')}</a>
-                        <a href="#faq" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">{t('pricingPage.nav.faq')}</a>
+                        <Link href="/" className="font-medium text-branding-gradient hover:opacity-80 transition-all">{t('pricingPage.nav.portal')}</Link>
+                        <a href="#top" className="font-medium text-slate-800 dark:text-white">{t('pricingPage.nav.home')}</a>
+                        <a href="#modulos-avulsos" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">{t('pricingPage.nav.modules')}</a>
+                        <a href="#comparison" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">{t('pricingPage.nav.comparison')}</a>
+                        <a href="#faq" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">{t('pricingPage.nav.faq')}</a>
                     </div>
 
                     <div className="flex items-center gap-4">
@@ -677,7 +679,23 @@ export default function PricingPage() {
                         <span className="font-extrabold text-2xl tracking-tighter text-slate-900 dark:text-white uppercase">VERITUM <span className="text-branding-gradient">PRO</span></span>
                     </div>
                     <p className="text-sm text-slate-400 dark:text-slate-500 font-medium">
-                        {locale === 'pt' ? 'Desenvolvido por AgTech | LegalTech de Alta Performance © 2024 Todos os direitos reservados.' : 'Developed by AgTech | High Performance LegalTech © 2024 All rights reserved.'}
+                        <button
+                            onClick={() => setIsCompanyModalOpen(true)}
+                            className="group relative transition-all duration-300 hover:scale-[1.02] cursor-pointer not-italic inline-flex items-center"
+                        >
+                            <span className="text-slate-400 dark:text-slate-500 font-medium">
+                                {locale === 'pt' ? 'Desenvolvido por ' : locale === 'es' ? 'Desarrollado por ' : 'Developed by '}
+                            </span>
+                            <span className="text-indigo-600 dark:text-indigo-400 font-extrabold ml-1 flex items-center">
+                                AGTech
+                                <sup className="ml-0.5 text-[10px] opacity-70 group-hover:opacity-100 transition-opacity">©</sup>
+                            </span>
+                            {/* Tooltip */}
+                            <span className="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-slate-900 text-white text-[10px] font-black rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap pointer-events-none shadow-2xl border border-slate-800 scale-90 group-hover:scale-100 z-[60]">
+                                {locale === 'pt' ? 'Clique para saber mais' : locale === 'es' ? 'Clic para saber más' : 'Click to learn more'}
+                            </span>
+                        </button>
+                        {locale === 'pt' ? ' | LegalTech de Alta Performance © 2026 Todos os direitos reservados.' : ' | High Performance LegalTech © 2026 All rights reserved.'}
                     </p>
                     <div className="flex gap-6">
                         <button
@@ -900,6 +918,11 @@ export default function PricingPage() {
                 isOpen={legalModal.isOpen}
                 onClose={() => setLegalModal({ ...legalModal, isOpen: false })}
                 type={legalModal.type}
+            />
+
+            <CompanyModal
+                isOpen={isCompanyModalOpen}
+                onClose={() => setIsCompanyModalOpen(false)}
             />
         </div>
     );

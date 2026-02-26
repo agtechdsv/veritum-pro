@@ -147,7 +147,7 @@ export function LegalModal({ isOpen, onClose, type }: Props) {
                                 <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-indigo-600/10 text-indigo-600 text-sm">4</span>
                                 Propriedade Intelectual
                             </h3>
-                            <p>Todo o design e marca Veritum Pro são de propriedade da AgTech. Os dados jurídicos inseridos permanecem de posse e responsabilidade do usuário.</p>
+                            <p>Todo o design e marca Veritum Pro são de propriedade da AGTech. Os dados jurídicos inseridos permanecem de posse e responsabilidade do usuário.</p>
                         </section>
                     </div>
                 ),
@@ -189,7 +189,7 @@ export function LegalModal({ isOpen, onClose, type }: Props) {
                                 <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-indigo-600/10 text-indigo-600 text-sm">4</span>
                                 Intellectual Property
                             </h3>
-                            <p>All design and Veritum Pro branding are the property of AgTech. S.A. The legal data entered remains the property and responsibility of the user.</p>
+                            <p>All design and Veritum Pro branding are the property of AGTech. S.A. The legal data entered remains the property and responsibility of the user.</p>
                         </section>
                     </div>
                 )

@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
 import { AuthModal } from '@/components/auth-modal';
+import { CompanyModal } from '@/components/company-modal';
 import { createMasterClient } from '@/lib/supabase/master';
 import { UserMenu } from '@/components/ui/user-menu';
 import { useTranslation } from '@/contexts/language-context';
@@ -23,13 +24,14 @@ const Logo = () => (
 );
 
 export default function SentinelLanding() {
-    const { t } = useTranslation();
+    const { t, locale } = useTranslation();
     const { theme, setTheme, resolvedTheme } = useTheme();
     const router = useRouter();
     const [mounted, setMounted] = useState(false);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [hasAccess, setHasAccess] = useState(false);
     const [currentUser, setCurrentUser] = useState<any>(undefined);
+    const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
 
     useEffect(() => {
         setMounted(true);
@@ -76,11 +78,11 @@ export default function SentinelLanding() {
                     </div>
 
                     <div className="hidden md:flex items-center gap-8">
-                        <Link href="/" className="text-base font-bold text-branding-gradient hover:opacity-80 transition-all">{t('pricingPage.nav.portal')}</Link>
-                        <a href="#top" className="text-sm font-bold text-slate-800 dark:text-white">{t('landingPages.sentinel.nav.home')}</a>
-                        <a href="#vision" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">{t('landingPages.sentinel.nav.vision')}</a>
-                        <a href="#features" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">{t('landingPages.sentinel.nav.features')}</a>
-                        <a href="#ux" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">{t('landingPages.sentinel.nav.ux')}</a>
+                        <Link href="/" className="font-medium text-branding-gradient hover:opacity-80 transition-all">{t('pricingPage.nav.portal')}</Link>
+                        <a href="#top" className="font-medium text-slate-800 dark:text-white">{t('landingPages.sentinel.nav.home')}</a>
+                        <a href="#vision" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">{t('landingPages.sentinel.nav.vision')}</a>
+                        <a href="#features" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">{t('landingPages.sentinel.nav.features')}</a>
+                        <a href="#ux" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">{t('landingPages.sentinel.nav.ux')}</a>
                     </div>
 
                     <div className="flex items-center gap-4">
@@ -394,7 +396,23 @@ export default function SentinelLanding() {
                                 <span className="text-lg font-black dark:text-white text-slate-900">VERITUM <span className="text-branding-gradient">PRO</span></span>
                             </div>
                             <p className="text-sm text-slate-400 dark:text-slate-500 font-medium italic max-w-sm">
-                                Desenvolvido por AgTech | LegalTech de Alta Performance © 2024 Todos os direitos reservados.
+                                <button
+                                    onClick={() => setIsCompanyModalOpen(true)}
+                                    className="group relative transition-all duration-300 hover:scale-[1.02] cursor-pointer not-italic inline-flex items-center"
+                                >
+                                    <span className="text-slate-400 dark:text-slate-500 font-medium">
+                                        {locale === 'pt' ? 'Desenvolvido por ' : locale === 'es' ? 'Desarrollado por ' : 'Developed by '}
+                                    </span>
+                                    <span className="text-indigo-600 dark:text-indigo-400 font-extrabold ml-1 flex items-center">
+                                        AGTech
+                                        <sup className="ml-0.5 text-[10px] opacity-70 group-hover:opacity-100 transition-opacity">©</sup>
+                                    </span>
+                                    {/* Tooltip */}
+                                    <span className="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-slate-900 text-white text-[10px] font-black rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap pointer-events-none shadow-2xl border border-slate-800 scale-90 group-hover:scale-100 z-[60]">
+                                        {locale === 'pt' ? 'Clique para saber mais' : locale === 'es' ? 'Clic para saber más' : 'Click to learn more'}
+                                    </span>
+                                </button>
+                                {locale === 'pt' ? ' | LegalTech de Alta Performance © 2026 Todos os direitos reservados.' : ' | High Performance LegalTech © 2026 All rights reserved.'}
                             </p>
                         </div>
                     </div>
@@ -405,6 +423,11 @@ export default function SentinelLanding() {
                 isOpen={isAuthModalOpen}
                 onClose={() => setIsAuthModalOpen(false)}
                 mode="register"
+            />
+
+            <CompanyModal
+                isOpen={isCompanyModalOpen}
+                onClose={() => setIsCompanyModalOpen(false)}
             />
         </div>
     );

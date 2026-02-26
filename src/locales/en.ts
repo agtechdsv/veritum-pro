@@ -1149,7 +1149,7 @@ export const en = {
             titleAccent: 'doesn\'t use spreadsheets.',
             subtitle: 'Join the Veritum PRO ecosystem today and transform your firm into a performance machine.',
             button: 'Create My Account Now',
-            footer: 'Powered by AgTech | High-Performance LegalTech © 2024'
+            footer: 'Developed by AGTech | High Performance LegalTech © 2026 All rights reserved.'
         },
         demoModal: {
             successTitle: 'Request Received!',

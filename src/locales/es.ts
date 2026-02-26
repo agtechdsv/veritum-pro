@@ -1191,7 +1191,7 @@ export const es = {
             "titleAccent": "no usa planilhas.",
             "subtitle": "Junte-se ao ecossistema Veritum PRO hoje mesmo e transforme seu escritório em uma máquina de performance.",
             "button": "Criar Minha Conta Agora",
-            "footer": "Desenvolvido por AgTech | LegalTech de Alta Performance © 2024"
+            "footer": "Desenvolvido por AGTech | LegalTech de Alta Performance © 2026"
         },
         "demoModal": {
             "successTitle": "Solicitação Recebida!",
