@@ -591,16 +591,16 @@ export default function PricingPage() {
             </section>
 
             {/* Bundle Justification */}
-            <section className="py-32 px-6 bg-slate-900 dark:bg-slate-950 rounded-[4rem] mx-6 relative overflow-hidden text-white">
+            <section className="py-32 px-6 bg-slate-50 dark:bg-slate-900/80 rounded-[4rem] mx-6 relative overflow-hidden text-slate-900 dark:text-white border border-slate-100 dark:border-none transition-colors duration-300">
                 <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-20 relative z-10">
                     <div className="flex-1 space-y-10">
                         <h2 className="text-5xl md:text-6xl font-black leading-tight tracking-tighter uppercase">
                             {t('pricingPage.whyChoose.title')} <br />
                             <span className="text-branding-gradient">{t('pricingPage.whyChoose.titleAccent')}</span>
                         </h2>
-                        <p className="text-xl text-slate-300 leading-relaxed font-medium">
+                        <p className="text-xl text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
                             {t('pricingPage.whyChoose.subtitle').split('Flow').map((part: string, i: number) => (
-                                i === 0 ? <React.Fragment key={i}>{part}</React.Fragment> : <React.Fragment key={i}><span className="text-white italic">Flow</span>{part}</React.Fragment>
+                                i === 0 ? <React.Fragment key={i}>{part}</React.Fragment> : <React.Fragment key={i}><span className="text-slate-900 dark:text-white italic">Flow</span>{part}</React.Fragment>
                             ))}
                         </p>
                     </div>
@@ -611,9 +611,9 @@ export default function PricingPage() {
                             { title: t('pricingPage.whyChoose.items.2.title'), desc: t('pricingPage.whyChoose.items.2.desc') },
                             { title: t('pricingPage.whyChoose.items.3.title'), desc: t('pricingPage.whyChoose.items.3.desc') }
                         ].map((item, i) => (
-                            <div key={i} className="p-6 bg-white/5 border border-white/10 rounded-3xl">
-                                <h4 className="font-black mb-1 uppercase tracking-tight text-indigo-400">{item.title}</h4>
-                                <p className="text-slate-400 text-sm font-medium">{item.desc}</p>
+                            <div key={i} className="p-6 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-3xl shadow-sm">
+                                <h4 className="font-black mb-1 uppercase tracking-tight text-indigo-600 dark:text-indigo-400">{item.title}</h4>
+                                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">{item.desc}</p>
                             </div>
                         ))}
                     </div>
