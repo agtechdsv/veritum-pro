@@ -12,6 +12,7 @@ import { AuthModal } from '@/components/auth-modal';
 import { LegalModal } from '@/components/legal-modal';
 import { CompanyModal } from '@/components/company-modal';
 import { SuiteDetailModal } from '@/components/suite-detail-modal';
+import { CheckoutModal } from '@/components/modules/checkout-modal';
 import { useTheme } from 'next-themes'
 import Link from 'next/link'
 import { AnimatePresence } from 'framer-motion'
@@ -114,6 +115,8 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
         isOpen: false,
         suite: null
     });
+    const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+    const [checkoutData, setCheckoutData] = useState<{ planName?: string; moduleName?: string; type: 'plan' | 'module' }>({ type: 'plan' });
 
 
     useEffect(() => {
@@ -291,6 +294,12 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                 </div>
             </nav>
 
+            <CheckoutModal
+                isOpen={isCheckoutOpen}
+                onClose={() => setIsCheckoutOpen(false)}
+                {...checkoutData}
+            />
+
             {/* Hero Section */}
             <section className="relative pt-44 pb-32 px-6 overflow-hidden bg-white dark:bg-slate-950 transition-colors duration-300">
                 <div className="max-w-7xl mx-auto text-center relative z-10">
@@ -406,7 +415,8 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                                             <button
                                                 onClick={() => {
                                                     if (isLocked) {
-                                                        router.push('/pricing');
+                                                        setCheckoutData({ type: 'module', moduleName: suite.name });
+                                                        setIsCheckoutOpen(true);
                                                     } else if (showLearnMore) {
                                                         const suiteSlug = suite.suite_key.toLowerCase().replace('_key', '');
                                                         router.push(`/${suiteSlug}`);

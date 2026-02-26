@@ -30,6 +30,7 @@ import { ptBR, enUS } from 'date-fns/locale';
 import { AuthModal } from '@/components/auth-modal';
 import { LegalModal } from '@/components/legal-modal';
 import { CompanyModal } from '@/components/company-modal';
+import { CheckoutModal } from '@/components/modules/checkout-modal';
 import { createMasterClient } from '@/lib/supabase/master';
 import { UserMenu } from '@/components/ui/user-menu';
 import { useTranslation } from '@/contexts/language-context';
@@ -53,6 +54,8 @@ export default function PricingPage() {
     const [currentUser, setCurrentUser] = useState<any>(undefined);
     const [legalModal, setLegalModal] = useState({ isOpen: false, type: 'privacy' as 'privacy' | 'terms' });
     const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
+    const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+    const [checkoutData, setCheckoutData] = useState<{ planName?: string; moduleName?: string; type: 'plan' | 'module' }>({ type: 'plan' });
 
     const dateLocale = locale === 'en' ? enUS : ptBR;
 
@@ -411,6 +414,9 @@ export default function PricingPage() {
                                                 onClick={() => {
                                                     if (plan.name.toLowerCase().includes('strategy') || plan.name.toLowerCase().includes('estrategia')) {
                                                         setIsDemoModalOpen(true);
+                                                    } else if (currentUser) {
+                                                        setCheckoutData({ type: 'plan', planName: plan.name });
+                                                        setIsCheckoutOpen(true);
                                                     } else {
                                                         setIsAuthModalOpen(true);
                                                     }
@@ -525,7 +531,14 @@ export default function PricingPage() {
                                                 ) : (
                                                     (!currentUser || isSocioAdmin) && (
                                                         <button
-                                                            onClick={() => setIsAuthModalOpen(true)}
+                                                            onClick={() => {
+                                                                if (currentUser) {
+                                                                    setCheckoutData({ type: 'module', moduleName: plan.name });
+                                                                    setIsCheckoutOpen(true);
+                                                                } else {
+                                                                    setIsAuthModalOpen(true);
+                                                                }
+                                                            }}
                                                             className={`w-full py-4 rounded-xl font-black text-[10px] tracking-widest uppercase transition-all shadow-sm border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700`}
                                                         >
                                                             {currentUser ? (t('management.settings.plan.acquirePlan') || 'Adquirir Plano') : (t('pricingPage.plans.start.cta') || 'Começar Teste Grátis')}
@@ -923,6 +936,12 @@ export default function PricingPage() {
             <CompanyModal
                 isOpen={isCompanyModalOpen}
                 onClose={() => setIsCompanyModalOpen(false)}
+            />
+
+            <CheckoutModal
+                isOpen={isCheckoutOpen}
+                onClose={() => setIsCheckoutOpen(false)}
+                {...checkoutData}
             />
         </div>
     );

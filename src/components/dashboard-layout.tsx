@@ -23,6 +23,7 @@ import { EmailSettingsManager } from './modules/email-config';
 import AccessManagement from './modules/access-management';
 import TrialCountdown from './shared/trial-countdown';
 import ProfileModal from './ui/profile-modal';
+import { CheckoutModal } from './modules/checkout-modal';
 
 import {
     LayoutDashboard, Scale, FileEdit, DollarSign, BarChart3,
@@ -111,6 +112,8 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+    const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+    const [checkoutData, setCheckoutData] = useState<{ planName?: string; moduleName?: string; type: 'plan' | 'module' }>({ type: 'plan' });
     const { theme, setTheme } = useTheme();
     const hasSyncedTheme = React.useRef(false);
 
@@ -353,7 +356,8 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                     onClick={(e) => {
                                         if (item.isLocked) {
                                             e.preventDefault();
-                                            toast.error(t('modules.notInPlan'));
+                                            setCheckoutData({ type: 'module', moduleName: item.label });
+                                            setIsCheckoutOpen(true);
                                         }
                                     }}
                                     className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 cursor-pointer ${item.isLocked ? 'opacity-50 grayscale' : ''} ${normalize(activeModule) === normalize(item.id)
@@ -493,6 +497,10 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                 <TrialCountdown
                     userId={user.id}
                     isSidebarOpen={isSidebarOpen}
+                    onUpgrade={() => {
+                        setCheckoutData({ type: 'plan', planName: user.plan_name || 'Pro' });
+                        setIsCheckoutOpen(true);
+                    }}
                 />
 
             </aside>
@@ -594,7 +602,8 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                             <button
                                                 onClick={() => {
                                                     if (isSuperAdmin) {
-                                                        router.push('/veritum/settings?tab=plan');
+                                                        setCheckoutData({ type: 'plan', planName: user.plan_name || 'Pro' });
+                                                        setIsCheckoutOpen(true);
                                                     } else {
                                                         toast.error('Acesso restrito. Apenas administradores podem gerenciar o plano.');
                                                     }
@@ -663,6 +672,12 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                     onClose={() => setIsProfileModalOpen(false)}
                     user={user}
                     onUpdateUser={onUpdateUser}
+                />
+
+                <CheckoutModal
+                    isOpen={isCheckoutOpen}
+                    onClose={() => setIsCheckoutOpen(false)}
+                    {...checkoutData}
                 />
             </main>
         </div >

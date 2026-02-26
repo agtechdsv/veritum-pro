@@ -185,3 +185,18 @@ export async function updatePlanPermissions(planId: string, featureIds: string[]
     revalidatePath('/veritum')
     return { success: true }
 }
+
+export async function getPlans() {
+    const supabase = createAdminClient()
+    const { data, error } = await supabase
+        .from('plans')
+        .select('*')
+        .eq('active', true)
+        .order('order_index', { ascending: true })
+
+    if (error) {
+        return { success: false, error: error.message }
+    }
+
+    return { success: true, plans: data }
+}

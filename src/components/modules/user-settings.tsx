@@ -10,6 +10,7 @@ import { toast } from '../ui/toast';
 import OrganizationForm from '../ui/organization-form';
 import { useTranslation } from '@/contexts/language-context';
 import { getFeatures, getPlanPermissions } from '@/app/actions/plan-actions';
+import { CheckoutModal } from './checkout-modal';
 
 interface Props {
     user: User;
@@ -37,7 +38,14 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
         features: Feature[];
         userPermissions: string[];
     } | null>(null);
+    const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+    const [checkoutData, setCheckoutData] = useState<{ planName?: string; moduleName?: string; type: 'plan' | 'module' }>({ type: 'plan' });
     const supabase = createMasterClient();
+
+    const handleCheckout = (type: 'plan' | 'module', name: string) => {
+        setCheckoutData({ type, [type === 'plan' ? 'planName' : 'moduleName']: name });
+        setIsCheckoutOpen(true);
+    };
 
     useEffect(() => {
         if (initialTab) {
@@ -276,7 +284,7 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                                             <p className="text-amber-100 font-medium">{t('management.settings.plan.planAccess') || 'Acesso total ao ecossistema habilitado no seu plano.'}</p>
                                         </div>
                                         <button
-                                            onClick={() => window.open('https://api.whatsapp.com/send?phone=YOUR_SALES_NUMBER', '_blank')}
+                                            onClick={() => handleCheckout('plan', 'Veritum Pro (Upgrade)')}
                                             className="bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-8 py-5 rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl hover:scale-105 transition-all flex items-center justify-center gap-3 w-full md:w-auto"
                                         >
                                             <Zap size={18} className="text-amber-500" />
@@ -333,7 +341,7 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                                                             </span>
                                                         ) : (
                                                             <button
-                                                                onClick={() => window.open('https://api.whatsapp.com/send?phone=YOUR_SALES_NUMBER', '_blank')}
+                                                                onClick={() => handleCheckout('module', suite.name)}
                                                                 className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/40 hover:scale-105 transition-all cursor-pointer text-amber-600 text-[9px] font-black uppercase tracking-widest rounded-full border border-amber-200 dark:border-amber-800/50"
                                                             >
                                                                 <ArrowRight size={12} /> {t('management.settings.plan.acquire') || 'Adquirir'} {hasSomeFeatures && '(Parcial)'}
@@ -461,7 +469,7 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                                                         </div>
                                                     ) : (
                                                         <button
-                                                            onClick={() => window.open('https://api.whatsapp.com/send?phone=YOUR_SALES_NUMBER', '_blank')}
+                                                            onClick={() => handleCheckout('plan', p.name)}
                                                             className="w-full py-4 bg-slate-900 text-white dark:bg-white dark:text-slate-900 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:scale-105 transition-all shadow-lg"
                                                         >
                                                             {t('management.settings.plan.acquirePlan') || 'Adquirir Plano'}
@@ -569,7 +577,7 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                                                             </div>
                                                         ) : (
                                                             <button
-                                                                onClick={() => window.open('https://api.whatsapp.com/send?phone=YOUR_SALES_NUMBER', '_blank')}
+                                                                onClick={() => handleCheckout('module', p.name)}
                                                                 className="w-full py-4 bg-slate-900 text-white dark:bg-white dark:text-slate-900 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:scale-105 transition-all shadow-lg"
                                                             >
                                                                 Adquirir Módulo
@@ -586,6 +594,12 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                     </div>
                 )}
             </div>
+
+            <CheckoutModal
+                isOpen={isCheckoutOpen}
+                onClose={() => setIsCheckoutOpen(false)}
+                {...checkoutData}
+            />
         </div>
     );
 };

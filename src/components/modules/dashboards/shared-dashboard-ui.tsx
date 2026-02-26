@@ -17,80 +17,76 @@ interface CardProps {
 import { Lock } from 'lucide-react';
 import { toast } from '../../ui/toast';
 import { useTranslation } from '@/contexts/language-context';
+import { CheckoutModal } from '../checkout-modal';
+import { useState } from 'react';
 
 export const DashboardCard: React.FC<CardProps> = ({ title, description, subtitle, icon: Icon, color, onClick, isLocked, onModuleChange }) => {
     const { t } = useTranslation();
+    const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+
     return (
-        <button
-            onClick={() => {
-                if (isLocked) {
-                    toast.error(
-                        <div className="flex flex-col gap-2">
-                            <span className="font-bold text-sm">Este módulo requer assinatura!</span>
-                            <span className="text-xs opacity-80">Acesse Configurações {'>'} Minha Assinatura para fazer o upgrade, ou fale com nosso time comercial.</span>
-                            <div className="flex gap-2 mt-2">
-                                <a href="https://api.whatsapp.com/send?phone=YOUR_SALES_NUMBER" target="_blank" rel="noreferrer" className="text-[10px] font-black uppercase tracking-widest bg-white/20 hover:bg-white/30 text-white rounded-lg py-1.5 px-3 transition-all flex items-center gap-1">
-                                    <Lock size={12} /> Consultor
-                                </a>
-                                {onModuleChange && (
-                                    <button onClick={(e) => { e.stopPropagation(); onModuleChange('settings?tab=plan'); toast.dismissAll(); }} className="text-[10px] font-black uppercase tracking-widest bg-emerald-500 hover:bg-emerald-400 text-white rounded-lg py-1.5 px-3 transition-all flex items-center gap-1">
-                                        Assinar
-                                    </button>
-                                )}
-                            </div>
-                        </div>,
-                        { duration: 5000 }
-                    );
-                    return;
-                }
-                onClick();
-            }}
-            className={`group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-[2.5rem] text-left transition-all hover:scale-[1.02] hover:shadow-2xl hover:shadow-indigo-500/10 hover:border-indigo-500/30 cursor-pointer overflow-hidden ${isLocked ? 'opacity-75 grayscale-[0.5]' : ''}`}
-        >
-            {/* Background Glow */}
-            {!isLocked && <div className={`absolute -right-8 -top-8 w-32 h-32 rounded-full opacity-0 group-hover:opacity-10 transition-all duration-700 blur-3xl ${color.replace('text-', 'bg-')}`} />}
+        <>
+            <button
+                onClick={() => {
+                    if (isLocked) {
+                        setIsCheckoutOpen(true);
+                        return;
+                    }
+                    onClick();
+                }}
+                className={`group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-[2.5rem] text-left transition-all hover:scale-[1.02] hover:shadow-2xl hover:shadow-indigo-500/10 hover:border-indigo-500/30 cursor-pointer overflow-hidden ${isLocked ? 'opacity-75 grayscale-[0.5]' : ''}`}
+            >
+                {/* Background Glow */}
+                {!isLocked && <div className={`absolute -right-8 -top-8 w-32 h-32 rounded-full opacity-0 group-hover:opacity-10 transition-all duration-700 blur-3xl ${color.replace('text-', 'bg-')}`} />}
 
-            {isLocked && (
-                <div className="absolute top-6 right-6 p-2 bg-amber-100 dark:bg-amber-900/30 text-amber-600 rounded-xl animate-in fade-in zoom-in duration-300 z-10" title={t('dashboard.moduleLocked') || "Módulo não incluído no seu plano"}>
-                    <Lock size={20} />
-                </div>
-            )}
+                {isLocked && (
+                    <div className="absolute top-6 right-6 p-2 bg-amber-100 dark:bg-amber-900/30 text-amber-600 rounded-xl animate-in fade-in zoom-in duration-300 z-10" title={t('dashboard.moduleLocked') || "Módulo não incluído no seu plano"}>
+                        <Lock size={20} />
+                    </div>
+                )}
 
-            <div className="flex flex-col h-full gap-6">
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all group-hover:scale-110 group-hover:rotate-3 shadow-sm ${isLocked ? 'bg-slate-100 text-slate-400' : `${color.replace('text-', 'bg-')}/10 ${color}`}`}>
-                    <Icon size={28} />
-                </div>
+                <div className="flex flex-col h-full gap-6">
+                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all group-hover:scale-110 group-hover:rotate-3 shadow-sm ${isLocked ? 'bg-slate-100 text-slate-400' : `${color.replace('text-', 'bg-')}/10 ${color}`}`}>
+                        <Icon size={28} />
+                    </div>
 
-                <div className="flex-1 space-y-2">
-                    <h3 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                        {title.split(/\b(PRO)\b/i).map((part, i) =>
-                            part.toUpperCase() === 'PRO' ? (
-                                <span key={i} className="text-branding-gradient">{part}</span>
-                            ) : part
+                    <div className="flex-1 space-y-2">
+                        <h3 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                            {title.split(/\b(PRO)\b/i).map((part, i) =>
+                                part.toUpperCase() === 'PRO' ? (
+                                    <span key={i} className="text-branding-gradient">{part}</span>
+                                ) : part
+                            )}
+                        </h3>
+
+                        {subtitle && (
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500/60 dark:text-indigo-400/40 pb-1">
+                                {subtitle}
+                            </p>
                         )}
-                    </h3>
 
-                    {subtitle && (
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500/60 dark:text-indigo-400/40 pb-1">
-                            {subtitle}
+                        <p className="text-sm font-medium text-slate-500 dark:text-slate-400 italic line-clamp-3">
+                            {description}
+                        </p>
+                    </div>
+
+                    {isLocked && (
+                        <p className="text-[10px] font-black uppercase text-amber-600 dark:text-amber-500 tracking-widest italic text-center">
+                            {t('dashboard.moduleLocked') || 'Este módulo não faz parte do seu plano atual.'}
                         </p>
                     )}
 
-                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400 italic line-clamp-3">
-                        {description}
-                    </p>
+                    <div className={`flex items-center gap-2 text-xs font-black uppercase tracking-widest transition-all transform translate-x-[-10px] group-hover:translate-x-0 ${isLocked ? 'text-amber-600' : 'text-indigo-600 dark:text-indigo-400 opacity-0 group-hover:opacity-100'}`}>
+                        {isLocked ? (t('dashboard.acquireModule') || 'Adquirir Módulo') : (t('dashboard.accessModule') || 'Acessar Módulo')} <ChevronRight size={14} />
+                    </div>
                 </div>
-
-                {isLocked && (
-                    <p className="text-[10px] font-black uppercase text-amber-600 dark:text-amber-500 tracking-widest italic text-center">
-                        {t('dashboard.moduleLocked') || 'Este módulo não faz parte do seu plano atual.'}
-                    </p>
-                )}
-
-                <div className={`flex items-center gap-2 text-xs font-black uppercase tracking-widest transition-all transform translate-x-[-10px] group-hover:translate-x-0 ${isLocked ? 'text-amber-600' : 'text-indigo-600 dark:text-indigo-400 opacity-0 group-hover:opacity-100'}`}>
-                    {isLocked ? (t('dashboard.acquireModule') || 'Adquirir Módulo') : (t('dashboard.accessModule') || 'Acessar Módulo')} <ChevronRight size={14} />
-                </div>
-            </div>
-        </button>
+            </button>
+            <CheckoutModal
+                isOpen={isCheckoutOpen}
+                onClose={() => setIsCheckoutOpen(false)}
+                type="module"
+                moduleName={title}
+            />
+        </>
     );
 };

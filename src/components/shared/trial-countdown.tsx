@@ -8,9 +8,10 @@ import { motion } from 'framer-motion';
 interface Props {
     userId: string;
     isSidebarOpen: boolean;
+    onUpgrade?: () => void;
 }
 
-const TrialCountdown: React.FC<Props> = ({ userId, isSidebarOpen }) => {
+const TrialCountdown: React.FC<Props> = ({ userId, isSidebarOpen, onUpgrade }) => {
     const [daysRemaining, setDaysRemaining] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -97,6 +98,18 @@ const TrialCountdown: React.FC<Props> = ({ userId, isSidebarOpen }) => {
                             className={`h-full rounded-full ${daysRemaining <= 3 ? 'bg-rose-500' : 'bg-indigo-600'}`}
                         />
                     </div>
+                )}
+
+                {isSidebarOpen && onUpgrade && (
+                    <button
+                        onClick={onUpgrade}
+                        className={`w-full py-2 mt-1 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all shadow-sm ${daysRemaining <= 3
+                            ? 'bg-rose-500 text-white hover:bg-rose-600'
+                            : 'bg-indigo-600 text-white hover:bg-indigo-700 hover:scale-[1.02]'
+                            }`}
+                    >
+                        Assinar Agora
+                    </button>
                 )}
             </motion.div>
         </div>

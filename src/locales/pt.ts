@@ -721,6 +721,7 @@ export const pt = {
                     shortDesc: 'Descrição Curta',
                     shortDescPlaceholder: 'Breve slogan ou diferencial do plano...',
                     translateIA: 'Traduzir via Gemini IA',
+                    monthlyPrice: 'Preço Mensal (R$)',
                     yearlyPrice: 'Preço Anual (R$)',
                     installments: 'Qtd. Parcelas (S/ Juros)',
                     yearlyCashDiscount: 'Desconto À Vista Anual (%)',
