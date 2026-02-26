@@ -38,12 +38,14 @@ export default function RootLayout({
           <ThemeProvider
             attribute="class"
             defaultTheme="dark"
+            storageKey="veritum-theme"
             enableSystem
             disableTransitionOnChange
           >
             {children}
           </ThemeProvider>
         </LanguageProvider>
+
         <script
           dangerouslySetInnerHTML={{
             __html: `

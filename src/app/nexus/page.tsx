@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import {
     LayoutDashboard, CheckCircle2, Clock, Users, ArrowRight,
     ChevronRight, Moon, Sun, ShieldCheck, Scale, BarChart3,
-    Kanban, Workflow, Building2, FileText, Zap, MousePointer2, LogOut, Briefcase
+    Kanban, Workflow, Building2, FileText, Zap, MousePointer2,
+    Sparkles, LogOut, Briefcase, Send
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
@@ -305,56 +306,52 @@ export default function NexusLanding() {
                 </div>
             </section>
 
-            {/* Dobra 4: UX e Diferencial */}
-            <section id="ux" className="py-32 px-6 bg-slate-900 dark:bg-slate-900/80 rounded-[4rem] mx-6 relative overflow-hidden text-white">
+            {/* Dobra 4: Por que o Nexus é diferente? */}
+            <section id="ux" className="py-32 px-6 bg-slate-50 dark:bg-slate-900/80 rounded-[4rem] mx-6 relative overflow-hidden text-slate-900 dark:text-white border border-slate-100 dark:border-none">
                 <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-20 relative z-10">
                     <div className="flex-1 space-y-10">
                         <h2 className="text-5xl md:text-6xl font-black leading-tight tracking-tighter uppercase mb-6">
                             {t('landingPages.nexus.ux.title').split(' ').map((word: string, i: number) => (
                                 <React.Fragment key={i}>
-                                    {word.toLowerCase() === 'trabalho.' || word.toLowerCase() === 'workflow.' ? <span className="text-branding-gradient">{word}</span> : word}{' '}
+                                    {word.toLowerCase() === 'flow' || word.toLowerCase() === 'trabalho.' || word.toLowerCase() === 'work' || word.toLowerCase() === 'flow.' ? <span className="text-branding-gradient">{word}</span> : word}{' '}
                                 </React.Fragment>
                             ))}
                         </h2>
-                        <p className="text-xl text-slate-300 leading-relaxed font-medium">
+                        <p className="text-xl text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
                             {t('landingPages.nexus.ux.subtitle')}
                         </p>
-                        <div className="flex flex-col gap-6">
-                            <div className="flex gap-4 items-start p-6 bg-white/5 rounded-3xl border border-white/10 hover:bg-white/10 transition-colors">
-                                <MousePointer2 className="text-emerald-400 shrink-0 mt-1" />
-                                <div>
-                                    <h4 className="font-black text-lg mb-1 uppercase tracking-tight">{t('landingPages.nexus.ux.items.progressive.title')}</h4>
-                                    <p className="text-slate-400 text-sm font-medium">{t('landingPages.nexus.ux.items.progressive.desc')}</p>
+                        <div className="space-y-6">
+                            {[
+                                { title: t('landingPages.nexus.ux.items.progressive.title'), desc: t('landingPages.nexus.ux.items.progressive.desc'), icon: MousePointer2 },
+                                { title: t('landingPages.nexus.ux.items.noise.title'), desc: t('landingPages.nexus.ux.items.noise.desc'), icon: Zap }
+                            ].map((item, i) => (
+                                <div key={i} className="flex gap-4 items-start p-6 bg-white dark:bg-slate-900/50 rounded-3xl border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-all duration-300 shadow-sm group">
+                                    <item.icon className="text-indigo-600 dark:text-indigo-400 shrink-0 mt-1 group-hover:scale-110 transition-transform" size={24} />
+                                    <div>
+                                        <h4 className="font-black text-lg mb-1 uppercase tracking-tight text-slate-900 dark:text-white">{item.title}</h4>
+                                        <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">{item.desc}</p>
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="flex gap-4 items-start p-6 bg-white/5 rounded-3xl border border-white/10 hover:bg-white/10 transition-colors">
-                                <ShieldCheck className="text-indigo-400 shrink-0 mt-1" />
-                                <div>
-                                    <h4 className="font-black text-lg mb-1 uppercase tracking-tight">{t('landingPages.nexus.ux.items.noise.title')}</h4>
-                                    <p className="text-slate-400 text-sm font-medium">{t('landingPages.nexus.ux.items.noise.desc')}</p>
-                                </div>
-                            </div>
+                            ))}
                         </div>
                     </div>
                     <div className="flex-1 relative aspect-square lg:aspect-auto h-full min-h-[500px]">
-                        {/* Large decorative mockup or visual element here */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/20 to-emerald-600/20 blur-3xl opacity-50"></div>
-                        <div className="relative z-10 w-full h-full border border-white/10 bg-white/5 backdrop-blur-3xl rounded-[3rem] p-10 flex flex-col justify-center">
-                            <div className="space-y-6">
-                                <div className="h-4 w-48 bg-white/20 rounded-full" />
-                                <div className="h-1 bg-white/10 w-full rounded-full" />
-                                <div className="grid grid-cols-2 gap-6 pt-6">
-                                    <div className="h-32 bg-white/10 rounded-3xl border border-white/10 flex flex-col items-center justify-center gap-2">
-                                        <div className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center"><CheckCircle2 size={24} /></div>
-                                        <span className="text-xs font-black uppercase text-slate-400">{t('landingPages.nexus.ux.efficiency')}</span>
-                                    </div>
-                                    <div className="h-32 bg-white/10 rounded-3xl border border-white/10 flex flex-col items-center justify-center gap-2">
-                                        <div className="w-10 h-10 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center"><Zap size={24} /></div>
-                                        <span className="text-xs font-black uppercase text-slate-400">{t('landingPages.nexus.ux.automation')}</span>
-                                    </div>
+                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/20 to-violet-600/20 blur-3xl opacity-50"></div>
+                        <div className="relative z-10 w-full h-full border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900/80 backdrop-blur-3xl rounded-[3rem] p-10 flex flex-col justify-center gap-8 shadow-2xl shadow-indigo-500/5 transition-colors duration-300">
+                            <div className="space-y-4">
+                                <div className="h-6 w-3/4 bg-slate-100 dark:bg-white/10 rounded-full" />
+                                <div className="h-2 w-full bg-slate-50 dark:bg-white/5 rounded-full" />
+                                <div className="h-2 w-[90%] bg-slate-50 dark:bg-white/5 rounded-full" />
+                            </div>
+                            <div className="p-6 bg-slate-50 dark:bg-white/10 rounded-3xl border border-slate-100 dark:border-white/20 animate-pulse">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center"><Zap size={18} className="text-indigo-600 dark:text-indigo-400" /></div>
+                                    <div className="h-4 w-32 bg-slate-200 dark:bg-white/20 rounded-full" />
                                 </div>
-                                <div className="h-1 bg-white/10 w-full rounded-full" />
-                                <div className="h-4 w-32 bg-white/20 rounded-full ml-auto" />
+                                <div className="space-y-2">
+                                    <div className="h-2 w-full bg-slate-100 dark:bg-white/10 rounded-full" />
+                                    <div className="h-2 w-2/3 bg-slate-100 dark:bg-white/10 rounded-full" />
+                                </div>
                             </div>
                         </div>
                     </div>

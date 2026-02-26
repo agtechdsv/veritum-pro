@@ -292,8 +292,8 @@ export default function SentinelLanding() {
             </section>
 
             {/* Dobra 4: Por que o Sentinel PRO é diferente? */}
-            <section id="ux" className="py-32 px-6 bg-slate-900 dark:bg-slate-900/80 text-white rounded-[4rem] mx-6 relative overflow-hidden">
-                <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-16 relative z-10">
+            <section id="ux" className="py-32 px-6 bg-slate-50 dark:bg-slate-900/80 text-slate-900 dark:text-white rounded-[4rem] mx-6 relative overflow-hidden border border-slate-100 dark:border-none transition-colors duration-300">
+                <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-16 relative z-10 transition-colors duration-300">
                     <div className="flex-1 space-y-8">
                         <h2 className="text-5xl font-black tracking-tighter uppercase leading-tight">
                             {t('landingPages.sentinel.ux.title').split(' ').map((word: string, i: number) => (
@@ -302,13 +302,13 @@ export default function SentinelLanding() {
                                 </React.Fragment>
                             ))}
                         </h2>
-                        <p className="text-xl text-slate-300 leading-relaxed font-medium">
+                        <p className="text-xl text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
                             {t('landingPages.sentinel.ux.subtitle')}
                         </p>
                         <ul className="space-y-4">
                             {((t('landingPages.sentinel.ux.list') as unknown) as string[]).map((text: string, i: number) => (
-                                <li key={i} className="flex items-center gap-3 font-bold text-slate-200">
-                                    <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 border border-emerald-500/30">
+                                <li key={i} className="flex items-center gap-3 font-bold text-slate-700 dark:text-slate-200">
+                                    <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
                                         <Check size={14} />
                                     </div>
                                     {text}
@@ -317,21 +317,21 @@ export default function SentinelLanding() {
                         </ul>
                     </div>
                     <div className="flex-1 grid grid-cols-2 gap-4">
-                        <div className="aspect-square bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 p-6 flex flex-col justify-center items-center text-center gap-4 hover:bg-white/10 transition-colors">
-                            <Eye size={40} className="text-indigo-400" />
-                            <span className="font-bold text-sm">{t('landingPages.sentinel.ux.grid.vision')}</span>
+                        <div className="aspect-square bg-white dark:bg-slate-900/50 backdrop-blur-md rounded-3xl border border-slate-200 dark:border-white/10 p-6 flex flex-col justify-center items-center text-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all shadow-sm group">
+                            <Eye size={40} className="text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition-transform" />
+                            <span className="font-bold text-sm text-slate-900 dark:text-white">{t('landingPages.sentinel.ux.grid.vision')}</span>
                         </div>
-                        <div className="aspect-square bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 p-6 flex flex-col justify-center items-center text-center gap-4 hover:bg-white/10 transition-colors">
-                            <ShieldCheck size={40} className="text-emerald-400" />
-                            <span className="font-bold text-sm">{t('landingPages.sentinel.ux.grid.security')}</span>
+                        <div className="aspect-square bg-white dark:bg-slate-900/50 backdrop-blur-md rounded-3xl border border-slate-200 dark:border-white/10 p-6 flex flex-col justify-center items-center text-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all shadow-sm group">
+                            <ShieldCheck size={40} className="text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform" />
+                            <span className="font-bold text-sm text-slate-900 dark:text-white">{t('landingPages.sentinel.ux.grid.security')}</span>
                         </div>
-                        <div className="aspect-square bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 p-6 flex flex-col justify-center items-center text-center gap-4 hover:bg-white/10 transition-colors">
-                            <Zap size={40} className="text-amber-400" />
-                            <span className="font-bold text-sm">{t('landingPages.sentinel.ux.grid.action')}</span>
+                        <div className="aspect-square bg-white dark:bg-slate-900/50 backdrop-blur-md rounded-3xl border border-slate-200 dark:border-white/10 p-6 flex flex-col justify-center items-center text-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all shadow-sm group">
+                            <Zap size={40} className="text-amber-600 dark:text-amber-400 group-hover:scale-110 transition-transform" />
+                            <span className="font-bold text-sm text-slate-900 dark:text-white">{t('landingPages.sentinel.ux.grid.action')}</span>
                         </div>
-                        <div className="aspect-square bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 p-6 flex flex-col justify-center items-center text-center gap-4 hover:bg-white/10 transition-colors">
-                            <ZapOff size={40} className="text-rose-400" />
-                            <span className="font-bold text-sm">{t('landingPages.sentinel.ux.grid.stress')}</span>
+                        <div className="aspect-square bg-white dark:bg-slate-900/50 backdrop-blur-md rounded-3xl border border-slate-200 dark:border-white/10 p-6 flex flex-col justify-center items-center text-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all shadow-sm group">
+                            <Zap size={40} className="text-rose-600 dark:text-rose-400 group-hover:scale-110 transition-transform rotate-180" />
+                            <span className="font-bold text-sm text-slate-900 dark:text-white">{t('landingPages.sentinel.ux.grid.stress')}</span>
                         </div>
                     </div>
                 </div>

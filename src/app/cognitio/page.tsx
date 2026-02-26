@@ -292,56 +292,49 @@ export default function CognitioLanding() {
             </section>
 
             {/* Dobra 4: UX e Diferencial */}
-            <section id="ux" className="py-32 px-6 bg-slate-900 dark:bg-slate-900/80 rounded-[4rem] mx-6 relative overflow-hidden text-white">
-                <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-20 relative z-10">
+            <section id="ux" className="py-32 px-6 bg-slate-50 dark:bg-slate-900/80 rounded-[4rem] mx-6 relative overflow-hidden text-slate-900 dark:text-white border border-slate-100 dark:border-none transition-colors duration-300">
+                <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-20 relative z-10 transition-colors duration-300">
                     <div className="flex-1 space-y-10">
                         <h2 className="text-5xl md:text-6xl font-black leading-tight tracking-tighter uppercase mb-6">
-                            {t('landingPages.cognitio.ux.title').split(' ').map((word: string, i: number) => {
-                                if (word.toLowerCase() === '"parede' || word.toLowerCase() === 'de' || word.toLowerCase() === 'números".' || word.toLowerCase() === '"wall' || word.toLowerCase() === 'of' || word.toLowerCase() === 'numbers".') {
-                                    return <React.Fragment key={i}><span className="text-branding-gradient">{word}</span> </React.Fragment>
-                                }
-                                return word + ' '
-                            })}
+                            {t('landingPages.cognitio.ux.title').split(' ').map((word: string, i: number) => (
+                                <React.Fragment key={i}>
+                                    {word.toLowerCase() === '"parede' || word.toLowerCase() === 'números".' || word.toLowerCase() === '"wall' || word.toLowerCase() === 'numbers".' ? <span className="text-branding-gradient">{word}</span> : word}{' '}
+                                </React.Fragment>
+                            ))}
                         </h2>
-                        <p className="text-xl text-slate-300 leading-relaxed font-medium">
+                        <p className="text-xl text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
                             {t('landingPages.cognitio.ux.subtitle')}
                         </p>
                         <div className="space-y-6">
                             {[
-                                { title: t('landingPages.cognitio.ux.items.disclosure.title'), desc: t('landingPages.cognitio.ux.items.disclosure.desc'), icon: MousePointer2 },
-                                { title: t('landingPages.cognitio.ux.items.trends.title'), desc: t('landingPages.cognitio.ux.items.trends.desc'), icon: TrendingUp },
-                                { title: t('landingPages.cognitio.ux.items.export.title'), desc: t('landingPages.cognitio.ux.items.export.desc'), icon: Presentation }
+                                { title: t('landingPages.cognitio.ux.items.disclosure.title'), desc: t('landingPages.cognitio.ux.items.disclosure.desc'), icon: Search },
+                                { title: t('landingPages.cognitio.ux.items.trends.title'), desc: t('landingPages.cognitio.ux.items.trends.desc'), icon: Zap },
+                                { title: t('landingPages.cognitio.ux.items.export.title'), desc: t('landingPages.cognitio.ux.items.export.desc'), icon: TrendingUp }
                             ].map((item, i) => (
-                                <div key={i} className="flex gap-4 items-start p-6 bg-white/5 rounded-3xl border border-white/10 hover:bg-white/10 transition-colors">
-                                    <item.icon className="text-blue-400 shrink-0 mt-1" size={24} />
+                                <div key={i} className="flex gap-4 items-start p-6 bg-white dark:bg-slate-900/50 rounded-3xl border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-all duration-300 shadow-sm group">
+                                    <item.icon className="text-indigo-600 dark:text-indigo-400 shrink-0 mt-1 group-hover:scale-110 transition-transform" size={24} />
                                     <div>
-                                        <h4 className="font-black text-lg mb-1 uppercase tracking-tight">{item.title}</h4>
-                                        <p className="text-slate-400 text-sm font-medium">{item.desc}</p>
+                                        <h4 className="font-black text-lg mb-1 uppercase tracking-tight text-slate-900 dark:text-white">{item.title}</h4>
+                                        <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">{item.desc}</p>
                                     </div>
                                 </div>
                             ))}
                         </div>
                     </div>
                     <div className="flex-1 relative aspect-square lg:aspect-auto h-full min-h-[500px]">
-                        <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-emerald-600/20 blur-3xl opacity-50"></div>
-                        <div className="relative z-10 w-full h-full border border-white/10 bg-white/5 backdrop-blur-3xl rounded-[3rem] p-10 flex flex-col justify-center gap-8">
-                            <div className="space-y-6">
-                                <div className="flex justify-between items-center">
-                                    <div className="h-4 w-32 bg-white/20 rounded-full" />
-                                    <div className="flex gap-2">
-                                        <div className="w-8 h-8 rounded-lg bg-emerald-500/20" />
-                                        <div className="w-8 h-8 rounded-lg bg-blue-500/20" />
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="h-32 bg-white/10 rounded-2xl border border-white/10 animate-pulse" />
-                                    <div className="h-32 bg-white/10 rounded-2xl border border-white/10 animate-pulse" style={{ animationDelay: '0.5s' }} />
-                                </div>
-                                <div className="space-y-3">
-                                    <div className="h-2 w-full bg-white/10 rounded-full" />
-                                    <div className="h-2 w-full bg-white/10 rounded-full" />
-                                    <div className="h-2 w-2/3 bg-white/10 rounded-full" />
-                                </div>
+                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/20 to-blue-600/20 blur-3xl opacity-50"></div>
+                        <div className="relative z-10 w-full h-full border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900/80 backdrop-blur-3xl rounded-[3rem] p-10 flex flex-col justify-center gap-8 shadow-2xl shadow-indigo-500/10 transition-colors duration-300">
+                            <div className="flex gap-4 items-end">
+                                <div className="w-8 h-12 bg-slate-100 dark:bg-slate-800 rounded-lg animate-pulse" />
+                                <div className="w-8 h-20 bg-indigo-500/40 rounded-lg" />
+                                <div className="w-8 h-32 bg-indigo-500 rounded-lg" />
+                                <div className="w-8 h-16 bg-slate-100 dark:bg-slate-800 rounded-lg" />
+                                <div className="w-8 h-24 bg-indigo-500/60 rounded-lg" />
+                            </div>
+                            <div className="space-y-4">
+                                <div className="h-4 w-48 bg-slate-100 dark:bg-slate-800 rounded-full" />
+                                <div className="h-2 w-full bg-slate-100 dark:bg-slate-800/50 rounded-full" />
+                                <div className="h-2 w-2/3 bg-slate-100 dark:bg-slate-800/50 rounded-full" />
                             </div>
                         </div>
                     </div>

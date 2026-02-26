@@ -76,19 +76,21 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
             const profileError = profileRes.error;
             const prefs = prefsRes.data;
 
-            // 2. IMMEDIATE Preference Hydration (Priority: UI Speed)
-            if (prefs) {
-                // Here we just ensure the internal UI state of VeritumLayout is consistent
-                // for things like custom keys. Global Theme/Locale are handled by Root Providers.
-                setPreferences({
-                    user_id: authUser.id,
-                    language: (prefs.language || 'pt') as Locale,
-                    theme: (prefs.theme || 'dark'),
-                    custom_supabase_url: prefs.custom_supabase_url,
-                    custom_supabase_key: prefs.custom_supabase_key,
-                    custom_gemini_key: prefs.custom_gemini_key,
-                });
-            }
+            // 2. IMMEDIATE Preference Hydration (Priority: LocalStorage is MASTER)
+            const localLanguage = localStorage.getItem('veritum-locale') as Locale;
+            const localTheme = localStorage.getItem('veritum-theme');
+
+            const currentLang = (localLanguage || 'pt') as Locale;
+            const currentTheme = (localTheme || 'dark') as 'light' | 'dark' | 'system';
+
+            setPreferences({
+                user_id: authUser.id,
+                language: currentLang,
+                theme: currentTheme,
+                custom_supabase_url: prefs?.custom_supabase_url,
+                custom_supabase_key: prefs?.custom_supabase_key,
+                custom_gemini_key: prefs?.custom_gemini_key,
+            });
 
             // 3. Process Profile Data
             if (profile) {
@@ -260,7 +262,7 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
         if (newPrefs.language !== locale) setLocale(newPrefs.language as Locale);
         if (newPrefs.theme !== theme) setTheme(newPrefs.theme);
 
-        // Persistent DB update ONLY for critical credentials
+        // Persistent DB update for cloud-only preferences (Keys, Google tokens, etc)
         await supabase
             .from('user_preferences')
             .update({
@@ -284,10 +286,10 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
 
     if (loading) {
         return (
-            <div className="h-screen w-full flex items-center justify-center bg-slate-950">
+            <div className="h-screen w-full flex items-center justify-center bg-white dark:bg-slate-950 transition-colors duration-500">
                 <div className="flex flex-col items-center gap-4">
                     <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-white font-medium animate-pulse">{t('common.loadingEcosystem') || 'Carregando Ecossistema...'}</p>
+                    <p className="text-slate-500 dark:text-white font-medium animate-pulse">{t('common.loadingEcosystem') || 'Carregando Ecossistema...'}</p>
                 </div>
             </div>
         );

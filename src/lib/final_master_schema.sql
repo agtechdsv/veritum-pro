@@ -53,8 +53,7 @@ create table if not exists public.users (
 
 create table if not exists public.user_preferences (
   user_id uuid primary key references auth.users(id) on delete cascade,
-  language text default 'pt' check (language in ('pt', 'en', 'es')),
-  theme text default 'dark' check (theme in ('light', 'dark')),
+  -- Idioma e Tema agora são exclusivos do LocalStorage (Sole Source of Truth)
   
   -- BYODB Campos (Chaves do Inquilino/Cliente)
   custom_supabase_url text,

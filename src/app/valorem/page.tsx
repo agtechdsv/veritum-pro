@@ -6,7 +6,8 @@ import {
     ChevronRight, Moon, Sun, Scale, BarChart3,
     QrCode, Smartphone, Receipt, FileSpreadsheet, Zap,
     MousePointer2, CheckCircle2, AlertCircle, Banknote,
-    ArrowDownToLine, Users2, FileOutput, LogOut, Briefcase
+    ArrowDownToLine, Users2, FileOutput, LogOut, Briefcase,
+    Eye, ShieldCheck
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
@@ -302,18 +303,17 @@ export default function ValoremLanding() {
             </section>
 
             {/* Dobra 4: UX e Diferencial */}
-            <section id="ux" className="py-32 px-6 bg-slate-900 dark:bg-slate-900/80 rounded-[4rem] mx-6 relative overflow-hidden text-white">
-                <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-20 relative z-10">
+            <section id="ux" className="py-32 px-6 bg-slate-50 dark:bg-slate-900/80 rounded-[4rem] mx-6 relative overflow-hidden text-slate-900 dark:text-white border border-slate-100 dark:border-none transition-colors duration-300">
+                <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-20 relative z-10 transition-colors duration-300">
                     <div className="flex-1 space-y-10">
                         <h2 className="text-5xl md:text-6xl font-black leading-tight tracking-tighter uppercase mb-6">
-                            {t('landingPages.valorem.ux.title').split(' ').map((word: string, i: number) => {
-                                if (word.toLowerCase() === 'idioma.' || word.toLowerCase() === 'language.' || word.toLowerCase() === 'your') {
-                                    return <React.Fragment key={i}><span className="text-branding-gradient">{word}</span> </React.Fragment>
-                                }
-                                return word + ' '
-                            })}
+                            {t('landingPages.valorem.ux.title').split(' ').map((word: string, i: number) => (
+                                <React.Fragment key={i}>
+                                    {word.toLowerCase() === 'finanças' || word.toLowerCase() === 'idioma.' || word.toLowerCase() === 'finances' || word.toLowerCase() === 'language.' ? <span className="text-branding-gradient">{word}</span> : word}{' '}
+                                </React.Fragment>
+                            ))}
                         </h2>
-                        <p className="text-xl text-slate-300 leading-relaxed font-medium">
+                        <p className="text-xl text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
                             {t('landingPages.valorem.ux.subtitle')}
                         </p>
                         <div className="space-y-6">
@@ -322,39 +322,32 @@ export default function ValoremLanding() {
                                 { title: t('landingPages.valorem.ux.items.sharing.title'), desc: t('landingPages.valorem.ux.items.sharing.desc'), icon: Users2 },
                                 { title: t('landingPages.valorem.ux.items.export.title'), desc: t('landingPages.valorem.ux.items.export.desc'), icon: FileOutput }
                             ].map((item, i) => (
-                                <div key={i} className="flex gap-4 items-start p-6 bg-white/5 rounded-3xl border border-white/10 hover:bg-white/10 transition-colors">
-                                    <item.icon className="text-emerald-400 shrink-0 mt-1" size={24} />
+                                <div key={i} className="flex gap-4 items-start p-6 bg-white dark:bg-slate-900/50 rounded-3xl border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-all duration-300 shadow-sm group">
+                                    <item.icon className="text-indigo-600 dark:text-indigo-400 shrink-0 mt-1 group-hover:scale-110 transition-transform" size={24} />
                                     <div>
-                                        <h4 className="font-black text-lg mb-1 uppercase tracking-tight">{item.title}</h4>
-                                        <p className="text-slate-400 text-sm font-medium">{item.desc}</p>
+                                        <h4 className="font-black text-lg mb-1 uppercase tracking-tight text-slate-900 dark:text-white">{item.title}</h4>
+                                        <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">{item.desc}</p>
                                     </div>
                                 </div>
                             ))}
                         </div>
                     </div>
                     <div className="flex-1 relative aspect-square lg:aspect-auto h-full min-h-[500px]">
-                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-600/20 to-emerald-400/20 blur-3xl opacity-50"></div>
-                        <div className="relative z-10 w-full h-full border border-white/10 bg-white/5 backdrop-blur-3xl rounded-[3rem] p-10 flex flex-col justify-center gap-8">
-                            <div className="p-8 border border-white/10 bg-white/5 rounded-3xl space-y-6">
-                                <div className="flex items-center justify-between">
-                                    <div className="h-4 w-24 bg-white/20 rounded-full" />
-                                    <div className="h-8 w-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center"><TrendingUp size={16} /></div>
+                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-600/20 to-blue-600/20 blur-3xl opacity-50"></div>
+                        <div className="relative z-10 w-full h-full border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900/80 backdrop-blur-3xl rounded-[3rem] p-10 flex flex-col justify-center gap-8 shadow-2xl shadow-emerald-500/5 transition-colors duration-300">
+                            <div className="space-y-6">
+                                <div className="flex justify-between items-center">
+                                    <div className="h-4 w-32 bg-slate-100 dark:bg-white/20 rounded-full" />
+                                    <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-black text-xs">V</div>
                                 </div>
-                                <div className="h-8 w-48 bg-white/10 rounded-xl" />
-                                <div className="flex gap-2">
-                                    <div className="flex-1 h-32 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 flex flex-col items-center justify-center gap-2">
-                                        <div className="text-2xl font-black text-emerald-400">85%</div>
-                                        <div className="text-[8px] font-black uppercase text-slate-500">{t('landingPages.valorem.mockup.efficiency')}</div>
-                                    </div>
-                                    <div className="flex-1 h-32 bg-white/5 rounded-2xl border border-white/10 flex flex-col items-center justify-center gap-2">
-                                        <div className="text-2xl font-black text-white">$4.2k</div>
-                                        <div className="text-[8px] font-black uppercase text-slate-500">{t('landingPages.valorem.mockup.today')}</div>
-                                    </div>
+                                <div className="space-y-3">
+                                    <div className="h-8 w-full bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/10" />
+                                    <div className="h-8 w-full bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/10" />
+                                    <div className="h-8 w-2/3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/10" />
                                 </div>
-                            </div>
-                            <div className="flex gap-4">
-                                <div className="h-12 flex-1 bg-emerald-500 text-white rounded-2xl flex items-center justify-center font-bold text-xs">{t('landingPages.valorem.mockup.direct')}</div>
-                                <div className="h-12 flex-1 bg-white/10 text-white rounded-2xl flex items-center justify-center font-bold text-xs border border-white/10">{t('landingPages.valorem.mockup.boleto')}</div>
+                                <div className="pt-4 flex justify-end">
+                                    <div className="h-10 w-32 bg-emerald-600 rounded-xl flex items-center justify-center text-[10px] font-black text-white uppercase shadow-lg shadow-emerald-600/20">{t('landingPages.valorem.ux.button')}</div>
+                                </div>
                             </div>
                         </div>
                     </div>

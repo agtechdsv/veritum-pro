@@ -43,7 +43,7 @@ export default function LandingPage() {
     }, [])
 
     return (
-        <Suspense fallback={<div className="min-h-screen bg-slate-950 flex items-center justify-center"><div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div></div>}>
+        <Suspense fallback={<div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center transition-colors duration-500"><div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div></div>}>
             <LandingPageContent
                 theme={theme}
                 setTheme={setTheme}
@@ -228,20 +228,8 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
         setLegalModal({ isOpen: true, type });
     };
 
-    useEffect(() => {
-        if (mounted) {
-            const savedTheme = localStorage.getItem('veritum-theme');
-            if (savedTheme) {
-                setTheme(savedTheme);
-            }
-        }
-    }, [mounted, setTheme]);
-
     const toggleTheme = () => {
-        const currentTheme = theme === 'system' ? resolvedTheme : theme;
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        setTheme(newTheme);
-        localStorage.setItem('veritum-theme', newTheme);
+        setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
     }
 
     // Prevent hydration mismatch

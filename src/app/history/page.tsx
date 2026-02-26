@@ -182,7 +182,7 @@ export default function HistoryPage() {
                 </section>
 
                 {/* Section 3: The Meaning of Veritum (Premium Card Style) */}
-                <section className="py-40 px-6 bg-slate-900 text-white relative overflow-hidden">
+                <section className="py-40 px-6 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white relative overflow-hidden transition-colors duration-500">
                     {/* Noise texture overlay */}
                     <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
 
@@ -202,21 +202,18 @@ export default function HistoryPage() {
                                     title: t('storyPage.meaning.veritas.title'),
                                     subtitle: t('storyPage.meaning.veritas.subtitle'),
                                     desc: t('storyPage.meaning.veritas.desc'),
-                                    color: "from-slate-700 to-slate-800",
                                     icon: Shield
                                 },
                                 {
                                     title: t('storyPage.meaning.verum.title'),
                                     subtitle: t('storyPage.meaning.verum.subtitle'),
                                     desc: t('storyPage.meaning.verum.desc'),
-                                    color: "from-blue-800 to-blue-900",
                                     icon: Scale
                                 },
                                 {
                                     title: t('storyPage.meaning.veritum.title'),
                                     subtitle: t('storyPage.meaning.veritum.subtitle'),
                                     desc: t('storyPage.meaning.veritum.desc'),
-                                    color: "bg-branding-gradient shadow-[0_0_50px_rgba(16,185,129,0.3)] scale-110 h-[100%]",
                                     icon: MessageSquare,
                                     isSpecial: true
                                 }
@@ -227,19 +224,24 @@ export default function HistoryPage() {
                                     whileInView={{ opacity: 1, y: 0 }}
                                     transition={{ delay: i * 0.2, duration: 0.6 }}
                                     viewport={{ once: true }}
-                                    className={`p-10 rounded-[3rem] border flex flex-col items-center gap-6 group transition-all duration-500 ${item.isSpecial ? 'bg-branding-gradient border-white/20' : 'bg-slate-800/50 border-white/10'}`}
+                                    className={`p-10 rounded-[3rem] border flex flex-col items-center gap-6 group transition-all duration-500 shadow-sm ${item.isSpecial ? 'bg-branding-gradient border-white/20 text-white' : 'bg-white dark:bg-slate-800/50 border-slate-200 dark:border-white/10'}`}
                                 >
-                                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 ${item.isSpecial ? 'bg-white/20' : 'bg-white/5'}`}>
-                                        <item.icon className="w-8 h-8 text-white" />
+                                    <div className={`w-20 h-20 rounded-3xl flex items-center justify-center transform group-hover:rotate-12 transition-transform duration-500 ${item.isSpecial ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white'}`}>
+                                        <item.icon size={36} strokeWidth={1.5} />
                                     </div>
-                                    <h3 className="text-4xl font-black uppercase tracking-widest">{item.title}</h3>
-                                    <h4 className={`text-sm font-bold uppercase tracking-[0.2em] ${item.isSpecial ? 'text-white/80' : 'text-indigo-400'}`}>{item.subtitle}</h4>
-                                    <p className={`text-lg font-medium leading-relaxed ${item.isSpecial ? 'text-white' : 'text-slate-400'}`}>
-                                        {item.desc}
-                                    </p>
-                                    {item.isSpecial && (
-                                        <div className="mt-4 px-4 py-1 bg-white/10 rounded-full text-[10px] font-black uppercase tracking-widest">{t('storyPage.meaning.veritum.specialTag')}</div>
-                                    )}
+                                    <div className="space-y-4">
+                                        <div>
+                                            <span className={`text-[10px] font-black uppercase tracking-[0.2em] mb-2 block ${item.isSpecial ? 'text-white/70' : 'text-indigo-600 dark:text-indigo-400'}`}>
+                                                {item.subtitle}
+                                            </span>
+                                            <h3 className={`text-4xl font-black italic tracking-tighter ${item.isSpecial ? 'text-white' : 'text-slate-900 dark:text-white'}`}>
+                                                {item.title}
+                                            </h3>
+                                        </div>
+                                        <p className={`text-sm leading-relaxed font-medium ${item.isSpecial ? 'text-white/80' : 'text-slate-500 dark:text-slate-400'}`}>
+                                            {item.desc}
+                                        </p>
+                                    </div>
                                 </motion.div>
                             ))}
                         </div>
