@@ -94,12 +94,12 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
             // Update Preferences in public.user_preferences
             const { error: prefsError } = await supabase
                 .from('user_preferences')
-                .upsert({
-                    user_id: user.id,
+                .update({
                     custom_supabase_url: formPrefs.custom_supabase_url,
                     custom_supabase_key: formPrefs.custom_supabase_key,
                     custom_gemini_key: formPrefs.custom_gemini_key
-                });
+                })
+                .eq('user_id', user.id);
 
             if (prefsError) throw prefsError;
 

@@ -4,8 +4,9 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { pt } from '@/locales/pt';
 import { en } from '@/locales/en';
 import { es } from '@/locales/es';
+import { createMasterClient } from '@/lib/supabase/master';
 
-type Locale = 'pt' | 'en' | 'es';
+export type Locale = 'pt' | 'en' | 'es';
 type Translations = typeof pt;
 
 interface LanguageContextType {
@@ -21,16 +22,31 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [locale, setLocaleState] = useState<Locale>('pt');
     const [isLoaded, setIsLoaded] = useState(false);
-
+    const [user, setUser] = useState<any>(null);
+    const supabase = createMasterClient();
+    // 1. Initial Load from LocalStorage
     useEffect(() => {
+        // Hydrate from localStorage for instant UI (Sole Source of Truth)
         const savedLocale = localStorage.getItem('veritum-locale') as Locale;
         if (savedLocale && (['pt', 'en', 'es'].includes(savedLocale))) {
             setLocaleState(savedLocale);
         }
         setIsLoaded(true);
+
+        // Still listen for user login just to update local user state, but NO DB sync for language
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
+            setUser(session?.user || null);
+        });
+
+        supabase.auth.getSession().then(({ data: { session } }: any) => {
+            if (session?.user) setUser(session.user);
+        });
+
+        return () => subscription.unsubscribe();
     }, []);
 
     const setLocale = (newLocale: Locale) => {
+        // LocalStorage is MASTER - No delays, no flickering, no DB race conditions
         setLocaleState(newLocale);
         localStorage.setItem('veritum-locale', newLocale);
     };
@@ -68,6 +84,10 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
 
         return current !== undefined && current !== null ? current : key;
     };
+
+    useEffect(() => {
+        document.documentElement.lang = locale;
+    }, [locale]);
 
     // Prevent hydration flickers by waiting for locale to load from localStorage
     return (

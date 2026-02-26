@@ -114,15 +114,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
     const { theme, setTheme } = useTheme();
     const hasSyncedTheme = React.useRef(false);
 
-    // Sync theme with user preferences on mount (ONLY ONCE)
-    React.useEffect(() => {
-        if (preferences?.theme && !hasSyncedTheme.current) {
-            if (theme !== preferences.theme) {
-                setTheme(preferences.theme);
-            }
-            hasSyncedTheme.current = true;
-        }
-    }, [preferences?.theme, theme, setTheme]);
+    // Theme and Language are now handled by Root Providers and VeritumLayout
 
     // DEFENSIVE FALLBACK: If syncedSuites is empty but we have activeSuites or general failure,
     // fallback to baseSuiteItems so the menu never disappears.

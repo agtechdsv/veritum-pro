@@ -1,7 +1,7 @@
 export const es = {
     "common": {
-        "loading": "Carregando...",
-        "back": "Voltar",
+        "loading": "Cargando...",
+        "back": "Volver",
         "save": "Guardar",
         "cancel": "Cancelar",
         "delete": "Eliminar",
@@ -9,118 +9,118 @@ export const es = {
         "error": "Error",
         "success": "Éxito",
         "veritumPro": "VERITUM PRO",
-        "backToHome": "Voltar ao Início",
-        "privacy": "Privacidade",
-        "terms": "Termos",
-        "byodb": "Arquitetura BYODB & Inteligência Jurídica.",
+        "backToHome": "Volver al Inicio",
+        "privacy": "Privacidad",
+        "terms": "Términos",
+        "byodb": "Arquitectura BYODB e Inteligencia Jurídica.",
         "search": "Busca global...",
-        "switchToLight": "Mudar para tema claro",
-        "switchToDark": "Mudar para tema escuro",
+        "switchToLight": "Cambiar a tema claro",
+        "switchToDark": "Cambiar a tema oscuro",
         "daysShort": [
             "Dom",
-            "Seg",
-            "Ter",
-            "Qua",
-            "Qui",
-            "Sex",
+            "Lun",
+            "Mar",
+            "Mie",
+            "Jue",
+            "Vie",
             "Sáb"
         ],
         "notApplicable": "N/A",
-        "user": "Usuário",
-        "loadingEcosystem": "Carregando ecossistema...",
-        "selectLanguage": "Selecionar Idioma"
+        "user": "Usuario",
+        "loadingEcosystem": "Cargando ecosistema...",
+        "selectLanguage": "Seleccionar Idioma"
     },
     "nav": {
-        "home": "Início",
+        "home": "Inicio",
         "modules": "Módulos",
-        "pricing": "Planos",
-        "story": "Nossa História",
+        "pricing": "Planes",
+        "story": "Nuestra Historia",
         "login": "Entrar",
-        "register": "Começar Grátis",
-        "dashboard": "Veritum Panel",
-        "admin": "Administração",
-        "master": "Master"
+        "register": "Comenzar Gratis",
+        "dashboard": "Panel Veritum",
+        "admin": "Administración",
+        "master": "Maestro"
     },
     "auth": {
-        "loginTitle": "Bienvenido de volta",
-        "registerTitle": "Crie sua conta",
-        "resetTitle": "Redefinir Senha",
-        "loginSubtitle": "Acesse seu ecossistema jurídico PRO.",
-        "registerSubtitle": "Junte-se ao ecossistema jurídico modular de alta performance.",
-        "resetSubtitle": "Insira seu e-mail para receber as instruções de redefinição.",
+        "loginTitle": "Bienvenido de nuevo",
+        "registerTitle": "Cree su cuenta",
+        "resetTitle": "Restablecer Contraseña",
+        "loginSubtitle": "Acceda a su ecosistema jurídico PRO.",
+        "registerSubtitle": "Únase al ecosistema jurídico modular de alto rendimiento.",
+        "resetSubtitle": "Ingrese su e-mail para recibir las instrucciones de restablecimiento.",
         "emailLabel": "E-mail / Login",
-        "passwordLabel": "Senha",
-        "confirmPasswordLabel": "Confirmar Senha",
-        "loginButton": "Entrar no Ecossistema",
-        "registerButton": "Criar Minha Conta",
-        "resetButton": "Enviar Instruções",
-        "googleLogin": "Entrar com Google",
-        "noAccount": "No tem conta? Cadastre-se",
-        "hasAccount": "Já tem conta? Faça Login",
-        "forgotPassword": "Esqueceu a senha?",
-        "signUp": "Cadastre-se",
-        "signIn": "Faça Login",
-        "backToLogin": "Voltar ao Login",
+        "passwordLabel": "Contraseña",
+        "confirmPasswordLabel": "Confirmar Contraseña",
+        "loginButton": "Entrar al Ecosistema",
+        "registerButton": "Crear Mi Cuenta",
+        "resetButton": "Enviar Instrucciones",
+        "googleLogin": "Entrar con Google",
+        "noAccount": "¿No tiene cuenta? Regístrese",
+        "hasAccount": "¿Ya tiene cuenta? Inicie Sesión",
+        "forgotPassword": "¿Olvidó su contraseña?",
+        "signUp": "Regístrese",
+        "signIn": "Inicie Sesión",
+        "backToLogin": "Volver al Login",
         "strength": {
-            "title": "Força da Senha",
-            "empty": "Insira uma senha",
-            "veryWeak": "Muito Fraca",
-            "weak": "Fraca",
+            "title": "Fuerza de la Contraseña",
+            "empty": "Ingrese una contraseña",
+            "veryWeak": "Muy Débil",
+            "weak": "Débil",
             "moderate": "Moderada",
-            "strong": "Forte",
+            "strong": "Fuerte",
             "checks": {
                 "length": "Mínimo 6 caracteres",
-                "upper": "Letra Maiúscula",
+                "upper": "Letra Mayúscula",
                 "lower": "Letra Minúscula",
                 "number": "Número",
                 "symbol": "Símbolo (!@#$)"
             }
         },
-        "newPasswordPlaceholder": "Nueva Senha",
-        "confirmNewPasswordPlaceholder": "Confirme a Nueva Senha",
+        "newPasswordPlaceholder": "Nueva Contraseña",
+        "confirmNewPasswordPlaceholder": "Confirme la Nueva Contraseña",
         "errors": {
-            "passwordsDoNotMatch": "As senhas no coincidem.",
-            "passwordTooShort": "A senha deve ter pelo menos 6 caracteres.",
-            "resetError": "Error ao redefinir senha. Tente novamente.",
-            "googleError": "Error ao entrar com Google.",
-            "inactive": "Esta conta está inativa. Entre em contato com o administrador.",
-            "default": "Ocorreu um erro na autenticação."
+            "passwordsDoNotMatch": "Las contraseñas no coinciden.",
+            "passwordTooShort": "La contraseña debe tener al menos 6 caracteres.",
+            "resetError": "Error al restablecer la contraseña. Intente nuevamente.",
+            "googleError": "Error al entrar con Google.",
+            "inactive": "Esta cuenta está inactiva. Contacte al administrador.",
+            "default": "Ocurrió un error en la autenticación."
         }
     },
     "modules": {
         "title": "Módulos Especializados",
-        "subtitle": "Arquitetura modular projetada para o ciclo de vida jurídico completo.",
-        "notInPlan": "Este módulo no faz parte do seu plano atual.",
+        "subtitle": "Arquitectura modular diseñada para el ciclo de vida jurídico completo.",
+        "notInPlan": "Este módulo no forma parte de su plan actual.",
         "acquire": "Adquirir Módulo",
-        "learnMore": "Saiba mais",
-        "access": "Acessar Módulo",
+        "learnMore": "Saber más",
+        "access": "Acceder al Módulo",
         "sentinel": {
             "title": "SENTINEL PRO",
-            "subtitle": "Monitoramento & Inteligência de Dados",
-            "newMonitor": "Nuevo Monitoramento",
+            "subtitle": "Monitoreo e Inteligencia de Datos",
+            "newMonitor": "Nuevo Monitoreo",
             "metrics": {
                 "active": "Alertas Activos",
-                "risks": "Riscos Identificados",
+                "risks": "Riesgos Identificados",
                 "score": "Score Reputacional",
-                "captures": "Capturas (Mês)"
+                "captures": "Capturas (Mes)"
             },
             "list": {
-                "title": "Monitoramentos",
-                "empty": "Ninguno monitoramento ativo.",
-                "loading": "Carregando...",
+                "title": "Monitoreos",
+                "empty": "Ningún monitoreo activo.",
+                "loading": "Cargando...",
                 "capturing": "Capturando..."
             },
             "table": {
-                "title": "Recortes e Publicações",
-                "filterPlaceholder": "Filtrar conteúdo...",
+                "title": "Recortes y Publicaciones",
+                "filterPlaceholder": "Filtrar contenido...",
                 "headers": {
                     "statusIA": "Status IA",
-                    "source": "Fonte / Termo",
-                    "fragment": "Fragmento do Conteúdo",
-                    "date": "Data",
-                    "actions": "Ações"
+                    "source": "Fuente / Término",
+                    "fragment": "Fragmento del Contenido",
+                    "date": "Fecha",
+                    "actions": "Acciones"
                 },
-                "empty": "Ningunoa captura encontrada.",
+                "empty": "Ninguna captura encontrada.",
                 "loading": "Localizando registros...",
                 "sentiment": {
                     "positive": "Positivo",
@@ -129,39 +129,39 @@ export const es = {
                 },
                 "scoreIA": "Score IA: {score}%",
                 "tooltips": {
-                    "golden": "Buscar Inteligência Proativa (Golden Alert)",
-                    "analyze": "Analisar Sentimento com IA",
-                    "link": "Vincular ao NEXUS PRO",
+                    "golden": "Buscar Inteligencia Proactiva (Golden Alert)",
+                    "analyze": "Analizar Sentimiento con IA",
+                    "link": "Vincular al NEXUS PRO",
                     "view": "Ver Original",
                     "edit": "Editar"
                 }
             },
             "modals": {
                 "link": {
-                    "title": "Vincular ao Nexus",
-                    "subtitle": "Seleccione o processo para anexar o recorte.",
-                    "empty": "Ninguno processo cadastrado no Nexus.",
-                    "noTitle": "Processo sem título",
+                    "title": "Vincular al Nexus",
+                    "subtitle": "Seleccione el proceso para adjuntar el recorte.",
+                    "empty": "Ningún proceso registrado en Nexus.",
+                    "noTitle": "Proceso sin título",
                     "cancel": "Cancelar"
                 },
                 "config": {
-                    "title": "Configurar Monitoramento",
-                    "subtitle": "Busca profunda e análise de sentimento IA.",
-                    "labelTitle": "Identificação / Apelido",
-                    "labelType": "Tipo de Monitoramento",
-                    "labelTerm": "Termo para Busca",
-                    "placeholderTitle": "Ex: Monitoramento Banco do Brasil",
-                    "placeholderTerm": "CNPJ, OAB ou Termo...",
+                    "title": "Configurar Monitoreo",
+                    "subtitle": "Búsqueda profunda y análisis de sentimiento IA.",
+                    "labelTitle": "Identificación / Apodo",
+                    "labelType": "Tipo de Monitoreo",
+                    "labelTerm": "Término para Búsqueda",
+                    "placeholderTitle": "Ej: Monitoreo Banco do Brasil",
+                    "placeholderTerm": "CNPJ, OAB o Término...",
                     "discard": "Descartar",
                     "start": "Iniciar Tracking",
                     "types": {
-                        "Keyword": "Palavra-Chave",
-                        "OAB": "OAB do Advogado",
-                        "CNJ": "Número de Processo",
-                        "Company": "Razão Social / CNPJ",
-                        "Person": "Nombre da Parte"
+                        "Keyword": "Palabra Clave",
+                        "OAB": "OAB del Abogado",
+                        "CNJ": "Número de Proceso",
+                        "Company": "Razón Social / CNPJ",
+                        "Person": "Nombre de la Parte"
                     },
-                    "footer": "Ao ativar, o Sentinel PRO processará indexações diárias em portais jurídicos e redes sociais, disparando avaliações de sentimento via Gemini AI automaticamente."
+                    "footer": "Al activar, el Sentinel PRO procesará indexaciones diarias en portales jurídicos y redes sociales, disparando evaluaciones de sentimiento vía Gemini AI automáticamente."
                 }
             },
             "label": "Sentinel"
@@ -169,80 +169,80 @@ export const es = {
         "nexus": {
             "label": "Nexus",
             "title": "NEXUS PRO",
-            "subtitle": "Core Operacional & Gestão Processual",
+            "subtitle": "Core Operativo y Gestión Procesal",
             "views": {
                 "kanban": "Kanban",
-                "list": "Listagem"
+                "list": "Listado"
             },
-            "newLawsuit": "Nuevo Processo",
-            "newTask": "Agendar Tarefa",
+            "newLawsuit": "Nuevo Proceso",
+            "newTask": "Agendar Tarea",
             "metrics": {
-                "active": "Processos Activos",
-                "deadlines": "Prazos Fatais 24h",
-                "pending": "Pendências Médias",
-                "completion": "Taxa de Conclusão"
+                "active": "Procesos Activos",
+                "deadlines": "Plazos Fatales 24h",
+                "pending": "Pendientes Medios",
+                "completion": "Tasa de Conclusión"
             },
             "kanban": {
-                "todo": "A Fazer",
-                "doing": "Em Andamento",
-                "done": "Concluído",
+                "todo": "Por Hacer",
+                "doing": "En Progreso",
+                "done": "Finalizado",
                 "late": "Atrasado",
-                "loading": "Carregando...",
-                "deleteConfirm": "Tem certeza que deseja arquivar este processo? Ele poderá ser recuperado pelo administrador."
+                "loading": "Cargando...",
+                "deleteConfirm": "¿Está seguro que desea archivar este proceso? Podrá ser recuperado por el administrador."
             },
             "table": {
                 "headers": {
                     "cnj": "Número CNJ",
                     "title": "Título / Cliente",
                     "status": "Status",
-                    "lastMovement": "Último Movimento",
-                    "actions": "Ações"
+                    "lastMovement": "Último Movimiento",
+                    "actions": "Acciones"
                 }
             },
             "modals": {
                 "lawsuit": {
-                    "title": "Cadastro de Processo",
-                    "subtitle": "Vinculação relacional para automação Sentinel PRO.",
-                    "labelCnj": "Número do Processo (CNJ - Estrito)",
+                    "title": "Registro de Proceso",
+                    "subtitle": "Vinculación relacional para automatización Sentinel PRO.",
+                    "labelCnj": "Número del Proceso (CNJ - Estricto)",
                     "placeholderCnj": "0000000-00.0000.0.00.0000",
-                    "labelTitle": "Título do Caso / Identificação",
-                    "placeholderTitle": "Ex: Ação de Cobrança - [Nombre do Cliente]",
+                    "labelTitle": "Título del Caso / Identificación",
+                    "placeholderTitle": "Ej: Acción de Cobro - [Nombre del Cliente]",
                     "labelAuthor": "Polo Activo (Autor)",
-                    "labelDefendant": "Polo Passivo (Réu)",
-                    "selectCrm": "Seleccione do CRM...",
-                    "advancedShow": "Ver Campos Avançados",
-                    "advancedHide": "Ocultar Campos Avançados",
-                    "labelLawyer": "Advogado Responsável",
-                    "selectTeam": "Seleccione da Equipe...",
+                    "labelDefendant": "Polo Pasivo (Demandado)",
+                    "selectCrm": "Seleccione del CRM...",
+                    "advancedShow": "Ver Campos Avanzados",
+                    "advancedHide": "Ocultar Campos Avanzados",
+                    "labelLawyer": "Abogado Responsable",
+                    "selectTeam": "Seleccione del Equipo...",
                     "labelSphere": "Esfera",
-                    "placeholderSphere": "Ex: Trabalhista",
-                    "labelValue": "Valor da Causa (R$)",
+                    "placeholderSphere": "Ej: Laboral",
+                    "labelValue": "Valor de la Causa (R$)",
                     "placeholderValue": "0,00",
                     "cancel": "Cancelar",
-                    "save": "Guardar Processo no Nexus",
+                    "save": "Guardar Proceso en Nexus",
                     "validation": {
-                        "cnj": "Número CNJ Inválido! Use o formato: 0000000-00.0000.0.00.0000"
+                        "cnj": "¡Número CNJ Inválido! Use el formato: 0000000-00.0000.0.00.0000"
                     }
                 },
                 "task": {
-                    "title": "Agendar Tarefa",
-                    "subtitle": "Vinculação estrita: Equipe & Processos.",
-                    "labelTitle": "Título da Tarefa",
-                    "placeholderTitle": "Ex: Protocolar Petição Inicial",
-                    "labelLawsuit": "Vincular a Processo (Nexus)",
-                    "selectLawsuit": "Seleccione um processo...",
-                    "labelResponsible": "Responsável (Equipe)",
-                    "selectTeam": "Seleccione da Equipe...",
-                    "labelDueDate": "Prazo (Due Date)",
-                    "labelPriority": "Prioridade",
+                    "title": "Agendar Tarea",
+                    "subtitle": "Vinculación estricta: Equipo y Procesos.",
+                    "labelTitle": "Título de la Tarea",
+                    "placeholderTitle": "Ej: Protocolizar Petición Inicial",
+                    "labelLawsuit": "Vincular a Proceso (Nexus)",
+                    "selectLawsuit": "Seleccione un proceso...",
+                    "labelResponsible": "Responsable (Equipo)",
+                    "selectTeam": "Seleccione del Equipo...",
+                    "labelDueDate": "Plazo (Due Date)",
+                    "labelPriority": "Prioridad",
                     "priorities": {
-                        "Low": "Baixa",
-                        "Medium": "Média",
+                        "Low": "Baja",
+                        "Medium": "Media",
                         "High": "Alta",
                         "Urgent": "Urgente"
                     },
                     "cancel": "Cancelar",
-                    "save": "Criar Tarefa"
+                    "save": "Crear Tarea"
                 }
             }
         },
@@ -263,343 +263,343 @@ export const es = {
         }
     },
     "pricing": {
-        "title": "Planos que acompanham o seu crescimento.",
-        "subtitle": "Nós no vendemos apenas software, entregamos a arquitetura exata para o seu momento na advocacia.",
+        "title": "Planes que acompañan su crecimiento.",
+        "subtitle": "No vendemos solo software, entregamos la arquitectura exacta para su momento en la abogacía.",
         "cancelGuarantee": "Veritum PRO no tiene tarifa de adhesión, no tiene permanencia y no tiene letra pequeña. Te quedas porque encontraste la paz mental para ejercer la abogacía, no porque estés atado a nosotros. Elige tu plan, cancela cuando quieras.",
-        "compare": "Comparar Planos e Valores",
+        "compare": "Comparar Planes y Valores",
         "plans": {
             "start": {
                 "title": "START",
-                "desc": "Para advogados autônomos e novos escritórios que precisam organizar a casa e parar de perder prazos."
+                "desc": "Para abogados autónomos y nuevos despachos que necesitan organizar la casa y dejar de perder plazos."
             },
             "growth": {
                 "title": "GROWTH",
-                "desc": "Para escritórios em crescimento que exigem automação de tarefas e Inteligência Artificial para ganhar escala.",
-                "badge": "Mais Popular"
+                "desc": "Para despachos en crecimiento que exigen automatización de tareas e Inteligencia Artificial para ganar escala.",
+                "badge": "Más Popular"
             },
             "strategy": {
                 "title": "STRATEGY",
-                "desc": "Para departamentos jurídicos corporativos que tomam decisões baseadas em Jurimetria e dados profundos.",
+                "desc": "Para departamentos jurídicos corporativos que toman decisiones basadas en Jurimetría y datos profundos.",
                 "badge": "Enterprise"
             }
         }
     },
     "dashboard": {
-        "accessModule": "Acessar Módulo",
+        "accessModule": "Acceder al Módulo",
         "acquireModule": "Adquirir Módulo",
-        "moduleLocked": "Este módulo no faz parte do seu plano atual.",
-        "welcome": "Bienvenido ao",
+        "moduleLocked": "Este módulo no forma parte de su plan actual.",
+        "welcome": "Bienvenido al",
         "veritumPro": "Veritum Pro",
-        "intro": "Seleccione uma área para começar a explorar o ecossistema jurídico modular.",
+        "intro": "Seleccione un área para comenzar a explorar el ecosistema jurídico modular.",
         "suiteTitle": "Dashboard de Módulos",
-        "suiteSubtitle": "Acesse as ferramentas do ecossistema Veritum Pro.",
-        "adminTitle": "Gestão de Administração",
-        "adminSubtitle": "Controle de acesso e configurações do ecossistema.",
-        "masterTitle": "Painel Master",
-        "masterSubtitle": "Configuraciones estruturais de módulos e planos comerciais.",
+        "suiteSubtitle": "Acceda a las herramientas del ecosistema Veritum Pro.",
+        "adminTitle": "Gestión de Administración",
+        "adminSubtitle": "Control de acceso y configuraciones del ecosistema.",
+        "masterTitle": "Panel Maestro",
+        "masterSubtitle": "Configuraciones estructurales de módulos y planes comerciales.",
         "groups": {
             "modules": {
                 "title": "Módulos",
-                "desc": "Acesse as ferramentas inteligentes do ecossistema Veritum Pro."
+                "desc": "Acceda a las herramientas inteligentes del ecosistema Veritum Pro."
             },
             "admin": {
-                "title": "Administração",
-                "desc": "Gerencie usuários, permissões e configurações do sistema."
+                "title": "Administración",
+                "desc": "Gestione usuarios, permisos y configuraciones del sistema."
             },
             "master": {
-                "title": "Master",
-                "desc": "Configuraciones de infraestrutura, módulos e planos comerciais."
+                "title": "Maestro",
+                "desc": "Configuraciones de infraestructura, módulos y planes comerciales."
             }
         },
-        "search": "Busca global...",
-        "accessFunc": "Acesse as funcionalidades do módulo {name}.",
-        "adminUserDesc": "Gerencie a hierarquia de usuários, permissões de acesso e controle de papéis (Master/Admin/Operador).",
-        "adminSettingsDesc": "Ajuste as preferências globais do sistema, integrações e parâmetros de interface.",
-        "masterSuitesDesc": "Configuração estrutural de módulos, chaves de API e disponibilização no ecossistema.",
-        "masterPlansDesc": "Criação e edição de planos comerciais, preços, descontos e vinculação de permissões.",
-        "masterSchedDesc": "Gestão de leads, agendamentos de demonstrações VIP e calendário de vendas.",
-        "masterEmailDesc": "Configuração de aliases SMTP (FROM) por departamento e localização (JSONB).",
-        "masterGenericDesc": "Ajustes estruturais de {name}."
+        "search": "Búsqueda global...",
+        "accessFunc": "Acceda a las funcionalidades del módulo {name}.",
+        "adminUserDesc": "Gestione la jerarquía de usuarios, permisos de acceso y control de roles (Master/Admin/Operador).",
+        "adminSettingsDesc": "Ajuste las preferencias globales del sistema, integraciones y parámetros de interfaz.",
+        "masterSuitesDesc": "Configuración estructural de módulos, claves de API y disponibilidad en el ecosistema.",
+        "masterPlansDesc": "Creación y edición de planes comerciales, precios, descuentos y vinculación de permisos.",
+        "masterSchedDesc": "Gestión de leads, agendamientos de demostraciones VIP y calendario de ventas.",
+        "masterEmailDesc": "Configuración de alias SMTP (FROM) por departamento y ubicación (JSONB).",
+        "masterGenericDesc": "Ajustes estructurales de {name}."
     },
     "hero": {
-        "title": "O Ecossistema Jurídico",
-        "titleAccent": "Modular & Inteligente",
-        "subtitle": "Uma arquitetura BYODB (Bring Your Own Database) completa para escritórios de alta performance. Seu dado, sua infraestrutura, nossos módulos inteligentes.",
-        "ctaPrimary": "Começar Agora",
-        "ctaSecondary": "Ver planos e preços"
+        "title": "El Ecosistema Jurídico",
+        "titleAccent": "Modular e Inteligente",
+        "subtitle": "Una arquitectura BYODB (Bring Your Own Database) completa para despachos de alto rendimiento. Sus datos, su infraestructura, nuestros módulos inteligentes.",
+        "ctaPrimary": "Comenzar Ahora",
+        "ctaSecondary": "Ver planes y precios"
     },
     "storyPage": {
-        "title": "A Busca pela Clareza.",
-        "subtitle": "A Busca pela Verdade.",
-        "purpose": "O Propósito",
+        "title": "La Búsqueda de la Claridad.",
+        "subtitle": "La Búsqueda de la Verdad.",
+        "purpose": "El Propósito",
         "pain": {
-            "title": "A dor que nos moveu",
-            "content1": "Sabemos que a advocacia moderna se tornou um mar de caos. Entre sistemas judiciais complexos, planilhas intermináveis e o medo constante de perder um prazo fatal, o advogado perdeu o seu bem mais precioso: o tempo para pensar estrategicamente e a qualidade de vida.",
-            "content2": "O mercado estava cheio de softwares, mas a maioria parecia ter sido desenhada para dificultar, e no para ajudar. Sentíamos que a tecnologia jurídica precisava de menos burocracia e mais humanidade."
+            "title": "El dolor que nos movió",
+            "content1": "Sabemos que la abogacía moderna se ha convertido en un mar de caos. Entre sistemas judiciales complejos, plantillas interminables y el miedo constante de perder un plazo fatal, el abogado perdió su bien más preciado: el tiempo para pensar estratégicamente y la calidad de vida.",
+            "content2": "El mercado estaba lleno de software, pero la mayoría parecía haber sido diseñado para dificultar, y no para ayudar. Sentíamos que la tecnología jurídica necesitaba menos burocracia y más humanidad."
         },
         "birth": {
-            "title": "O nascimento de um Ecossistema",
-            "content": "Foi dessa frustração que nasceu o nosso ecossistema. Nós no queríamos criar apenas \"mais um sistema de gestão\". Queríamos construir um parceiro silencioso, uma inteligência invisível que trabalhasse nos bastidores para que os escritórios pudessem focar no que realmente importa: a justiça e os seus clientes."
+            "title": "El nacimiento de un Ecosistema",
+            "content": "Fue de esa frustración de donde nació nuestro ecosistema. No queríamos crear solo \"un sistema de gestión más\". Queríamos construir un socio silencioso, una inteligencia invisible que trabajara en los bastidores para que los despachos pudieran enfocarse en lo que realmente importa: la justicia y sus clientes."
         },
         "meaning": {
-            "title": "O Significado de Veritum",
-            "content": "Quando fomos batizar nossa plataforma, no queríamos uma palavra que significasse apenas \"dados corretos\". Queríamos algo que fosse além dos números e olhasse para as pessoas.",
+            "title": "El Significado de Veritum",
+            "content": "Cuando fuimos a bautizar nuestra plataforma, no queríamos una palabra que significara solo \"datos correctos\". Queríamos algo que fuera más allá de los números y mirara a las personas.",
             "veritas": {
                 "title": "Veritas",
-                "subtitle": "A verdade abstrata",
-                "desc": "O conceito geral de justiça que usted defende. O ideal."
+                "subtitle": "La verdad abstracta",
+                "desc": "El concepto general de justicia que usted defiende. El ideal."
             },
             "verum": {
                 "title": "Verum",
-                "subtitle": "O fato frio",
-                "desc": "A prova objetiva, o documento anexado aos autos. Dados brutos."
+                "subtitle": "El hecho frío",
+                "desc": "La prueba objetiva, el documento adjunto a los autos. Datos brutos."
             },
             "veritum": {
                 "title": "Veritum",
-                "subtitle": "A verdade sentida",
-                "desc": "A realidade experimentada. O aspecto psicológico da paz mental.",
-                "specialTag": "A Escolha Veritum"
+                "subtitle": "La verdad sentida",
+                "desc": "La realidad experimentada. El aspecto psicológico de la paz mental.",
+                "specialTag": "La Elección Veritum"
             }
         },
         "deepDive": {
             "peaceTitle": "PAZ",
             "peaceSubtitle": "Psicológica",
-            "content1": "E no Direito, onde a verdade muitas vezes fica oculta sob pilhas de documentos e prazos, entregar Veritum significa entregar a paz mental.",
-            "content2": "É a tranquilidade psicológica de saber que nenhum prazo será perdido. O Veritum PRO existe para trazer a clareza à tona: ele ilumina o seu escritório, transformando o caos processual em controle visual, dados brutos em jurimetria exata, e tarefas repetitivas em automação inteligente.",
-            "quote": "Nós simplificamos a tecnologia para que usted sinta a verdadeira liberdade de advogar e possa elevar a sua performance ao máximo."
+            "content1": "Y en el Derecho, donde la verdad muchas veces queda oculta bajo pilas de documentos y plazos, entregar Veritum significa entregar la paz mental.",
+            "content2": "Es la tranquilidad psicológica de saber que ningún plazo se perderá. Veritum PRO existe para sacar la claridad a la superficie: ilumina su despacho, transformando el caos procesal en control visual, datos brutos en jurimetría exacta, y tareas repetitivas en automatización inteligente.",
+            "quote": "Simplificamos la tecnología para que usted sienta la verdadera libertad de ejercer la abogacía y pueda elevar su rendimiento al máximo."
         },
         "cta": {
-            "title": "Veritum PRO - A verdade sobre o seu escritório, o controle sobre o seu futuro."
+            "title": "Veritum PRO - La verdad sobre su despacho, el control sobre su futuro."
         },
-        "footer": "Veritum PRO - A verdade sobre o seu escritório, o controle sobre o seu futuro."
+        "footer": "Veritum PRO - La verdad sobre su despacho, el control sobre su futuro."
     },
     "userMenu": {
-        "profile": "Meu Perfil",
-        "logout": "Salir do Ecossistema",
+        "profile": "Mi Perfil",
+        "logout": "Salir del Ecosistema",
         "profileBreadcrumb": "Perfil"
     },
     "staticPages": {
         "privacy": {
-            "title": "Política de Privacidade",
-            "updatedAt": "Última atualização: 24 de Fevereiro de 2024",
-            "intro": "A sua privacidade é de extrema relevância para o Veritum PRO. Esta política descreve como coletamos, usamos e protegemos as suas informações ao utilizar a nossa arquitetura BYODB integrada ao Supabase.",
-            "section1Title": "1. Arquitetura BYODB (Bring Your Own Database)",
-            "section1Content": "O Veritum PRO opera sob um modelo onde usted fornece a sua própria infraestrutura de dados. Credenciais de API (Supabase/Gemini) são armazenadas localmente no seu dispositivo ou em tabelas seguras sob o seu controle. Nós no temos acesso aos seus dados de clientes ou processos judiciais.",
-            "section2Title": "2. Coleta de Informações",
-            "section2Content": "Coletamos apenas dados essenciais para autenticação (E-mail/Nombre) via Supabase Auth e preferências de interface (Tema/Idioma). O conteúdo processado pelos módulos (Nexus, Sentinel) reside exclusivamente na sua instância de banco de dados.",
-            "section3Title": "3. Inteligência Artificial",
-            "section3Content": "Utilizamos o Google Gemini AI para processamento jurídico. Os dados enviados para análise são processados conforme as políticas de privacidade da Google API, e nenhuma informação sensível é utilizada para treinamento de modelos globais por nossa parte."
+            "title": "Política de Privacidad",
+            "updatedAt": "Última actualización: 24 de Febrero de 2024",
+            "intro": "Su privacidad es de suma relevancia para Veritum PRO. Esta política describe cómo recopilamos, usamos y protegemos su información al utilizar nuestra arquitectura BYODB integrada con Supabase.",
+            "section1Title": "1. Arquitectura BYODB (Bring Your Own Database)",
+            "section1Content": "Veritum PRO opera bajo un modelo donde usted proporciona su propia infraestructura de datos. Las credenciales de API (Supabase/Gemini) se almacenan localmente en su dispositivo o en tablas seguras bajo su control. Nosotros no tenemos acceso a sus datos de clientes ni procesos judiciales.",
+            "section2Title": "2. Recopilación de Información",
+            "section2Content": "Recopilamos solo datos esenciales para la autenticación (E-mail/Nombre) a través de Supabase Auth y preferencias de interfaz (Tema/Idioma). El contenido procesado por los módulos (Nexus, Sentinel) reside exclusivamente en su instancia de base de datos.",
+            "section3Title": "3. Inteligencia Artificial",
+            "section3Content": "Utilizamos Google Gemini AI para el procesamiento jurídico. Los datos enviados para análisis se procesan de acuerdo con las políticas de privacidad de Google API, y ninguna información sensible es utilizada para el entrenamiento de modelos globales por nuestra parte."
         },
         "terms": {
-            "title": "Termos de Serviço",
-            "updatedAt": "Última atualização: 24 de Fevereiro de 2024",
-            "intro": "Ao acessar o ecossistema Veritum PRO, usted concorda em cumprir estes termos de serviço, todas as leis e regulamentos aplicáveis.",
-            "section1Title": "1. Licença de Uso",
-            "section1Content": "O Veritum PRO concede uma licença limitada, no exclusiva e revogável para o uso do software modular conforme o plano contratado. É proibida a engenharia reversa ou redistribuição dos módulos proprietários."
+            "title": "Términos de Servicio",
+            "updatedAt": "Última actualización: 24 de Febrero de 2024",
+            "intro": "Al acceder al ecosistema Veritum PRO, usted acepta cumplir con estos términos de servicio, todas las leyes y regulaciones aplicables.",
+            "section1Title": "1. Licencia de Uso",
+            "section1Content": "Veritum PRO otorga una licencia limitada, no exclusiva y revocable para el uso del software modular según el plan contratado. Está prohibida la ingeniería inversa o la redistribución de los módulos propietarios."
         }
     },
     "management": {
         "accessGroups": {
             "title": "Grupos de Acceso",
-            "subtitle": "Refinamento Granular: Defina permissões por funcionalidade."
+            "subtitle": "Refinamiento Granular: Defina permisos por funcionalidad."
         },
         "users": {
-            "title": "Gestão de Usuarios",
-            "subtitle": "Administre quem acessa seu ecossistema.",
-            "searchPlaceholder": "Nombre ou e-mail...",
+            "title": "Gestión de Usuarios",
+            "subtitle": "Administre quién accede a su ecosistema.",
+            "searchPlaceholder": "Nombre o e-mail...",
             "searchLabel": "Buscar Integrante",
-            "roleLabel": "Role/Nível",
-            "statusLabel": "Status",
-            "newUser": "Nuevo Usuário",
-            "allPlans": "Todos os Planos",
+            "roleLabel": "Rol/Nivel",
+            "statusLabel": "Estado",
+            "newUser": "Nuevo Usuario",
+            "allPlans": "Todos los Planes",
             "allRoles": "Todos",
             "active": "Activos",
             "inactive": "Inactivos",
             "filterByAdmin": "Filtrar por Administrador",
-            "allAdmins": "Todos os Administradores",
+            "allAdmins": "Todos los Administradores",
             "masterFilter": {
-                "self": "Master (Meus Usuarios)",
-                "clients": "Sócio-Administradores Privados"
+                "self": "Maestro (Mis Usuarios)",
+                "clients": "Socio-Administradores Privados"
             },
             "table": {
                 "member": "Integrante",
                 "accessGroup": "Grupo de Acceso",
-                "role": "Role",
-                "status": "Status",
+                "role": "Rol",
+                "status": "Estado",
                 "controls": "Controles",
-                "noGroup": "Sem Grupo",
-                "syncing": "Sincronizando Ecossistema...",
-                "noUser": "Ninguno integrante encontrado.",
-                "readOnly": "Apenas Leitura",
+                "noGroup": "Sin Grupo",
+                "syncing": "Sincronizando Ecosistema...",
+                "noUser": "Ningún integrante encontrado.",
+                "readOnly": "Solo Lectura",
                 "page": "Página {current} de {total}",
                 "tooltips": {
-                    "toggleStatus": "Alternar Status",
+                    "toggleStatus": "Alternar Estado",
                     "edit": "Editar",
                     "delete": "Eliminar"
                 }
             },
             "roles": {
-                "master": "Master",
+                "master": "Maestro",
                 "admin": "Administrador",
                 "operator": "Operador",
-                "intern": "Estagiário",
-                "partnerAdmin": "Sócio-Administrador",
-                "partnerAdministrative": "Sócio Administrativo",
-                "senior": "Sênior",
-                "coordinator": "Coordenador",
+                "intern": "Pasante",
+                "partnerAdmin": "Socio-Administrador",
+                "partnerAdministrative": "Socio Administrativo",
+                "senior": "Senior",
+                "coordinator": "Coordinador",
                 "paralegal": "Paralegal",
-                "financial": "Financeiro"
+                "financial": "Financiero"
             },
             "modal": {
                 "addTitle": "Nuevo Integrante",
-                "editTitle": "Atualizar Dados",
-                "subtitle": "Configure as credenciais e o nível de acesso.",
+                "editTitle": "Actualizar Datos",
+                "subtitle": "Configure las credenciales y el nivel de acceso.",
                 "name": "Nombre Completo",
                 "email": "E-mail / Login",
-                "password": "Senha Inicial",
-                "passwordEdit": "Trocar Senha (Opcional)",
-                "role": "Cargo / Função Corporativa",
-                "selectRole": "Seleccione um Cargo...",
-                "inherited": "Permisos herdadas do Grupo: {name}",
-                "close": "Fechar",
-                "submitAdd": "Finalizar Cadastro",
-                "submitEdit": "Guardar Edição",
-                "roleRestriction": "Apenas administradores podem alterar cargos e permissões.",
+                "password": "Contraseña Inicial",
+                "passwordEdit": "Cambiar Contraseña (Opcional)",
+                "role": "Cargo / Función Corporativa",
+                "selectRole": "Seleccione un Cargo...",
+                "inherited": "Permisos heredados del Grupo: {name}",
+                "close": "Cerrar",
+                "submitAdd": "Finalizar Registro",
+                "submitEdit": "Guardar Edición",
+                "roleRestriction": "Solo los administradores pueden alterar cargos y permisos.",
                 "globalSystem": "Sistema Global",
-                "godMode": "Super Master (Deus)"
+                "godMode": "Súper Maestro (Dios)"
             },
             "delete": {
-                "title": "Eliminar Integrante?",
-                "message": "Usted tem certeza que deseja excluir \"{name}\"? Esta ação é irreversível.",
+                "title": "¿Eliminar Integrante?",
+                "message": "¿Está seguro que desea eliminar a \"{name}\"? Esta acción es irreversible.",
                 "confirm": "Sí, Eliminar",
                 "cancel": "No, Cancelar"
             },
             "bulk": {
-                "selected": "{count} selecionados",
-                "activate": "Ativar Selecionados",
-                "deactivate": "Desativar Selecionados",
+                "selected": "{count} seleccionados",
+                "activate": "Activar Seleccionados",
+                "deactivate": "Desactivar Seleccionados",
                 "delete": "Eliminar Permanentemente",
-                "confirmDelete": "Tem certeza que deseja excluir {count} usuários? Esta ação é irreversível."
+                "confirmDelete": "¿Está seguro que desea eliminar {count} usuarios? Esta acción es irreversible."
             },
             "toast": {
-                "bulkStatusSuccess": "{count} usuários marcados como {status}!",
-                "bulkDeleteSuccess": "{count} usuários removidos do ecossistema!",
-                "bulkError": "Error ao processar ações em massa.",
-                "superAdminOnly": "Acceso negado: Requer nível Sócio-Administrador.",
-                "operatorRestriction": "Restrição: Operadores no podem criar Administradores.",
-                "selfEditOnly": "Usted só pode editar seu próprio perfil.",
-                "successEdit": "Dados atualizados com sucesso!",
-                "successAdd": "Integrante cadastrado no ecossistema!",
-                "statusSuccess": "Usuário está agora {status}.",
-                "successDelete": "Integrante removido permanentemente.",
-                "deleteError": "Falha ao remover integrante.",
-                "errorProcess": "Error no processamento da solicitação.",
-                "unauthorized": "Ação no autorizada."
+                "bulkStatusSuccess": "¡{count} usuarios marcados como {status}!",
+                "bulkDeleteSuccess": "¡{count} usuarios eliminados del ecosistema!",
+                "bulkError": "Error al procesar acciones en masa.",
+                "superAdminOnly": "Acceso denegado: Requiere nivel Socio-Administrador.",
+                "operatorRestriction": "Restricción: Los operadores no pueden crear Administradores.",
+                "selfEditOnly": "Usted solo puede editar su propio perfil.",
+                "successEdit": "¡Datos actualizados con éxito!",
+                "successAdd": "¡Integrante registrado en el ecosistema!",
+                "statusSuccess": "El usuario está ahora {status}.",
+                "successDelete": "Integrante eliminado permanentemente.",
+                "deleteError": "Falla al eliminar integrante.",
+                "errorProcess": "Error en el procesamiento de la solicitud.",
+                "unauthorized": "Acción no autorizada."
             },
-            "menu": "Gestão de Usuarios"
+            "menu": "Gestión de Usuarios"
         },
         "access": {
             "title": "Grupos de Acceso",
-            "subtitle": "Refinamento Granular: Defina permissões por funcionalidade.",
+            "subtitle": "Refinamiento Granular: Defina permisos por funcionalidad.",
             "menu": "Grupos de Acceso",
             "newGroup": "Nuevo Grupo",
-            "masterGroups": "Master (Meus Grupos)",
-            "privateAdmins": "Sócio-Administradores Privados",
-            "noRoles": "Ninguno cargo encontrado. Crie um novo primeiro.",
-            "created": "Criado em {date}",
-            "noAccess": "Ninguno acesso ativo",
-            "syncing": "Sincronizando Ecossistema...",
-            "noGroups": "Ninguno grupo de acesso criado.",
+            "masterGroups": "Maestro (Mis Grupos)",
+            "privateAdmins": "Socio-Administradores Privados",
+            "noRoles": "Ningún cargo encontrado. Cree uno nuevo primero.",
+            "created": "Creado en {date}",
+            "noAccess": "Ningún acceso activo",
+            "syncing": "Sincronizando Ecosistema...",
+            "noGroups": "Ningún grupo de acceso creado.",
             "table": {
                 "group": "Grupo de Acceso",
                 "members": "Integrantes",
                 "features": "Funcionalidades",
                 "controls": "Controles",
-                "noMembers": "Ninguno Integrante",
+                "noMembers": "Ningún Integrante",
                 "memberCount": "{count} Integrantes",
-                "featureCount": "{count} Funções"
+                "featureCount": "{count} Funciones"
             },
             "modal": {
                 "addTitle": "Nuevo Grupo RBAC",
                 "editTitle": "Configurar Permisos",
-                "subtitle": "Ative funcionalidades específicas para este perfil.",
-                "translateIA": "Traduzir via IA",
-                "translating": "Traduzindo...",
-                "groupName": "Identificação do Grupo",
-                "groupNamePlaceholder": "Ex: Equipe de Triagem, Controladoria, Sócios...",
-                "templateLabel": "Usar Template (Acceso Rápido)",
-                "templatePlaceholder": "Seleccione um template para preenchimento rápido...",
-                "clearSelection": "Limpar Seleção",
-                "clearSelectionSuccess": "Permisos limpas.",
+                "subtitle": "Active funcionalidades específicas para este perfil.",
+                "translateIA": "Traducir vía IA",
+                "translating": "Traduciendo...",
+                "groupName": "Identificación del Grupo",
+                "groupNamePlaceholder": "Ej: Equipo de Triaje, Controlaría, Socios...",
+                "templateLabel": "Usar Plantilla (Acceso Rápido)",
+                "templatePlaceholder": "Seleccione una plantilla para llenado rápido...",
+                "clearSelection": "Limpiar Selección",
+                "clearSelectionSuccess": "Permisos limpiados.",
                 "linkedRoles": "Cargos Vinculados",
                 "newRole": "Nuevo Cargo",
-                "rolesPlaceholder": "Seleccione cargos ou crie novos...",
-                "others": "Outros Cargos / Avulsos",
-                "granularTitle": "Permisos Granulares por Suíte",
+                "rolesPlaceholder": "Seleccione cargos o cree nuevos...",
+                "others": "Otros Cargos / Sueltos",
+                "granularTitle": "Permisos Granulares por Suite",
                 "featuresActive": "{count} de {total} Activos",
-                "toggleAll": "Alternar Tudo",
-                "planRestriction": "O plano atual no tem acesso a esta funcionalidade.",
-                "save": "Guardar Grupo e Permisos",
-                "close": "Fechar"
+                "toggleAll": "Alternar Todo",
+                "planRestriction": "El plan actual no tiene acceso a esta funcionalidad.",
+                "save": "Guardar Grupo y Permisos",
+                "close": "Cerrar"
             },
             "roleModal": {
                 "addTitle": "Nuevo Cargo",
                 "editTitle": "Editar Cargo",
-                "subtitle": "Defina o nome da função",
-                "namePlaceholder": "Ex: Advogado Pleno",
+                "subtitle": "Defina el nombre de la función",
+                "namePlaceholder": "Ej: Abogado Pleno",
                 "save": "Guardar Cargo"
             },
             "delete": {
-                "title": "Eliminar?",
-                "message": "Remover o grupo {name}? Usuarios vinculados perderão acesso granular.",
+                "title": "¿Eliminar?",
+                "message": "¿Remover el grupo {name}? Los usuarios vinculados perderán el acceso granular.",
                 "confirm": "Sí, Remover Grupo",
                 "cancel": "Cancelar",
-                "error": "Error ao remover: {error}"
+                "error": "Error al remover: {error}"
             },
             "toast": {
-                "duplicate": "Já existe um grupo com o nome \"{name}\"",
-                "successName": "Nombre do grupo atualizado.",
-                "successSave": "Grupo e permissões atualizados!",
-                "successCreate": "Grupo criado com sucesso!",
-                "errorSave": "Ocorreu um erro ao salvar o grupo.",
-                "fillName": "Preencha o nome do grupo em pt-br para realizar a tradução.",
-                "successTranslate": "Tradução via IA concluída!",
-                "errorTranslate": "Error na tradução: verifique a API Key do Gemini.",
-                "duplicateRole": "O cargo \"{name}\" já existe.",
-                "successRoleAdd": "Cargo criado com sucesso.",
-                "successRoleEdit": "Cargo atualizado.",
-                "errorRole": "Error ao salvar cargo.",
-                "applyTemplateSuccess": "Template \"{name}\" aplicado!",
-                "applyTemplateWithPremium": "Template \"{name}\" aplicado! (Recursos premium ignorados)",
-                "loadModulesError": "Error ao carregar módulos do sistema.",
-                "loadFeaturesError": "Error ao carregar funcionalidades."
+                "duplicate": "Ya existe un grupo con el nombre \"{name}\"",
+                "successName": "Nombre del grupo actualizado.",
+                "successSave": "¡Grupo y permisos actualizados!",
+                "successCreate": "¡Grupo creado con éxito!",
+                "errorSave": "Ocurrió un error al guardar el grupo.",
+                "fillName": "Complete el nombre del grupo en pt-br para realizar la traducción.",
+                "successTranslate": "¡Traducción vía IA completada!",
+                "errorTranslate": "Error en la traducción: verifique la API Key de Gemini.",
+                "duplicateRole": "El cargo \"{name}\" ya existe.",
+                "successRoleAdd": "Cargo creado con éxito.",
+                "successRoleEdit": "Cargo actualizado.",
+                "errorRole": "Error al guardar cargo.",
+                "applyTemplateSuccess": "¡Plantilla \"{name}\" aplicada!",
+                "applyTemplateWithPremium": "¡Plantilla \"{name}\" aplicada! (Recursos premium ignorados)",
+                "loadModulesError": "Error al cargar los módulos del sistema.",
+                "loadFeaturesError": "Error al cargar las funcionalidades."
             }
         },
         "settings": {
             "title": "Configuraciones",
             "menu": "Configuraciones",
-            "subtitle": "Ajustes globais do seu workspace.",
+            "subtitle": "Ajustes globales de su espacio de trabajo.",
             "tabs": {
-                "infra": "Infraestrutura",
-                "org": "Dados do Escritório",
+                "infra": "Infraestructura",
+                "org": "Datos del Despacho",
                 "plan": "Mi Suscripción"
             },
             "infra": {
-                "title": "Bring Your Own Database (BYODB)",
+                "title": "Traiga Su Propia Base de Datos (BYODB)",
                 "save": "Guardar Infra",
-                "urlLabel": "Custom Supabase URL",
-                "keyLabel": "Custom Supabase Key",
-                "geminiLabel": "Custom Gemini Key",
-                "urlPlaceholder": "https://your-project.supabase.co",
-                "keyPlaceholder": "Anon/Public Key...",
+                "urlLabel": "URL de Supabase Personalizada",
+                "keyLabel": "Clave de Supabase Personalizada",
+                "geminiLabel": "Clave de Gemini Personalizada",
+                "urlPlaceholder": "https://su-proyecto.supabase.co",
+                "keyPlaceholder": "Clave Anon/Public...",
                 "geminiPlaceholder": "AIzaSyB...",
-                "privacyTitle": "Privacidade Garantida",
-                "privacyDesc": "Ao utilizar BYODB, seus dados de clientes, processos e faturamento nunca saem do seu próprio servidor Supabase.",
-                "restricted": "Acceso restrito a Sócio-Administradores."
+                "privacyTitle": "Privacidad Garantizada",
+                "privacyDesc": "Al utilizar BYODB, sus datos de clientes, procesos y facturación nunca salen de su propio servidor de Supabase.",
+                "restricted": "Acceso restringido a Socios-Administradores."
             },
             "toast": {
-                "saveSuccess": "Configuraciones de infraestrutura salvas!",
-                "saveError": "Error ao salvar configurações."
+                "saveSuccess": "¡Configuraciones de infraestructura guardadas!",
+                "saveError": "Error al guardar configuraciones."
             },
             "plan": {
                 "restrictedSub": "Acceso restringido a Socios-Administradores.",
@@ -628,170 +628,170 @@ export const es = {
             }
         },
         "organization": {
-            "identification": "Identificação",
-            "companyName": "Razão Social",
-            "companyNamePlaceholder": "Nombre Oficial da Empresa",
-            "tradingName": "Nombre Fantasia",
+            "identification": "Identificación",
+            "companyName": "Razón Social",
+            "companyNamePlaceholder": "Nombre Oficial de la Empresa",
+            "tradingName": "Nombre Fantasía",
             "tradingNamePlaceholder": "Nombre de Marca",
             "cnpj": "CNPJ",
-            "logo": "Logo & Marcas",
-            "logoTitle": "Logotipo do Escritório",
-            "logoDesc": "Será usado em cabeçalhos de documentos e relatórios.",
+            "logo": "Logo y Marcas",
+            "logoTitle": "Logotipo del Despacho",
+            "logoDesc": "Será usado en encabezados de documentos e informes.",
             "email": "E-mail Comercial",
-            "emailPlaceholder": "contato@escritorio.com",
-            "phone": "Telefone",
-            "website": "Site",
-            "address": "Endereço Sede",
-            "zip": "CEP (Busca Automática)",
-            "street": "Logradouro (Rua/Av)",
+            "emailPlaceholder": "contacto@despacho.com",
+            "phone": "Teléfono",
+            "website": "Sitio Web",
+            "address": "Dirección Sede",
+            "zip": "C.P. (Búsqueda Automática)",
+            "street": "Vía (Calle/Av)",
             "number": "Número",
             "complement": "Complemento",
-            "neighborhood": "Bairro",
-            "city": "Cidade",
-            "state": "UF",
-            "save": "Guardar Escritório",
+            "neighborhood": "Barrio",
+            "city": "Ciudad",
+            "state": "Estado/Provincia",
+            "save": "Guardar Despacho",
             "toast": {
-                "fetchError": "Error ao carregar dados do escritório.",
-                "cepError": "CEP no encontrado.",
-                "cepFetchError": "Error ao buscar CEP.",
-                "saveSuccess": "Dados do escritório salvos com sucesso!",
-                "saveError": "Error ao salvar dados."
+                "fetchError": "Error al cargar los datos del despacho.",
+                "cepError": "C.P. no encontrado.",
+                "cepFetchError": "Error al buscar el C.P..",
+                "saveSuccess": "¡Datos del despacho guardados con éxito!",
+                "saveError": "Error al guardar los datos."
             }
         },
         "master": {
             "suites": {
-                "menu": "Gestão de Módulos",
+                "menu": "Gestión de Módulos",
                 "title": "Gestão de Módulos",
-                "subtitle": "Configure a vitrine do seu ecossistema jurídico.",
-                "listTitle": "Listagem de Módulos",
+                "subtitle": "Configure el escaparate de su ecosistema jurídico.",
+                "listTitle": "Listado de Módulos",
                 "table": {
-                    "order": "Ordem",
+                    "order": "Orden",
                     "module": "Módulo",
-                    "actions": "Ações",
-                    "visible": "Módulo Visível",
+                    "actions": "Acciones",
+                    "visible": "Módulo Visible",
                     "hidden": "Módulo Oculto",
-                    "noActive": "Ninguno módulo ativo"
+                    "noActive": "Ningún módulo activo"
                 },
                 "form": {
                     "edit": "Editar Módulo",
                     "add": "Nuevo Módulo",
-                    "metadata": "Metadata do Ecossistema",
-                    "saveChanges": "Guardar Alterações",
-                    "cancelSelection": "Cancelar Seleção",
+                    "metadata": "Metadata del Ecosistema",
+                    "saveChanges": "Guardar Alteraciones",
+                    "cancelSelection": "Cancelar Selección",
                     "publish": "Publicar Módulo",
                     "idKey": "Key Identificadora",
                     "mainName": "Nombre Principal",
-                    "translateIA": "Traduzir via IA",
-                    "translating": "Traduzindo...",
-                    "shortBio": "Bio Curta",
-                    "cardDetails": "Detalhes do Card",
+                    "translateIA": "Traducir vía IA",
+                    "translating": "Traduciendo...",
+                    "shortBio": "Bio Corta",
+                    "cardDetails": "Detalles del Card",
                     "features": "Recursos / Features",
-                    "iconSvg": "Código SVG do Ícone",
-                    "activePortal": "Ativa no Portal"
+                    "iconSvg": "Código SVG del Ícono",
+                    "activePortal": "Activa en el Portal"
                 },
                 "delete": {
-                    "title": "Confirmar Exclusão",
-                    "message": "Usted está prestes a remover permanentemente o módulo \"{name}\" do ecossistema. Esta ação no pode ser desfeita.",
+                    "title": "Confirmar Eliminación",
+                    "message": "Usted está a punto de eliminar permanentemente el módulo \"{name}\" del ecosistema. Esta acción no puede deshacerse.",
                     "cancel": "Cancelar",
                     "confirm": "Sí, Eliminar"
                 },
                 "toast": {
-                    "successUpdate": "Módulo atualizado com sucesso!",
-                    "successCreate": "Módulo criado com sucesso!",
-                    "errorSave": "Error ao salvar módulo",
-                    "errorStatus": "Error ao alterar status: {error}",
-                    "errorDelete": "Error ao excluir: {error}",
-                    "fillBio": "Preencha ao menos a Bio Curta para traduzir.",
-                    "noGemini": "Chave do Gemini no configurada. Por favor, adicione sua API Key nas Configuraciones.",
-                    "successTranslate": "Tradução baseada em IA concluída!",
-                    "errorTranslate": "Error na tradução: {error}"
+                    "successUpdate": "¡Módulo actualizado con éxito!",
+                    "successCreate": "¡Módulo creado con éxito!",
+                    "errorSave": "Error al guardar módulo",
+                    "errorStatus": "Error al alterar estado: {error}",
+                    "errorDelete": "Error al eliminar: {error}",
+                    "fillBio": "Complete al menos la Bio Corta para traducir.",
+                    "noGemini": "Clave de Gemini no configurada. Por favor, agregue su API Key en las Configuraciones.",
+                    "successTranslate": "¡Traducción basada en IA completada!",
+                    "errorTranslate": "Error en la traducción: {error}"
                 }
             },
             "plans": {
-                "menu": "Gestão de Planos",
-                "title": "Gestão de Planos",
-                "subtitle": "Configure os pacotes e preços do Veritum Pro.",
+                "menu": "Gestión de Planes",
+                "title": "Gestión de Planes",
+                "subtitle": "Configure los paquetes y precios de Veritum Pro.",
                 "filters": {
                     "all": "Todos",
-                    "individual": "Individuais",
+                    "individual": "Individuales",
                     "combo": "Combos"
                 },
-                "listTitle": "Listagem",
+                "listTitle": "Listado",
                 "table": {
-                    "order": "Ordem",
-                    "plan": "Plano",
-                    "action": "Ação",
-                    "active": "Plano Activo",
-                    "inactive": "Plano Inactivo"
+                    "order": "Orden",
+                    "plan": "Plan",
+                    "action": "Acción",
+                    "active": "Plan Activo",
+                    "inactive": "Plan Inactivo"
                 },
                 "form": {
                     "edit": "Editando:",
-                    "noName": "Sem Nombre",
-                    "add": "Nuevo Plano",
+                    "noName": "Sin Nombre",
+                    "add": "Nuevo Plan",
                     "tabs": {
-                        "details": "Detalhes",
+                        "details": "Detalles",
                         "permissions": "Permisos"
                     },
-                    "saveChanges": "Guardar Alterações",
-                    "cancelSelection": "Cancelar Seleção",
-                    "create": "Criar Plano",
-                    "name": "Nombre do Plano",
-                    "shortDesc": "Descripción Curta",
-                    "shortDescPlaceholder": "Breve slogan ou diferencial do plano...",
-                    "translateIA": "Traduzir via Gemini IA",
-                    "monthlyPrice": "Preço Mensal (R$)",
-                    "yearlyPrice": "Preço Anual (R$)",
+                    "saveChanges": "Guardar Alteraciones",
+                    "cancelSelection": "Cancelar Selección",
+                    "create": "Crear Plan",
+                    "name": "Nombre del Plan",
+                    "shortDesc": "Descripción Corta",
+                    "shortDescPlaceholder": "Breve eslogan o diferencial del plan...",
+                    "translateIA": "Traducir vía Gemini IA",
+                    "monthlyPrice": "Precio Mensual (R$)",
+                    "yearlyPrice": "Precio Anual (R$)",
                     "installments": "Cant. de Cuotas (Sin Interés)",
                     "yearlyCashDiscount": "Descuento en Efectivo Anual (%)",
-                    "discount": "Desconto (%)",
+                    "discount": "Descuento (%)",
                     "basicFeatures": "Funcionalidades Básicas (Bullet Points)",
-                    "featuresPlaceholder": "Uma funcionalidade por linha...",
-                    "recommended": "Plano Recomendado",
-                    "activeSale": "Activo para Venda",
-                    "comboPlan": "Plano Combo",
-                    "granularTitle": "Controle de Acceso Granular",
-                    "granularDesc": "Seleccione quais suítes e funcionalidades específicas estarão liberadas neste plano.",
+                    "featuresPlaceholder": "Una funcionalidad por línea...",
+                    "recommended": "Plan Recomendado",
+                    "activeSale": "Activo para Venta",
+                    "comboPlan": "Plan Combo",
+                    "granularTitle": "Control de Acceso Granular",
+                    "granularDesc": "Seleccione qué suites y funcionalidades específicas estarán liberadas en este plan.",
                     "tooltips": {
-                        "uncheckAll": "Clique para desmarcar tudo",
-                        "originalData": "Dados Originais (Clique para marcar tudo)",
-                        "empty": "Vazio (Clique para restaurar originais)",
-                        "partial": "Seleção Parcial (Clique para marcar tudo)"
+                        "uncheckAll": "Haga clic para desmarcar todo",
+                        "originalData": "Datos Originales (Haga clic para marcar todo)",
+                        "empty": "Vacío (Haga clic para restaurar originales)",
+                        "partial": "Selección Parcial (Haga clic para marcar todo)"
                     }
                 },
                 "delete": {
-                    "title": "Eliminar Plano?",
-                    "message": "Usted removerá \"{name}\" das opções de venda.",
+                    "title": "¿Eliminar Plan?",
+                    "message": "Usted eliminará \"{name}\" de las opciones de venta.",
                     "no": "No",
                     "confirm": "Sí, Eliminar"
                 },
                 "toast": {
-                    "errorProcess": "Falha ao salvar o plano (dados no retornados)",
-                    "successUpdate": "Plano e permissões atualizados!",
-                    "successCreate": "Plano criado com sucesso!",
-                    "errorSave": "Error ao salvar plano",
-                    "statusSuccess": "Plano {status} com sucesso!",
-                    "errorStatus": "Error ao alterar status: {error}",
-                    "errorDelete": "Error ao excluir: {error}",
-                    "fillBio": "Preencha a Bio Curta para traduzir.",
-                    "successTranslate": "Tradução baseada em IA concluída!",
-                    "errorTranslate": "Error na tradução: {error}"
+                    "errorProcess": "Falla al guardar el plan (datos no retornados)",
+                    "successUpdate": "¡Plan y permisos actualizados!",
+                    "successCreate": "¡Plan creado con éxito!",
+                    "errorSave": "Error al guardar plan",
+                    "statusSuccess": "¡Plan {status} con éxito!",
+                    "errorStatus": "Error al alterar estado: {error}",
+                    "errorDelete": "Error al eliminar: {error}",
+                    "fillBio": "Complete la Bio Corta para traducir.",
+                    "successTranslate": "¡Traducción basada en IA completada!",
+                    "errorTranslate": "Error en la traducción: {error}"
                 }
             },
             "scheduling": {
-                "menu": "Agendamentos",
-                "title": "Gestão de",
-                "titleHighlight": "Agendamentos",
-                "subtitle": "Visualize e organize as demonstrações estratégicas solicitadas.",
+                "menu": "Citas",
+                "title": "Gestión de",
+                "titleHighlight": "Citas",
+                "subtitle": "Visualice y organice las demostraciones estratégicas solicitadas.",
                 "views": {
-                    "month": "Mensal",
-                    "day": "Diário"
+                    "month": "Mensual",
+                    "day": "Diario"
                 },
                 "sidebar": {
-                    "title": "Solicitações",
+                    "title": "Solicitudes",
                     "empty": "Nada encontrado",
-                    "filterTitle": "Filtrar Período",
+                    "filterTitle": "Filtrar Periodo",
                     "status": {
-                        "all": "Tudo",
+                        "all": "Todo",
                         "pending": "Pend",
                         "scheduled": "Agend",
                         "attended": "Atend",
@@ -799,7 +799,7 @@ export const es = {
                     }
                 },
                 "calendar": {
-                    "today": "Hoje",
+                    "today": "Hoy",
                     "monthFormat": "MMMM yyyy",
                     "dayFormat": "EEEE, dd MMMM",
                     "filters": {
@@ -809,225 +809,225 @@ export const es = {
                         "canceled": "Cancelados"
                     },
                     "tooltips": {
-                        "selectTime": "Seleccione o horário para {name}",
-                        "scheduleAt": "Agendar às {time}"
+                        "selectTime": "Seleccione el horario para {name}",
+                        "scheduleAt": "Agendar a las {time}"
                     }
                 },
                 "actions": {
-                    "sendInvite": "Enviar E-mail de Convite",
-                    "edit": "Editar Agendamento",
+                    "sendInvite": "Enviar E-mail de Invitación",
+                    "edit": "Editar Cita",
                     "markAttended": "Marcar como Atendido",
-                    "backPending": "Voltar para Pendentes",
+                    "backPending": "Volver a Pendientes",
                     "attended": "Atendido",
-                    "reschedule": "Remarcar",
+                    "reschedule": "Reprogramar",
                     "cancel": "Cancelar",
                     "delete": "Eliminar"
                 },
                 "delete": {
-                    "title": "Confirmar Exclusão",
-                    "message": "Usted tem certeza que deseja excluir o agendamento de \"{name}\"? Esta ação no pode ser desfeita.",
+                    "title": "Confirmar Eliminación",
+                    "message": "¿Usted está seguro que desea eliminar la cita de \"{name}\"? Esta acción no puede deshacerse.",
                     "cancel": "Cancelar",
                     "confirm": "Eliminar Lead"
                 },
                 "scheduleConfirm": {
-                    "title": "Confirmar Agendamento?",
-                    "message": "Usted está confirmando a demonstração para:",
+                    "title": "¿Confirmar Cita?",
+                    "message": "Usted está confirmando la demostración para:",
                     "scheduledFor": "Agendado para",
-                    "at": "às",
-                    "no": "No, Voltar",
+                    "at": "a las",
+                    "no": "No, Volver",
                     "yes": "Sí, Confirmar",
-                    "saving": "Salvando..."
+                    "saving": "Guardando..."
                 },
                 "editModal": {
-                    "title": "Editar Agendamento",
+                    "title": "Editar Cita",
                     "leadLabel": "Lead: {name}",
                     "fields": {
                         "name": "Nombre Completo",
                         "email": "Email",
                         "whatsapp": "WhatsApp",
-                        "teamSize": "Tamanho da Equipe",
-                        "meetingLink": "Link da Reunião (Zoom, Teams, etc)",
+                        "teamSize": "Tamaño del Equipo",
+                        "meetingLink": "Enlace de la Reunión (Zoom, Teams, etc)",
                         "meetingPlaceholder": "https://zoom.us/j/..."
                     },
                     "actions": {
                         "cancel": "Cancelar",
                         "sending": "Enviando...",
-                        "sendInvite": "Enviar Convite",
-                        "save": "Guardar Alterações"
+                        "sendInvite": "Enviar Invitación",
+                        "save": "Guardar Alteraciones"
                     }
                 },
                 "toast": {
-                    "successConfirm": "Agendamento confirmado!",
-                    "errorConfirm": "Error ao confirmar agendamento.",
-                    "errorTechnical": "Falha técnica no agendamento.",
-                    "successDelete": "Agendamento excluído permanentemente.",
-                    "errorDelete": "Error ao excluir agendamento.",
-                    "successUpdate": "Agendamento atualizado com sucesso!",
-                    "errorSave": "Error ao salvar alterações.",
-                    "missingLink": "Informe o link da reunião antes de enviar o convite.",
-                    "missingDate": "Esta solicitação no possui data agendada.",
-                    "emailSubject": "Confirmação de Reunião - Veritum PRO",
-                    "emailSuccess": "Convite enviado para {email}!",
-                    "emailError": "Falha no envio: {error}",
-                    "unexpectedError": "Error inesperado ao enviar e-mail."
+                    "successConfirm": "¡Cita confirmada!",
+                    "errorConfirm": "Error al confirmar cita.",
+                    "errorTechnical": "Falla técnica en la cita.",
+                    "successDelete": "Cita eliminada permanentemente.",
+                    "errorDelete": "Error al eliminar cita.",
+                    "successUpdate": "¡Cita actualizada con éxito!",
+                    "errorSave": "Error al guardar alteraciones.",
+                    "missingLink": "Informe el enlace de la reunión antes de enviar la invitación.",
+                    "missingDate": "Esta solicitud no posee fecha agendada.",
+                    "emailSubject": "Confirmación de Reunión - Veritum PRO",
+                    "emailSuccess": "¡Invitación enviada para {email}!",
+                    "emailError": "Falla en el envío: {error}",
+                    "unexpectedError": "Error inesperado al enviar e-mail."
                 }
             },
             "email": {
-                "menu": "Gestão de E-mails",
-                "title": "Gestão de E-mails",
-                "subtitle": "Configure os aliases (FROM) agrupados por cenário (JSONB).",
+                "menu": "Gestión de E-mails",
+                "title": "Gestión de E-mails",
+                "subtitle": "Configure los alias (DE) agrupados por escenario (JSONB).",
                 "scenarios": {
-                    "general": "Dúvidas Gerais e Parcerias",
-                    "sales": "Vendas VIP e Agendamentos",
-                    "billing": "Gestão de Assinaturas e Financeiro",
-                    "support": "Ajuda Técnica e Suporte"
+                    "general": "Dudas Generales y Alianzas",
+                    "sales": "Ventas VIP y Citas",
+                    "billing": "Gestión de Suscripciones y Financiero",
+                    "support": "Ayuda Técnica y Soporte"
                 },
                 "card": {
-                    "description": "Traduções e e-mails",
+                    "description": "Traducciones y e-mails",
                     "save": "Guardar",
                     "email": "E-mail",
                     "name": "Nombre"
                 },
                 "langs": {
-                    "pt": "Português (BR)",
-                    "en": "Inglês (US)"
+                    "pt": "Portugués (BR)",
+                    "en": "Inglés (US)"
                 },
                 "toasts": {
-                    "loadError": "Error ao carregar configurações de e-mail",
-                    "saveSuccess": "Configuração atualizada com sucesso",
-                    "saveError": "Error ao salvar configuração"
+                    "loadError": "Error al cargar configuraciones de e-mail",
+                    "saveSuccess": "Configuración actualizada con éxito",
+                    "saveError": "Error al guardar configuración"
                 }
             },
             "team": {
-                "menu": "Gestão de Equipe",
-                "title": "Gestão de Equipe",
-                "subtitle": "Gerencie os membros do seu workspace e suas respectivas permissões.",
-                "addMember": "Adicionar Membro",
-                "searchPlaceholder": "Buscar por nome, e-mail ou OAB...",
+                "menu": "Gestión de Equipo",
+                "title": "Gestión de Equipo",
+                "subtitle": "Gestione los miembros de su espacio de trabajo y sus respectivos permisos.",
+                "addMember": "Agregar Miembro",
+                "searchPlaceholder": "Buscar por nombre, e-mail o identificación...",
                 "stats": {
-                    "total": "Workspace Total",
+                    "total": "Total del Espacio de Trabajo",
                     "active": "Colaboradores Activos"
                 },
                 "table": {
-                    "member": "Membro",
+                    "member": "Miembro",
                     "role": "Cargo / ID",
-                    "contact": "Contato",
-                    "status": "Status",
-                    "actions": "Ações",
-                    "loading": "Carregando membros...",
-                    "empty": "Ninguno membro encontrado."
+                    "contact": "Contacto",
+                    "status": "Estado",
+                    "actions": "Acciones",
+                    "loading": "Cargando miembros...",
+                    "empty": "Ningún miembro encontrado."
                 },
                 "status": {
                     "active": "Activo",
                     "inactive": "Inactivo"
                 },
                 "tooltips": {
-                    "edit": "Editar Membro",
+                    "edit": "Editar Miembro",
                     "access": "Configuraciones de Acceso"
                 },
                 "modal": {
                     "titles": {
-                        "edit": "Editar Membro",
-                        "new": "Nuevo Membro da Equipe"
+                        "edit": "Editar Miembro",
+                        "new": "Nuevo Miembro del Equipo"
                     },
                     "fields": {
                         "name": "Nombre Completo",
-                        "namePlaceholder": "Ex: João da Silva",
+                        "namePlaceholder": "Ej: Juan Pérez",
                         "email": "E-mail Corporativo",
                         "emailPlaceholder": "email@empresa.com",
-                        "phone": "Celular / Whats",
-                        "phonePlaceholder": "(11) 99999-9999",
-                        "oab": "Número da OAB",
-                        "oabPlaceholder": "SP123456",
-                        "role": "Cargo / Função",
-                        "rolePlaceholder": "Seleccione um cargo..."
+                        "phone": "Celular / WhatsApp",
+                        "phonePlaceholder": "+54 9 11 ...",
+                        "oab": "Número de Identificación Prof.",
+                        "oabPlaceholder": "ID123456",
+                        "role": "Cargo / Función",
+                        "rolePlaceholder": "Seleccione un cargo..."
                     },
                     "roles": {
-                        "socio": "Sócio-Administrador",
-                        "advogado": "Advogado Associado",
-                        "estagiario": "Estagiário",
+                        "socio": "Socio-Administrador",
+                        "advogado": "Abogado Asociado",
+                        "estagiario": "Pasante",
                         "paralegal": "Paralegal",
-                        "financeiro": "Financeiro / Admin"
+                        "financeiro": "Financiero / Admin"
                     },
                     "actions": {
                         "cancel": "Cancelar",
-                        "update": "Atualizar Membro",
-                        "create": "Cadastrar Membro"
+                        "update": "Actualizar Miembro",
+                        "create": "Registrar Miembro"
                     }
                 },
                 "toasts": {
-                    "fetchError": "Error ao carregar membros",
-                    "saveError": "Error ao salvar membro",
-                    "statusError": "Error ao alterar status"
+                    "fetchError": "Error al cargar miembros",
+                    "saveError": "Error al guardar miembro",
+                    "statusError": "Error al alterar estado"
                 }
             },
             "persons": {
                 "menu": "CRM de Clientes",
-                "title": "CRM - Clientes e Pessoas",
-                "subtitle": "Repositório central de dados estruturados para processos e IA.",
-                "newEntry": "Nuevo Cadastro CRM",
-                "searchPlaceholder": "Buscar por nome ou CPF/CNPJ...",
+                "title": "CRM - Clientes y Personas",
+                "subtitle": "Repositorio central de datos estructurados para procesos e IA.",
+                "newEntry": "Nuevo Registro CRM",
+                "searchPlaceholder": "Buscar por nombre o documento...",
                 "stats": {
-                    "label": "Base de Dados CRM"
+                    "label": "Base de Datos CRM"
                 },
                 "table": {
-                    "member": "Membro",
-                    "classification": "Classificação",
-                    "contact": "Contato",
-                    "actions": "Ações",
-                    "loading": "Carregando CRM...",
-                    "empty": "Ningunoa pessoa cadastrada."
+                    "member": "Miembro",
+                    "classification": "Clasificación",
+                    "contact": "Contacto",
+                    "actions": "Acciones",
+                    "loading": "Cargando CRM...",
+                    "empty": "Ninguna persona registrada."
                 },
                 "types": {
                     "Cliente": "Cliente",
                     "Reclamado": "Reclamado",
-                    "Testemunha": "Testemunha",
-                    "Preposto": "Preposto",
-                    "Advogado Adverso": "Advogado Adverso"
+                    "Testemunha": "Testigo",
+                    "Preposto": "Representante",
+                    "Advogado Adverso": "Abogado Adverso"
                 },
                 "modal": {
                     "titles": {
-                        "edit": "Editar Cadastro",
-                        "new": "Nuevo Cadastro CRM"
+                        "edit": "Editar Registro",
+                        "new": "Nuevo Registro CRM"
                     },
                     "sections": {
-                        "classification": "Tipo de Classificação",
-                        "advanced": "Ver Detalhes Avançados (RG, Endereço, Histórico)",
-                        "hideAdvanced": "Esconder Campos Avançados"
+                        "classification": "Tipo de Clasificación",
+                        "advanced": "Ver Detalles Avanzados (Documentos, Dirección, Historial)",
+                        "hideAdvanced": "Ocultar Campos Avanzados"
                     },
                     "fields": {
-                        "name": "Nombre Completo / Razão Social",
-                        "namePlaceholder": "Ex: Pedro de Alcântara ou Empresa Ltda",
-                        "document": "CPF / CNPJ (Somente Números)",
-                        "documentPlaceholder": "000.000.000-00",
-                        "phone": "WhatsApp / Telefone",
-                        "phonePlaceholder": "+55 (11) 9...",
+                        "name": "Nombre Completo / Razón Social",
+                        "namePlaceholder": "Ej: Pedro de Alcántara o Empresa S.A.",
+                        "document": "DNI / CUIT / CUIL / CPF / CNPJ",
+                        "documentPlaceholder": "00-00000000-0",
+                        "phone": "WhatsApp / Teléfono",
+                        "phonePlaceholder": "+54 9 11 ...",
                         "email": "E-mail Principal",
-                        "emailPlaceholder": "contato@cliente.com",
-                        "rg": "RG",
-                        "cep": "CEP",
+                        "emailPlaceholder": "contacto@cliente.com",
+                        "rg": "Identidad",
+                        "cep": "Código Postal",
                         "maritalStatus": "Estado Civil",
-                        "profession": "Profissão",
-                        "history": "Histórico de Funções / Notas",
-                        "historyPlaceholder": "Detalhes relevantes para o processo trabalhista/cível..."
+                        "profession": "Profesión",
+                        "history": "Historial de Funciones / Notas",
+                        "historyPlaceholder": "Detalles relevantes para el proceso laboral/civil..."
                     },
                     "actions": {
                         "cancel": "Cancelar",
-                        "update": "Atualizar Registro",
-                        "save": "Guardar no CRM"
+                        "update": "Actualizar Registro",
+                        "save": "Guardar en el CRM"
                     }
                 },
                 "validations": {
-                    "invalidDocument": "Formato de Documento Inválido! Use 000.000.000-00 ou 00.000.000/0000-00"
+                    "invalidDocument": "¡Formato de Documento Inválido!"
                 },
                 "confirmations": {
-                    "softDelete": "Tem certeza que deseja ocultar este cadastro? O dado permanecerá no servidor para recuperação."
+                    "softDelete": "¿Está seguro que desea ocultar este registro? El dato permanecerá en el servidor para recuperación."
                 },
                 "toasts": {
-                    "saveSuccess": "Registro salvo com sucesso!",
-                    "saveError": "Error ao salvar: Verifique se o CPF/CNPJ já existe ou se os campos estão corretos.",
-                    "deleteSuccess": "Registro excluído com sucesso!",
-                    "deleteError": "Error ao excluir registro."
+                    "saveSuccess": "¡Registro guardado con éxito!",
+                    "saveError": "Error al guardar: Verifique si el documento ya existe o si los campos son correctos.",
+                    "deleteSuccess": "¡Registro eliminado con éxito!",
+                    "deleteError": "Error al eliminar registro."
                 }
             }
         }
@@ -1035,710 +1035,710 @@ export const es = {
     "pricingPage": {
         "nav": {
             "portal": "Portal",
-            "home": "Início",
+            "home": "Inicio",
             "comparison": "Comparativo",
-            "modules": "Módulos Avulsos",
-            "faq": "Dúvidas"
+            "modules": "Módulos Sueltos",
+            "faq": "Dudas"
         },
         "hero": {
-            "title": "Seu momento na advocacia,",
-            "titleAccent": "nosso melhor plano.",
-            "subtitle": "Escolha o plano que acompanha o seu ritmo. Do autônomo ao departamento jurídico corporativo, temos a arquitetura exata para o seu crescimento.",
+            "title": "Su momento en la abogacía,",
+            "titleAccent": "nuestro mejor plan.",
+            "subtitle": "Elija el plan que acompaña su ritmo. Desde el autónomo hasta el departamento jurídico corporativo, tenemos la arquitectura exacta para su crecimiento.",
             "cancelGuarantee": "El ecosistema legal sin tarifa de adhesión, sin penalizaciones contractuales y sin permanencia. Suscríbase hoy, cancele cuando quiera."
         },
         "plans": {
             "start": {
                 "name": "START",
-                "desc": "Para advogados autônomos e novos escritórios. A base sólida para organizar a rotina.",
+                "desc": "Para abogados autónomos y nuevos despachos. La base sólida para organizar la rutina.",
                 "price": "R$ 297",
-                "period": "/mês",
+                "period": "/mes",
                 "features": [
-                    "Nexus PRO: Gestão e Kanban (500 proc.)",
-                    "Valorem PRO: Financeiro e PIX",
-                    "Vox Clientis: Portal do Cliente Básico",
-                    "Suporte via E-mail e Chat"
+                    "Nexus PRO: Gestión y Kanban (500 proc.)",
+                    "Valorem PRO: Financiero y PIX",
+                    "Vox Clientis: Portal del Cliente Básico",
+                    "Soporte vía E-mail y Chat"
                 ],
-                "cta": "Começar Teste Grátis"
+                "cta": "Empezar Prueba Gratis"
             },
             "growth": {
                 "name": "GROWTH",
-                "desc": "Para escritórios em crescimento e bancas estruturadas. O motor de inteligência e automação.",
+                "desc": "Para despachos en crecimiento y bancas estructuradas. El motor de inteligencia y automatización.",
                 "price": "R$ 597",
-                "period": "/mês",
+                "period": "/mes",
                 "features": [
-                    "Tudo do plano Start, mais:",
-                    "Sentinel PRO: Captura Antecipada",
-                    "Scriptor PRO: IA Geradora de Peças",
-                    "Nexus PRO: Automação de Workflows",
-                    "Vox Clientis: WhatsApp e IA Tradutora",
-                    "Suporte Prioritário"
+                    "Todo del plan Start, más:",
+                    "Sentinel PRO: Captura Anticipada",
+                    "Scriptor PRO: IA Generadora de Documentos",
+                    "Nexus PRO: Automatización de Workflows",
+                    "Vox Clientis: WhatsApp e IA Traductora",
+                    "Soporte Prioritario"
                 ],
-                "cta": "Começar teste grátis",
-                "badge": "Mais Popular"
+                "cta": "Empezar prueba gratis",
+                "badge": "Más Popular"
             },
             "strategy": {
                 "name": "STRATEGY",
-                "desc": "Para diretorias jurídicas e corporações. O cockpit estratégico com jurimetria.",
-                "price": "Sob Consulta",
+                "desc": "Para direcciones jurídicas y corporaciones. El cockpit estratégico con jurimetría.",
+                "price": "Bajo Consulta",
                 "period": "",
                 "features": [
-                    "Tudo do plano Growth, mais:",
-                    "Cognitio PRO: BI e Jurimetria Preditiva",
-                    "Nexus PRO: Gestão de Activos e Frota",
-                    "Valorem PRO: Relatórios de Contingência",
+                    "Todo del plan Growth, más:",
+                    "Cognitio PRO: BI y Jurimetría Predictiva",
+                    "Nexus PRO: Gestión de Activos y Flota",
+                    "Valorem PRO: Informes de Contingencia",
                     "Gerente de Éxito Dedicado (CSM)"
                 ],
-                "cta": "Agendar Demonstração"
+                "cta": "Agendar Demostración"
             }
         },
         "comparison": {
-            "label": "Quer analisar cada detalhe técnico?",
+            "label": "¿Quiere analizar cada detalle técnico?",
             "hide": "Ocultar",
             "show": "Ver",
             "cta": "comparativo completo de funcionalidades",
             "headers": {
-                "feature": "Funcionalidade",
+                "feature": "Funcionalidad",
                 "start": "Start",
                 "growth": "Growth",
                 "strategy": "Strategy"
             },
             "categories": {
-                "nexus": "Gestão Processual (Nexus)",
-                "sentinel": "Vigilância (Sentinel)",
-                "scriptor": "Inteligência (Scriptor)",
-                "valorem": "Financeiro (Valorem)",
-                "vox": "Relacionamento (Vox)",
-                "cognitio": "Estratégia (Cognitio)"
+                "nexus": "Gestión Procesal (Nexus)",
+                "sentinel": "Vigilancia (Sentinel)",
+                "scriptor": "Inteligencia (Scriptor)",
+                "valorem": "Financiero (Valorem)",
+                "vox": "Relacionamiento (Vox)",
+                "cognitio": "Estrategia (Cognitio)"
             },
             "features": {
-                "kanban": "Kanban e Prazos",
+                "kanban": "Kanban y Plazos",
                 "workflows": "Workflows Automatizados",
-                "assets": "Gestão de Activos e Frota",
-                "capture": "Captura Antecipada (Distribuição)",
-                "monitoring": "Monitoramento de Diários",
-                "genAi": "IA Gerativa de Peças",
-                "audit": "Auditoria de Risco (IA)",
-                "cashflow": "Fluxo de Caixa e PIX",
-                "provisioning": "Provisionamento e PJe-Calc",
-                "portal": "Portal do Cliente",
+                "assets": "Gestión de Activos y Flota",
+                "capture": "Captura Anticipada (Distribución)",
+                "monitoring": "Monitoreo de Diarios",
+                "genAi": "IA Generativa de Documentos",
+                "audit": "Auditoría de Riesgo (IA)",
+                "cashflow": "Flujo de Caja y PIX",
+                "provisioning": "Provisionamiento y Cálculos Judiciales",
+                "portal": "Portal del Cliente",
                 "portalBasic": "Básico",
                 "portalFull": "Completo",
-                "translation": "Tradução IA e WhatsApp",
-                "bi": "BI e Jurimetria Preditiva"
+                "translation": "Traducción IA y WhatsApp",
+                "bi": "BI y Jurimetría Predictiva"
             }
         },
         "whyChoose": {
-            "title": "Por que escolher o",
-            "titleAccent": "Ecossistema?",
-            "subtitle": "Ferramentas isoladas geram retrabalho. Desenhamos nossos planos para garantir o Flow perfeito. Um módulo alimenta o outro, eliminando 100% da digitação manual de dados.",
+            "title": "¿Por qué elegir el",
+            "titleAccent": "Ecosistema?",
+            "subtitle": "Las herramientas aisladas generan retrabajo. Diseñamos nuestros planes para garantizar el Flow perfecto. Un módulo alimenta al otro, eliminando el 100% de la digitación manual de datos.",
             "items": [
                 {
                     "title": "Sentinel Captura",
-                    "desc": "Identifica o processo na distribuição."
+                    "desc": "Identifica el proceso en la distribución."
                 },
                 {
                     "title": "Nexus Delega",
-                    "desc": "Cria a tarefa para sua equipe."
+                    "desc": "Crea la tarea para su equipo."
                 },
                 {
-                    "title": "Scriptor Redige",
-                    "desc": "IA gera a defesa em minutos."
+                    "title": "Scriptor Redacta",
+                    "desc": "La IA genera la defensa en minutos."
                 },
                 {
                     "title": "Vox Notifica",
-                    "desc": "Avisa o cliente automaticamente."
+                    "desc": "Avisa al cliente automáticamente."
                 }
             ]
         },
         "aLaCarte": {
-            "badge": "Flexibilidade Total",
-            "title": "Módulos Avulsos",
-            "subtitle": "Precisa de uma solução pontual? Usted no precisa levar o ecossistema inteiro se quiser resolver apenas um desafio imediato.",
+            "badge": "Flexibilidad Total",
+            "title": "Módulos Sueltos",
+            "subtitle": "¿Necesita una solución puntual? Usted no necesita llevar el ecosistema entero si quiere resolver solo un desafío inmediato.",
             "sentinel": {
                 "title": "Sentinel Radar",
-                "desc": "Ideal para quem só precisa monitorar diários oficiais e capturar novos processos sem a gestão completa.",
-                "cta": "Saiba mais"
+                "desc": "Ideal para quien solo necesita monitorear diarios oficiales y capturar nuevos procesos sin la gestión completa.",
+                "cta": "Saber más"
             },
             "cognitio": {
                 "title": "Cognitio Analytics",
-                "desc": "Ideal para diretores que já usam outro sistema de gestão, mas precisam da nossa Jurimetria de Magistrados.",
+                "desc": "Ideal para directores que ya usan otro sistema de gestión, pero necesitan nuestra Jurimetría de Magistrados.",
                 "cta": "Agendar Demo"
             }
         },
         "faq": {
-            "title": "Dúvidas Frequentes",
+            "title": "Dudas Frecuentes",
             "questions": [
                 {
                     "q": "¿Qué pasa si quiero cancelar mi plan?",
                     "a": "Cero llamadas largas o multas ocultas. Puedes cancelar con un solo clic directamente en tu panel. Sin períodos de carencia y sin permanencia. En Veritum PRO, no te atamos con contratos, te conquistamos con la excelencia del servicio. Si decides irte, podrás exportar libremente todos tus datos antes del cierre."
                 },
                 {
-                    "q": "Preciso de cartão de crédito para o teste grátis?",
-                    "a": "No. Acreditamos na nossa tecnologia. Usted testa os planos Start ou Growth por 14 dias com acesso total, sem burocracia."
+                    "q": "¿Necesito tarjeta de crédito para la prueba gratis?",
+                    "a": "No. Creemos en nuestra tecnología. Usted prueba los planes Start o Growth por 14 días con acceso total, sin burocracia."
                 },
                 {
-                    "q": "Como funciona o limite de processos?",
-                    "a": "O sistema no cobra por \"processo arquivado\". Nós precificamos baseados nos seus casos ativos, garantindo que usted pague apenas pelo que gera esforço real."
+                    "q": "¿Cómo funciona el límite de procesos?",
+                    "a": "El sistema no cobra por \"proceso archivado\". Nosotros tasamos basados en sus casos activos, garantizando que usted pague solo por lo que genera esfuerzo real."
                 },
                 {
-                    "q": "Posso mudar de plano depois?",
-                    "a": "A qualquer momento. O Veritum PRO tem uma arquitetura modular. Faça upgrade ou downgrade com apenas um clique a partir das suas configurações."
+                    "q": "¿Puedo cambiar de plan después?",
+                    "a": "En cualquier momento. Veritum PRO tiene una arquitectura modular. Haga upgrade o downgrade con solo un clic desde sus configuraciones."
                 }
             ]
         },
         "finalCta": {
-            "title": "A advocacia do futuro",
-            "titleAccent": "no usa planilhas.",
-            "subtitle": "Junte-se ao ecossistema Veritum PRO hoje mesmo e transforme seu escritório em uma máquina de performance.",
-            "button": "Criar Minha Conta Agora",
-            "footer": "Desenvolvido por AGTech | LegalTech de Alta Performance © 2026"
+            "title": "La abogacía del futuro",
+            "titleAccent": "no usa planillas.",
+            "subtitle": "Únase al ecosistema Veritum PRO hoy mismo y transforme su despacho en una máquina de performance.",
+            "button": "Crear Mi Cuenta Ahora",
+            "footer": "Desarrollado por AGTech | LegalTech de Alta Performance © 2026"
         },
         "demoModal": {
-            "successTitle": "Solicitação Recebida!",
-            "successDesc": "Um de nossos consultores especializados entrará em contato via WhatsApp para confirmar o **melhor horário** na data que usted sugeriu.",
-            "title": "Demonstração Estratégica",
-            "subtitle": "Preencha os dados abaixo para qualificar seu atendimento.",
+            "successTitle": "¡Solicitud Recibida!",
+            "successDesc": "Uno de nuestros consultores especializados se pondrá en contacto vía WhatsApp para confirmar el **mejor horario** en la fecha que usted sugirió.",
+            "title": "Demostración Estratégica",
+            "subtitle": "Complete los datos a continuación para calificar su atención.",
             "labels": {
                 "name": "Nombre Completo",
                 "email": "E-mail Corporativo",
                 "whatsapp": "WhatsApp",
-                "teamSize": "Tamanho da Equipe / Volume",
-                "dateRange": "Seleccione o intervalo de datas desejado"
+                "teamSize": "Tamaño del Equipo / Volumen",
+                "dateRange": "Seleccione el intervalo de fechas deseado"
             },
             "placeholders": {
-                "name": "Ex: Dr. Alexandre Aguiar",
-                "email": "nome@escritorio.com",
-                "whatsapp": "(11) 99999-9999",
-                "teamSize": "Seleccione uma opção..."
+                "name": "Ej: Dr. Alejandro Aguiar",
+                "email": "nombre@despacho.com",
+                "whatsapp": "+54 9 11 ...",
+                "teamSize": "Seleccione una opción..."
             },
             "teamOptions": {
-                "small": "1 a 5 advogados (Nuevo Escritório)",
-                "medium": "6 a 20 advogados (Escritório em Expansão)",
-                "large": "+20 advogados ou Depto. Jurídico"
+                "small": "1 a 5 abogados (Nuevo Despacho)",
+                "medium": "6 a 20 abogados (Despacho en Expansión)",
+                "large": "+20 abogados o Depto. Jurídico"
             },
             "calendar": {
-                "tooltip1": "Clique uma vez para o início e outra para o fim do período desejado.",
-                "tooltip2": "Entraremos em contato para confirmar o melhor horário dentro deste intervalo.",
-                "error": "Por favor, selecione o período para a demonstração."
+                "tooltip1": "Haga clic una vez para el inicio y otra para el fin del periodo deseado.",
+                "tooltip2": "Nos pondremos en contacto para confirmar el mejor horario dentro de este intervalo.",
+                "error": "Por favor, seleccione el periodo para la demostración."
             },
-            "submitBtn": "Confirmar Sugestão",
+            "submitBtn": "Confirmar Sugerencia",
             "submitting": "Enviando..."
         }
     },
     "landingPages": {
         "nexus": {
             "nav": {
-                "home": "Início",
-                "vision": "Visão",
+                "home": "Inicio",
+                "vision": "Visión",
                 "features": "Funcionalidades",
                 "ux": "Diferencial"
             },
             "hero": {
-                "badge": "Gestão de Alta Performance",
-                "title": "A central de comando do seu escritório.",
-                "subtitle": "Onde o caos se transforma em clareza. Centralize processos, prazos e equipe em um único painel inteligente. O Nexus PRO elimina planilhas e automatiza a sua rotina.",
-                "cta1": "Começar Teste Grátis",
-                "cta2": "Saiba mais"
+                "badge": "Gestión de Alta Performance",
+                "title": "La central de mando de su despacho.",
+                "subtitle": "Donde el caos se transforma en claridad. Centralice procesos, plazos y equipo en un único panel inteligente. Nexus PRO elimina planillas y automatiza su rutina.",
+                "cta1": "Empezar Prueba Gratis",
+                "cta2": "Saber más"
             },
             "mockup": {
                 "title": "Nexus PRO Kanban",
                 "columns": {
-                    "todo": "A Fazer (12)",
-                    "doing": "Em Andamento (5)",
-                    "done": "Concluído (84)"
+                    "todo": "Por Hacer (12)",
+                    "doing": "En Progreso (5)",
+                    "done": "Concluido (84)"
                 }
             },
             "vision": {
                 "stats": {
-                    "deadlines": "Prazos Hoje",
-                    "tasks": "Tarefas Concluídas",
-                    "productivity": "Produtividade",
+                    "deadlines": "Plazos Hoy",
+                    "tasks": "Tareas Concluidas",
+                    "productivity": "Productividad",
                     "members": "Colaboradores"
                 },
-                "title": "Gestão que acompanha o seu ritmo.",
-                "subtitle": "O Nexus PRO é o coração operacional do ecossistema Veritum. Desenhado para reduzir a carga cognitiva da sua equipe, ele reúne todas as pontas soltas da advocacia em um fluxo de trabalho claro e intuitivo.",
-                "quote": "\"Saiba exatamente quem está fazendo o quê, em qual prazo e com qual prioridade.\""
+                "title": "Gestión que acompaña su ritmo.",
+                "subtitle": "Nexus PRO es el corazón operativo del ecosistema Veritum. Diseñado para reducir la carga cognitiva de su equipo, reúne todas las puntas sueltas de la abogacía en un flujo de trabajo claro e intuitivo.",
+                "quote": "\"Sepa exactamente quién está haciendo qué, en qué plazo y con qué prioridad.\""
             },
             "features": {
-                "category": "Tecnologia Operacional",
-                "title": "Funcionalidades de Alto Nível",
-                "subtitle": "Ferramentas criadas para escritórios que no têm tempo a perder.",
+                "category": "Tecnología Operativa",
+                "title": "Funcionalidades de Alto Nivel",
+                "subtitle": "Herramientas creadas para despachos que no tienen tiempo que perder.",
                 "items": {
                     "kanban": {
-                        "title": "Gestão de Processos e Prazos (Kanban)",
-                        "desc": "Transforme a ansiedade em controle. Acompanhe processos, audiências e tarefas em um mural Kanban totalmente visual."
+                        "title": "Gestión de Procesos y Plazos (Kanban)",
+                        "desc": "Transforme la ansiedad en control. Acompañe procesos, audiencias y tareas en un mural Kanban totalmente visual."
                     },
                     "automation": {
-                        "title": "Workflows Avançados e Automação",
-                        "desc": "Delegue no piloto automático. Crie fluxos de trabalho inteligentes que distribuem tarefas para a sua equipe automaticamente."
+                        "title": "Workflows Avanzados y Automatización",
+                        "desc": "Delegue en piloto automático. Cree flujos de trabajo inteligentes que distribuyen tareas a su equipo automáticamente."
                     },
                     "assets": {
-                        "title": "Gestão de Activos e Bens em Litígio",
-                        "desc": "Tenha o mapa completo da execução. Controle certidões, matrículas, frotas e imóveis atrelados a processos jurídicos."
+                        "title": "Gestión de Activos y Bienes en Litigio",
+                        "desc": "Tenga el mapa completo de la ejecución. Controle certificados, matrículas, flotas e inmuebles vinculados a procesos jurídicos."
                     },
                     "corporate": {
-                        "title": "Controle Societário e Ciclo de Vida",
-                        "desc": "Domine o consultivo corporativo. Gerencie contratos no-financeiros, procurações e atos societários com alertas automáticos."
+                        "title": "Control Societario y Ciclo de Vida",
+                        "desc": "Domine el consultivo corporativo. Gestione contratos no financieros, poderes y actos societarios con alertas automáticas."
                     }
                 }
             },
             "ux": {
-                "title": "Design pensado para o seu Flow de trabalho.",
-                "subtitle": "Diga adeus aos sistemas travados e difíceis de aprender. O Nexus PRO foi criado sob rigorosos princípios de design centrado no usuário. Menos cliques, zero distrações e foco total no que importa.",
+                "title": "Diseño pensado para su Flow de trabajo.",
+                "subtitle": "Diga adiós a los sistemas trabados y difíciles de aprender. Nexus PRO fue creado bajo rigurosos principios de diseño centrado en el usuario. Menos clics, cero distracciones y foco total en lo que importa.",
                 "items": {
                     "progressive": {
-                        "title": "Divulgação Progressiva",
-                        "desc": "Usted visualiza o painel macro e acessa os detalhes apenas quando precisa."
+                        "title": "Divulgación Progresiva",
+                        "desc": "Usted visualiza el panel macro y accede a los detalles solo cuando lo necesita."
                     },
                     "noise": {
-                        "title": "Interface Sem Ruído",
-                        "desc": "Elimine ferramentas complexas que atrasam sua equipe. O foco é seu aliado."
+                        "title": "Interfaz Sin Ruido",
+                        "desc": "Elimine herramientas complejas que retrasan a su equipo. El foco es su aliado."
                     }
                 },
-                "efficiency": "Eficiência",
-                "automation": "Automação"
+                "efficiency": "Eficiencia",
+                "automation": "Automatización"
             },
             "finalCta": {
-                "title": "Pronto para revolucionar a sua gestão jurídica?",
-                "subtitle": "O Nexus PRO é a base sólida da sua operação e se conecta de forma nativa às outras inteligências do Ecossistema Veritum.",
-                "button1": "Começar Agora - É Grátis",
-                "button2": "Ver Planos de Assinatura",
-                "footer": "Sem cartão de crédito • Configuração em 2 minutos"
+                "title": "¿Listo para revolucionar su gestión jurídica?",
+                "subtitle": "Nexus PRO es la base sólida de su operación y se conecta de forma nativa a las otras inteligencias del Ecosistema Veritum.",
+                "button1": "Empezar Ahora - Es Gratis",
+                "button2": "Ver Planes de Suscripción",
+                "footer": "Sin tarjeta de crédito • Configuración en 2 minutos"
             },
             "footer": {
-                "slogan": "A central de comando de quem advoga com estratégia."
+                "slogan": "La central de mando de quien aboga con estrategia."
             }
         },
         "sentinel": {
             "nav": {
-                "home": "Início",
-                "vision": "Visão",
+                "home": "Inicio",
+                "vision": "Visión",
                 "features": "Funcionalidades",
                 "ux": "Diferencial"
             },
             "hero": {
-                "badge": "Inteligência Jurídica Ativa",
-                "title": "Aja antes da citação oficial. O radar definitivo.",
-                "subtitle": "Monitore publicações, intimações e descubra novos processos no momento da distribuição. O Sentinel PRO varre o Brasil inteiro para que usted nunca mais tenha medo de perder um prazo ou sofrer uma revelia.",
-                "cta1": "Começar Teste Grátis",
-                "cta2": "Conhecer Planos",
-                "check": "Junte-se a advogados que deixaram de buscar processos manualmente."
+                "badge": "Inteligencia Jurídica Activa",
+                "title": "Actúe antes de la citación oficial. El radar definitivo.",
+                "subtitle": "Monitoree publicaciones, notificaciones e identifique nuevos procesos en el momento de la distribución. Sentinel PRO barre todo el país para que usted nunca más tenga miedo de perder un plazo o caer en rebeldía.",
+                "cta1": "Empezar Prueba Gratis",
+                "cta2": "Conocer Planes",
+                "check": "Únase a abogados que dejaron de buscar procesos manualmente."
             },
             "mockup": {
                 "title": "Sentinel PRO Cockpit",
-                "alerts": "12 ALERTAS DE CRISE",
+                "alerts": "12 ALERTAS DE CRISIS",
                 "stats": {
-                    "intimations": "INTIMAÇÕES HOJE",
-                    "timeSaved": "TEMPO SALVO"
+                    "intimations": "NOTIFICACIONES HOY",
+                    "timeSaved": "TIEMPO AHORRADO"
                 }
             },
             "vision": {
-                "title": "O seu \"Cockpit\" de Vigilância Jurídica.",
-                "subtitle": "O Sentinel PRO no é apenas um buscador, é o sensor de riscos do ecossistema Veritum. Processamos milhares de publicações e movimentações processuais por dia, filtrando o ruído e entregando apenas o que é estritamente relevante para usted e seus clientes.",
-                "box": "Com um painel visual limpo e inteligente, agrupamos as informações para que usted saiba exatamente onde sua atenção é necessária hoje, reduzindo a fadiga de olhar para dezenas de telas."
+                "title": "Su \"Cockpit\" de Vigilancia Jurídica.",
+                "subtitle": "Sentinel PRO no es solo un buscador, es el sensor de riesgos del ecosistema Veritum. Procesamos miles de publicaciones y movimientos procesales al día, filtrando el ruido y entregando solo lo que es estrictamente relevante para usted y sus clientes.",
+                "box": "Con un panel visual limpio e inteligente, agrupamos la información para que usted sepa exactamente dónde se requiere su atención hoy, reduciendo la fatiga de mirar decenas de pantallas."
             },
             "features": {
-                "category": "Tecnologia Proativa",
+                "category": "Tecnología Proactiva",
                 "title": "Funcionalidades Sugeridas",
                 "items": {
                     "revelia": {
-                        "title": "Antecipe-se à Revelia",
-                        "desc": "No espere o oficial de justiça bater à porta. Nossos robôs detectam novas ações no exato momento do peticionamento (distribuição). Receba alertas de processos até 30 dias antes da citação oficial."
+                        "title": "Anticípese a la Rebeldía",
+                        "desc": "No espere a que el oficial de justicia toque a su puerta. Nuestros robots detectan nuevas acciones en el exacto momento de la presentación (distribución). Reciba alertas de procesos hasta 30 días antes de la citación oficial."
                     },
                     "zeroDeadlines": {
-                        "title": "Zero Prazos Perdidos",
-                        "desc": "Esqueça a busca manual. O Sentinel PRO varre automaticamente os Diários Oficiais, DJEN e os tribunais do país. Receba alertas inteligentes de intimações e movimentações em tempo real."
+                        "title": "Cero Plazos Perdidos",
+                        "desc": "Olvide la búsqueda manual. Sentinel PRO recorre automáticamente los Diarios Oficiales y los tribunales del país. Reciba alertas inteligentes de notificaciones y movimientos en tiempo real."
                     },
                     "reputation": {
-                        "title": "Proteja a Reputação do Cliente",
-                        "desc": "A vigilância vai além dos tribunais. Monitore marcas em jornais, portais de notícias e órgãos de defesa do consumidor (Procon, Consumidor.gov). Atue como um escudo corporativo proativo."
+                        "title": "Proteja la Reputación del Cliente",
+                        "desc": "La vigilancia va más allá de los tribunales. Monitoree marcas en periódicos, portales de noticias y organismos de defensa del consumidor. Actúe como un escudo corporativo proactivo."
                     },
                     "aiIntelligence": {
-                        "title": "Inteligência que lê por usted",
-                        "desc": "Nossa IA lê publicações e classifica o conteúdo instantaneamente. indicadores visuais (como vermelho para Risco Alto) ajudam usted a priorizar urgências em um segundo."
+                        "title": "Inteligencia que lee por usted",
+                        "desc": "Nuestra IA lee las publicaciones y clasifica el contenido instantáneamente. Indicadores visuales (como rojo para Riesgo Alto) le ayudan a priorizar urgencias en un segundo."
                     }
                 }
             },
             "ux": {
-                "title": "Uma interface que pensa como um advogado.",
-                "subtitle": "Ferramentas complexas atrasam o seu trabalho. Projetamos o Sentinel PRO para garantir foco total. Sem \"muralhas de dados\", usted visualiza gráficos limpos, navegação intuitiva e alertas codificados por cores que evitam erros.",
+                "title": "Una interfaz que piensa como un abogado.",
+                "subtitle": "Las herramientas complejas retrasan su trabajo. Diseñamos Sentinel PRO para garantizar un enfoque total. Sin \"murallas de datos\", usted visualiza gráficos limpios, navegación intuitiva y alertas codificadas por colores que evitan errores.",
                 "list": [
-                    "Foco total: Menos cliques, mais resultados.",
-                    "Alertas por cores: Priorização instantânea.",
-                    "Resumos por IA: Deixe a leitura densa para nós.",
-                    "Ação rápida: Transforme alertas em tarefas com um clique."
+                    "Enfoque total: Menos clics, más resultados.",
+                    "Alertas por colores: Priorización instantánea.",
+                    "Resúmenes por IA: Deje la lectura densa para nosotros.",
+                    "Acción rápida: Transforme alertas en tareas con un clic."
                 ],
                 "grid": {
-                    "vision": "Visão 360º",
-                    "security": "Segurança Total",
-                    "action": "Ação Instantânea",
-                    "stress": "Fim do Stress"
+                    "vision": "Visión 360º",
+                    "security": "Seguridad Total",
+                    "action": "Acción Instantánea",
+                    "stress": "Fin del Estrés"
                 }
             },
             "finalCta": {
-                "title": "Pronto para nunca mais se preocupar com Publicações?",
-                "subtitle": "O Sentinel PRO é brilhante sozinho, mas é imbatível no Ecossistema Veritum. Junte-se a centenas de escritórios que elevaram sua segurança operacional.",
-                "button1": "Começar Agora - É Grátis",
-                "button2": "Ver Planos de Assinatura",
-                "footer": "Sem cartão de crédito • Configuração rápida"
+                "title": "¿Listo para no preocuparse nunca más por las Publicaciones?",
+                "subtitle": "Sentinel PRO es brillante por sí solo, pero es imbatible en el Ecosistema Veritum. Únase a cientos de despachos que elevaron su seguridad operativa.",
+                "button1": "Empezar Ahora - Es Gratis",
+                "button2": "Ver Planes de Suscripción",
+                "footer": "Sin tarjeta de crédito • Configuración rápida"
             },
             "footer": {
-                "slogan": "O radar proativo de quem no aceita o risco da revelia."
+                "slogan": "El radar proactivo de quien no acepta el riesgo de la rebeldía."
             }
         },
         "scriptor": {
             "nav": {
-                "home": "Início",
-                "vision": "Visão",
+                "home": "Inicio",
+                "vision": "Visión",
                 "features": "Funcionalidades",
                 "ux": "Diferencial"
             },
             "hero": {
                 "badge": "IA Documental Generativa",
-                "title": "A inteligência que redige, revisa e protege.",
-                "subtitle": "O fim da \"Síndrome da Página em Branco\". Transforme horas de redação e revisão em minutos com seu co-piloto jurídico alimentado por IA.",
-                "cta1": "Começar Teste Grátis",
-                "cta2": "Saiba mais"
+                "title": "La inteligencia que redacta, revisa y protege.",
+                "subtitle": "El fin del \"Síndrome de la Página en Blanco\". Transforme horas de redacción y revisión en minutos con su copiloto jurídico alimentado por IA.",
+                "cta1": "Empezar Prueba Gratis",
+                "cta2": "Saber más"
             },
             "mockup": {
                 "title": "Scriptor PRO Editor",
-                "pilot": "IA Co-piloto sugerindo...",
-                "accept": "TAB p/ Aceitar"
+                "pilot": "IA Copiloto sugiriendo...",
+                "accept": "TAB para Aceptar"
             },
             "stats": {
-                "drafting": "Tempo de Redação",
+                "drafting": "Tiempo de Redacción",
                 "clauses": "Cláusulas Abusivas",
-                "signatures": "Assinaturas Hoje",
-                "search": "Pesquisa Global"
+                "signatures": "Firmas Hoy",
+                "search": "Búsqueda Global"
             },
             "vision": {
-                "title": "Mais do que um editor. Uma mente jurídica ao seu lado.",
-                "desc1": "O Scriptor PRO no substitui a sua estratégia, ele a potencializa. Desenvolvemos um ecossistema documental inteligente que lê, compreende o contexto e sugere as melhores práticas jurídicas.",
-                "desc2": "Concentre sua energia no intelecto da tese, enquanto nossos algoritmos cuidam da formatação, da revisão e da caça aos riscos ocultos."
+                "title": "Más que un editor. Una mente jurídica a su lado.",
+                "desc1": "Scriptor PRO no sustituye su estrategia, la potencializa. Desarrollamos un ecosistema documental inteligente que lee, comprende el contexto y sugiere las mejores prácticas jurídicas.",
+                "desc2": "Concentre su energía en el intelecto de la tesis, mientras nuestros algoritmos se encargan del formato, la revisión y la búsqueda de riesgos ocultos."
             },
             "features": {
-                "category": "Tecnologia Documental",
-                "title": "Funcionalidades de Elite",
-                "subtitle": "Ferramentas criadas para bancas e departamentos que exigem produtividade máxima.",
+                "category": "Tecnología Documental",
+                "title": "Funcionalidades de Élite",
+                "subtitle": "Herramientas creadas para bufetes y departamentos que exigen productividad máxima.",
                 "items": {
                     "generator": {
-                        "title": "Gerador de Peças e Contratos (IA)",
-                        "desc": "Acelere a sua produção. Nossa IA analisa o contexto do seu caso e redige minutas, contestações e contratos automaticamente."
+                        "title": "Generador de Documentos y Contratos (IA)",
+                        "desc": "Acelere su producción. Nuestra IA analiza el contexto de su caso y redacta escritos, contestaciones y contratos automáticamente."
                     },
                     "auditor": {
-                        "title": "Auditoria de Risco em Contratos (IA)",
-                        "desc": "Nunca mais deixe uma \"pegadinha\" passar despercebida. Identifique instantaneamente cláusulas abusivas e pontos de atenção."
+                        "title": "Auditoría de Riesgo en Contratos (IA)",
+                        "desc": "Nunca más deje que una \"trampa\" pase desapercibida. Identifique instantáneamente cláusulas abusivas y puntos de atención."
                     },
                     "repository": {
-                        "title": "Repositório Inteligente (GED)",
-                        "desc": "O fim das pastas perdidas. Armazene modelos e arquivos em um cofre digital seguro com total conformidade com a LGPD."
+                        "title": "Repositorio Inteligente (GED)",
+                        "desc": "El fin de las carpetas perdidas. Almacene modelos y archivos en una bóveda digital segura con total cumplimiento de las normativas de datos (LGPD/GDPR)."
                     },
                     "signature": {
-                        "title": "Assinatura Digital Nativa",
-                        "desc": "Feche negócios sem plataformas terceiras. Envie documentos para assinatura pelo celular com validade jurídica garantida."
+                        "title": "Firma Digital Nativa",
+                        "desc": "Cierre negocios sin plataformas externas. Envíe documentos para firma por el celular con validez jurídica garantizada."
                     }
                 },
-                "cta": "Saiba mais"
+                "cta": "Saber más"
             },
             "ux": {
-                "title": "Seu ambiente de foco absoluto.",
-                "subtitle": "A tecnologia só é boa quando no atrapalha. Projetamos o SCRIPTOR PRO com um design minimalista para proteger a sua concentração. Mantenha-se no Flow do início ao fim da sua redação.",
+                "title": "Su ambiente de enfoque absoluto.",
+                "subtitle": "La tecnología solo es buena cuando no estorba. Diseñamos SCRIPTOR PRO con un diseño minimalista para proteger su concentración. Manténgase en el Flow del inicio al fin de su redacción.",
                 "items": {
                     "contextual": {
                         "title": "IA Contextual",
-                        "desc": "Ela sugere, usted aprova. O controle é sempre seu."
+                        "desc": "Ella sugiere, usted aprueba. El control es siempre suyo."
                     },
                     "versioning": {
-                        "title": "Versionamento Seguro",
-                        "desc": "Restaure versões anteriores com um clique."
+                        "title": "Versionado Seguro",
+                        "desc": "Restaure versiones anteriores con un clic."
                     },
                     "search": {
-                        "title": "Busca Global",
-                        "desc": "Encontre palavras em milhares de PDFs em milissegundos."
+                        "title": "Búsqueda Global",
+                        "desc": "Encuentre palabras en miles de PDFs en milisegundos."
                     }
                 }
             },
             "finalCta": {
-                "title": "Pronto para multiplicar a sua capacidade de produção?",
-                "subtitle": "Seja operando sozinho como um Super ChatGPT Jurídico ou integrado perfeitamente ao Ecossistema Veritum, o Scriptor PRO é a vantagem injusta do seu escritório.",
-                "button1": "Começar Agora - É Grátis",
-                "button2": "Ver Planos de Assinatura",
-                "footer": "Sem cartão de crédito • Configuração rápida"
+                "title": "¿Listo para multiplicar su capacidad de producción?",
+                "subtitle": "Ya sea operando solo como un Super ChatGPT Jurídico o integrado perfectamente al Ecosistema Veritum, Scriptor PRO es la ventaja competitiva de su despacho.",
+                "button1": "Empezar Ahora - Es Gratis",
+                "button2": "Ver Planes de Suscripción",
+                "footer": "Sin tarjeta de crédito • Configuración rápida"
             },
             "footer": {
-                "slogan": "A tecnologia de quem advoga no estado da arte."
+                "slogan": "La tecnología de quien aboga en el estado del arte."
             }
         },
         "valorem": {
             "nav": {
-                "home": "Início",
-                "vision": "Visão",
+                "home": "Inicio",
+                "vision": "Visión",
                 "features": "Funcionalidades",
                 "ux": "Diferencial"
             },
             "hero": {
-                "badge": "Inteligência Financeira Jurídica",
-                "title": "Sua saúde financeira em piloto automático.",
-                "subtitle": "Receba seus honorários sem burocracia. Diga adeus às planilhas confusas e à inadimplência. O Valorem PRO resolve cálculos judiciais e automatiza cobranças.",
-                "cta1": "Começar Teste Grátis",
-                "cta2": "Saiba mais"
+                "badge": "Inteligencia Financiera Jurídica",
+                "title": "Su salud financiera en piloto automático.",
+                "subtitle": "Reciba sus honorarios sin burocracia. Diga adiós a las planillas confusas y a la morosidad. Valorem PRO resuelve cálculos judiciales y automatiza cobranzas.",
+                "cta1": "Empezar Prueba Gratis",
+                "cta2": "Saber más"
             },
             "mockup": {
-                "monthly": "Receita Mensal",
-                "pix": "Pagamento via PIX",
-                "pay": "Pagar Agora",
-                "direct": "PIX Direto",
-                "boleto": "Boleto",
-                "efficiency": "Eficiência",
-                "today": "Hoje"
+                "monthly": "Ingresos Mensuales",
+                "pix": "Pago vía PIX / Transferencia",
+                "pay": "Pagar Ahora",
+                "direct": "Transferencia Directa",
+                "boleto": "Boleto Bancario",
+                "efficiency": "Eficiencia",
+                "today": "Hoy"
             },
             "stats": {
-                "revenue": "Receitas no Mês",
-                "overdue": "Inadimplência",
-                "provision": "Provisão de Risco",
-                "liquidity": "Liquidez Hoje",
+                "revenue": "Ingresos en el Mes",
+                "overdue": "Morosidad",
+                "provision": "Provisión de Riesgo",
+                "liquidity": "Liquidez Hoy",
                 "liquidityVal": "Alta"
             },
             "vision": {
-                "title": "Pare de cobrar clientes. Deixe o sistema fazer isso por usted.",
-                "desc": "O Valorem PRO foi desenhado para quem advoga e no quer perder tempo com tarefas burocráticas de tesouraria. Saiba exatamente quem pagou, quem está devendo e qual é a projeção de faturamento do trimestre.",
-                "quote": "\"Uma visão em tempo real, do centavo ao milhão, sem precisar ser um especialista em finanças.\""
+                "title": "Deje de cobrar a los clientes. Deje que el sistema lo haga por usted.",
+                "desc": "Valorem PRO fue diseñado para quien aboga y no quiere perder tiempo con tareas burocráticas de tesorería. Sepa exactamente quién pagó, quién debe y cuál es la proyección de facturación del trimestre.",
+                "quote": "\"Una visión en tiempo real, desde el centavo hasta el millón, sin necesidad de ser un experto en finanzas.\""
             },
             "features": {
-                "category": "Tecnologia Financeira",
-                "title": "Funcionalidades de Elite",
-                "subtitle": "Ferramentas criadas para garantir a rentabilidade e a transparência do seu negócio.",
+                "category": "Tecnología Financiera",
+                "title": "Funcionalidades de Élite",
+                "subtitle": "Herramientas creadas para garantizar la rentabilidad y la transparencia de su negocio.",
                 "items": {
                     "management": {
-                        "title": "Gestão Financeira Inteligente",
-                        "desc": "Assuma o controle total. Gerencie honorários, custas e fluxo de caixa. Vincule cada despesa diretamente ao processo do cliente."
+                        "title": "Gestión Financiera Inteligente",
+                        "desc": "Asuma el control total. Gestione honorarios, costos y flujo de caja. Vincule cada gasto directamente al proceso del cliente."
                     },
                     "billing": {
-                        "title": "Emissão de Boletos e PIX Integrado",
-                        "desc": "Profissionalize suas cobranças. Gere QR Codes PIX e boletos com lembretes automáticos e baixa instantânea no sistema."
+                        "title": "Emisión de Boletos y Pagos Integrados",
+                        "desc": "Profesionalice sus cobros. Genere QR Codes para transferencias y boletos con recordatorios automáticos y baja instantánea en el sistema."
                     },
                     "calc": {
-                        "title": "Integração PJe-Calc e Atualizações",
-                        "desc": "Fim da dor de cabeça com cálculos judiciais. Importe dados governamentais e atualize valores com índices monetários reais."
+                        "title": "Integración de Cálculos y Actualizaciones",
+                        "desc": "Fin del dolor de cabeza con los cálculos judiciales. Importe datos gubernamentales y actualice valores con índices monetarios reales."
                     },
                     "reports": {
-                        "title": "Provisionamento e Relatórios de Contingência",
-                        "desc": "A visão exigida por grandes diretorias. Calcule provisões de risco e monitore valores retidos em depósitos judiciais."
+                        "title": "Provisionamiento e Informes de Contingencia",
+                        "desc": "La visión exigida por las grandes direcciones. Calcule provisiones de riesgo y monitoree valores retenidos en depósitos judiciales."
                     }
                 },
-                "cta": "Saiba mais"
+                "cta": "Saber más"
             },
             "ux": {
-                "title": "Finanças traduzidas para o seu idioma.",
-                "subtitle": "Usted é de humanas, e nós entendemos isso. Em vez de telas repletas de jargões contábeis, o Valorem PRO usa gráficos visuais e ícones intuitivos.",
+                "title": "Finanzas traducidas a su idioma.",
+                "subtitle": "Usted es de letras (humanidades), y nosotros lo entendemos. En lugar de pantallas repletas de tecnicismos contables, Valorem PRO usa gráficos visuales e iconos intuitivos.",
                 "items": {
                     "conciliation": {
-                        "title": "Conciliação Visual",
-                        "desc": "Cores que indicam imediatamente o que está pago, atrasado ou pendente."
+                        "title": "Conciliación Visual",
+                        "desc": "Colores que indican inmediatamente lo que está pagado, atrasado o pendiente."
                     },
                     "sharing": {
-                        "title": "Rateio Descomplicado",
-                        "desc": "Divisão automática de honorários entre sócios e parceiros."
+                        "title": "Reparto Descomplicado",
+                        "desc": "División automática de honorarios entre socios y colaboradores."
                     },
                     "export": {
-                        "title": "Exportação Transparente",
-                        "desc": "Exporte relatórios para o seu contador com apenas um clique."
+                        "title": "Exportación Transparente",
+                        "desc": "Exporte informes para su contador con solo un clic."
                     }
                 }
             },
             "finalCta": {
-                "title": "Pronto para lucrar mais e se preocupar menos?",
-                "subtitle": "Integrado perfeitamente ao Nexus PRO, o Valorem garante que todo o seu trabalho jurídico seja devidamente registrado, cobrado e recebido.",
-                "button1": "Começar Agora - É Grátis",
-                "button2": "Ver Planos de Assinatura",
-                "footer": "Sem cartão de crédito • Configuração em 2 minutos"
+                "title": "¿Listo para ganar más y preocuparse menos?",
+                "subtitle": "Integrado perfectamente a Nexus PRO, Valorem garantiza que todo su trabajo jurídico sea debidamente registrado, cobrado y recibido.",
+                "button1": "Empezar Ahora - Es Gratis",
+                "button2": "Ver Planes de Suscripción",
+                "footer": "Sin tarjeta de crédito • Configuración en 2 minutos"
             },
             "footer": {
-                "slogan": "O controle financeiro de quem advoga com previsibilidade."
+                "slogan": "El control financiero de quien aboga con previsibilidad."
             }
         },
         "cognitio": {
             "nav": {
-                "home": "Início",
-                "vision": "Visão",
+                "home": "Inicio",
+                "vision": "Visión",
                 "features": "Funcionalidades",
                 "ux": "Diferencial"
             },
             "hero": {
-                "badge": "Inteligência Jurídica Preditiva",
-                "title": "O olhar estratégico que a sua diretoria exige.",
-                "subtitle": "Advocacia guiada por dados. Transforme dados complexos em previsibilidade financeira e decisões de alto impacto para seu departamento ou banca.",
-                "cta1": "Agendar Demonstração",
-                "cta2": "Saiba mais"
+                "badge": "Inteligencia Jurídica Predictiva",
+                "title": "La visión estratégica que su dirección exige.",
+                "subtitle": "Abogacía guiada por datos. Transforme datos complejos en previsibilidad financiera y decisiones de alto impacto para su departamento o bufete.",
+                "cta1": "Agendar Demostración",
+                "cta2": "Saber más"
             },
             "mockup": {
                 "kpiGlobal": "KPI Global",
-                "activeRisk": "Risco Activo",
-                "sentences": "Sentenças",
+                "activeRisk": "Riesgo Activo",
+                "sentences": "Sentencias",
                 "sentencesValue": "1.2k",
-                "sentencesSub": "Hoje",
-                "analysisTitle": "Análise de Êxito por Tribunal"
+                "sentencesSub": "Hoy",
+                "analysisTitle": "Análisis de Éxito por Tribunal"
             },
             "stats": {
-                "successRate": "Taxa de Êxito",
-                "mitigatedRisk": "Risco Mitigado",
-                "avgTime": "Tempo Médio",
+                "successRate": "Tasa de Éxito",
+                "mitigatedRisk": "Riesgo Mitigado",
+                "avgTime": "Tiempo Medio",
                 "avgTimeVal": "14 Meses",
-                "predictability": "Previsibilidade",
+                "predictability": "Previsibilidad",
                 "predictabilityVal": "Alta"
             },
             "vision": {
-                "title": "Pare de advogar no escuro. A intuição cede lugar à precisão.",
-                "desc": "Grandes bancas e departamentos jurídicos corporativos no podem depender de \"achismos\". O Cognitio PRO lê o histórico de milhares de decisões para que usted saiba quando é mais vantajoso um acordo ou o litígio.",
-                "quote": "\"Tenha o raio-x completo da sua operação na palma da mão e preste contas à diretoria com segurança absoluta.\""
+                "title": "Deje de abogar a ciegas. La intuición cede el paso a la precisión.",
+                "desc": "Los grandes bufetes y departamentos jurídicos corporativos no pueden depender de suposiciones. Cognitio PRO lee el historial de miles de decisiones para que usted sepa cuándo es más ventajoso un acuerdo o el litigio.",
+                "quote": "\"Tenga la radiografía completa de su operación en la palma de la mano y rinda cuentas a la dirección con seguridad absoluta.\""
             },
             "features": {
-                "category": "Tecnologia Analítica",
-                "title": "Funcionalidades de Elite",
-                "subtitle": "Ferramentas criadas para sócios e diretores que precisam de respostas rápidas e exatas.",
+                "category": "Tecnología Analítica",
+                "title": "Funcionalidades de Élite",
+                "subtitle": "Herramientas creadas para socios y directores que necesitan respuestas rápidas y exactas.",
                 "items": {
                     "bi": {
-                        "title": "Dashboards e BI Jurídico",
-                        "desc": "Visualize a performance de toda a operação em painéis interativos. Identifique gargalos e métricas de produtividade em tempo real."
+                        "title": "Dashboards y BI Jurídico",
+                        "desc": "Visualice el rendimiento de toda la operación en paneles interactivos. Identifique cuellos de botella y métricas de productividad en tiempo real."
                     },
                     "predictive": {
-                        "title": "Análise Preditiva de Desfechos (IA)",
-                        "desc": "Nossa IA cruza dados de jurisprudência e histórico processual para calcular a probabilidade de ganho antes mesmo do protocolo."
+                        "title": "Análisis Predictivo de Resultados (IA)",
+                        "desc": "Nuestra IA cruza datos de jurisprudencia e historial procesal para calcular la probabilidad de éxito incluso antes de la presentación."
                     },
                     "judges": {
-                        "title": "Raio-X de Magistrados e Comarcas",
-                        "desc": "Conheça a mente de quem vai julgar. Relatórios detalhados sobre como cada tribunal costuma decidir em temas específicos."
+                        "title": "Radiografía de Magistrados y Juzgados",
+                        "desc": "Conozca la mente de quien va a juzgar. Informes detallados sobre cómo cada tribunal suele decidir en temas específicos."
                     },
                     "corporate": {
-                        "title": "Visão Corporativa e Provisionamento",
-                        "desc": "Acompanhe custos por filial ou projeto. Descubra quais setores enfrentam maior litigiosidade e atue preventivamente."
+                        "title": "Visión Corporativa y Provisionamiento",
+                        "desc": "Siga los costos por sucursal o proyecto. Descubra qué sectores enfrentan mayor litigiosidad y actúe preventivamente."
                     }
                 },
-                "cta": "Saiba mais"
+                "cta": "Saber más"
             },
             "ux": {
-                "title": "O fim da \"Parede de Números\".",
-                "subtitle": "Executivos no têm tempo para decifrar planilhas. Projetamos o Cognitio PRO com as melhores práticas de visualização para decisões rápidas.",
+                "title": "El fin de la \"Pared de Números\".",
+                "subtitle": "Los ejecutivos no tienen tiempo para descifrar planillas. Diseñamos Cognitio PRO con las mejores prácticas de visualización para decisiones rápidas.",
                 "items": {
                     "disclosure": {
-                        "title": "Divulgação Progressiva",
-                        "desc": "Cenário macro limpo com possibilidade de aprofundamento total em um clique."
+                        "title": "Divulgación Progresiva",
+                        "desc": "Escenario macro limpio con posibilidad de profundizar totalmente con un clic."
                     },
                     "trends": {
-                        "title": "Destaque de Tendências",
-                        "desc": "Gráficos codificados por cores que indicam riscos e oportunidades instantaneamente."
+                        "title": "Destaque de Tendencias",
+                        "desc": "Gráficos codificados por colores que indican riesgos y oportunidades instantáneamente."
                     },
                     "export": {
-                        "title": "Exportação Executiva",
-                        "desc": "Gere relatórios visuais perfeitos para apresentações em segundos."
+                        "title": "Exportación Ejecutiva",
+                        "desc": "Genere informes visuales perfectos para presentaciones en segundos."
                     }
                 }
             },
             "finalCta": {
-                "title": "Pronto para liderar com inteligência de dados?",
-                "subtitle": "Ideal para bancas estruturadas e corporações que buscam excelência, previsibilidade e rentabilidade em sua operação jurídica.",
-                "button1": "Agendar Demonstração Exclusiva",
-                "button2": "Ver Planos de Assinatura"
+                "title": "¿Listo para liderar con inteligencia de datos?",
+                "subtitle": "Ideal para bufetes estructurados y corporaciones que buscan excelencia, previsibilidad y rentabilidad en su operación jurídica.",
+                "button1": "Agendar Demostración Exclusiva",
+                "button2": "Ver Planes de Suscripción"
             },
             "footer": {
-                "slogan": "A tecnologia de quem dita as regras do jogo."
+                "slogan": "La tecnología de quien dicta las reglas del juego."
             }
         },
         "vox": {
             "nav": {
-                "home": "Início",
-                "vision": "Visão",
+                "home": "Inicio",
+                "vision": "Visión",
                 "features": "Funcionalidades",
                 "ux": "Diferencial"
             },
             "hero": {
-                "badge": "Atendimento Padrão Ouro",
-                "title": "O fim da pergunta: \"Doutor, como está o meu caso?\"",
-                "subtitle": "Comunicação jurídica sem interrupções. Automatize seu atendimento com integração ao WhatsApp e Inteligência Artificial. Fidelize com transparência absoluta.",
-                "cta1": "Começar Teste Grátis",
-                "cta2": "Saiba mais"
+                "badge": "Atención Estándar de Oro",
+                "title": "El fin de la pregunta: \"Doctor, ¿cómo va mi caso?\"",
+                "subtitle": "Comunicación jurídica sin interrupciones. Automatice su atención con integración a WhatsApp e Inteligencia Artificial. Fidelice con transparencia absoluta.",
+                "cta1": "Empezar Prueba Gratis",
+                "cta2": "Saber más"
             },
             "mockup": {
                 "title1": "Veritum Automations",
                 "status": "online",
-                "msg1": "Olá João! 👋",
-                "msg2": "O juiz deu andamento no seu caso hoje. Em palavras simples, isso significa que entramos na fase final para a sentença.",
+                "msg1": "¡Hola Juan! 👋",
+                "msg2": "El juez dio trámite a su caso hoy. En palabras simples, esto significa que entramos en la fase final para la sentencia.",
                 "time": "10:45",
-                "aiLabel": "Tradutor IA:",
-                "msg3": "No se preocupe, o processo está seguindo o cronograma esperado. Próximo passo: Audiência de Instrução.",
+                "aiLabel": "Traductor IA:",
+                "msg3": "No se preocupe, el proceso está siguiendo el cronograma esperado. Próximo paso: Audiencia de Instrucción.",
                 "clientBanner": "Cliente Feliz",
                 "percentage": "98%"
             },
             "vision": {
                 "stats": {
-                    "messages": "Mensagens Enviadas",
+                    "messages": "Mensajes Enviados",
                     "messagesVal": "1.240",
-                    "timeSaved": "Tempo Salvo",
+                    "timeSaved": "Tiempo Ahorrado",
                     "timeSavedVal": "45h",
-                    "satisfaction": "Satisfação",
+                    "satisfaction": "Satisfacción",
                     "satisfactionVal": "98%",
-                    "availability": "Disponibilidade",
+                    "availability": "Disponibilidad",
                     "availabilityVal": "24/7"
                 },
-                "title": "Atendimento de excelência em piloto automático.",
-                "desc1": "A maior causa de insatisfação dos clientes jurídicos é a falta de comunicação. O Vox Clientis preenche essa lacuna atuando como o seu gerente de relacionamento 24 horas por dia.",
-                "desc2": "Compartilhe o progresso das ações de forma ágil e proativa, garantindo que o seu cliente se sinta seguro e o seu WhatsApp pessoal continue livre de cobranças."
+                "title": "Atención de excelencia en piloto automático.",
+                "desc1": "La mayor causa de insatisfacción de los clientes jurídicos es la falta de comunicación. Vox Clientis llena ese vacío actuando como su gerente de relación las 24 horas del día.",
+                "desc2": "Comparta el progreso de las acciones de forma ágil y proactiva, garantizando que su cliente se sienta seguro y su WhatsApp personal continúe libre de consultas constantes."
             },
             "features": {
-                "category": "Tecnologia de Relacionamento",
-                "title": "Funcionalidades de Elite",
-                "subtitle": "Ferramentas criadas para escritórios que valorizam e profissionalizam a experiência do cliente.",
+                "category": "Tecnología de Relacionamiento",
+                "title": "Funcionalidades de Élite",
+                "subtitle": "Herramientas creadas para despachos que valoran y profesionalizan la experiencia del cliente.",
                 "items": {
                     "translator": {
-                        "title": "Tradutor de Juridiquês (IA)",
-                        "desc": "Nossa IA lê o andamento processual e o traduz automaticamente para uma linguagem simples e empática para o seu cliente."
+                        "title": "Traductor de Tecnicismos (IA)",
+                        "desc": "Nuestra IA lee el movimiento procesal y lo traduce automáticamente a un lenguaje sencillo y empático para su cliente."
                     },
                     "automation": {
-                        "title": "Automação de WhatsApp",
-                        "desc": "Envie atualizações de processos, lembretes de audiência e links para pagamento diretamente para o canal preferido do cliente."
+                        "title": "Automatización de WhatsApp",
+                        "desc": "Envíe actualizaciones de procesos, recordatorios de audiencias y enlaces de pago directamente al canal preferido del cliente."
                     },
                     "portal": {
-                        "title": "Portal Exclusivo do Cliente",
-                        "desc": "Ofereça um portal web seguro com a sua identidade visual para consulta de status, documentos e dúvidas básicas."
+                        "title": "Portal Exclusivo del Cliente",
+                        "desc": "Ofrezca un portal web seguro con su identidad visual para consulta de estados, documentos y dudas básicas."
                     },
                     "proactive": {
-                        "title": "Comunicação Proativa",
-                        "desc": "Informe antes de ser perguntado. O sistema dispara notificações automáticas sempre que algo relevante acontece no processo."
+                        "title": "Comunicación Proactiva",
+                        "desc": "Informe antes de que le pregunten. El sistema dispara notificaciones automáticas siempre que sucede algo relevante en el proceso."
                     }
                 },
-                "cta": "Saiba mais"
+                "cta": "Saber más"
             },
             "ux": {
-                "title": "A transparência que gera indicações.",
-                "subtitle": "Projetamos o Vox Clientis com uma interface inclusiva e acolhedora no apenas para usted, mas principalmente para o consumidor final.",
+                "title": "La transparencia que genera recomendaciones.",
+                "subtitle": "Diseñamos Vox Clientis con una interfaz inclusiva y acogedora no solo para usted, sino principalmente para el consumidor final.",
                 "items": {
                     "boundaries": {
-                        "title": "Fronteiras Profissionais",
-                        "desc": "O cliente acessa o Portal dele; o seu time trabalha no Nexus. Cada um no seu espaço."
+                        "title": "Fronteras Profesionales",
+                        "desc": "El cliente accede a su Portal; su equipo trabaja en Nexus. Cada uno en su espacio."
                     },
                     "accessibility": {
-                        "title": "Acessibilidade Universal",
-                        "desc": "Telas simples, fontes legíveis e linguagem clara para qualquer perfil de cliente."
+                        "title": "Accesibilidad Universal",
+                        "desc": "Pantallas sencillas, fuentes legibles y lenguaje claro para cualquier perfil de cliente."
                     },
                     "notifications": {
-                        "title": "Notificações Proativas",
-                        "desc": "Acabe com a ansiedade. Mantenha o cliente informado em tempo real."
+                        "title": "Notificaciones Proactivas",
+                        "desc": "Acabe con la ansiedad. Mantenga al cliente informado en tiempo real."
                     }
                 },
                 "mockupLabels": {
                     "chat": "Chat Online",
-                    "process": "Ver Processo"
+                    "process": "Ver Proceso"
                 }
             },
             "finalCta": {
-                "title": "Pronto para elevar o nível do seu atendimento?",
-                "subtitle": "Integrado nativamente ao Sentinel e ao Nexus, o Vox Clientis fecha o ciclo perfeito da sua operação: o sistema vigia, usted executa, e o cliente é informado.",
-                "button1": "Começar Agora - É Grátis",
-                "button2": "Ver Planos de Assinatura",
-                "footer": "Sem cartão de crédito • Configuração em 2 minutos"
+                "title": "¿Listo para elevar el nivel de su atención?",
+                "subtitle": "Integrado nativamente a Sentinel y Nexus, Vox Clientis cierra el ciclo perfecto de su operación: el sistema vigila, usted ejecuta y el cliente es informado.",
+                "button1": "Empezar Ahora - Es Gratis",
+                "button2": "Ver Planes de Suscripción",
+                "footer": "Sin tarjeta de crédito • Configuración en 2 minutos"
             },
             "footer": {
-                "slogan": "A tecnologia de quem advoga com empatia e profissionalismo."
+                "slogan": "La tecnología de quien aboga con empatía y profesionalismo."
             }
         }
     }

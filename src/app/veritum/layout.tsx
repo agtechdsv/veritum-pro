@@ -5,7 +5,8 @@ import { useRouter, usePathname } from 'next/navigation';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { User, UserPreferences, ModuleId, Credentials } from '@/types';
 import { createMasterClient } from '@/lib/supabase/master';
-import { useTranslation } from '@/contexts/language-context';
+import { useTranslation, Locale } from '@/contexts/language-context';
+import { useTheme } from 'next-themes';
 
 interface ModuleContextType {
     user: User | null;
@@ -45,7 +46,8 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
     const router = useRouter();
     const pathname = usePathname();
     const supabase = createMasterClient();
-    const { t, locale } = useTranslation();
+    const { t, locale, setLocale } = useTranslation();
+    const { theme, setTheme } = useTheme();
 
     useEffect(() => {
         const checkUser = async () => {
@@ -56,160 +58,143 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
                 return;
             }
 
-            const { data: profile, error: profileError } = await supabase
-                .from('users')
-                .select('*, access_groups(name, name_loc), plans:plan_id(name)')
-                .eq('id', authUser.id)
-                .single();
+            // 1. Parallelize initial critical data fetching
+            const [profileRes, prefsRes] = await Promise.all([
+                supabase
+                    .from('users')
+                    .select('*, access_groups(name, name_loc), plans:plan_id(name)')
+                    .eq('id', authUser.id)
+                    .single(),
+                supabase
+                    .from('user_preferences')
+                    .select('*')
+                    .eq('user_id', authUser.id)
+                    .maybeSingle()
+            ]);
 
-            const profileData = profile as any;
-            const accessGroupNameRaw = Array.isArray(profileData?.access_groups)
-                ? profileData.access_groups[0]?.name
-                : profileData?.access_groups?.name;
+            const profile = profileRes.data;
+            const profileError = profileRes.error;
+            const prefs = prefsRes.data;
 
-            const accessGroupNameTranslated = Array.isArray(profileData?.access_groups)
-                ? (profileData.access_groups[0]?.name_loc?.[locale] || profileData.access_groups[0]?.name)
-                : (profileData?.access_groups?.name_loc?.[locale] || profileData?.access_groups?.name);
-
-            if (profileError) {
-                // Ignore PGRST116 (No rows returned) if the trigger failed and the user is fresh
-                if (profileError.code !== 'PGRST116') {
-                    console.error("Erro ao buscar perfil na tabela public.users:", JSON.stringify(profileError, null, 2));
-                } else {
-                    console.warn("Perfil não encontrado na tabela public.users (PGRST116). O Trigger falhou ao registrar?");
-                }
+            // 2. IMMEDIATE Preference Hydration (Priority: UI Speed)
+            if (prefs) {
+                // Here we just ensure the internal UI state of VeritumLayout is consistent
+                // for things like custom keys. Global Theme/Locale are handled by Root Providers.
+                setPreferences({
+                    user_id: authUser.id,
+                    language: (prefs.language || 'pt') as Locale,
+                    theme: (prefs.theme || 'dark'),
+                    custom_supabase_url: prefs.custom_supabase_url,
+                    custom_supabase_key: prefs.custom_supabase_key,
+                    custom_gemini_key: prefs.custom_gemini_key,
+                });
             }
 
-            setUser({
-                id: authUser.id,
-                name: profile?.name || authUser.user_metadata.full_name || 'Usuário',
-                username: profile?.username || authUser.email?.split('@')[0] || 'user',
-                email: authUser.email,
-                role: (profile?.role || authUser.user_metadata.role || 'Operador') as any,
-                active: profile?.active ?? true,
-                avatar_url: profile?.avatar_url || authUser.user_metadata.avatar_url || authUser.user_metadata.picture,
-                parent_user_id: profile?.parent_user_id || authUser.user_metadata.parent_user_id,
-                plan_id: profile?.plan_id || authUser.user_metadata.plan_id,
-                access_group_id: profile?.access_group_id || authUser.user_metadata.access_group_id,
-                access_group_name: accessGroupNameRaw,
-                translated_group_name: accessGroupNameTranslated,
-                plan_name: profileData?.plans?.name || (Array.isArray(profileData?.plans) ? profileData?.plans[0]?.name : undefined)
-            });
+            // 3. Process Profile Data
+            if (profile) {
+                const profileData = profile as any;
+                const accessGroupNameRaw = Array.isArray(profileData?.access_groups)
+                    ? profileData.access_groups[0]?.name
+                    : profileData?.access_groups?.name;
 
-            // Fetch plan permissions with robust metadata fallback
+                const accessGroupNameTranslated = Array.isArray(profileData?.access_groups)
+                    ? (profileData.access_groups[0]?.name_loc?.[locale] || profileData.access_groups[0]?.name)
+                    : (profileData?.access_groups?.name_loc?.[locale] || profileData?.access_groups?.name);
+
+                setUser({
+                    id: authUser.id,
+                    name: profile?.name || authUser.user_metadata.full_name || 'Usuário',
+                    username: profile?.username || authUser.email?.split('@')[0] || 'user',
+                    email: authUser.email,
+                    role: (profile?.role || authUser.user_metadata.role || 'Operador') as any,
+                    active: profile?.active ?? true,
+                    avatar_url: profile?.avatar_url || authUser.user_metadata.avatar_url || authUser.user_metadata.picture,
+                    parent_user_id: profile?.parent_user_id || authUser.user_metadata.parent_user_id,
+                    plan_id: profile?.plan_id || authUser.user_metadata.plan_id,
+                    access_group_id: profile?.access_group_id || authUser.user_metadata.access_group_id,
+                    access_group_name: accessGroupNameRaw,
+                    translated_group_name: accessGroupNameTranslated,
+                    plan_name: profileData?.plans?.name || (Array.isArray(profileData?.plans) ? profileData?.plans[0]?.name : undefined)
+                });
+            }
+
+            if (profileError && profileError.code !== 'PGRST116') {
+                console.error("Erro ao buscar perfil:", profileError);
+            }
+
+            // 4. Fetch Permissions and Suites (Dependent on profile)
             const planId = profile?.plan_id || authUser.user_metadata.plan_id;
             const parentId = profile?.parent_user_id || authUser.user_metadata.parent_user_id;
 
+            const queries: any[] = [
+                supabase
+                    .from('suites')
+                    .select('*')
+                    .eq('active', true)
+                    .order('order_index', { ascending: true }),
+                supabase.from('features').select('id, suite_id')
+            ];
+
             if (planId) {
-                const { data: perms } = await supabase
-                    .from('plan_permissions')
-                    .select('feature_id, features(feature_key, suite_id, suites(suite_key))')
-                    .eq('plan_id', planId);
-
-                if (perms) {
-                    const suiteMap = new Map<string, any>();
-                    perms.forEach((p: any) => {
-                        const sKey = p.features?.suites?.suite_key;
-                        const fKey = p.features?.feature_key;
-                        if (sKey && fKey) {
-                            if (!suiteMap.has(sKey)) {
-                                suiteMap.set(sKey, { suite_key: sKey, enabled_features: [] });
-                            }
-                            suiteMap.get(sKey).enabled_features.push(fKey);
-                        }
-                    });
-                    setPlanPermissions(Array.from(suiteMap.values()));
-                }
-            } else if (parentId) {
-                const { data: parentProfile } = await supabase
-                    .from('users')
-                    .select('plan_id, plans:plan_id(name)')
-                    .eq('id', parentId)
-                    .single();
-
-                if (parentProfile?.plan_id) {
-                    const { data: perms } = await supabase
+                queries.push(
+                    supabase
                         .from('plan_permissions')
                         .select('feature_id, features(feature_key, suite_id, suites(suite_key))')
-                        .eq('plan_id', parentProfile.plan_id);
-
-                    if (perms) {
-                        const suiteMap = new Map<string, any>();
-                        perms.forEach((p: any) => {
-                            const sKey = p.features?.suites?.suite_key;
-                            const fKey = p.features?.feature_key;
-                            if (sKey && fKey) {
-                                if (!suiteMap.has(sKey)) {
-                                    suiteMap.set(sKey, { suite_key: sKey, enabled_features: [] });
-                                }
-                                suiteMap.get(sKey).enabled_features.push(fKey);
-                            }
-                        });
-                        setPlanPermissions(Array.from(suiteMap.values()));
-                    }
-
-                    const parentProfileData = parentProfile as any;
-                    setUser(prev => prev ? {
-                        ...prev,
-                        plan_name: parentProfileData?.plans?.name || (Array.isArray(parentProfileData?.plans) ? parentProfileData?.plans[0]?.name : undefined)
-                    } : prev);
-                }
+                        .eq('plan_id', planId)
+                );
             }
 
-            const { data: prefs } = await supabase
-                .from('user_preferences')
-                .select('*')
-                .eq('user_id', authUser.id)
-                .maybeSingle();
-
-            let custom_url = prefs?.custom_supabase_url;
-            let custom_key = prefs?.custom_supabase_key;
-            let gemini_key = prefs?.custom_gemini_key;
-
+            // If it's a sub-user, we need to fetch the parent's preferences for Supabase/Gemini keys
             if (parentId) {
-                const { data: parentPrefs } = await supabase
-                    .from('user_preferences')
-                    .select('custom_supabase_url, custom_supabase_key, custom_gemini_key')
-                    .eq('user_id', parentId)
-                    .maybeSingle();
-
-                if (parentPrefs) {
-                    custom_url = parentPrefs.custom_supabase_url;
-                    custom_key = parentPrefs.custom_supabase_key;
-                    gemini_key = parentPrefs.custom_gemini_key;
-                }
+                queries.push(
+                    supabase
+                        .from('user_preferences')
+                        .select('custom_supabase_url, custom_supabase_key, custom_gemini_key')
+                        .eq('user_id', parentId)
+                        .maybeSingle()
+                );
             }
 
-            setPreferences({
-                user_id: authUser.id,
-                language: prefs?.language || 'pt',
-                theme: prefs?.theme || 'dark',
-                custom_supabase_url: custom_url,
-                custom_supabase_key: custom_key,
-                custom_gemini_key: gemini_key,
-            });
+            const results = await Promise.all(queries);
+            const suitesRes = results[0];
+            const featuresRes = results[1];
+            const planPermsRes = planId ? results[2] : null;
+            const parentPrefsRes = parentId ? (planId ? results[3] : results[2]) : null;
 
-            const { data: suites } = await supabase
-                .from('suites')
-                .select('*')
-                .eq('active', true)
-                .order('order_index', { ascending: true });
+            if (suitesRes.data) setActiveSuites(suitesRes.data);
+            if (featuresRes.data) setAllFeatures(featuresRes.data);
 
-            if (suites) {
-                setActiveSuites(suites);
+            if (planPermsRes?.data) {
+                const suiteMap = new Map<string, any>();
+                planPermsRes.data.forEach((p: any) => {
+                    const sKey = p.features?.suites?.suite_key;
+                    const fKey = p.features?.feature_key;
+                    if (sKey && fKey) {
+                        if (!suiteMap.has(sKey)) {
+                            suiteMap.set(sKey, { suite_key: sKey, enabled_features: [] });
+                        }
+                        suiteMap.get(sKey).enabled_features.push(fKey);
+                    }
+                });
+                setPlanPermissions(Array.from(suiteMap.values()));
             }
 
-            // Fetch Dynamic Permissions (RBAC)
-            const { data: featData } = await supabase.from('features').select('id, suite_id');
-            if (featData) setAllFeatures(featData as any);
+            // Apply parent credentials if available
+            if (parentPrefsRes?.data) {
+                setPreferences(prev => prev ? ({
+                    ...prev,
+                    custom_supabase_url: parentPrefsRes.data.custom_supabase_url || prev.custom_supabase_url,
+                    custom_supabase_key: parentPrefsRes.data.custom_supabase_key || prev.custom_supabase_key,
+                    custom_gemini_key: parentPrefsRes.data.custom_gemini_key || prev.custom_gemini_key,
+                }) : prev);
+            }
 
-            const profileDataFinal = profile as any;
-            if (profileDataFinal?.access_group_id && profileDataFinal?.role !== 'Master') {
+            // Recursive RBAC fetch for non-Master users with access groups
+            if (profile?.access_group_id && profile?.role !== 'Master') {
                 const { data: permData } = await supabase
                     .from('group_permissions')
                     .select('*')
-                    .eq('group_id', profileDataFinal.access_group_id);
-
+                    .eq('group_id', profile.access_group_id);
                 if (permData) setGroupPermissions(permData);
             }
 
@@ -270,17 +255,20 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
 
     const handleUpdatePrefs = async (newPrefs: UserPreferences) => {
         setPreferences(newPrefs);
-        localStorage.setItem('veritum-theme', newPrefs.theme);
+
+        // UI state updates (LocalStorage via providers)
+        if (newPrefs.language !== locale) setLocale(newPrefs.language as Locale);
+        if (newPrefs.theme !== theme) setTheme(newPrefs.theme);
+
+        // Persistent DB update ONLY for critical credentials
         await supabase
             .from('user_preferences')
-            .upsert({
-                user_id: user?.id,
-                theme: newPrefs.theme,
-                language: newPrefs.language,
+            .update({
                 custom_supabase_url: newPrefs.custom_supabase_url,
                 custom_supabase_key: newPrefs.custom_supabase_key,
                 custom_gemini_key: newPrefs.custom_gemini_key
-            }, { onConflict: 'user_id' });
+            })
+            .eq('user_id', user?.id);
     };
 
     const handleLogout = async () => {

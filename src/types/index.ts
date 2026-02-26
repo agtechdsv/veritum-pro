@@ -145,7 +145,7 @@ export interface Role {
 export interface UserPreferences {
     user_id: string;
     language: 'pt' | 'en' | 'es';
-    theme: 'light' | 'dark';
+    theme: 'light' | 'dark' | 'system';
     custom_supabase_url?: string;
     custom_supabase_key?: string;
     custom_gemini_key?: string;

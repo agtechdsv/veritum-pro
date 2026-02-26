@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Globe, ChevronDown, Check } from 'lucide-react';
-import { useTranslation } from '@/contexts/language-context';
+import { useTranslation, Locale } from '@/contexts/language-context';
 
 const BR_FLAG = "https://flagcdn.com/w40/br.png";
 const US_FLAG = "https://flagcdn.com/w40/us.png";
@@ -53,7 +53,7 @@ export const LanguageSelector: React.FC = () => {
                             <button
                                 key={lang.id}
                                 onClick={() => {
-                                    setLocale(lang.id as 'pt' | 'en');
+                                    setLocale(lang.id as Locale);
                                     setIsOpen(false);
                                 }}
                                 className={`w-full flex items-center justify-between px-4 py-3 text-sm font-bold transition-all text-left cursor-pointer ${locale === lang.id
