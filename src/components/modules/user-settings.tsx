@@ -28,6 +28,8 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
     const [activeTab, setActiveTab] = useState<'infra' | 'org' | 'plan'>(initialTab || (isRootAdmin ? 'infra' : 'plan'));
     const [formPrefs, setFormPrefs] = useState(preferences);
     const [saving, setSaving] = useState(false);
+    const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+    const [modulesBillingCycle, setModulesBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
     const [loadingPlanData, setLoadingPlanData] = useState(false);
     const [planData, setPlanData] = useState<{
         plans: Plan[];
@@ -54,7 +56,7 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
         try {
             const [suitesRes, plansRes, featuresRes] = await Promise.all([
                 supabase.from('suites').select('*').order('order_index', { ascending: true }),
-                supabase.from('plans').select('*').eq('is_combo', true).order('order_index', { ascending: true }),
+                supabase.from('plans').select('*').eq('active', true).order('order_index', { ascending: true }),
                 getFeatures()
             ]);
 
@@ -361,35 +363,85 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
 
                                 {/* Plans Section */}
                                 <div className="space-y-6 pt-10">
-                                    <div className="flex items-center gap-3 ml-4">
-                                        <div className="w-1.5 h-6 bg-amber-500 rounded-full" />
-                                        <h3 className="text-lg font-black uppercase tracking-tighter text-slate-800 dark:text-white">{t('management.settings.plan.commercialPlans') || 'Planos Comerciais'}</h3>
+                                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 ml-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-1.5 h-6 bg-amber-500 rounded-full" />
+                                            <h3 className="text-lg font-black uppercase tracking-tighter text-slate-800 dark:text-white">{t('management.settings.plan.commercialPlans') || 'Planos Comerciais'}</h3>
+                                        </div>
+                                        <div className="flex items-center bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl self-start md:self-auto">
+                                            <button
+                                                onClick={() => setBillingCycle('monthly')}
+                                                className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${billingCycle === 'monthly' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                            >
+                                                {t('management.settings.plan.monthly') || 'MENSAL'}
+                                            </button>
+                                            <button
+                                                onClick={() => setBillingCycle('yearly')}
+                                                className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${billingCycle === 'yearly' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                            >
+                                                {t('management.settings.plan.yearly') || 'ANUAL'}
+                                            </button>
+                                        </div>
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        {planData.plans.map((p) => {
+                                        {planData.plans.filter(p => p.is_combo).map((p) => {
                                             const isCurrentPlan = p.id === user.plan_id;
                                             const lang = locale as 'pt' | 'en' | 'es';
+                                            const isYearly = billingCycle === 'yearly';
+                                            const basePrice = isYearly ? p.yearly_price : p.monthly_price;
+                                            const discount = isYearly ? p.yearly_discount : p.monthly_discount;
+                                            const finalPrice = discount > 0 ? basePrice * (1 - discount / 100) : basePrice;
+                                            const installmentValue = finalPrice / (p.installments || 12);
+                                            const cashValue = finalPrice * (1 - (p.yearly_cash_discount || 0) / 100);
 
                                             return (
-                                                <div key={p.id} className={`p-8 rounded-[2.5rem] border transition-all flex flex-col h-full ${isCurrentPlan ? 'bg-white dark:bg-slate-900 border-amber-300 dark:border-amber-900 shadow-2xl scale-105 z-10' : 'bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800 opacity-90'}`}>
+                                                <div key={p.id} className={`relative p-8 rounded-[2.5rem] border transition-all flex flex-col h-full ${isCurrentPlan ? 'bg-white dark:bg-slate-900 border-amber-300 dark:border-amber-900 shadow-2xl scale-105 z-10' : 'bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800 opacity-90'}`}>
+                                                    {p.recommended && (
+                                                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-[9px] font-black uppercase px-4 py-1.5 rounded-full tracking-[0.2em] shadow-lg">
+                                                            {t('management.settings.plan.recommended') || 'RECOMENDADO'}
+                                                        </div>
+                                                    )}
                                                     <div className="flex justify-between items-start mb-6">
                                                         <div>
                                                             <h4 className={`text-xl font-black uppercase tracking-tighter ${isCurrentPlan ? 'text-amber-600' : 'text-slate-700 dark:text-slate-300'}`}>{p.name}</h4>
                                                             <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{p.is_combo ? (t('management.settings.plan.ecosystemCombo') || 'Ecosystem Combo') : (t('management.settings.plan.individualModule') || 'Módulo Individual')}</p>
                                                         </div>
-                                                        {p.recommended && (
-                                                            <span className="px-3 py-1 bg-amber-100 text-amber-700 text-[8px] font-black uppercase tracking-widest rounded-full">{t('management.settings.plan.recommended') || 'Recomendado'}</span>
-                                                        )}
                                                     </div>
 
-                                                    <div className="mb-8">
-                                                        <div className="flex items-baseline gap-1">
-                                                            <span className="text-sm font-black text-slate-400">R$</span>
-                                                            <span className="text-4xl font-black text-slate-800 dark:text-white">{p.monthly_price.toLocaleString('pt-BR')}</span>
-                                                            <span className="text-xs font-bold text-slate-400">{t('management.settings.plan.perMonth') || '/mês'}</span>
+                                                    <div className="mb-8 flex flex-col items-baseline gap-1 relative">
+                                                        {discount > 0 ? (
+                                                            <span className="text-[15px] font-bold text-slate-500 line-through decoration-rose-500 decoration-2">
+                                                                R$ {basePrice?.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0,00'}
+                                                            </span>
+                                                        ) : (
+                                                            <div className="h-[22.5px]" />
+                                                        )}
+
+                                                        <div className="flex flex-col gap-0.5 relative group">
+                                                            <div className="flex items-baseline gap-1">
+                                                                <span className="text-4xl font-black text-slate-800 dark:text-white">R$ {(finalPrice || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">
+                                                                    {isYearly ? (t('management.settings.plan.perYear') || '/ ano') : (t('management.settings.plan.perMonth') || '/ mês')}
+                                                                </span>
+                                                                {discount > 0 && (
+                                                                    <div className="absolute -top-6 right-0 md:-right-6 px-3 py-1.5 rounded-full text-[10px] font-black shadow-[0_0_15px_rgba(16,185,129,0.5)] animate-pulse whitespace-nowrap bg-emerald-500 text-slate-950 ring-2 ring-emerald-400/50 scale-110 z-20">
+                                                                        {discount}% OFF
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            {isYearly && discount > 0 && (
+                                                                <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-1 animate-in fade-in slide-in-from-left-2 duration-500">
+                                                                    <p>ou em até {p.installments || 12}x de R$ {(installmentValue || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} sem juros</p>
+                                                                    {(p.yearly_cash_discount || 0) > 0 && (
+                                                                        <p className="mt-1 text-slate-900 dark:text-white font-black uppercase tracking-widest">
+                                                                            * À Vista: R$ {cashValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({p.yearly_cash_discount}% OFF) *
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            )}
                                                         </div>
-                                                        <p className="text-[10px] text-slate-500 mt-2 font-medium leading-relaxed">
+                                                        <p className="text-[10px] text-slate-500 mt-4 font-medium leading-relaxed">
                                                             {p.short_desc?.[lang] || p.short_desc?.pt}
                                                         </p>
                                                     </div>
@@ -420,6 +472,115 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                                         })}
                                     </div>
                                 </div>
+
+                                {/* A La Carte Modules Section */}
+                                {planData.plans.filter(p => !p.is_combo).length > 0 && (
+                                    <div className="space-y-6 pt-10">
+                                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 ml-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-1.5 h-6 bg-indigo-500 rounded-full" />
+                                                <h3 className="text-lg font-black uppercase tracking-tighter text-slate-800 dark:text-white">Módulos Avulsos</h3>
+                                            </div>
+                                            <div className="flex items-center bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl self-start md:self-auto">
+                                                <button
+                                                    onClick={() => setModulesBillingCycle('monthly')}
+                                                    className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${modulesBillingCycle === 'monthly' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                                >
+                                                    {t('management.settings.plan.monthly') || 'MENSAL'}
+                                                </button>
+                                                <button
+                                                    onClick={() => setModulesBillingCycle('yearly')}
+                                                    className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${modulesBillingCycle === 'yearly' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                                >
+                                                    {t('management.settings.plan.yearly') || 'ANUAL'}
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                            {planData.plans.filter(p => !p.is_combo).map((p) => {
+                                                const isCurrentPlan = p.id === user.plan_id;
+                                                const lang = locale as 'pt' | 'en' | 'es';
+                                                const isYearly = modulesBillingCycle === 'yearly';
+                                                const basePrice = isYearly ? p.yearly_price : p.monthly_price;
+                                                const discount = isYearly ? p.yearly_discount : p.monthly_discount;
+                                                const finalPrice = discount > 0 ? basePrice * (1 - discount / 100) : basePrice;
+                                                const installmentValue = finalPrice / (p.installments || 12);
+                                                const cashValue = finalPrice * (1 - (p.yearly_cash_discount || 0) / 100);
+
+                                                return (
+                                                    <div key={p.id} className={`relative p-8 rounded-[2.5rem] border transition-all flex flex-col h-full ${isCurrentPlan ? 'bg-white dark:bg-slate-900 border-indigo-300 dark:border-indigo-900 shadow-2xl scale-105 z-10' : 'bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800 opacity-90'}`}>
+                                                        <div className="flex justify-between items-start mb-6">
+                                                            <div>
+                                                                <h4 className={`text-xl font-black uppercase tracking-tighter ${isCurrentPlan ? 'text-indigo-600' : 'text-slate-700 dark:text-slate-300'}`}>{p.name}</h4>
+                                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{t('management.settings.plan.individualModule') || 'Módulo Individual'}</p>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="mb-8 flex flex-col items-baseline gap-1 relative">
+                                                            {discount > 0 ? (
+                                                                <span className="text-[15px] font-bold text-slate-500 line-through decoration-rose-500 decoration-2">
+                                                                    R$ {basePrice?.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0,00'}
+                                                                </span>
+                                                            ) : (
+                                                                <div className="h-[22.5px]" />
+                                                            )}
+
+                                                            <div className="flex flex-col gap-0.5 relative group">
+                                                                <div className="flex items-baseline gap-1">
+                                                                    <span className="text-4xl font-black text-slate-800 dark:text-white">R$ {(finalPrice || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">
+                                                                        {isYearly ? (t('management.settings.plan.perYear') || '/ ano') : (t('management.settings.plan.perMonth') || '/ mês')}
+                                                                    </span>
+                                                                    {discount > 0 && (
+                                                                        <div className="absolute -top-6 right-0 md:-right-6 px-3 py-1.5 rounded-full text-[10px] font-black shadow-[0_0_15px_rgba(16,185,129,0.5)] animate-pulse whitespace-nowrap bg-emerald-500 text-slate-950 ring-2 ring-emerald-400/50 scale-110 z-20">
+                                                                            {discount}% OFF
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                                {isYearly && discount > 0 && (
+                                                                    <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-1 animate-in fade-in slide-in-from-left-2 duration-500">
+                                                                        <p>ou em até {p.installments || 12}x de R$ {(installmentValue || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} sem juros</p>
+                                                                        {(p.yearly_cash_discount || 0) > 0 && (
+                                                                            <p className="mt-1 text-slate-900 dark:text-white font-black uppercase tracking-widest">
+                                                                                * À Vista: R$ {cashValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({p.yearly_cash_discount}% OFF) *
+                                                                            </p>
+                                                                        )}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <p className="text-[10px] text-slate-500 mt-4 font-medium leading-relaxed">
+                                                                {p.short_desc?.[lang] || p.short_desc?.pt}
+                                                            </p>
+                                                        </div>
+
+                                                        <div className="space-y-3 mb-8 flex-1">
+                                                            {(p.features?.[lang] || p.features?.pt || []).slice(0, 5).map((feat: string, i: number) => (
+                                                                <div key={i} className="flex items-start gap-2">
+                                                                    <CheckCircle2 size={14} className="text-indigo-500 mt-0.5 shrink-0" />
+                                                                    <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400">{feat}</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+
+                                                        {isCurrentPlan ? (
+                                                            <div className="w-full py-4 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 border border-emerald-100 dark:border-emerald-800">
+                                                                <CheckCircle2 size={16} /> {t('management.settings.plan.statusUnlocked') || 'Liberado'}
+                                                            </div>
+                                                        ) : (
+                                                            <button
+                                                                onClick={() => window.open('https://api.whatsapp.com/send?phone=YOUR_SALES_NUMBER', '_blank')}
+                                                                className="w-full py-4 bg-slate-900 text-white dark:bg-white dark:text-slate-900 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:scale-105 transition-all shadow-lg"
+                                                            >
+                                                                Adquirir Módulo
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
                             </>
                         ) : null}
                     </div>

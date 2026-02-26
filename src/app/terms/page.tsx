@@ -1,9 +1,14 @@
 'use client'
 
 import React from 'react';
-import { ArrowLeft, FileText, Scale } from 'lucide-react';
+import { ArrowLeft, FileText, Scale, Moon, Sun, LayoutDashboard } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslation } from '@/contexts/language-context';
+import { useState, useEffect } from 'react';
+import { useTheme } from 'next-themes';
+import { LanguageSelector } from '@/components/ui/language-selector';
+import { UserMenu } from '@/components/ui/user-menu';
+import { createMasterClient } from '@/lib/supabase/master';
 
 const Logo = () => (
     <div className="bg-indigo-600/10 p-2 rounded-lg flex items-center justify-center text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400">
@@ -13,22 +18,40 @@ const Logo = () => (
 
 export default function TermsPage() {
     const { t } = useTranslation();
+    const { theme, setTheme, resolvedTheme } = useTheme();
+    const [mounted, setMounted] = useState(false);
+    const [currentUser, setCurrentUser] = useState<any>(undefined);
+
+    useEffect(() => {
+        setMounted(true);
+        const supabase = createMasterClient();
+        const fetchUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data: profile } = await supabase
+                    .from('users')
+                    .select('name, avatar_url, role, plan_id, access_groups(name)')
+                    .eq('id', user.id)
+                    .single();
+                setCurrentUser({ ...user, profile });
+            } else {
+                setCurrentUser(null);
+            }
+        };
+        fetchUser();
+    }, []);
+
+    const toggleTheme = () => {
+        setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
+    };
+
+    if (!mounted) return null;
     return (
         <div className="min-h-screen bg-white text-slate-900 dark:bg-slate-950 dark:text-white transition-colors duration-500">
             <div className="fixed top-1/4 left-0 w-96 h-96 bg-indigo-400/10 blur-[120px] rounded-full pointer-events-none"></div>
             <div className="fixed bottom-0 right-0 w-[500px] h-[500px] bg-purple-400/5 blur-[150px] rounded-full pointer-events-none"></div>
 
-            <nav className="fixed top-0 w-full z-50 glass border-b transition-colors duration-300 backdrop-blur-md bg-white/70 dark:bg-slate-950/70 border-slate-200 dark:border-slate-800">
-                <div className="max-w-4xl mx-auto px-6 h-20 flex items-center justify-between">
-                    <Link href="/" className="flex items-center gap-3">
-                        <Logo />
-                        <span className="font-extrabold text-2xl tracking-tighter text-slate-900 dark:text-white">VERITUM <span className="text-branding-gradient">PRO</span></span>
-                    </Link>
-                    <Link href="/" className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-indigo-600 transition-colors">
-                        <ArrowLeft size={16} /> {t('common.backToHome')}
-                    </Link>
-                </div>
-            </nav>
+
 
             <main className="relative pt-32 pb-20 px-6 max-w-4xl mx-auto">
                 <div className="mb-12">

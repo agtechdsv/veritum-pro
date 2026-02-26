@@ -247,6 +247,7 @@ export const pt = {
     pricing: {
         title: 'Planos que acompanham o seu crescimento.',
         subtitle: 'Nós não vendemos apenas software, entregamos a arquitetura exata para o seu momento na advocacia.',
+        cancelGuarantee: 'O Veritum PRO não tem taxa de adesão, não tem fidelidade e não tem letras miúdas. Você fica porque encontrou a paz mental para advogar, não porque está preso a nós. Escolha o seu plano, cancele quando quiser.',
         compare: 'Comparar Planos e Valores',
         plans: {
             start: {
@@ -600,6 +601,11 @@ export const pt = {
                 individualModule: 'Módulo Individual',
                 recommended: 'Recomendado',
                 perMonth: '/mês',
+                perYear: '/ano',
+                monthly: 'Mensal',
+                yearly: 'Anual',
+                liberated: 'Liberado',
+                current: 'Atual',
                 acquirePlan: 'Adquirir Plano'
             }
         },
@@ -715,8 +721,9 @@ export const pt = {
                     shortDesc: 'Descrição Curta',
                     shortDescPlaceholder: 'Breve slogan ou diferencial do plano...',
                     translateIA: 'Traduzir via Gemini IA',
-                    monthlyPrice: 'Preço Mensal (R$)',
                     yearlyPrice: 'Preço Anual (R$)',
+                    installments: 'Qtd. Parcelas (S/ Juros)',
+                    yearlyCashDiscount: 'Desconto À Vista Anual (%)',
                     discount: 'Desconto (%)',
                     basicFeatures: 'Funcionalidades Básicas (Bullet Points)',
                     featuresPlaceholder: 'Uma funcionalidade por linha...',
@@ -1017,7 +1024,8 @@ export const pt = {
         hero: {
             title: 'Seu momento na advocacia,',
             titleAccent: 'nosso melhor plano.',
-            subtitle: 'Escolha o plano que acompanha o seu ritmo. Do autônomo ao departamento jurídico corporativo, temos a arquitetura exata para o seu crescimento.'
+            subtitle: 'Escolha o plano que acompanha o seu ritmo. Do autônomo ao departamento jurídico corporativo, temos a arquitetura exata para o seu crescimento.',
+            cancelGuarantee: 'O ecossistema jurídico sem taxa de adesão, sem multas contratuais e sem fidelidade. Assine hoje, cancele quando quiser.'
         },
         plans: {
             start: {
@@ -1129,6 +1137,7 @@ export const pt = {
         faq: {
             title: 'Dúvidas Frequentes',
             questions: [
+                { q: 'O que acontece se eu quiser cancelar meu plano?', a: 'Nada de ligações demoradas ou multas escondidas. Você cancela com um clique direto no seu painel. Sem carência e sem fidelidade. No Veritum PRO, nós não te prendemos por contrato, nós te conquistamos pela excelência do serviço. Caso decida sair, você poderá exportar todos os seus dados livremente antes do encerramento.' },
                 { q: 'Preciso de cartão de crédito para o teste grátis?', a: 'Não. Acreditamos na nossa tecnologia. Você testa os planos Start ou Growth por 14 dias com acesso total, sem burocracia.' },
                 { q: 'Como funciona o limite de processos?', a: 'O sistema não cobra por "processo arquivado". Nós precificamos baseados nos seus casos ativos, garantindo que você pague apenas pelo que gera esforço real.' },
                 { q: 'Posso mudar de plano depois?', a: 'A qualquer momento. O Veritum PRO tem uma arquitetura modular. Faça upgrade ou downgrade com apenas um clique a partir das suas configurações.' }

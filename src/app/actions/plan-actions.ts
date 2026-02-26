@@ -19,7 +19,9 @@ export async function createPlan(formData: any) {
             recommended: formData.recommended,
             active: formData.active,
             order_index: formData.order_index,
-            is_combo: formData.is_combo
+            is_combo: formData.is_combo,
+            installments: formData.installments,
+            yearly_cash_discount: formData.yearly_cash_discount
         }])
         .select()
 
@@ -52,7 +54,9 @@ export async function updatePlan(planId: string, formData: any) {
             recommended: formData.recommended,
             active: formData.active,
             order_index: formData.order_index,
-            is_combo: formData.is_combo
+            is_combo: formData.is_combo,
+            installments: formData.installments,
+            yearly_cash_discount: formData.yearly_cash_discount
         })
         .eq('id', planId)
         .select()

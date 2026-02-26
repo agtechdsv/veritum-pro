@@ -281,16 +281,22 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                                 </Link>
                                 <UserMenu user={currentUser} supabase={supabase} />
                             </div>
-                        ) : hasAccess ? (
-                            <>
-                                <button onClick={() => openAuth('login')} className="hidden sm:flex items-center gap-2 font-semibold px-4 py-2 hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300 cursor-pointer">
-                                    <LogIn size={18} /> {t('nav.login')}
+                        ) : (
+                            <div className="flex items-center gap-3">
+                                <button
+                                    onClick={() => openAuth('login')}
+                                    className="hidden sm:flex items-center gap-2 font-bold px-4 py-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all cursor-pointer"
+                                >
+                                    <LogOut size={18} /> {t('nav.login')}
                                 </button>
-                                <button onClick={() => openAuth('register')} className="bg-indigo-600 text-white px-6 py-2.5 rounded-full font-bold shadow-xl shadow-indigo-600/20 hover:scale-105 transition-all flex items-center gap-2 cursor-pointer">
-                                    <UserPlus size={18} /> {t('nav.register')}
+                                <button
+                                    onClick={() => openAuth('register')}
+                                    className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold shadow-xl shadow-indigo-600/20 hover:scale-105 transition-all text-sm cursor-pointer"
+                                >
+                                    {t('landingPages.nexus.hero.cta1')}
                                 </button>
-                            </>
-                        ) : null}
+                            </div>
+                        )}
                     </div>
                 </div>
             </nav>
@@ -449,6 +455,9 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                         <p className="text-xl text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
                             {t('pricing.subtitle')}
                         </p>
+                        <p className="text-lg text-slate-600 dark:text-slate-400 font-medium mt-6 leading-relaxed max-w-2xl mx-auto">
+                            {t('pricing.cancelGuarantee')}
+                        </p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
@@ -503,31 +512,29 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                 </div>
             </section>
 
-            {/* Footer */}
+            {/* Standard Footer */}
             <footer className="py-20 px-6 border-t border-slate-100 dark:border-slate-900 bg-slate-50 dark:bg-slate-950 transition-colors">
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
                     <div className="flex items-center gap-3">
                         <Logo />
-                        <span className="font-extrabold text-2xl tracking-tighter text-slate-900 dark:text-white">VERITUM <span className="text-branding-gradient">PRO</span></span>
+                        <span className="font-extrabold text-2xl tracking-tighter text-slate-900 dark:text-white uppercase">VERITUM <span className="text-branding-gradient">PRO</span></span>
                     </div>
                     <p className="text-sm text-slate-400 dark:text-slate-500 font-medium">
                         {locale === 'pt' ? 'Desenvolvido por AgTech | LegalTech de Alta Performance © 2024 Todos os direitos reservados.' : 'Developed by AgTech | High Performance LegalTech © 2024 All rights reserved.'}
                     </p>
                     <div className="flex gap-6">
-                        <Link
-                            href="/privacy"
-                            onClick={(e) => { e.preventDefault(); openLegal('privacy'); }}
-                            className="text-sm text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer"
+                        <button
+                            onClick={() => openLegal('privacy')}
+                            className="text-sm text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer font-bold"
                         >
                             {t('common.privacy')}
-                        </Link>
-                        <Link
-                            href="/terms"
-                            onClick={(e) => { e.preventDefault(); openLegal('terms'); }}
-                            className="text-sm text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer"
+                        </button>
+                        <button
+                            onClick={() => openLegal('terms')}
+                            className="text-sm text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer font-bold"
                         >
                             {t('common.terms')}
-                        </Link>
+                        </button>
                     </div>
                 </div>
             </footer>

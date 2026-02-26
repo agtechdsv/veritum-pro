@@ -247,6 +247,7 @@ export const en = {
     pricing: {
         title: 'Plans that keep up with your growth.',
         subtitle: 'We don\'t just sell software, we deliver the exact architecture for your moment in law.',
+        cancelGuarantee: 'Veritum PRO has no setup fees, no lock-in contracts, and no fine print. You stay because you found peace of mind to practice law, not because you are tied to us. Choose your plan, cancel whenever you want.',
         compare: 'Compare Plans and Values',
         plans: {
             start: {
@@ -600,6 +601,11 @@ export const en = {
                 individualModule: 'Individual Module',
                 recommended: 'Recommended',
                 perMonth: '/month',
+                perYear: '/year',
+                monthly: 'Monthly',
+                yearly: 'Annual',
+                liberated: 'Liberated',
+                current: 'Current',
                 acquirePlan: 'Acquire Plan'
             }
         },
@@ -717,6 +723,8 @@ export const en = {
                     translateIA: 'Translate via Gemini AI',
                     monthlyPrice: 'Monthly Price ($)',
                     yearlyPrice: 'Yearly Price ($)',
+                    installments: 'Installments (No interest)',
+                    yearlyCashDiscount: 'Yearly Cash Discount (%)',
                     discount: 'Discount (%)',
                     basicFeatures: 'Basic Features (Bullet Points)',
                     featuresPlaceholder: 'One feature per line...',
@@ -1017,7 +1025,8 @@ export const en = {
         hero: {
             title: 'Your moment in law,',
             titleAccent: 'our best plan.',
-            subtitle: 'Choose the plan that suits your pace. From solo practitioners to corporate legal departments, we have the exact architecture for your growth.'
+            subtitle: 'Choose the plan that suits your pace. From solo practitioners to corporate legal departments, we have the exact architecture for your growth.',
+            cancelGuarantee: 'The legal ecosystem with no setup fee, no contractual penalties, and no lock-in. Subscribe today, cancel anytime.'
         },
         plans: {
             start: {
@@ -1129,6 +1138,7 @@ export const en = {
         faq: {
             title: 'Frequently Asked Questions',
             questions: [
+                { q: 'What happens if I want to cancel my plan?', a: 'No long phone calls or hidden fees. You cancel with one click directly in your dashboard. No grace periods and no lock-in. At Veritum PRO, we don\'t trap you with contracts, we win you over with service excellence. If you decide to leave, you can freely export all your data before closing.' },
                 { q: 'Do I need a credit card for the free trial?', a: 'No. We believe in our technology. You test the Start or Growth plans for 14 days with full access, no strings attached.' },
                 { q: 'How does the case limit work?', a: 'The system doesn\'t charge per "archived case". We price based on your active cases, ensuring you pay only for what generates real effort.' },
                 { q: 'Can I change plans later?', a: 'At any time. Veritum PRO has a modular architecture. Upgrade or downgrade with just one click in your settings.' }

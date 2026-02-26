@@ -7,7 +7,7 @@ import {
     Shield, BarChart3, MessageSquare, Wallet,
     PenTool, Radar, HelpCircle, Briefcase,
     Building2, Users2, Sparkles, Send, Calendar as CalendarIcon,
-    ChevronLeft, LogOut
+    ChevronLeft, LogOut, LayoutDashboard
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
@@ -28,9 +28,11 @@ import {
 } from 'date-fns';
 import { ptBR, enUS } from 'date-fns/locale';
 import { AuthModal } from '@/components/auth-modal';
+import { LegalModal } from '@/components/legal-modal';
 import { createMasterClient } from '@/lib/supabase/master';
 import { UserMenu } from '@/components/ui/user-menu';
 import { useTranslation } from '@/contexts/language-context';
+import { LanguageSelector } from '@/components/ui/language-selector';
 
 const Logo = () => (
     <div className="bg-indigo-600/10 p-2 rounded-lg flex items-center justify-center text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400">
@@ -44,9 +46,11 @@ export default function PricingPage() {
     const router = useRouter();
     const [mounted, setMounted] = useState(false);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+    const [authMode, setAuthMode] = useState<'login' | 'register'>('register');
     const [showComparison, setShowComparison] = useState(true);
     const [hasAccess, setHasAccess] = useState(false);
     const [currentUser, setCurrentUser] = useState<any>(undefined);
+    const [legalModal, setLegalModal] = useState({ isOpen: false, type: 'privacy' as 'privacy' | 'terms' });
 
     const dateLocale = locale === 'en' ? enUS : ptBR;
 
@@ -60,6 +64,10 @@ export default function PricingPage() {
     });
     const [selectedRange, setSelectedRange] = useState<{ start: Date | null, end: Date | null }>({ start: null, end: null });
     const [currentMonth, setCurrentMonth] = useState(new Date());
+
+    const [dbPlans, setDbPlans] = useState<any[]>([]);
+    const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+    const [modulesBillingCycle, setModulesBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
 
     const formatWhatsApp = (value: string) => {
         const numbers = value.replace(/\D/g, '');
@@ -81,7 +89,7 @@ export default function PricingPage() {
             if (user) {
                 const { data: profile } = await supabase
                     .from('users')
-                    .select('name, avatar_url, role')
+                    .select('name, avatar_url, role, plan_id, access_groups(name)')
                     .eq('id', user.id)
                     .single();
                 setCurrentUser({ ...user, profile });
@@ -90,6 +98,12 @@ export default function PricingPage() {
             }
         };
         fetchUser();
+
+        const fetchPlans = async () => {
+            const { data } = await supabase.from('plans').select('*').eq('active', true).order('order_index');
+            if (data) setDbPlans(data);
+        };
+        fetchPlans();
     }, []);
 
     const handleDemoSubmit = async (e: React.FormEvent) => {
@@ -132,6 +146,15 @@ export default function PricingPage() {
 
     const toggleTheme = () => {
         setTheme(resolvedTheme === 'light' ? 'dark' : 'light');
+    };
+
+    const openLegal = (type: 'privacy' | 'terms') => {
+        setLegalModal({ isOpen: true, type });
+    };
+
+    const openAuth = (mode: 'login' | 'register') => {
+        setAuthMode(mode);
+        setIsAuthModalOpen(true);
     };
 
     if (!mounted) return null;
@@ -219,8 +242,8 @@ export default function PricingPage() {
                     <div className="hidden md:flex items-center gap-8">
                         <Link href="/" className="text-base font-bold text-branding-gradient hover:opacity-80 transition-all">{t('pricingPage.nav.portal')}</Link>
                         <a href="#top" className="text-sm font-bold text-slate-800 dark:text-white">{t('pricingPage.nav.home')}</a>
+                        <a href="#modulos-avulsos" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">{t('pricingPage.nav.modules')}</a>
                         <a href="#comparison" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">{t('pricingPage.nav.comparison')}</a>
-                        <a href="#modules" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">{t('pricingPage.nav.modules')}</a>
                         <a href="#faq" className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">{t('pricingPage.nav.faq')}</a>
                     </div>
 
@@ -228,15 +251,36 @@ export default function PricingPage() {
                         <button onClick={toggleTheme} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all text-slate-600 dark:text-slate-400">
                             {resolvedTheme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
                         </button>
+                        <LanguageSelector />
                         {currentUser === undefined ? (
-                            <div className="w-24 h-10 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl" />
+                            <div className="w-32 h-10 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-full" />
                         ) : currentUser ? (
-                            <UserMenu user={currentUser} supabase={createMasterClient()} />
-                        ) : hasAccess ? (
-                            <Link href="/?login=true" className="flex items-center gap-2 font-bold px-4 py-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all">
-                                <LogOut size={18} /> Entrar
-                            </Link>
-                        ) : null}
+                            <div className="flex items-center gap-3">
+                                <Link
+                                    href="/veritum"
+                                    className="hidden sm:flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-bold text-sm shadow-xl shadow-indigo-600/20 transition-all hover:scale-105"
+                                >
+                                    <LayoutDashboard size={18} />
+                                    Painel Pro
+                                </Link>
+                                <UserMenu user={currentUser} supabase={createMasterClient()} />
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-3">
+                                <button
+                                    onClick={() => openAuth('login')}
+                                    className="hidden sm:flex items-center gap-2 font-bold px-4 py-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all cursor-pointer"
+                                >
+                                    <LogOut size={18} /> {t('nav.login')}
+                                </button>
+                                <button
+                                    onClick={() => setIsAuthModalOpen(true)}
+                                    className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold shadow-xl shadow-indigo-600/20 hover:scale-105 transition-all text-sm cursor-pointer"
+                                >
+                                    {t('landingPages.nexus.hero.cta1')}
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
             </nav>
@@ -250,8 +294,11 @@ export default function PricingPage() {
                             <span key={i} className={i === 1 ? "text-branding-gradient" : ""}>{word} </span>
                         ))}
                     </h1>
-                    <p className="text-xl text-slate-500 dark:text-slate-400 mb-12 leading-relaxed max-w-2xl mx-auto font-medium">
+                    <p className="text-xl text-slate-500 dark:text-slate-400 leading-relaxed max-w-2xl mx-auto font-medium">
                         {t('pricingPage.hero.subtitle')}
+                    </p>
+                    <p className="text-lg text-slate-600 dark:text-slate-400 font-medium mt-6 mb-12 leading-relaxed max-w-2xl mx-auto">
+                        {t('pricingPage.hero.cancelGuarantee')}
                     </p>
                 </div>
             </section>
@@ -259,56 +306,237 @@ export default function PricingPage() {
             {/* Pricing Cards */}
             <section id="plans" className="pb-32 px-6">
                 <div className="max-w-7xl mx-auto">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
-                        {plans.map((plan, i) => (
-                            <div key={i} className={`relative flex flex-col p-10 rounded-[3rem] border bg-white dark:bg-slate-950 transition-all duration-500 ${plan.color} ${plan.featured ? 'lg:-mt-4 lg:mb-4 lg:p-12 z-10' : ''}`}>
-                                {plan.featured && (
-                                    <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-indigo-600 text-white px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest shadow-xl">
-                                        {t('pricingPage.plans.growth.badge')}
-                                    </div>
-                                )}
-                                <div className="mb-10">
-                                    <h3 className="text-xl font-black text-slate-400 uppercase tracking-widest mb-4">{plan.name}</h3>
-                                    <div className="flex items-baseline gap-1 mb-6">
-                                        <span className="text-5xl font-black text-slate-900 dark:text-white">{plan.price}</span>
-                                        <span className="text-slate-400 font-bold">{plan.period}</span>
-                                    </div>
-                                    <p className="text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
-                                        {plan.desc}
-                                    </p>
-                                </div>
-                                <div className="flex-1 space-y-4 mb-10">
-                                    {plan.features.map((feature, idx) => (
-                                        <div key={idx} className="flex gap-3 items-start group">
-                                            <div className="mt-1 bg-emerald-500/10 text-emerald-500 p-0.5 rounded-full group-hover:scale-110 transition-transform">
-                                                <Check size={14} strokeWidth={4} />
-                                            </div>
-                                            <span className="text-slate-600 dark:text-slate-300 text-sm font-bold leading-tight">{feature}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                                {(plan.name === 'STRATEGY' || hasAccess || currentUser) && (
-                                    <button
-                                        onClick={() => {
-                                            if (plan.name === 'STRATEGY') {
-                                                setIsDemoModalOpen(true);
-                                            } else {
-                                                setIsAuthModalOpen(true);
-                                            }
-                                        }}
-                                        className={`w-full py-5 rounded-2xl font-black text-lg transition-all ${plan.name === 'START'
-                                            ? 'border-2 border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400 bg-transparent hover:bg-indigo-50 dark:hover:bg-indigo-900/10 shadow-none'
-                                            : plan.featured
-                                                ? 'bg-indigo-600 text-white shadow-2xl shadow-indigo-600/40 hover:bg-indigo-700 hover:scale-[1.02]'
-                                                : 'bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-800'
-                                            }`}
-                                    >
-                                        {plan.cta}
-                                    </button>
-                                )}
-                            </div>
-                        ))}
+                    <div className="flex justify-center mb-12">
+                        <div className="flex items-center bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl">
+                            <button
+                                onClick={() => setBillingCycle('monthly')}
+                                className={`px-6 py-3 rounded-lg text-sm font-black uppercase tracking-widest transition-all ${billingCycle === 'monthly' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                            >
+                                {t('management.settings.plan.monthly') || 'MENSAL'}
+                            </button>
+                            <button
+                                onClick={() => setBillingCycle('yearly')}
+                                className={`px-6 py-3 rounded-lg text-sm font-black uppercase tracking-widest transition-all ${billingCycle === 'yearly' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                            >
+                                {t('management.settings.plan.yearly') || 'ANUAL'}
+                            </button>
+                        </div>
                     </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
+                        {dbPlans.filter(p => p.is_combo).length > 0 ? dbPlans.filter(p => p.is_combo).map((plan, i) => {
+                            const isCurrentPlan = currentUser?.profile?.plan_id === plan.id;
+                            const isSocioAdmin = currentUser?.profile?.role === 'Master' || (currentUser?.profile?.access_groups && currentUser.profile.access_groups.name?.includes('Sócio-Administra'));
+
+                            const isYearly = billingCycle === 'yearly';
+                            const basePrice = isYearly ? plan.yearly_price : plan.monthly_price;
+                            const discount = isYearly ? plan.yearly_discount : plan.monthly_discount;
+                            const finalPrice = discount > 0 ? basePrice * (1 - discount / 100) : basePrice;
+                            const installmentValue = finalPrice / (plan.installments || 12);
+                            const cashValue = finalPrice * (1 - (plan.yearly_cash_discount || 0) / 100);
+
+                            const lang = locale as 'pt' | 'en' | 'es';
+                            const features = (plan.features?.[lang] || plan.features?.pt || []);
+
+                            return (
+                                <div key={i} className={`relative flex flex-col p-10 rounded-[3rem] border transition-all duration-500 flex-1 ${plan.recommended ? 'bg-white dark:bg-slate-950 border-indigo-500 dark:border-indigo-400 shadow-2xl shadow-indigo-500/20 lg:-mt-4 lg:mb-4 lg:p-12 z-10' : 'bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800'}`}>
+                                    {plan.recommended && (
+                                        <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-indigo-600 text-white px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl">
+                                            {t('management.settings.plan.recommended') || 'RECOMENDADO'}
+                                        </div>
+                                    )}
+                                    <div className="mb-10">
+                                        <h3 className={`text-xl font-black uppercase tracking-widest mb-4 ${isCurrentPlan ? 'text-amber-500' : 'text-slate-400'}`}>
+                                            {plan.name} {isCurrentPlan && `(${t('management.settings.plan.current') || 'Atual'})`}
+                                        </h3>
+
+                                        <div className="mb-8 flex flex-col items-baseline gap-1 relative">
+                                            {discount > 0 ? (
+                                                <span className="text-[15px] font-bold text-slate-500 line-through decoration-rose-500 decoration-2">
+                                                    R$ {basePrice?.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0,00'}
+                                                </span>
+                                            ) : (
+                                                <div className="h-[22.5px]" />
+                                            )}
+
+                                            <div className="flex flex-col gap-0.5 relative group">
+                                                <div className="flex items-baseline gap-1">
+                                                    <span className="text-5xl font-black text-slate-900 dark:text-white">R$ {(finalPrice || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                    <span className="text-sm font-bold text-slate-400 uppercase tracking-widest ml-1">
+                                                        {isYearly ? (t('management.settings.plan.perYear') || '/ ano') : (t('management.settings.plan.perMonth') || '/ mês')}
+                                                    </span>
+                                                    {discount > 0 && (
+                                                        <div className="absolute -top-6 right-0 md:-right-6 px-3 py-1.5 rounded-full text-[10px] font-black shadow-[0_0_15px_rgba(16,185,129,0.5)] animate-pulse whitespace-nowrap bg-emerald-500 text-slate-950 ring-2 ring-emerald-400/50 scale-110 z-20">
+                                                            {discount}% OFF
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                {isYearly && discount > 0 && (
+                                                    <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-2 animate-in fade-in slide-in-from-left-2 duration-500">
+                                                        <p>ou em até {plan.installments || 12}x de R$ {(installmentValue || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} sem juros</p>
+                                                        {(plan.yearly_cash_discount || 0) > 0 && (
+                                                            <p className="mt-1 text-slate-900 dark:text-white font-black uppercase tracking-widest">
+                                                                * À Vista: R$ {cashValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({plan.yearly_cash_discount}% OFF) *
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <p className="text-[12px] text-slate-500 mt-6 font-medium leading-relaxed">
+                                                {plan.short_desc?.[lang] || plan.short_desc?.pt}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex-1 space-y-4 mb-10">
+                                        {features.map((feature: string, idx: number) => (
+                                            <div key={idx} className="flex gap-3 items-start group">
+                                                <div className="mt-1 bg-emerald-500/10 text-emerald-500 p-0.5 rounded-full group-hover:scale-110 transition-transform">
+                                                    <Check size={14} strokeWidth={4} />
+                                                </div>
+                                                <span className="text-slate-600 dark:text-slate-300 text-sm font-bold leading-tight">{feature}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {(isCurrentPlan) ? (
+                                        <div className="w-full py-5 text-center bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-2xl font-black uppercase tracking-widest text-sm border border-emerald-100 dark:border-emerald-800 flex justify-center items-center gap-2">
+                                            <Check size={18} /> {t('management.settings.plan.liberated') || 'Liberado'}
+                                        </div>
+                                    ) : (
+                                        (!currentUser || isSocioAdmin) && (
+                                            <button
+                                                onClick={() => {
+                                                    if (plan.name.toLowerCase().includes('strategy') || plan.name.toLowerCase().includes('estrategia')) {
+                                                        setIsDemoModalOpen(true);
+                                                    } else {
+                                                        setIsAuthModalOpen(true);
+                                                    }
+                                                }}
+                                                className={`w-full py-5 rounded-2xl font-black text-lg transition-all ${!plan.recommended
+                                                    ? 'border-2 border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400 bg-transparent hover:bg-indigo-50 dark:hover:bg-indigo-900/10 shadow-none'
+                                                    : 'bg-indigo-600 text-white shadow-2xl shadow-indigo-600/40 hover:bg-indigo-700 hover:scale-[1.02]'
+                                                    }`}
+                                            >
+                                                {currentUser ? (t('management.settings.plan.acquirePlan') || 'Adquirir Plano') : (plan.name.toLowerCase().includes('strategy') || plan.name.toLowerCase().includes('estrategia') ? (t('pricingPage.plans.strategy.cta') || 'Agendar Demonstração') : (t('pricingPage.plans.start.cta') || 'Começar Teste Grátis'))}
+                                            </button>
+                                        )
+                                    )}
+                                </div>
+                            );
+                        }) : (
+                            <div className="col-span-3 flex justify-center py-20">
+                                <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                            </div>
+                        )}
+                    </div>
+
+                    {dbPlans.filter(p => !p.is_combo).length > 0 && (
+                        <div id="modulos-avulsos" className="mt-40 scroll-mt-32">
+                            <div className="text-center mb-16">
+                                <span className="text-indigo-600 dark:text-indigo-400 font-black tracking-[0.2em] uppercase text-sm">Flexibilidade Total</span>
+                                <h2 className="text-4xl md:text-5xl font-black mt-4 text-slate-900 dark:text-white uppercase tracking-tighter">Módulos Avulsos</h2>
+                                <p className="text-xl text-slate-500 dark:text-slate-400 mt-4 leading-relaxed font-medium max-w-3xl mx-auto">Precisa de uma solução pontual? Você não precisa levar o ecossistema inteiro se quiser resolver apenas um desafio imediato.</p>
+
+                                <div className="flex justify-center mt-12 mb-4">
+                                    <div className="flex items-center bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl">
+                                        <button
+                                            onClick={() => setModulesBillingCycle('monthly')}
+                                            className={`px-6 py-3 rounded-lg text-sm font-black uppercase tracking-widest transition-all ${modulesBillingCycle === 'monthly' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                        >
+                                            {t('management.settings.plan.monthly') || 'MENSAL'}
+                                        </button>
+                                        <button
+                                            onClick={() => setModulesBillingCycle('yearly')}
+                                            className={`px-6 py-3 rounded-lg text-sm font-black uppercase tracking-widest transition-all ${modulesBillingCycle === 'yearly' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                        >
+                                            {t('management.settings.plan.yearly') || 'ANUAL'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
+                                {dbPlans.filter(p => !p.is_combo).map((plan, i) => {
+                                    const isCurrentPlan = currentUser?.profile?.plan_id === plan.id;
+                                    const isSocioAdmin = currentUser?.profile?.role === 'Master' || (currentUser?.profile?.access_groups && currentUser.profile.access_groups.name?.includes('Sócio-Administra'));
+
+                                    const isYearly = modulesBillingCycle === 'yearly';
+                                    const basePrice = isYearly ? plan.yearly_price : plan.monthly_price;
+                                    const discount = isYearly ? plan.yearly_discount : plan.monthly_discount;
+                                    const finalPrice = discount > 0 ? basePrice * (1 - discount / 100) : basePrice;
+                                    const installmentValue = finalPrice / (plan.installments || 12);
+                                    const cashValue = finalPrice * (1 - (plan.yearly_cash_discount || 0) / 100);
+
+                                    const lang = locale as 'pt' | 'en' | 'es';
+
+                                    return (
+                                        <div key={i} className={`relative flex flex-col p-8 rounded-[2rem] border transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl flex-1 bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800`}>
+                                            <div className="mb-6">
+                                                <h3 className={`text-lg font-black uppercase tracking-widest mb-2 ${isCurrentPlan ? 'text-amber-500' : 'text-slate-900 dark:text-white'}`}>
+                                                    {plan.name} {isCurrentPlan && `(${t('management.settings.plan.current') || 'Atual'})`}
+                                                </h3>
+
+                                                <div className="mb-4 flex flex-col items-baseline gap-1 relative">
+                                                    {discount > 0 ? (
+                                                        <span className="text-[13px] font-bold text-slate-500 line-through decoration-rose-500 decoration-2">
+                                                            R$ {basePrice?.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0,00'}
+                                                        </span>
+                                                    ) : (
+                                                        <div className="h-[19.5px]" />
+                                                    )}
+
+                                                    <div className="flex flex-col gap-0.5 relative group">
+                                                        <div className="flex items-baseline gap-1">
+                                                            <span className="text-3xl font-black text-slate-900 dark:text-white">R$ {(finalPrice || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">
+                                                                {isYearly ? (t('management.settings.plan.perYear') || '/ ano') : (t('management.settings.plan.perMonth') || '/ mês')}
+                                                            </span>
+                                                            {discount > 0 && (
+                                                                <div className="absolute -top-4 -right-1 px-2 py-1 rounded-full text-[8px] font-black shadow-[0_0_15px_rgba(16,185,129,0.5)] animate-pulse whitespace-nowrap bg-emerald-500 text-slate-950 ring-2 ring-emerald-400/50 rotate-6 z-20">
+                                                                    {discount}% OFF
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        {isYearly && discount > 0 && (
+                                                            <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mt-1 animate-in fade-in slide-in-from-left-2 duration-500">
+                                                                <p>ou em até {plan.installments || 12}x de R$ {(installmentValue || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} sem juros</p>
+                                                                {(plan.yearly_cash_discount || 0) > 0 && (
+                                                                    <p className="mt-1 text-slate-900 dark:text-white font-black uppercase tracking-widest">
+                                                                        * À Vista: R$ {cashValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({plan.yearly_cash_discount}% OFF) *
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <p className="text-[11px] text-slate-500 font-medium leading-relaxed min-h-[48px]">
+                                                    {plan.short_desc?.[lang] || plan.short_desc?.pt}
+                                                </p>
+                                            </div>
+
+                                            <div className="mt-auto pt-6 border-t border-slate-100 dark:border-slate-800">
+                                                {(isCurrentPlan) ? (
+                                                    <div className="w-full py-4 text-center bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-xl font-black uppercase tracking-widest text-[10px] border border-emerald-100 dark:border-emerald-800 flex justify-center items-center gap-2">
+                                                        <Check size={16} /> {t('management.settings.plan.liberated') || 'Liberado'}
+                                                    </div>
+                                                ) : (
+                                                    (!currentUser || isSocioAdmin) && (
+                                                        <button
+                                                            onClick={() => setIsAuthModalOpen(true)}
+                                                            className={`w-full py-4 rounded-xl font-black text-[10px] tracking-widest uppercase transition-all shadow-sm border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700`}
+                                                        >
+                                                            {currentUser ? (t('management.settings.plan.acquirePlan') || 'Adquirir Plano') : (t('pricingPage.plans.start.cta') || 'Começar Teste Grátis')}
+                                                        </button>
+                                                    )
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </section>
 
@@ -390,44 +618,7 @@ export default function PricingPage() {
                 </div>
             </section>
 
-            {/* A La Carte Modules */}
-            <section id="modules" className="py-32 px-6">
-                <div className="max-w-7xl mx-auto">
-                    <div className="text-center mb-20">
-                        <span className="text-indigo-600 dark:text-indigo-400 font-black tracking-[0.2em] uppercase text-sm">{t('pricingPage.aLaCarte.badge')}</span>
-                        <h2 className="text-5xl font-black mt-4 text-slate-900 dark:text-white uppercase tracking-tighter">{t('pricingPage.aLaCarte.title')}</h2>
-                        <p className="text-xl text-slate-500 dark:text-slate-400 mt-4 leading-relaxed font-medium max-w-2xl mx-auto">{t('pricingPage.aLaCarte.subtitle')}</p>
-                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-                        <div className="p-10 bg-slate-50 dark:bg-slate-900/50 rounded-[3rem] border border-slate-100 dark:border-slate-800 hover:bg-white dark:hover:bg-slate-900 transition-all group">
-                            <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
-                                <Radar size={32} />
-                            </div>
-                            <h3 className="text-3xl font-black mb-4 text-slate-900 dark:text-white tracking-tight leading-snug">{t('pricingPage.aLaCarte.sentinel.title')}</h3>
-                            <p className="text-slate-500 dark:text-slate-400 font-medium mb-10 leading-relaxed">
-                                {t('pricingPage.aLaCarte.sentinel.desc')}
-                            </p>
-                            <Link href="/sentinel" className="flex items-center gap-2 font-black text-indigo-600 dark:text-indigo-400 hover:gap-3 transition-all uppercase tracking-widest text-sm">
-                                {t('pricingPage.aLaCarte.sentinel.cta')} <ArrowRight size={18} />
-                            </Link>
-                        </div>
-
-                        <div className="p-10 bg-slate-50 dark:bg-slate-900/50 rounded-[3rem] border border-slate-100 dark:border-slate-800 hover:bg-white dark:hover:bg-slate-900 transition-all group">
-                            <div className="w-16 h-16 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
-                                <BarChart3 size={32} />
-                            </div>
-                            <h3 className="text-3xl font-black mb-4 text-slate-900 dark:text-white tracking-tight leading-snug">{t('pricingPage.aLaCarte.cognitio.title')}</h3>
-                            <p className="text-slate-500 dark:text-slate-400 font-medium mb-10 leading-relaxed">
-                                {t('pricingPage.aLaCarte.cognitio.desc')}
-                            </p>
-                            <Link href="/cognitio" className="flex items-center gap-2 font-black text-blue-600 dark:text-blue-400 hover:gap-3 transition-all uppercase tracking-widest text-sm">
-                                {t('pricingPage.aLaCarte.cognitio.cta')} <ArrowRight size={18} />
-                            </Link>
-                        </div>
-                    </div>
-                </div>
-            </section>
 
             {/* FAQ */}
             <section id="faq" className="py-32 px-6 bg-slate-50 dark:bg-slate-950 border-t border-slate-100 dark:border-slate-900">
@@ -437,7 +628,8 @@ export default function PricingPage() {
                         {[
                             { q: t('pricingPage.faq.questions.0.q'), a: t('pricingPage.faq.questions.0.a') },
                             { q: t('pricingPage.faq.questions.1.q'), a: t('pricingPage.faq.questions.1.a') },
-                            { q: t('pricingPage.faq.questions.2.q'), a: t('pricingPage.faq.questions.2.a') }
+                            { q: t('pricingPage.faq.questions.2.q'), a: t('pricingPage.faq.questions.2.a') },
+                            { q: t('pricingPage.faq.questions.3.q'), a: t('pricingPage.faq.questions.3.a') }
                         ].map((faq, i) => (
                             <div key={i} className="p-8 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm">
                                 <h4 className="font-black text-lg text-slate-900 dark:text-white mb-4 flex gap-3 text-left">
@@ -476,6 +668,33 @@ export default function PricingPage() {
                     </p>
                 </div>
             </section>
+
+            {/* Standard Footer */}
+            <footer className="py-20 px-6 border-t border-slate-100 dark:border-slate-900 bg-slate-50 dark:bg-slate-950 transition-colors">
+                <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+                    <div className="flex items-center gap-3">
+                        <Logo />
+                        <span className="font-extrabold text-2xl tracking-tighter text-slate-900 dark:text-white uppercase">VERITUM <span className="text-branding-gradient">PRO</span></span>
+                    </div>
+                    <p className="text-sm text-slate-400 dark:text-slate-500 font-medium">
+                        {locale === 'pt' ? 'Desenvolvido por AgTech | LegalTech de Alta Performance © 2024 Todos os direitos reservados.' : 'Developed by AgTech | High Performance LegalTech © 2024 All rights reserved.'}
+                    </p>
+                    <div className="flex gap-6">
+                        <button
+                            onClick={() => openLegal('privacy')}
+                            className="text-sm text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer font-bold"
+                        >
+                            {t('common.privacy')}
+                        </button>
+                        <button
+                            onClick={() => openLegal('terms')}
+                            className="text-sm text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer font-bold"
+                        >
+                            {t('common.terms')}
+                        </button>
+                    </div>
+                </div>
+            </footer>
 
             {/* Demo Modal */}
             {isDemoModalOpen && (
@@ -674,7 +893,13 @@ export default function PricingPage() {
             <AuthModal
                 isOpen={isAuthModalOpen}
                 onClose={() => setIsAuthModalOpen(false)}
-                mode="register"
+                mode={authMode}
+            />
+
+            <LegalModal
+                isOpen={legalModal.isOpen}
+                onClose={() => setLegalModal({ ...legalModal, isOpen: false })}
+                type={legalModal.type}
             />
         </div>
     );

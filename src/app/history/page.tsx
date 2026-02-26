@@ -1,11 +1,14 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Sparkles, Zap, Shield, Globe, Users, Scale, MessageSquare, Moon, Sun } from 'lucide-react';
+import { ArrowLeft, Sparkles, Zap, Shield, Globe, Users, Scale, MessageSquare, Moon, Sun, LayoutDashboard } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslation } from '@/contexts/language-context';
 import { LanguageSelector } from '@/components/ui/language-selector';
 import { useTheme } from 'next-themes';
+import { UserMenu } from '@/components/ui/user-menu';
+import { createMasterClient } from '@/lib/supabase/master';
+import { LegalModal } from '@/components/legal-modal';
 
 const Logo = () => (
     <div className="bg-indigo-600/10 p-2 rounded-lg flex items-center justify-center text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400">
@@ -14,16 +17,37 @@ const Logo = () => (
 );
 
 export default function HistoryPage() {
-    const { t } = useTranslation();
+    const { t, locale } = useTranslation();
     const { theme, setTheme, resolvedTheme } = useTheme();
     const [mounted, setMounted] = useState(false);
+    const [currentUser, setCurrentUser] = useState<any>(undefined);
+    const [legalModal, setLegalModal] = useState({ isOpen: false, type: 'privacy' as 'privacy' | 'terms' });
 
     useEffect(() => {
         setMounted(true);
+        const supabase = createMasterClient();
+        const fetchUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data: profile } = await supabase
+                    .from('users')
+                    .select('name, avatar_url, role, plan_id, access_groups(name)')
+                    .eq('id', user.id)
+                    .single();
+                setCurrentUser({ ...user, profile });
+            } else {
+                setCurrentUser(null);
+            }
+        };
+        fetchUser();
     }, []);
 
     const toggleTheme = () => {
         setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
+    };
+
+    const openLegal = (type: 'privacy' | 'terms') => {
+        setLegalModal({ isOpen: true, type });
     };
 
     if (!mounted) return null;
@@ -44,13 +68,28 @@ export default function HistoryPage() {
                         <button onClick={toggleTheme} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all text-slate-600 dark:text-slate-400">
                             {resolvedTheme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
                         </button>
-                        <Link
-                            href="/"
-                            className="flex items-center gap-2 px-6 py-2.5 border border-slate-200 dark:border-slate-800 rounded-full font-bold text-sm transition-all hover:bg-slate-50 dark:hover:bg-slate-800"
-                        >
-                            <ArrowLeft size={16} /> {t('common.backToHome')}
-                        </Link>
                         <LanguageSelector />
+                        {currentUser === undefined ? (
+                            <div className="w-32 h-10 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-full" />
+                        ) : currentUser ? (
+                            <div className="flex items-center gap-3">
+                                <Link
+                                    href="/veritum"
+                                    className="hidden sm:flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-bold text-sm shadow-xl shadow-indigo-600/20 transition-all hover:scale-105"
+                                >
+                                    <LayoutDashboard size={18} />
+                                    Painel Pro
+                                </Link>
+                                <UserMenu user={currentUser} supabase={createMasterClient()} />
+                            </div>
+                        ) : (
+                            <Link
+                                href="/"
+                                className="flex items-center gap-2 px-6 py-2.5 border border-slate-200 dark:border-slate-800 rounded-full font-bold text-sm transition-all hover:bg-slate-50 dark:hover:bg-slate-800"
+                            >
+                                <ArrowLeft size={16} /> {t('common.backToHome')}
+                            </Link>
+                        )}
                     </div>
                 </div>
             </nav>
@@ -287,24 +326,38 @@ export default function HistoryPage() {
                 </section>
             </main>
 
-            {/* Simple Footer */}
-            <footer className="py-20 px-6 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 transition-colors">
+            {/* Standard Footer */}
+            <footer className="py-20 px-6 border-t border-slate-100 dark:border-slate-900 bg-slate-50 dark:bg-slate-950 transition-colors">
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
                     <div className="flex items-center gap-3">
                         <Logo />
-                        <span className="font-extrabold text-2xl tracking-tighter text-slate-900 dark:text-white transition-all group-hover:scale-105">
-                            VERITUM <span className="text-branding-gradient">PRO</span>
-                        </span>
+                        <span className="font-extrabold text-2xl tracking-tighter text-slate-900 dark:text-white uppercase">VERITUM <span className="text-branding-gradient">PRO</span></span>
                     </div>
-                    <p className="text-sm text-slate-400 dark:text-slate-500 font-medium italic">
-                        {t('common.byodb')}
+                    <p className="text-sm text-slate-400 dark:text-slate-500 font-medium">
+                        {locale === 'pt' ? 'Desenvolvido por AgTech | LegalTech de Alta Performance © 2024 Todos os direitos reservados.' : 'Developed by AgTech | High Performance LegalTech © 2024 All rights reserved.'}
                     </p>
-                    <div className="flex items-center gap-8">
-                        <Link href="/privacy" className="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-indigo-600 transition-colors">{t('common.privacy')}</Link>
-                        <Link href="/terms" className="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-indigo-600 transition-colors">{t('common.terms')}</Link>
+                    <div className="flex gap-6">
+                        <button
+                            onClick={() => openLegal('privacy')}
+                            className="text-sm text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer font-bold"
+                        >
+                            {t('common.privacy')}
+                        </button>
+                        <button
+                            onClick={() => openLegal('terms')}
+                            className="text-sm text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer font-bold"
+                        >
+                            {t('common.terms')}
+                        </button>
                     </div>
                 </div>
             </footer>
+
+            <LegalModal
+                isOpen={legalModal.isOpen}
+                onClose={() => setLegalModal({ ...legalModal, isOpen: false })}
+                type={legalModal.type}
+            />
         </div>
     );
 }

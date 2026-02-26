@@ -265,6 +265,7 @@ export const es = {
     "pricing": {
         "title": "Planos que acompanham o seu crescimento.",
         "subtitle": "Nós no vendemos apenas software, entregamos a arquitetura exata para o seu momento na advocacia.",
+        "cancelGuarantee": "Veritum PRO no tiene tarifa de adhesión, no tiene permanencia y no tiene letra pequeña. Te quedas porque encontraste la paz mental para ejercer la abogacía, no porque estés atado a nosotros. Elige tu plan, cancela cuando quieras.",
         "compare": "Comparar Planos e Valores",
         "plans": {
             "start": {
@@ -618,6 +619,11 @@ export const es = {
                 "individualModule": "Módulo Individual",
                 "recommended": "Recomendado",
                 "perMonth": "/mes",
+                "perYear": "/año",
+                "monthly": "Mensual",
+                "yearly": "Anual",
+                "liberated": "Liberado",
+                "current": "Actual",
                 "acquirePlan": "Adquirir Plan"
             }
         },
@@ -735,6 +741,8 @@ export const es = {
                     "translateIA": "Traduzir via Gemini IA",
                     "monthlyPrice": "Preço Mensal (R$)",
                     "yearlyPrice": "Preço Anual (R$)",
+                    "installments": "Cant. de Cuotas (Sin Interés)",
+                    "yearlyCashDiscount": "Descuento en Efectivo Anual (%)",
                     "discount": "Desconto (%)",
                     "basicFeatures": "Funcionalidades Básicas (Bullet Points)",
                     "featuresPlaceholder": "Uma funcionalidade por linha...",
@@ -1035,7 +1043,8 @@ export const es = {
         "hero": {
             "title": "Seu momento na advocacia,",
             "titleAccent": "nosso melhor plano.",
-            "subtitle": "Escolha o plano que acompanha o seu ritmo. Do autônomo ao departamento jurídico corporativo, temos a arquitetura exata para o seu crescimento."
+            "subtitle": "Escolha o plano que acompanha o seu ritmo. Do autônomo ao departamento jurídico corporativo, temos a arquitetura exata para o seu crescimento.",
+            "cancelGuarantee": "El ecosistema legal sin tarifa de adhesión, sin penalizaciones contractuales y sin permanencia. Suscríbase hoy, cancele cuando quiera."
         },
         "plans": {
             "start": {
@@ -1159,6 +1168,10 @@ export const es = {
         "faq": {
             "title": "Dúvidas Frequentes",
             "questions": [
+                {
+                    "q": "¿Qué pasa si quiero cancelar mi plan?",
+                    "a": "Cero llamadas largas o multas ocultas. Puedes cancelar con un solo clic directamente en tu panel. Sin períodos de carencia y sin permanencia. En Veritum PRO, no te atamos con contratos, te conquistamos con la excelencia del servicio. Si decides irte, podrás exportar libremente todos tus datos antes del cierre."
+                },
                 {
                     "q": "Preciso de cartão de crédito para o teste grátis?",
                     "a": "No. Acreditamos na nossa tecnologia. Usted testa os planos Start ou Growth por 14 dias com acesso total, sem burocracia."
