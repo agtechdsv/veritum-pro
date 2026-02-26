@@ -94,7 +94,10 @@ export function CheckoutModal({
             cashPrice: "À vista no PIX/Boleto",
             cashLabel: "à vista",
             interestFree: "sem juros",
-            payCash: "Pagar à vista com desconto anual"
+            payCash: "Pagar à vista com desconto anual",
+            pixAuto: "Pix Automático",
+            boletoRecurrent: "Boleto recorrente",
+            cardRecurrent: "Cobrança Recorrente"
         },
         en: {
             selectedSub: "Selected Subscription",
@@ -127,7 +130,10 @@ export function CheckoutModal({
             cashPrice: "Cash on PIX/Ticket",
             cashLabel: "cash",
             interestFree: "interest free",
-            payCash: "Pay cash with yearly discount"
+            payCash: "Pay cash with yearly discount",
+            pixAuto: "Automatic Pix",
+            boletoRecurrent: "Recurring Ticket",
+            cardRecurrent: "Recurring Charge"
         },
         es: {
             selectedSub: "Suscripción Seleccionada",
@@ -160,7 +166,10 @@ export function CheckoutModal({
             cashPrice: "Al contado en PIX/Boleto",
             cashLabel: "al contado",
             interestFree: "sin intereses",
-            payCash: "Pagar al contado con descuento anual"
+            payCash: "Pagar al contado con descuento anual",
+            pixAuto: "Pix Automático",
+            boletoRecurrent: "Boleto recurrente",
+            cardRecurrent: "Cobro Recurrente"
         }
     };
 
@@ -252,17 +261,16 @@ export function CheckoutModal({
     const currentPlan = plans[currentPlanIndex];
     if (!currentPlan && isOpen) return null;
 
-
-
     const calculatePricing = () => {
-        if (!currentPlan) return { full: 0, discount: 0, total: 0, cashTotal: 0 };
-        const basePrice = billingCycle === 'monthly' ? currentPlan.monthly_price : currentPlan.yearly_price;
-        const discountPercentage = 0.07;
-        const discountValue = basePrice * discountPercentage;
+        if (!currentPlan) return { full: 0, discount: 0, total: 0, cashTotal: 0, discountPerc: 0 };
+        const isMonthly = billingCycle === 'monthly';
+        const basePrice = isMonthly ? currentPlan.monthly_price : currentPlan.yearly_price;
+        const discountPerc = isMonthly ? (currentPlan.monthly_discount || 0) : (currentPlan.yearly_discount || 0);
+        const discountValue = basePrice * (discountPerc / 100);
         const totalValue = basePrice - discountValue;
 
         let cashTotal = 0;
-        if (billingCycle === 'yearly' && currentPlan.yearly_cash_discount) {
+        if (!isMonthly && currentPlan.yearly_cash_discount) {
             cashTotal = totalValue * (1 - (currentPlan.yearly_cash_discount / 100));
         }
 
@@ -270,13 +278,16 @@ export function CheckoutModal({
             full: basePrice,
             discount: discountValue,
             total: totalValue,
-            cashTotal
+            cashTotal,
+            discountPerc
         };
     };
 
-    const { full, discount, total, cashTotal } = calculatePricing();
+    const { full, discount, total, cashTotal, discountPerc } = calculatePricing();
 
-    const totalDisplay = isCash ? cashTotal : total;
+    const totalDisplay = isCash
+        ? cashTotal
+        : (billingCycle === 'monthly' ? total * parseInt(installments) : total);
 
     const formatPrice = (value: number) => {
         return new Intl.NumberFormat(lang === 'pt' ? 'pt-BR' : lang === 'es' ? 'es-ES' : 'en-US', {
@@ -285,10 +296,27 @@ export function CheckoutModal({
         }).format(value);
     };
 
-    const installments_options = Array.from({ length: currentPlan?.installments || 1 }, (_, i) => ({
-        value: `${i + 1}`,
-        label: `${i + 1}x de ${formatPrice(total / (i + 1))} ${i === 0 ? t.cashLabel : t.interestFree}`
-    }));
+    const installments_options = Array.from({
+        length: billingCycle === 'monthly' ? 12 : (currentPlan?.installments || 1)
+    }, (_, i) => {
+        const count = i + 1;
+        if (billingCycle === 'monthly') {
+            return {
+                value: `${count}`,
+                label: `${count}x de ${formatPrice(total)}`
+            };
+        }
+        return {
+            value: `${count}`,
+            label: `${count}x de ${formatPrice(total / count)} ${count === 1 ? t.cashLabel : t.interestFree}`
+        };
+    });
+
+    const getPaymentTitle = () => {
+        if (paymentMethod === 'pix') return t.pixAuto;
+        if (paymentMethod === 'boleto') return t.boletoRecurrent;
+        return t.cardRecurrent;
+    };
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
@@ -308,7 +336,7 @@ export function CheckoutModal({
                         </div>
 
                         {/* Lock Icon Gradient */}
-                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center shadow-2xl shadow-indigo-600/40 mb-10 border-2 border-indigo-600/20 dark:border-indigo-400/20 ring-4 ring-indigo-500/5">
+                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center shadow-2xl shadow-indigo-600/40 mb-10 border-2 border-slate-900 dark:border-white/20 ring-4 ring-slate-900/10 dark:ring-white/5">
                             <LockIcon size={24} className="drop-shadow-sm" />
                         </div>
 
@@ -351,15 +379,19 @@ export function CheckoutModal({
                                 {/* Values Breakdown */}
                                 <div className="bg-white/40 dark:bg-white/5 backdrop-blur-md rounded-3xl p-6 border border-white/50 dark:border-white/10 mb-10 shadow-sm">
                                     <div className="space-y-2">
-                                        <div className="flex justify-between text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-                                            <span>{t.original}</span>
-                                            <span className="line-through">{formatPrice(full)}</span>
-                                        </div>
-                                        <div className="flex justify-between text-[11px] font-bold text-emerald-500 uppercase tracking-widest">
-                                            <span>{t.savings} (7%)</span>
-                                            <span>- {formatPrice(discount)}</span>
-                                        </div>
-                                        <div className="pt-4 border-t border-slate-200/30 dark:border-white/10 flex flex-col items-end gap-1">
+                                        {discountPerc > 0 && (
+                                            <>
+                                                <div className="flex justify-between text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                                                    <span>{t.original}</span>
+                                                    <span className="line-through">{formatPrice(full * (billingCycle === 'monthly' ? parseInt(installments) : 1))}</span>
+                                                </div>
+                                                <div className="flex justify-between text-[11px] font-bold text-emerald-500 uppercase tracking-widest">
+                                                    <span>{t.savings} ({discountPerc}%)</span>
+                                                    <span>- {formatPrice(discount * (billingCycle === 'monthly' ? parseInt(installments) : 1))}</span>
+                                                </div>
+                                            </>
+                                        )}
+                                        <div className={`${discountPerc > 0 ? 'pt-4 border-t border-slate-200/30 dark:border-white/10' : ''} flex flex-col items-end gap-1`}>
                                             <div className="flex justify-between items-end w-full">
                                                 <span className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-tighter">{t.totalValue}</span>
                                                 <span className="text-4xl font-black text-slate-950 dark:text-white tracking-tighter">{formatPrice(totalDisplay)}</span>
@@ -397,8 +429,8 @@ export function CheckoutModal({
 
                     {/* RIGHT COLUMN (60%): Identity & Payment (Stacked) */}
                     <div className="md:w-[60%] flex flex-col bg-white dark:bg-slate-950 overflow-y-auto custom-scrollbar relative">
-                        <button onClick={handleClose} className="absolute top-10 right-10 text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors z-50 p-2 bg-slate-50 dark:bg-slate-900/50 rounded-full">
-                            <X size={20} />
+                        <button onClick={handleClose} className="absolute top-10 right-10 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all z-50 p-3 bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full shadow-lg border border-slate-200/50 dark:border-slate-700/50">
+                            <X size={20} strokeWidth={3} />
                         </button>
 
                         <div className="p-10 md:p-14 space-y-12">
@@ -490,7 +522,7 @@ export function CheckoutModal({
 
                                         {!isCash && (
                                             <div className="space-y-2">
-                                                <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{t.installments}</Label>
+                                                <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{getPaymentTitle()}</Label>
                                                 <div className="relative group">
                                                     <select
                                                         value={installments}
@@ -563,12 +595,16 @@ export function CheckoutModal({
                                 </div>
 
                                 <div className="space-y-4">
-                                    <Button
-                                        className="w-full bg-slate-950 dark:bg-indigo-600 hover:bg-slate-900 dark:hover:bg-indigo-700 text-white h-16 rounded-xl text-lg font-black uppercase tracking-[0.1em] shadow-2xl hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-4"
+                                    <button
+                                        type="button"
                                         onClick={() => setStep(2)}
+                                        className="w-full h-16 rounded-xl shadow-2xl hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-4 border-none cursor-pointer outline-none bg-indigo-600 hover:bg-indigo-700 text-white"
                                     >
-                                        {t.confirmPay} <Zap size={24} className="fill-current text-yellow-400" />
-                                    </Button>
+                                        <span className="text-lg font-black uppercase tracking-[0.1em] text-white">
+                                            {t.confirmPay}
+                                        </span>
+                                        <Zap size={24} className="fill-current text-yellow-400" />
+                                    </button>
 
                                     <div className="flex items-center justify-center gap-2 text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                                         <Lock size={10} className="shrink-0" />
