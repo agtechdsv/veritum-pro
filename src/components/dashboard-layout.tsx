@@ -498,6 +498,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                 {/* 💎 TRIAL COUNTDOWN */}
                 <TrialCountdown
                     userId={user.id}
+                    planId={user.plan_id}
                     isSidebarOpen={isSidebarOpen}
                     onUpgrade={() => {
                         setCheckoutData({ type: 'plan', planName: user.plan_name || 'Pro' });

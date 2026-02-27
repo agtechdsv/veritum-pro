@@ -118,35 +118,7 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    // Idempotency: if already processed, return 200
-    if (localPayment?.webhook_processed === true || localPayment?.status === "paid") {
-      console.info("Webhook already processed for payment", localPayment?.id ?? asaasPaymentId);
-      // Update webhook_payload and received_at for audit
-      await supabaseAdmin
-        .from("payments")
-        .update({ webhook_payload: body, webhook_received_at: new Date().toISOString() })
-        .eq("id", localPayment?.id ?? null);
-      return new Response(JSON.stringify({ received: true, id: localPayment?.id }), { headers: corsHeaders });
-    }
-
-    // Helper to mark processed and store payload
-    async function markPayment(updatedFields: any) {
-      const update = {
-        ...updatedFields,
-        webhook_payload: body,
-        asaas_response: payment,
-        webhook_received_at: new Date().toISOString(),
-        webhook_processed: true,
-        updated_at: new Date().toISOString(),
-      };
-      if (localPayment?.id) {
-        await supabaseAdmin.from("payments").update(update).eq("id", localPayment.id);
-      } else if (asaasPaymentId) {
-        await supabaseAdmin.from("payments").update(update).eq("asaas_payment_id", asaasPaymentId);
-      }
-    }
-
-    // Event handling
+    // Event definitions
     const confirmedEvents = ["PAYMENT_CONFIRMED", "PAYMENT_RECEIVED", "PAYMENT_RE_ACTIVATED", "PAYMENT_CONFIRMED_BY_POSTBACK"];
     const cancelledEvents = [
       "PAYMENT_DELETED",
@@ -159,6 +131,36 @@ Deno.serve(async (req: Request) => {
       "PAYMENT_BANK_SLIP_CANCELLED"
     ];
 
+    // Idempotency: Skip ONLY if already paid (for confirmed events) or if already handled this terminal status
+    const isPaid = localPayment?.status === "paid";
+    const isConfirmed = confirmedEvents.includes(event);
+    const isCancelled = cancelledEvents.includes(event);
+
+    if (isPaid && isConfirmed) {
+      console.info("Payment already marked as paid, skipping confirmed event duplicate.");
+      return new Response(JSON.stringify({ received: true, already_paid: true }), { headers: corsHeaders });
+    }
+
+    // Helper to log event without setting terminal 'webhook_processed' flag for non-terminal events
+    async function logEvent(updatedFields: any, isTerminal = false) {
+      const update: any = {
+        ...updatedFields,
+        webhook_payload: body,
+        asaas_response: payment,
+        webhook_received_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      if (isTerminal) {
+        update.webhook_processed = true;
+      }
+
+      if (localPayment?.id) {
+        await supabaseAdmin.from("payments").update(update).eq("id", localPayment.id);
+      } else if (asaasPaymentId) {
+        await supabaseAdmin.from("payments").update(update).eq("asaas_payment_id", asaasPaymentId);
+      }
+    }
+
     if (confirmedEvents.includes(event)) {
       // parse externalReference -> userId|planName|billingCycle
       const parts = String(externalReference ?? "").split("|");
@@ -168,12 +170,12 @@ Deno.serve(async (req: Request) => {
 
       if (!userId || !planName) {
         console.error("Confirmed payment but missing data in externalReference:", externalReference);
-        await markPayment({ status: "paid", asaas_payment_id: asaasPaymentId });
+        await logEvent({ status: "paid", asaas_payment_id: asaasPaymentId }, true);
         return new Response(JSON.stringify({ received: true }), { headers: corsHeaders });
       }
 
       // Update payment row: set as paid and link user
-      await markPayment({ status: "paid", user_id: userId, asaas_payment_id: asaasPaymentId });
+      await logEvent({ status: "paid", user_id: userId, asaas_payment_id: asaasPaymentId }, true);
 
       // Fetch Plan ID
       const { data: planData, error: planErr } = await supabaseAdmin
@@ -200,20 +202,20 @@ Deno.serve(async (req: Request) => {
       const validUntilISO = validUntil.toISOString();
 
       // 1. Upsert Subscription
-      // We assume user_subscriptions tracks the current plan for the user
       const { error: upsertErr } = await supabaseAdmin
         .from("user_subscriptions")
         .upsert({
           user_id: userId,
           plan_id: planId,
           status: "active",
+          is_trial: false, // Mark as paid
           start_date: new Date().toISOString(),
           end_date: validUntilISO,
-          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         }, { onConflict: "user_id" });
 
       if (upsertErr) {
-        console.error("Failed to upsert user_subscription:", upsertErr.message);
+        console.error(`Failed to upsert user_subscription for user ${userId}:`, upsertErr.message);
       }
 
       // 2. Update user profile for immediate permission sync
@@ -231,7 +233,7 @@ Deno.serve(async (req: Request) => {
       return new Response(JSON.stringify({ received: true }), { headers: corsHeaders });
     } else if (cancelledEvents.includes(event)) {
       // Mark payment cancelled/refunded and revoke products if possible
-      await markPayment({ status: "cancelled", asaas_payment_id: asaasPaymentId });
+      await logEvent({ status: "cancelled", asaas_payment_id: asaasPaymentId }, true);
 
       // Optionally revoke active subscriptions inferred from externalReference
       const [userIdRaw] = String(externalReference ?? "").split("|");
@@ -249,7 +251,7 @@ Deno.serve(async (req: Request) => {
     } else {
       // Unknown event: store payload for audit and respond 200
       console.info("Unhandled Asaas event type:", event);
-      await markPayment({ status: "webhook_received", asaas_payment_id: asaasPaymentId });
+      await logEvent({ status: "webhook_received", asaas_payment_id: asaasPaymentId }, false);
       return new Response(JSON.stringify({ received: true }), { headers: corsHeaders });
     }
   } catch (err: any) {

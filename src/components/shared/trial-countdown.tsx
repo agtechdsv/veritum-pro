@@ -7,11 +7,12 @@ import { motion } from 'framer-motion';
 
 interface Props {
     userId: string;
+    planId: string | undefined;
     isSidebarOpen: boolean;
     onUpgrade?: () => void;
 }
 
-const TrialCountdown: React.FC<Props> = ({ userId, isSidebarOpen, onUpgrade }) => {
+const TrialCountdown: React.FC<Props> = ({ userId, planId, isSidebarOpen, onUpgrade }) => {
     const [daysRemaining, setDaysRemaining] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -20,7 +21,7 @@ const TrialCountdown: React.FC<Props> = ({ userId, isSidebarOpen, onUpgrade }) =
 
     useEffect(() => {
         fetchTrialStatus();
-    }, [userId]);
+    }, [userId, planId]);
 
     const fetchTrialStatus = async () => {
         if (!userId) {

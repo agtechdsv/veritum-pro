@@ -113,14 +113,21 @@ create table if not exists public.plan_permissions (
 
 create table if not exists public.user_subscriptions (
     id uuid primary key default gen_random_uuid(),
-    user_id uuid not null references auth.users(id) on delete cascade,
+    user_id uuid not null unique references auth.users(id) on delete cascade,
     plan_id uuid not null references public.plans(id) on delete cascade,
     start_date timestamptz default now(),
     end_date timestamptz,
     status text default 'active' check (status in ('active', 'expired', 'canceled')),
     is_trial boolean default false,
-    created_at timestamptz default now()
+    created_at timestamptz default now(),
+    updated_at timestamptz default now()
 );
+
+-- Trigger for updated_at on user_subscriptions
+create trigger set_updated_at_subscriptions
+    before update on public.user_subscriptions
+    for each row
+    execute function public.handle_updated_at();
 
 -- Restrição de Plans na tabela Users
 alter table public.users add constraint fk_user_plan foreign key (plan_id) references public.plans(id) on delete set null;
@@ -253,7 +260,27 @@ create table if not exists public.asaas_sub_accounts (
     updated_at timestamptz default now()
 );
 
+-- 4.3. GESTÃO DE PAGAMENTOS (ASAAS INVOICES)
+create table if not exists public.payments (
+    id uuid primary key default gen_random_uuid(),
+    user_id uuid references public.users(id) on delete cascade,
+    asaas_payment_id text unique,
+    external_reference text,
+    amount numeric,
+    status text,
+    payment_method text,
+    asaas_response jsonb,
+    webhook_payload jsonb,
+    webhook_received_at timestamptz,
+    webhook_processed boolean default false,
+    created_at timestamptz default now(),
+    updated_at timestamptz default now()
+);
+
+create trigger tr_payments_updated before update on public.payments for each row execute function handle_updated_at();
+
 alter table public.asaas_sub_accounts enable row level security;
+alter table public.payments enable row level security;
 
 CREATE POLICY "Master and Admins can view sub-accounts" ON public.asaas_sub_accounts
 FOR SELECT USING (
@@ -362,7 +389,7 @@ begin
      on conflict do nothing;
   end if;
 
-  insert into public.user_preferences (user_id, language, theme) values (new.id, 'pt', 'dark') on conflict (user_id) do nothing;
+  insert into public.user_preferences (user_id) values (new.id) on conflict (user_id) do nothing;
 
   update auth.users set raw_user_meta_data = coalesce(raw_user_meta_data, '{}'::jsonb) || jsonb_build_object('role', user_role, 'full_name', user_name, 'name', user_name, 'plan_id', user_plan_id, 'access_group_id', (new.raw_user_meta_data->>'access_group_id')) where id = new.id;
   

@@ -398,11 +398,11 @@ export function CheckoutModal({
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-            <DialogContent className="max-w-6xl p-0 gap-0 overflow-hidden border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 sm:rounded-[3rem] shadow-2xl">
+            <DialogContent className="max-w-[1150px] w-[1150px] p-0 gap-0 overflow-hidden border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 sm:rounded-[3rem] shadow-2xl">
                 <div className="flex flex-col md:flex-row h-full max-h-[90vh]">
 
-                    {/* LEFT COLUMN (40%): Plan Info & Pricing */}
-                    <div className="md:w-[40%] bg-slate-50 dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 p-8 md:p-12 flex flex-col relative overflow-hidden group">
+                    {/* LEFT COLUMN (Fixed): Plan Info & Pricing */}
+                    <div className="md:w-[450px] md:flex-none bg-slate-50 dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 p-8 md:p-12 flex flex-col relative overflow-hidden group">
                         {/* Plan Navigation Overlay Arrows */}
                         <div className="absolute top-10 right-10 flex gap-2 z-30">
                             <button onClick={prevPlan} className="p-2.5 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-indigo-600 transition-all hover:scale-110 shadow-sm">
@@ -505,8 +505,8 @@ export function CheckoutModal({
                         </AnimatePresence>
                     </div>
 
-                    {/* RIGHT COLUMN (60%): Identity & Payment (Stacked) */}
-                    <div className="md:w-[60%] flex flex-col bg-white dark:bg-slate-950 overflow-y-auto custom-scrollbar relative">
+                    {/* RIGHT COLUMN (Fixed): Identity & Payment */}
+                    <div className="md:w-[700px] md:flex-none flex flex-col bg-white dark:bg-slate-950 overflow-y-auto custom-scrollbar relative">
                         <button onClick={handleClose} className="absolute top-10 right-10 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all z-50 p-3 bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full shadow-lg border border-slate-200/50 dark:border-slate-700/50">
                             <X size={20} strokeWidth={3} />
                         </button>
