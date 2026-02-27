@@ -1,0 +1,244 @@
+import { createClient } from "npm:@supabase/supabase-js@2.45.1";
+
+declare const Deno: any;
+console.info("asaas-webhook starting");
+
+const corsHeaders = {
+  "Content-Type": "application/json",
+};
+
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const ASAAS_WEBHOOK_TOKEN = Deno.env.get("ASAAS_WEBHOOK_TOKEN") ?? "";
+
+if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+  console.error("Missing Supabase environment variables");
+}
+if (!ASAAS_WEBHOOK_TOKEN) {
+  console.warn("Missing ASAAS_WEBHOOK_TOKEN");
+}
+
+function safeCompare(a?: string, b?: string) {
+  // timing-safe compare
+  if (!a || !b) return false;
+  const ua = new TextEncoder().encode(a);
+  const ub = new TextEncoder().encode(b);
+  if (ua.length !== ub.length) return false;
+  let diff = 0;
+  for (let i = 0; i < ua.length; i++) diff |= ua[i] ^ ub[i];
+  return diff === 0;
+}
+
+Deno.serve(async (req: Request) => {
+  try {
+    if (req.method !== "POST") {
+      return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers: corsHeaders });
+    }
+
+    // Validate token header (accept common header names)
+    const tokenHeader =
+      req.headers.get("asaas-access-token") ??
+      req.headers.get("x-asaas-token") ??
+      req.headers.get("x-asaas-access-token") ??
+      "";
+
+    if (!safeCompare(tokenHeader, ASAAS_WEBHOOK_TOKEN)) {
+      console.warn("Unauthorized webhook attempt");
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
+    }
+
+    const body = await req.json().catch(() => null);
+    if (!body) {
+      console.error("Webhook: invalid JSON payload");
+      return new Response(JSON.stringify({ error: "Invalid JSON" }), { status: 400, headers: corsHeaders });
+    }
+
+    const event: string = body.event;
+    const payment = body.payment;
+
+    if (!event || !payment) {
+      console.error("Webhook: missing event or payment", body);
+      return new Response(JSON.stringify({ error: "Malformed webhook payload" }), { status: 400, headers: corsHeaders });
+    }
+
+    const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    // Extract identifiers
+    const asaasPaymentId = payment.id ?? payment.paymentId ?? null;
+    const externalReference = payment.externalReference ?? payment.external_reference ?? null;
+
+    // Lookup local payment by asaas_payment_id or external_reference
+    let { data: localPayment, error: paymentLookupError } = await supabaseAdmin
+      .from("payments")
+      .select("*")
+      .or(
+        asaasPaymentId
+          ? `asaas_payment_id.eq.${asaasPaymentId},external_reference.eq.${externalReference}`
+          : `external_reference.eq.${externalReference}`
+      )
+      .limit(1)
+      .single();
+
+    if (paymentLookupError && paymentLookupError.code !== "PGRST116" && paymentLookupError.code !== "PGRST102") {
+      // PGRST116/PGRST102 may indicate no rows; handle gracefully
+      console.info("payments lookup returned error (non-fatal):", paymentLookupError.message);
+    }
+
+    // If not found, try to find by externalReference only
+    if (!localPayment && externalReference) {
+      const { data, error } = await supabaseAdmin
+        .from("payments")
+        .select("*")
+        .eq("external_reference", externalReference)
+        .limit(1)
+        .single();
+      if (!error) localPayment = data;
+    }
+
+    // If still not found, insert a "ghost" payment record so we can track the webhook
+    if (!localPayment) {
+      const insertPayload: any = {
+        user_id: null,
+        asaas_payment_id: asaasPaymentId,
+        external_reference: externalReference,
+        status: "webhook_received",
+        asaas_response: payment,
+        webhook_payload: body,
+        webhook_received_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+      };
+      const { data: inserted, error: insertErr } = await supabaseAdmin.from("payments").insert(insertPayload).select("*").single();
+      if (insertErr) {
+        console.error("Failed to create placeholder payment record", insertErr.message);
+        // proceed but warn
+      } else {
+        localPayment = inserted;
+      }
+    }
+
+    // Idempotency: if already processed, return 200
+    if (localPayment?.webhook_processed === true || localPayment?.status === "paid") {
+      console.info("Webhook already processed for payment", localPayment?.id ?? asaasPaymentId);
+      // Update webhook_payload and received_at for audit
+      await supabaseAdmin
+        .from("payments")
+        .update({ webhook_payload: body, webhook_received_at: new Date().toISOString() })
+        .eq("id", localPayment?.id ?? null);
+      return new Response(JSON.stringify({ received: true, id: localPayment?.id }), { headers: corsHeaders });
+    }
+
+    // Helper to mark processed and store payload
+    async function markPayment(updatedFields: any) {
+      const update = {
+        ...updatedFields,
+        webhook_payload: body,
+        asaas_response: payment,
+        webhook_received_at: new Date().toISOString(),
+        webhook_processed: true,
+        updated_at: new Date().toISOString(),
+      };
+      if (localPayment?.id) {
+        await supabaseAdmin.from("payments").update(update).eq("id", localPayment.id);
+      } else if (asaasPaymentId) {
+        await supabaseAdmin.from("payments").update(update).eq("asaas_payment_id", asaasPaymentId);
+      }
+    }
+
+    // Event handling
+    const confirmedEvents = ["PAYMENT_CONFIRMED", "PAYMENT_RECEIVED", "PAYMENT_RE_ACTIVATED", "PAYMENT_CONFIRMED_BY_POSTBACK"];
+    const cancelledEvents = ["PAYMENT_CANCELLED", "PAYMENT_REFUNDED", "PAYMENT_EXPIRED", "PAYMENT_CHARGEBACK"];
+
+    if (confirmedEvents.includes(event)) {
+      // parse externalReference -> userId|planName
+      const [userIdRaw, planNameRaw] = String(externalReference ?? "").split("|");
+      const userId = userIdRaw?.trim();
+      const planName = planNameRaw ? planNameRaw.trim() : "Essential";
+
+      if (!userId) {
+        console.error("Confirmed payment but userId missing in externalReference:", externalReference);
+        // mark webhook but do not attempt activation
+        await markPayment({ status: "paid", asaas_payment_id: asaasPaymentId });
+        return new Response(JSON.stringify({ received: true }), { headers: corsHeaders });
+      }
+
+      // Update payment row: set as paid and link user
+      await markPayment({ status: "paid", user_id: userId, asaas_payment_id: asaasPaymentId });
+
+      // Activate products for user (same logic as you had)
+      const validUntil = new Date();
+      validUntil.setDate(validUntil.getDate() + 30);
+      validUntil.setHours(23, 59, 59, 999);
+      const validUntilISO = validUntil.toISOString();
+
+      let productsToActivate: string[] = ["JOURNAL_PRO"];
+      if (planName === "Master Pro") {
+        productsToActivate = ["JOURNAL_PRO", "INSIGHTS_PRO", "COACH_PRO"];
+      } else if (planName === "Apex Elite") {
+        productsToActivate = ["JOURNAL_PRO", "INSIGHTS_PRO", "COACH_PRO", "SIGNAL_PRO"];
+      }
+
+      console.info(`Activating ${productsToActivate.length} products for user ${userId} (plan ${planName})`);
+
+      // Upsert subscriptions; do it with per-row upsert and update only status+valid_until to avoid overwriting created_at
+      for (const productKey of productsToActivate) {
+        const upsertRow = {
+          user_id: userId,
+          product_key: productKey,
+          status: "ACTIVE",
+          valid_until: validUntilISO,
+          updated_at: new Date().toISOString(),
+        };
+
+        // Try update first; if no rows updated, insert
+        const { data: updated, error: updateErr } = await supabaseAdmin
+          .from("user_subscriptions")
+          .update(upsertRow)
+          .match({ user_id: userId, product_key: productKey });
+
+        if (updateErr) {
+          // If update fails due to no matching row, insert
+          const { data: inserted, error: insertErr } = await supabaseAdmin
+            .from("user_subscriptions")
+            .insert({
+              user_id: userId,
+              product_key: productKey,
+              status: "ACTIVE",
+              valid_until: validUntilISO,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            });
+          if (insertErr) console.error("Failed to upsert subscription", productKey, insertErr.message);
+        }
+      }
+
+      return new Response(JSON.stringify({ received: true }), { headers: corsHeaders });
+    } else if (cancelledEvents.includes(event)) {
+      // Mark payment cancelled/refunded and revoke products if possible
+      await markPayment({ status: "cancelled", asaas_payment_id: asaasPaymentId });
+
+      // Optionally revoke active subscriptions inferred from externalReference
+      const [userIdRaw] = String(externalReference ?? "").split("|");
+      const userId = userIdRaw?.trim();
+      if (userId) {
+        // Set subscriptions to INACTIVE where externalReference plan matched? Simpler: set all ACTIVE to INACTIVE for user
+        const { data: revoked, error: revokeErr } = await supabaseAdmin
+          .from("user_subscriptions")
+          .update({ status: "INACTIVE", updated_at: new Date().toISOString() })
+          .match({ user_id: userId, status: "ACTIVE" });
+        if (revokeErr) console.error("Failed to revoke subscriptions for user", userId, revokeErr.message);
+      }
+
+      return new Response(JSON.stringify({ received: true }), { headers: corsHeaders });
+    } else {
+      // Unknown event: store payload for audit and respond 200
+      console.info("Unhandled Asaas event type:", event);
+      await markPayment({ status: "webhook_received", asaas_payment_id: asaasPaymentId });
+      return new Response(JSON.stringify({ received: true }), { headers: corsHeaders });
+    }
+  } catch (err: any) {
+    console.error("Unhandled webhook error:", err?.message ?? err);
+    return new Response(JSON.stringify({ error: err?.message ?? "Internal error" }), { status: 500, headers: corsHeaders });
+  }
+});
