@@ -85,16 +85,12 @@ export function CheckoutModal({
             step1: "Passo 1: Seus dados",
             document: "Documento (CPF ou CNPJ)",
             whatsapp: "WhatsApp",
-            payment: "Pagamento",
-            step2: "Passo 2: Ativação",
+            payment: "Ativação",
+            step2: "Passo 2: Resumo",
             pix: "PIX",
             boleto: "BOLETO",
             card: "CARTÃO",
             installments: "Parcelamento",
-            cardNumber: "Número do cartão",
-            cardName: "Nome no cartão",
-            validity: "Validade",
-            cvv: "CVV",
             secureEnv: "Ambiente seguro e criptografado. Sua assinatura será ativada instantaneamente após a confirmação.",
             confirmPay: "Confirmar e Pagar",
             securePayment: "Pagamento Seguro via ASAAS S.A.",
@@ -104,10 +100,8 @@ export function CheckoutModal({
             cashPrice: "À vista no PIX/Boleto",
             cashLabel: "à vista",
             interestFree: "sem juros",
-            payCash: "Pagar à vista com desconto anual",
-            pixAuto: "Pix Automático",
-            boletoRecurrent: "Boleto recorrente",
-            cardRecurrent: "Cobrança Recorrente"
+            redirectMsg: "Você será redirecionado para o ambiente de pagamento seguro do Asaas.",
+            incentiveMsg: "Prepare-se para transformar sua produtividade com as ferramentas exclusivas do Veritum Pro. Estamos quase lá!"
         },
         en: {
             selectedSub: "Selected Subscription",
@@ -121,16 +115,12 @@ export function CheckoutModal({
             step1: "Step 1: Your details",
             document: "Document (ID or Tax ID)",
             whatsapp: "WhatsApp",
-            payment: "Payment",
-            step2: "Step 2: Activation",
+            payment: "Activation",
+            step2: "Step 2: Summary",
             pix: "PIX",
             boleto: "TICKET",
             card: "CARD",
             installments: "Installments",
-            cardNumber: "Card Number",
-            cardName: "Name on Card",
-            validity: "Validity",
-            cvv: "CVV",
             secureEnv: "Secure and encrypted environment. Your subscription will be activated instantly after confirmation.",
             confirmPay: "Confirm and Pay",
             securePayment: "Secure Payment via ASAAS S.A.",
@@ -140,10 +130,8 @@ export function CheckoutModal({
             cashPrice: "Cash on PIX/Ticket",
             cashLabel: "cash",
             interestFree: "interest free",
-            payCash: "Pay cash with yearly discount",
-            pixAuto: "Automatic Pix",
-            boletoRecurrent: "Recurring Ticket",
-            cardRecurrent: "Recurring Charge"
+            redirectMsg: "You will be redirected to the secure Asaas payment environment.",
+            incentiveMsg: "Get ready to transform your productivity with Veritum Pro's exclusive tools. We're almost there!"
         },
         es: {
             selectedSub: "Suscripción Seleccionada",
@@ -157,16 +145,12 @@ export function CheckoutModal({
             step1: "Paso 1: Sus datos",
             document: "Documento (DNI o RUC)",
             whatsapp: "WhatsApp",
-            payment: "Pago",
-            step2: "Paso 2: Activación",
+            payment: "Activación",
+            step2: "Paso 2: Resumen",
             pix: "PIX",
             boleto: "BOLETO",
             card: "TARJETA",
             installments: "Cuotas",
-            cardNumber: "Número de tarjeta",
-            cardName: "Nombre en la tarjeta",
-            validity: "Validez",
-            cvv: "CVV",
             secureEnv: "Ambiente seguro y encriptado. Su suscripción se activará instantáneamente después de la confirmación.",
             confirmPay: "Confirmar y Pagar",
             securePayment: "Pago Seguro vía ASAAS S.A.",
@@ -176,10 +160,8 @@ export function CheckoutModal({
             cashPrice: "Al contado en PIX/Boleto",
             cashLabel: "al contado",
             interestFree: "sin intereses",
-            payCash: "Pagar al contado con descuento anual",
-            pixAuto: "Pix Automático",
-            boletoRecurrent: "Boleto recurrente",
-            cardRecurrent: "Cobro Recurrente"
+            redirectMsg: "Será redirigido al entorno de pago seguro de Asaas.",
+            incentiveMsg: "¡Prepárate para transformar tu productividad con as ferramentas exclusivas de Veritum Pro. ¡Ya quase chegamos!"
         }
     };
 
@@ -322,15 +304,14 @@ export function CheckoutModal({
         };
     });
 
-    const getPaymentTitle = () => {
-        if (paymentMethod === 'pix') return t.pixAuto;
-        if (paymentMethod === 'boleto') return t.boletoRecurrent;
-        return t.cardRecurrent;
+    const getSummaryText = () => {
+        const cycleText = billingCycle === 'monthly' ? t.monthly : t.yearly;
+        return `Você selecionou o plano ${currentPlan?.name} com faturamento ${cycleText.toLowerCase()}.`;
     };
 
     const handlePayment = async () => {
         if (!cpfCnpj || !whatsapp) {
-            toast.error(lang === 'pt' ? "Preencha seus dados de identificação." : "Please fill your identification data.");
+            toast.error(lang === 'pt' ? "Preencha seus dados de identificação no Passo 1." : "Please fill your identification data in Step 1.");
             return;
         }
 
@@ -347,14 +328,13 @@ export function CheckoutModal({
             const payload = {
                 planName: currentPlan.name,
                 billingCycle,
-                billingType: paymentMethod === 'card' ? 'CREDIT_CARD' : paymentMethod.toUpperCase(),
-                isCash,
+                billingType: "UNDEFINED", // Let Asaas handle choice
                 cpfCnpj: cpfCnpj.replace(/\D/g, ''),
                 phone: whatsapp.replace(/\D/g, ''),
-                returnUrl: window.location.origin + '/veritum',
-                installments: billingCycle === 'yearly' ? currentPlan.installments || 1 : 1,
-                // For CREDIT_CARD, we should ideally tokenize here
-                cardToken: paymentMethod === 'card' ? 'dummy_token_or_implement_asaas_js' : undefined,
+                // Usando apenas o domínio base para garantir aceitação do Asaas
+                returnUrl: window.location.hostname === 'localhost'
+                    ? 'https://www.veritumpro.com'
+                    : window.location.origin,
             };
 
             const { data, error } = await supabase.functions.invoke('asaas-checkout', {
@@ -367,30 +347,17 @@ export function CheckoutModal({
             setPaymentResult(data);
             console.log("Asaas Checkout Response Data:", data);
 
-            // Auto-open and Close integration
-            if (data.invoiceUrl && (paymentMethod === 'pix' || paymentMethod === 'boleto')) {
-                const newWindow = window.open(data.invoiceUrl, '_blank');
-                if (newWindow) {
-                    handleClose();
-                    return;
-                }
+            // Redirect to Asaas Checkout
+            if (data.invoiceUrl) {
+                window.location.href = data.invoiceUrl;
+            } else {
+                setStep(2);
             }
-
-            setStep(2);
         } catch (err: any) {
-            console.error("Payment error full object:", err);
-
-            // Try to extract a specific message from the edge function response
-            let errorMessage = "Erro ao processar pagamento.";
-
-            if (err.context?.error) {
-                errorMessage = err.context.error;
-                if (err.context.details) errorMessage += `: ${err.context.details}`;
-            } else if (err.message) {
-                errorMessage = err.message;
-            }
-
-            toast.error(errorMessage);
+            console.error("Payment error details:", err);
+            const errorMsg = err.message || "Erro ao processar redirecionamento.";
+            const details = err.details ? `\nDetalhes: ${err.details}` : "";
+            toast.error(errorMsg + details);
         } finally {
             setIsLoading(false);
         }
@@ -550,7 +517,7 @@ export function CheckoutModal({
                             <div className="space-y-8 pt-4">
                                 <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-indigo-600 border border-slate-100 dark:border-slate-800">
-                                        <CreditCard size={24} strokeWidth={2.5} />
+                                        <Zap size={24} strokeWidth={2.5} />
                                     </div>
                                     <div>
                                         <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">{t.payment}</h3>
@@ -558,111 +525,22 @@ export function CheckoutModal({
                                     </div>
                                 </div>
 
-                                {/* Payment Method Selector */}
-                                <div className="grid grid-cols-3 p-1.5 bg-slate-50 dark:bg-slate-900 rounded-2xl gap-1 border border-slate-100 dark:border-slate-800">
-                                    {[
-                                        { id: 'pix', label: t.pix, icon: Zap },
-                                        { id: 'boleto', label: t.boleto, icon: FileText },
-                                        { id: 'card', label: t.card, icon: CreditCard }
-                                    ].map((method) => (
-                                        <button
-                                            key={method.id}
-                                            onClick={() => setPaymentMethod(method.id as PaymentMethod)}
-                                            className={`py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${paymentMethod === method.id ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-600/30' : 'text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400'}`}
-                                        >
-                                            <method.icon size={16} strokeWidth={3} />
-                                            {method.label}
-                                        </button>
-                                    ))}
-                                </div>
-
-                                {/* Installments / Card Details */}
-                                <div className="space-y-4">
-                                    <div className="space-y-4">
-                                        {billingCycle === 'yearly' && (paymentMethod === 'pix' || paymentMethod === 'boleto') && cashTotal > 0 && (
-                                            <div
-                                                onClick={() => setIsCash(!isCash)}
-                                                className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center gap-4 ${isCash ? 'bg-indigo-600 border-indigo-600 shadow-lg shadow-indigo-600/20' : 'bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800'}`}
-                                            >
-                                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${isCash ? 'bg-white border-white' : 'border-slate-200'}`}>
-                                                    {isCash && <Check size={14} className="text-indigo-600" strokeWidth={4} />}
-                                                </div>
-                                                <div className="flex-1">
-                                                    <p className={`text-[10px] font-black uppercase tracking-widest ${isCash ? 'text-white' : 'text-slate-900 dark:text-white'}`}>
-                                                        {t.payCash}
-                                                    </p>
-                                                    <p className={`text-[11px] font-bold ${isCash ? 'text-white/80' : 'text-slate-500'}`}>
-                                                        {formatPrice(cashTotal)} (-{currentPlan.yearly_cash_discount}%)
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {!isCash && (
-                                            <div className="space-y-2">
-                                                <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{getPaymentTitle()}</Label>
-                                                <div className="relative group">
-                                                    <select
-                                                        value={installments}
-                                                        onChange={(e) => setInstallments(e.target.value)}
-                                                        className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 h-12 rounded-xl px-8 font-black text-sm text-slate-900 dark:text-white appearance-none cursor-pointer focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-sm"
-                                                    >
-                                                        {installments_options.map((opt) => (
-                                                            <option key={opt.value} value={opt.value} className="bg-white dark:bg-slate-950">{opt.label}</option>
-                                                        ))}
-                                                    </select>
-                                                    <div className="absolute right-8 top-1/2 -translate-y-1/2 pointer-events-none text-slate-300 group-hover:text-indigo-500 transition-colors">
-                                                        <ArrowRight size={18} className="rotate-90" strokeWidth={3} />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
+                                {/* Step 2: Summary View */}
+                                <div className="space-y-6">
+                                    <div className="p-8 rounded-[2rem] bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm">
+                                        <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-600 mb-4">{t.step2}</h4>
+                                        <p className="text-lg font-black text-slate-900 dark:text-white leading-tight mb-4">
+                                            {getSummaryText()}
+                                        </p>
+                                        <p className="text-sm font-bold text-slate-500 dark:text-slate-400 leading-relaxed italic">
+                                            "{t.incentiveMsg}"
+                                        </p>
+                                        <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800">
+                                            <p className="text-xs font-bold text-slate-600 dark:text-slate-400">
+                                                {t.redirectMsg}
+                                            </p>
+                                        </div>
                                     </div>
-
-                                    {paymentMethod === 'card' && (
-                                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-                                            <div className="grid grid-cols-1 gap-4">
-                                                <div className="space-y-2">
-                                                    <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">{t.cardNumber}</Label>
-                                                    <Input
-                                                        placeholder="0000 0000 0000 0000"
-                                                        value={cardNumber}
-                                                        onChange={handleCardNumberChange}
-                                                        className="h-12 rounded-xl bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800 font-bold text-xs dark:text-white"
-                                                    />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">{t.cardName}</Label>
-                                                    <Input
-                                                        placeholder="NOME COMO NO CARTÃO"
-                                                        value={cardName}
-                                                        onChange={(e) => setCardName(e.target.value.toUpperCase())}
-                                                        className="h-12 rounded-xl bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800 font-bold text-xs dark:text-white"
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="space-y-2">
-                                                    <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">{t.validity}</Label>
-                                                    <Input
-                                                        placeholder="MM/AA"
-                                                        value={cardExpiry}
-                                                        onChange={handleCardExpiryChange}
-                                                        className="h-12 rounded-xl bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800 font-bold text-xs dark:text-white"
-                                                    />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">{t.cvv}</Label>
-                                                    <Input
-                                                        placeholder="000"
-                                                        value={cardCvv}
-                                                        onChange={handleCardCvvChange}
-                                                        className="h-12 rounded-xl bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800 font-bold text-xs dark:text-white"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </motion.div>
-                                    )}
                                 </div>
 
                                 <div className="p-5 rounded-[1.5rem] bg-emerald-50/50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 flex items-center gap-4">

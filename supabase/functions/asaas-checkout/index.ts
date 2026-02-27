@@ -103,6 +103,8 @@ Deno.serve(async (req: Request) => {
     const userId = jwtUser.id;
 
     const body = await req.json().catch(() => null);
+    console.log("Incoming Payload:", JSON.stringify(body, null, 2));
+
     if (!body) return jsonResponse({ error: "Invalid JSON body" }, 400, origin);
 
     const {
@@ -114,31 +116,37 @@ Deno.serve(async (req: Request) => {
       billingType,
       cardToken,
       creditCardHolderInfo,
-      cpfCnpj: bodyCpfCnpj,
       phone: bodyPhone,
       description
     } = body;
 
-    if (!planName || !returnUrl) return jsonResponse({ error: "Missing required params: planName, returnUrl" }, 400, origin);
+    const bodyCpfCnpj = body.cpfCnpj;
+
+    if (!planName || !returnUrl) {
+      console.error("Missing params:", { planName, returnUrl });
+      return jsonResponse({ error: "Missing required params: planName, returnUrl" }, 400, origin);
+    }
 
     // Validate returnUrl origin
     const returnOrigin = getOriginFromUrl(returnUrl);
     if (SUPPORTED_ORIGINS.length > 0) {
       if (!returnOrigin || !SUPPORTED_ORIGINS.includes(returnOrigin)) {
-        return jsonResponse({ error: "returnUrl origin is not allowed" }, 400, origin);
+        console.error("returnUrl origin not allowed:", { returnOrigin, SUPPORTED_ORIGINS });
+        return jsonResponse({ error: `returnUrl origin is not allowed: ${returnOrigin}` }, 400, origin);
       }
     } else {
       if (!returnOrigin || !returnOrigin.startsWith("https://")) {
         // Allow localhost for dev
         if (!returnOrigin?.includes("localhost") && !returnOrigin?.includes("127.0.0.1")) {
+          console.error("returnUrl must be https:", { returnOrigin });
           return jsonResponse({ error: "returnUrl must be a valid https URL" }, 400, origin);
         }
       }
     }
 
     const normalizedBillingType = billingType ? String(billingType).toUpperCase() : "PIX";
-    if (!["BOLETO", "PIX", "CREDIT_CARD"].includes(normalizedBillingType)) {
-      return jsonResponse({ error: "billingType inválido. Valores permitidos: BOLETO, PIX, CREDIT_CARD" }, 400, origin);
+    if (!["BOLETO", "PIX", "CREDIT_CARD", "UNDEFINED"].includes(normalizedBillingType)) {
+      return jsonResponse({ error: "billingType inválido. Valores permitidos: BOLETO, PIX, CREDIT_CARD, UNDEFINED" }, 400, origin);
     }
     if (normalizedBillingType === "CREDIT_CARD" && !cardToken) {
       return jsonResponse({ error: "cardToken requerido para billingType=CREDIT_CARD" }, 400, origin);
@@ -323,7 +331,7 @@ Deno.serve(async (req: Request) => {
       value: Number(totalValue),
       externalReference,
       description: description ?? `Plano ${safePlan} - ${isMonthly ? 'Mensal' : 'Anual'}`,
-      billingType: normalizedBillingType,
+      billingType: (isMonthly && normalizedBillingType === "UNDEFINED") ? "PIX" : normalizedBillingType,
     };
 
     if (normalizedBillingType === "CREDIT_CARD") {
@@ -346,29 +354,45 @@ Deno.serve(async (req: Request) => {
 
     // Determine Endpoint and specific fields
     let endpoint = `${ASAAS_URL}/payments`;
-    let finalPayload = { ...commonPayload, dueDate, callback: { successUrl: returnUrl, autoRedirect: true } };
+
+    // Sanitize returnUrl for Asaas (it forbids localhost in production)
+    const sanitizedReturnUrl = (returnUrl.includes("localhost") || returnUrl.includes("127.0.0.1"))
+      ? "https://www.veritumpro.com"
+      : returnUrl;
+
+    console.log("Using sanitizedReturnUrl:", sanitizedReturnUrl);
+
+    let finalPayload: any = {
+      ...commonPayload,
+      dueDate,
+      callback: {
+        successUrl: sanitizedReturnUrl,
+        autoRedirect: true
+      }
+    };
 
     if (isMonthly) {
       // For monthly, we create a SUBSCRIPTION
       endpoint = `${ASAAS_URL}/subscriptions`;
       finalPayload = {
-        ...commonPayload,
+        ...finalPayload, // Keep the rest
         cycle: "MONTHLY",
         nextDueDate: dueDate,
-        // Optional: asaas automatic pix is handled by the gateway depending on customer bank
       };
+      // Note: Subscriptions typically don't use the 'callback' object in the same way.
+      // If needed, it would be configured in the Asaas Dashboard.
     } else {
       // For yearly, check for installments (e.g. 10x)
       const installmentCount = body.installments ? Number(body.installments) : 1;
       if (installmentCount > 1) {
         finalPayload.installmentCount = installmentCount;
-        // value in installments is the total value divided by asaas or total as passed
-        // For Asaas installments, 'value' is the price of EACH installment, OR you pass 'totalValue'
-        // Let's use totalValue for clarity
         delete finalPayload.value;
         finalPayload.totalValue = Number(totalValue);
       }
     }
+
+    console.log(`Endpoint: ${endpoint}`);
+    console.log("Final Payload to Asaas:", JSON.stringify(finalPayload, null, 2));
 
     // create payment/subscription with retry
     let asaasResponse;
@@ -379,15 +403,44 @@ Deno.serve(async (req: Request) => {
           headers: { "Content-Type": "application/json", "access_token": String(ASAAS_API_KEY) },
           body: JSON.stringify(finalPayload),
         });
-        if (!res.ok) throw new Error(`Gateway request failed: ${JSON.stringify(res.body)}`);
+        if (!res.ok) {
+          console.error(`Asaas error response: ${JSON.stringify(res.body)}`);
+          throw new Error(`Gateway request failed: ${JSON.stringify(res.body)}`);
+        }
         return res;
       }, 3, 500);
-    } catch (err) {
+    } catch (err: any) {
+      let description = String(err);
+      let errorCode = "UNKNOWN_ERROR";
+
+      try {
+        if (err.message && err.message.includes('Gateway request failed: ')) {
+          const rawBody = err.message.replace('Gateway request failed: ', '');
+          const errorBody = JSON.parse(rawBody);
+          description = errorBody?.errors?.[0]?.description || description;
+          errorCode = errorBody?.errors?.[0]?.code || errorCode;
+        }
+      } catch (e) {
+        console.error("Error parsing Asaas error:", e);
+      }
+
+      console.error(`Final Error caught: ${description} (${errorCode})`);
+
+      // Update payment record with the failure
       await supabaseAdmin.from("payments").update({
         status: "failed",
-        asaas_response: JSON.stringify({ gatewayError: String(err) }),
+        asaas_response: {
+          gatewayError: description,
+          errorCode,
+          payloadSent: finalPayload
+        },
       }).eq("id", insertedPayment.id);
-      return jsonResponse({ error: "Falha ao processar com o gateway", details: String(err) }, 400, origin);
+
+      return jsonResponse({
+        error: "Falha no Asaas",
+        details: description,
+        code: errorCode
+      }, 400, origin);
     }
 
     const asaasData = asaasResponse.body;
