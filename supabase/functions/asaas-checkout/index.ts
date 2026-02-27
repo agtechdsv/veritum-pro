@@ -26,22 +26,6 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const PLAN_PRICES_RAW: Record<string, number> = {
-  "Essential": 97.0,
-  "Master Pro": 197.0,
-  "Apex Elite": 250.0,
-  "Essential ANUAL": 931.0,
-  "Master Pro ANUAL": 1891.0,
-  "Apex Elite ANUAL": 2400.0
-};
-const DEFAULT_PRICE = 97.0;
-
-// Create a case-insensitive map (lowercased keys)
-const PLAN_PRICES: Record<string, number> = Object.keys(PLAN_PRICES_RAW).reduce((acc: any, k) => {
-  acc[k.toLowerCase()] = PLAN_PRICES_RAW[k];
-  return acc;
-}, {});
-
 function buildCors(origin?: string) {
   const headers: Record<string, string> = { ...corsHeaders, "Content-Type": "application/json" };
   if (origin && SUPPORTED_ORIGINS.length > 0 && SUPPORTED_ORIGINS.includes(origin)) {
@@ -67,18 +51,20 @@ async function fetchJson(input: RequestInfo, init?: RequestInit) {
 }
 
 // Exponential backoff retry helper
-async function retry<T>(fn: () => Promise<T>, attempts = 3, baseDelayMs = 300): Promise<T> {
+function retry<T>(fn: () => Promise<T>, attempts = 3, baseDelayMs = 300): Promise<T> {
   let lastErr: any;
-  for (let i = 0; i < attempts; i++) {
+  const execute = async (attempt: number): Promise<T> => {
     try {
       return await fn();
     } catch (err) {
       lastErr = err;
-      const delay = baseDelayMs * Math.pow(2, i);
+      if (attempt >= attempts - 1) throw lastErr;
+      const delay = baseDelayMs * Math.pow(2, attempt);
       await new Promise((res) => setTimeout(res, delay));
+      return execute(attempt + 1);
     }
-  }
-  throw lastErr;
+  };
+  return execute(0);
 }
 
 function getOriginFromUrl(url?: string | null) {
@@ -98,27 +84,22 @@ Deno.serve(async (req: Request) => {
     if (req.method !== "POST") return new Response("Method Not Allowed", { status: 405, headers: buildCors(origin) });
 
     const authHeader = req.headers.get("authorization") || "";
-    if (!authHeader.startsWith("Bearer ")) return jsonResponse({ error: "Missing or invalid Authorization header" }, 401, origin);
+    if (!authHeader.startsWith("Bearer ")) {
+      console.warn("Missing Authorization Bearer header");
+      return jsonResponse({ error: "Missing or invalid Authorization header" }, 401, origin);
+    }
     const idToken = authHeader.split(" ")[1];
 
     const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    // compat getUser signatures
-    let tokenData: any = null;
-    let tokenError: any = null;
-    try {
-      const maybe = await supabaseAdmin.auth.getUser(idToken);
-      tokenData = maybe?.data ?? maybe;
-      tokenError = maybe?.error;
-    } catch {
-      const maybe2 = await supabaseAdmin.auth.getUser({ access_token: idToken } as any);
-      tokenData = maybe2?.data ?? maybe2;
-      tokenError = maybe2?.error;
+    // authenticate user
+    const { data: { user: jwtUser }, error: authError } = await supabaseAdmin.auth.getUser(idToken);
+    if (authError || !jwtUser) {
+      console.error("Supabase Auth verify failed:", authError?.message || "No user found");
+      return jsonResponse({ error: "Invalid authentication token", details: authError?.message }, 401, origin);
     }
-    if (tokenError || !tokenData?.user) return jsonResponse({ error: "Invalid authentication token" }, 401, origin);
-    const jwtUser = tokenData.user;
     const userId = jwtUser.id;
 
     const body = await req.json().catch(() => null);
@@ -126,6 +107,8 @@ Deno.serve(async (req: Request) => {
 
     const {
       planName,
+      billingCycle, // 'monthly' | 'yearly'
+      isCash,       // boolean (for yearly cash discount)
       returnUrl,
       idempotencyKey,
       billingType,
@@ -138,16 +121,18 @@ Deno.serve(async (req: Request) => {
 
     if (!planName || !returnUrl) return jsonResponse({ error: "Missing required params: planName, returnUrl" }, 400, origin);
 
-    // (B) Validate returnUrl origin
+    // Validate returnUrl origin
     const returnOrigin = getOriginFromUrl(returnUrl);
     if (SUPPORTED_ORIGINS.length > 0) {
       if (!returnOrigin || !SUPPORTED_ORIGINS.includes(returnOrigin)) {
         return jsonResponse({ error: "returnUrl origin is not allowed" }, 400, origin);
       }
     } else {
-      // require https when no SUPPORTED_ORIGINS is configured
       if (!returnOrigin || !returnOrigin.startsWith("https://")) {
-        return jsonResponse({ error: "returnUrl must be a valid https URL" }, 400, origin);
+        // Allow localhost for dev
+        if (!returnOrigin?.includes("localhost") && !returnOrigin?.includes("127.0.0.1")) {
+          return jsonResponse({ error: "returnUrl must be a valid https URL" }, 400, origin);
+        }
       }
     }
 
@@ -168,13 +153,33 @@ Deno.serve(async (req: Request) => {
 
     if (userError || !user) return jsonResponse({ error: "Usuário não encontrado." }, 404, origin);
 
+    // Fetch plan from DB
+    const { data: plan, error: planError } = await supabaseAdmin
+      .from("plans")
+      .select("*")
+      .eq("name", planName)
+      .eq("active", true)
+      .maybeSingle();
+
+    if (planError || !plan) return jsonResponse({ error: "Plano não encontrado ou inativo." }, 404, origin);
+
+    // Calculate Price
+    const isMonthly = billingCycle === 'monthly';
+    const basePrice = isMonthly ? plan.monthly_price : plan.yearly_price;
+    const discountPerc = isMonthly ? (plan.monthly_discount || 0) : (plan.yearly_discount || 0);
+    let totalValue = basePrice * (1 - (discountPerc / 100));
+
+    if (!isMonthly && isCash && plan.yearly_cash_discount) {
+      totalValue = totalValue * (1 - (plan.yearly_cash_discount / 100));
+    }
+
     // Update profile only if provided in body
     const updates: any = {};
     let normalizedBodyDoc: string | null = null;
     if (bodyCpfCnpj) {
       normalizedBodyDoc = String(bodyCpfCnpj).replace(/\D/g, "");
       if (!/^(?:\d{11}|\d{14})$/.test(normalizedBodyDoc)) {
-        return jsonResponse({ error: "cpfCnpj inválido no body (deve ter 11 ou 14 dígitos)" }, 400, origin);
+        return jsonResponse({ error: "cpfCnpj inválido (deve ter 11 ou 14 dígitos)" }, 400, origin);
       }
       updates.cpf_cnpj = normalizedBodyDoc;
     }
@@ -203,10 +208,8 @@ Deno.serve(async (req: Request) => {
     }
 
     // Create local payment pre-gateway
-    const normalizedPlanKey = String(planName).trim().toLowerCase();
-    const price = PLAN_PRICES[normalizedPlanKey] ?? DEFAULT_PRICE;
     const safePlan = String(planName).trim().replace(/\|/g, "-").slice(0, 100);
-    const externalReference = `${user.id}|${safePlan}`;
+    const externalReference = `${user.id}|${safePlan}|${billingCycle}`;
 
     const { data: insertedPayment, error: insertError } = await supabaseAdmin
       .from("payments")
@@ -214,7 +217,7 @@ Deno.serve(async (req: Request) => {
         user_id: user.id,
         asaas_customer_id: null,
         plan_name: safePlan,
-        amount: price,
+        amount: totalValue,
         status: "pending",
         external_reference: externalReference,
         idempotency_key: idempotencyKey ?? null,
@@ -228,12 +231,17 @@ Deno.serve(async (req: Request) => {
       return jsonResponse({ error: "Erro interno ao criar registro de pagamento" }, 500, origin);
     }
 
+
     // Search or create Asaas customer
     const emailToSearch = user.username ?? jwtUser.email;
     const q = new URLSearchParams({ email: String(emailToSearch) });
+    const targetUrl = `${ASAAS_URL}/customers?${q.toString()}`;
 
-    const customerSearch = await fetchJson(`${ASAAS_URL}/customers?${q.toString()}`, {
-      headers: { Authorization: `Bearer ${ASAAS_API_KEY}` },
+    console.log(`Connecting to: ${targetUrl}`);
+    console.log(`API Key prefix: ${ASAAS_API_KEY?.substring(0, 10)}...`);
+
+    const customerSearch = await fetchJson(targetUrl, {
+      headers: { "access_token": String(ASAAS_API_KEY) },
     });
 
     let asaasCustomerId: string | null = null;
@@ -247,9 +255,13 @@ Deno.serve(async (req: Request) => {
         try {
           await retry(async () => {
             const patchRes = await fetchJson(`${ASAAS_URL}/customers/${asaasCustomerId}`, {
-              method: "PATCH",
-              headers: { "Content-Type": "application/json", Authorization: `Bearer ${ASAAS_API_KEY}` },
-              body: JSON.stringify({ cpfCnpj: normalizedDoc, mobilePhone: bodyPhone ?? user.phone ?? null }),
+              method: "POST", // Asaas docs sometimes use POST for update, but PATCH is standard. v3 usually allows POST or PUT/PATCH
+              headers: { "Content-Type": "application/json", "access_token": String(ASAAS_API_KEY) },
+              body: JSON.stringify({
+                cpfCnpj: normalizedDoc,
+                mobilePhone: bodyPhone ?? user.phone ?? null,
+                notificationDisabled: true
+              }),
             });
             if (!patchRes.ok) throw new Error(`Patch failed: ${JSON.stringify(patchRes.body)}`);
             return patchRes;
@@ -267,6 +279,7 @@ Deno.serve(async (req: Request) => {
         name: user.name ?? jwtUser.user_metadata?.full_name ?? String(emailToSearch).split("@")[0],
         email: emailToSearch,
         externalReference: user.id,
+        notificationDisabled: true,
       };
       if (normalizedDoc) customerPayload.cpfCnpj = normalizedDoc;
       if (bodyPhone || user.phone) customerPayload.mobilePhone = bodyPhone ?? user.phone;
@@ -275,7 +288,7 @@ Deno.serve(async (req: Request) => {
         const createCustomerRes = await retry(async () => {
           const res = await fetchJson(`${ASAAS_URL}/customers`, {
             method: "POST",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${ASAAS_API_KEY}` },
+            headers: { "Content-Type": "application/json", "access_token": String(ASAAS_API_KEY) },
             body: JSON.stringify(customerPayload),
           });
           if (!res.ok) throw new Error(`create customer failed: ${JSON.stringify(res.body)}`);
@@ -295,7 +308,7 @@ Deno.serve(async (req: Request) => {
             asaas_response: JSON.stringify({ createCustomerError: String(err) }),
           })
           .eq("id", insertedPayment.id);
-        return jsonResponse({ error: "Erro ao criar cliente no gateway de pagamentos" }, 502, origin);
+        return jsonResponse({ error: "Erro ao criar cliente no gateway", details: String(err) }, 400, origin);
       }
     }
 
@@ -304,90 +317,115 @@ Deno.serve(async (req: Request) => {
 
     // Build payment payload
     const dueDate = new Date(Date.now() + 86400000).toISOString().split("T")[0];
-    const basePaymentPayload: any = {
+
+    const commonPayload: any = {
       customer: asaasCustomerId,
-      value: Number(price),
-      dueDate,
-      description: description ?? `Plano ${safePlan}`,
+      value: Number(totalValue),
       externalReference,
-      callback: { successUrl: returnUrl, autoRedirect: true },
+      description: description ?? `Plano ${safePlan} - ${isMonthly ? 'Mensal' : 'Anual'}`,
       billingType: normalizedBillingType,
     };
 
-    // create payment with retry (C)
-    let createPaymentRes;
-    try {
-      createPaymentRes = await retry(async () => {
-        let payload: any;
-        if (normalizedBillingType === "CREDIT_CARD") {
-          payload = { ...basePaymentPayload, creditCard: { token: cardToken } };
-          if (creditCardHolderInfo && typeof creditCardHolderInfo === "object") {
-            payload.creditCardHolderInfo = { ...creditCardHolderInfo };
-            if (!payload.creditCardHolderInfo.cpfCnpj && normalizedDoc) payload.creditCardHolderInfo.cpfCnpj = normalizedDoc;
-          } else {
-            payload.creditCardHolderInfo = {
-              name: user.name ?? jwtUser.user_metadata?.full_name ?? "Cliente",
-              email: emailToSearch,
-              cpfCnpj: normalizedDoc ?? undefined,
-              phone: bodyPhone ?? user.phone ?? undefined,
-            };
-          }
-        } else {
-          payload = basePaymentPayload;
-        }
+    if (normalizedBillingType === "CREDIT_CARD") {
+      commonPayload.creditCard = { token: cardToken };
+      const holderInfo = creditCardHolderInfo && typeof creditCardHolderInfo === "object" ? { ...creditCardHolderInfo } : {
+        name: user.name ?? jwtUser.user_metadata?.full_name ?? "Cliente",
+        email: emailToSearch,
+        cpfCnpj: normalizedDoc ?? undefined,
+        phone: bodyPhone ?? user.phone ?? undefined,
+      };
+      if (!holderInfo.cpfCnpj && normalizedDoc) holderInfo.cpfCnpj = normalizedDoc;
+      commonPayload.creditCardHolderInfo = holderInfo;
+    }
 
-        const res = await fetchJson(`${ASAAS_URL}/payments`, {
+    // Determine Endpoint and specific fields
+    let endpoint = `${ASAAS_URL}/payments`;
+    let finalPayload = { ...commonPayload, dueDate, callback: { successUrl: returnUrl, autoRedirect: true } };
+
+    if (isMonthly) {
+      // For monthly, we create a SUBSCRIPTION
+      endpoint = `${ASAAS_URL}/subscriptions`;
+      finalPayload = {
+        ...commonPayload,
+        cycle: "MONTHLY",
+        nextDueDate: dueDate,
+        // Optional: asaas automatic pix is handled by the gateway depending on customer bank
+      };
+    } else {
+      // For yearly, check for installments (e.g. 10x)
+      const installmentCount = body.installments ? Number(body.installments) : 1;
+      if (installmentCount > 1) {
+        finalPayload.installmentCount = installmentCount;
+        // value in installments is the total value divided by asaas or total as passed
+        // For Asaas installments, 'value' is the price of EACH installment, OR you pass 'totalValue'
+        // Let's use totalValue for clarity
+        delete finalPayload.value;
+        finalPayload.totalValue = Number(totalValue);
+      }
+    }
+
+    // create payment/subscription with retry
+    let asaasResponse;
+    try {
+      asaasResponse = await retry(async () => {
+        const res = await fetchJson(endpoint, {
           method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${ASAAS_API_KEY}` },
-          body: JSON.stringify(payload),
+          headers: { "Content-Type": "application/json", "access_token": String(ASAAS_API_KEY) },
+          body: JSON.stringify(finalPayload),
         });
-        if (!res.ok) throw new Error(`create payment failed: ${JSON.stringify(res.body)}`);
+        if (!res.ok) throw new Error(`Gateway request failed: ${JSON.stringify(res.body)}`);
         return res;
       }, 3, 500);
     } catch (err) {
-      await supabaseAdmin
-        .from("payments")
-        .update({
-          status: "failed",
-          asaas_response: JSON.stringify({ createPaymentError: String(err) }),
-        })
-        .eq("id", insertedPayment.id);
-      const errMsg = String(err).slice(0, 1000);
-      return jsonResponse({ error: "Falha ao criar pagamento no gateway", details: errMsg }, 400, origin);
+      await supabaseAdmin.from("payments").update({
+        status: "failed",
+        asaas_response: JSON.stringify({ gatewayError: String(err) }),
+      }).eq("id", insertedPayment.id);
+      return jsonResponse({ error: "Falha ao processar com o gateway", details: String(err) }, 400, origin);
     }
 
-    const asaasPayment = createPaymentRes.body;
-    const invoiceUrl =
-      asaasPayment.invoiceUrl ??
-      asaasPayment.invoice_url ??
-      asaasPayment.invoiceUrlBoleto ??
-      asaasPayment.bankSlipUrl ??
-      asaasPayment.checkoutUrl ??
-      asaasPayment.paymentUrl ??
+    const asaasData = asaasResponse.body;
+    // For Subscriptions, sometimes the URL is in invoiceUrl, for Payments it might be bankSlipUrl.
+    let invoiceUrl =
+      asaasData.invoiceUrl ||
+      asaasData.bankSlipUrl ||
+      asaasData.invoiceCustomization?.url ||
+      asaasData.checkoutUrl ||
       null;
-    const asaasPaymentId = asaasPayment.id ?? null;
-    const cardLast4 = asaasPayment?.creditCard?.last4 ?? asaasPayment?.card?.last4 ?? asaasPayment?.cardLast4 ?? null;
-    const cardBrand = asaasPayment?.creditCard?.brand ?? asaasPayment?.card?.brand ?? asaasPayment?.cardBrand ?? null;
-    const gatewayStatus = asaasPayment?.status ?? "created";
+
+    const asaasId = asaasData.id ?? null;
+
+    // FEAT: If it's a subscription and we don't have a URL yet, fetch the first payment
+    if (!invoiceUrl && isMonthly && asaasId && (normalizedBillingType === 'PIX' || normalizedBillingType === 'BOLETO')) {
+      try {
+        const paymentsRes = await fetchJson(`${ASAAS_URL}/payments?subscription=${asaasId}&limit=1`, {
+          headers: { "access_token": String(ASAAS_API_KEY) },
+        });
+        if (paymentsRes.ok && paymentsRes.body?.data?.length > 0) {
+          invoiceUrl = paymentsRes.body.data[0].invoiceUrl || paymentsRes.body.data[0].bankSlipUrl || null;
+          console.log(`Found subscription payment URL: ${invoiceUrl}`);
+        }
+      } catch (e) {
+        console.warn("Failed to fetch first subscription payment for URL", e);
+      }
+    }
+    const gatewayStatus = asaasData.status ?? "ACTIVE"; // Subscriptions are ACTIVE by default
 
     // Final local update
     await supabaseAdmin.from("payments").update({
-      asaas_payment_id: asaasPaymentId,
+      asaas_payment_id: asaasId,
       status: String(gatewayStatus).toLowerCase(),
       invoice_url: invoiceUrl,
-      asaas_response: asaasPayment,
-      card_last4: cardLast4,
-      card_brand: cardBrand,
+      asaas_response: asaasData,
       webhook_processed: false,
     }).eq("id", insertedPayment.id);
 
     return jsonResponse({
       invoiceUrl,
-      asaasPaymentId,
+      asaasPaymentId: asaasId,
       localPaymentId: insertedPayment.id,
       status: gatewayStatus
     }, 200, origin);
-
   } catch (err: any) {
     console.error("Unhandled error in asaas-checkout (merged A-D):", err?.message ?? err);
     return jsonResponse({ error: "Internal error" }, 500, req.headers.get("origin") ?? undefined);

@@ -144,8 +144,16 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
         if (e) e.preventDefault();
 
         try {
+            const cleanFeatures = { ...formData.features };
+            Object.keys(cleanFeatures).forEach(lang => {
+                if (Array.isArray(cleanFeatures[lang as 'pt' | 'en' | 'es'])) {
+                    cleanFeatures[lang as 'pt' | 'en' | 'es'] = cleanFeatures[lang as 'pt' | 'en' | 'es']!.filter(l => l.trim() !== '');
+                }
+            });
+
             const planData = {
                 ...formData,
+                features: cleanFeatures,
                 monthly_price: Number(formData.monthly_price) || 0,
                 monthly_discount: Number(formData.monthly_discount) || 0,
                 yearly_price: Number(formData.yearly_price) || 0,
@@ -609,7 +617,7 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
                                             className="w-full px-12 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl text-xs font-medium focus:ring-2 focus:ring-indigo-600 outline-none dark:text-white resize-none shadow-sm"
                                             placeholder={t('management.master.plans.form.featuresPlaceholder')}
                                             value={formData.features?.[activeLang]?.join('\n') || ''}
-                                            onChange={e => setFormData({ ...formData, features: { ...formData.features!, [activeLang]: e.target.value.split('\n').filter(l => l.trim() !== '') } })}
+                                            onChange={e => setFormData({ ...formData, features: { ...formData.features!, [activeLang]: e.target.value.split('\n') } })}
                                         />
                                     </div>
                                 </div>

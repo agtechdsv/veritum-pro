@@ -17,12 +17,15 @@ import {
     Check,
     User,
     ShieldCheck,
-    Lock
+    Lock,
+    Loader2
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getPlans } from "@/app/actions/plan-actions";
 import { Plan } from "@/types";
 import { useTranslation } from "@/contexts/language-context";
+import { createBrowserClient } from "@supabase/ssr";
+import { toast } from "../ui/toast";
 
 interface CheckoutModalProps {
     isOpen: boolean;
@@ -59,6 +62,13 @@ export function CheckoutModal({
     const [cardName, setCardName] = useState("");
     const [cardExpiry, setCardExpiry] = useState("");
     const [cardCvv, setCardCvv] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
+    const [paymentResult, setPaymentResult] = useState<any>(null);
+
+    const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
 
     const lang = (locale as 'pt' | 'en' | 'es') || 'pt';
 
@@ -316,6 +326,74 @@ export function CheckoutModal({
         if (paymentMethod === 'pix') return t.pixAuto;
         if (paymentMethod === 'boleto') return t.boletoRecurrent;
         return t.cardRecurrent;
+    };
+
+    const handlePayment = async () => {
+        if (!cpfCnpj || !whatsapp) {
+            toast.error(lang === 'pt' ? "Preencha seus dados de identificação." : "Please fill your identification data.");
+            return;
+        }
+
+        setIsLoading(true);
+
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                toast.error("Sessão expirada. Faça login novamente.");
+                setIsLoading(false);
+                return;
+            }
+
+            const payload = {
+                planName: currentPlan.name,
+                billingCycle,
+                billingType: paymentMethod === 'card' ? 'CREDIT_CARD' : paymentMethod.toUpperCase(),
+                isCash,
+                cpfCnpj: cpfCnpj.replace(/\D/g, ''),
+                phone: whatsapp.replace(/\D/g, ''),
+                returnUrl: window.location.origin + '/veritum',
+                installments: billingCycle === 'yearly' ? currentPlan.installments || 1 : 1,
+                // For CREDIT_CARD, we should ideally tokenize here
+                cardToken: paymentMethod === 'card' ? 'dummy_token_or_implement_asaas_js' : undefined,
+            };
+
+            const { data, error } = await supabase.functions.invoke('asaas-checkout', {
+                body: payload,
+            });
+
+            if (error) throw error;
+            if (data.error) throw new Error(data.error);
+
+            setPaymentResult(data);
+            console.log("Asaas Checkout Response Data:", data);
+
+            // Auto-open and Close integration
+            if (data.invoiceUrl && (paymentMethod === 'pix' || paymentMethod === 'boleto')) {
+                const newWindow = window.open(data.invoiceUrl, '_blank');
+                if (newWindow) {
+                    handleClose();
+                    return;
+                }
+            }
+
+            setStep(2);
+        } catch (err: any) {
+            console.error("Payment error full object:", err);
+
+            // Try to extract a specific message from the edge function response
+            let errorMessage = "Erro ao processar pagamento.";
+
+            if (err.context?.error) {
+                errorMessage = err.context.error;
+                if (err.context.details) errorMessage += `: ${err.context.details}`;
+            } else if (err.message) {
+                errorMessage = err.message;
+            }
+
+            toast.error(errorMessage);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -597,13 +675,14 @@ export function CheckoutModal({
                                 <div className="space-y-4">
                                     <button
                                         type="button"
-                                        onClick={() => setStep(2)}
-                                        className="w-full h-16 rounded-xl shadow-2xl hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-4 border-none cursor-pointer outline-none bg-indigo-600 hover:bg-indigo-700 text-white"
+                                        onClick={handlePayment}
+                                        disabled={isLoading}
+                                        className="w-full h-16 rounded-xl shadow-2xl hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-4 border-none cursor-pointer outline-none bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-70 disabled:cursor-not-allowed"
                                     >
                                         <span className="text-lg font-black uppercase tracking-[0.1em] text-white">
-                                            {t.confirmPay}
+                                            {isLoading ? (lang === 'pt' ? 'Processando...' : 'Processing...') : t.confirmPay}
                                         </span>
-                                        <Zap size={24} className="fill-current text-yellow-400" />
+                                        {isLoading ? <Loader2 size={24} className="animate-spin" /> : <Zap size={24} className="fill-current text-yellow-400" />}
                                     </button>
 
                                     <div className="flex items-center justify-center gap-2 text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
@@ -640,10 +719,20 @@ export function CheckoutModal({
                                 <p className="text-3xl font-black text-indigo-600">{formatPrice(totalDisplay)}</p>
                             </div>
                             <Button
-                                className="h-16 px-16 rounded-2xl bg-slate-950 dark:bg-indigo-600 text-white font-black uppercase tracking-widest hover:scale-105 transition-all shadow-xl"
-                                onClick={handleClose}
+                                className="h-16 px-16 rounded-2xl bg-indigo-600 text-white font-black uppercase tracking-widest hover:scale-105 transition-all shadow-xl"
+                                onClick={() => {
+                                    if (paymentResult?.invoiceUrl && (paymentMethod === 'pix' || paymentMethod === 'boleto')) {
+                                        window.open(paymentResult.invoiceUrl, '_blank');
+                                    } else {
+                                        setStep(1);
+                                        setPaymentResult(null);
+                                        onClose();
+                                    }
+                                }}
                             >
-                                {t.startNow}
+                                {paymentResult?.invoiceUrl && (paymentMethod === 'pix' || paymentMethod === 'boleto')
+                                    ? (lang === 'pt' ? 'PAGAR PIX / BOLETO' : 'PAY PIX / BOLETO')
+                                    : t.startNow}
                             </Button>
                         </motion.div>
                     )}

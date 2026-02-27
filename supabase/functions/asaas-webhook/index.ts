@@ -148,17 +148,26 @@ Deno.serve(async (req: Request) => {
 
     // Event handling
     const confirmedEvents = ["PAYMENT_CONFIRMED", "PAYMENT_RECEIVED", "PAYMENT_RE_ACTIVATED", "PAYMENT_CONFIRMED_BY_POSTBACK"];
-    const cancelledEvents = ["PAYMENT_CANCELLED", "PAYMENT_REFUNDED", "PAYMENT_EXPIRED", "PAYMENT_CHARGEBACK"];
+    const cancelledEvents = [
+      "PAYMENT_DELETED",
+      "PAYMENT_OVERDUE",
+      "PAYMENT_REFUNDED",
+      "PAYMENT_EXPIRED",
+      "PAYMENT_CHARGEBACK",
+      "PAYMENT_CHARGEBACK_REQUESTED",
+      "PAYMENT_CHARGEBACK_DISPUTE",
+      "PAYMENT_BANK_SLIP_CANCELLED"
+    ];
 
     if (confirmedEvents.includes(event)) {
-      // parse externalReference -> userId|planName
-      const [userIdRaw, planNameRaw] = String(externalReference ?? "").split("|");
-      const userId = userIdRaw?.trim();
-      const planName = planNameRaw ? planNameRaw.trim() : "Essential";
+      // parse externalReference -> userId|planName|billingCycle
+      const parts = String(externalReference ?? "").split("|");
+      const userId = parts[0]?.trim();
+      const planName = parts[1]?.trim();
+      const billingCycle = parts[2]?.trim() || "monthly";
 
-      if (!userId) {
-        console.error("Confirmed payment but userId missing in externalReference:", externalReference);
-        // mark webhook but do not attempt activation
+      if (!userId || !planName) {
+        console.error("Confirmed payment but missing data in externalReference:", externalReference);
         await markPayment({ status: "paid", asaas_payment_id: asaasPaymentId });
         return new Response(JSON.stringify({ received: true }), { headers: corsHeaders });
       }
@@ -166,52 +175,58 @@ Deno.serve(async (req: Request) => {
       // Update payment row: set as paid and link user
       await markPayment({ status: "paid", user_id: userId, asaas_payment_id: asaasPaymentId });
 
-      // Activate products for user (same logic as you had)
+      // Fetch Plan ID
+      const { data: planData, error: planErr } = await supabaseAdmin
+        .from("plans")
+        .select("id")
+        .eq("name", planName)
+        .maybeSingle();
+
+      if (planErr || !planData) {
+        console.error("Plan not found during webhook processing:", planName);
+        return new Response(JSON.stringify({ received: true }), { headers: corsHeaders });
+      }
+
+      const planId = planData.id;
+
+      // Calculate validity
       const validUntil = new Date();
-      validUntil.setDate(validUntil.getDate() + 30);
+      if (billingCycle === "yearly") {
+        validUntil.setFullYear(validUntil.getFullYear() + 1);
+      } else {
+        validUntil.setMonth(validUntil.getMonth() + 1);
+      }
       validUntil.setHours(23, 59, 59, 999);
       const validUntilISO = validUntil.toISOString();
 
-      let productsToActivate: string[] = ["JOURNAL_PRO"];
-      if (planName === "Master Pro") {
-        productsToActivate = ["JOURNAL_PRO", "INSIGHTS_PRO", "COACH_PRO"];
-      } else if (planName === "Apex Elite") {
-        productsToActivate = ["JOURNAL_PRO", "INSIGHTS_PRO", "COACH_PRO", "SIGNAL_PRO"];
-      }
-
-      console.info(`Activating ${productsToActivate.length} products for user ${userId} (plan ${planName})`);
-
-      // Upsert subscriptions; do it with per-row upsert and update only status+valid_until to avoid overwriting created_at
-      for (const productKey of productsToActivate) {
-        const upsertRow = {
+      // 1. Upsert Subscription
+      // We assume user_subscriptions tracks the current plan for the user
+      const { error: upsertErr } = await supabaseAdmin
+        .from("user_subscriptions")
+        .upsert({
           user_id: userId,
-          product_key: productKey,
-          status: "ACTIVE",
-          valid_until: validUntilISO,
-          updated_at: new Date().toISOString(),
-        };
+          plan_id: planId,
+          status: "active",
+          start_date: new Date().toISOString(),
+          end_date: validUntilISO,
+          created_at: new Date().toISOString(),
+        }, { onConflict: "user_id" });
 
-        // Try update first; if no rows updated, insert
-        const { data: updated, error: updateErr } = await supabaseAdmin
-          .from("user_subscriptions")
-          .update(upsertRow)
-          .match({ user_id: userId, product_key: productKey });
-
-        if (updateErr) {
-          // If update fails due to no matching row, insert
-          const { data: inserted, error: insertErr } = await supabaseAdmin
-            .from("user_subscriptions")
-            .insert({
-              user_id: userId,
-              product_key: productKey,
-              status: "ACTIVE",
-              valid_until: validUntilISO,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            });
-          if (insertErr) console.error("Failed to upsert subscription", productKey, insertErr.message);
-        }
+      if (upsertErr) {
+        console.error("Failed to upsert user_subscription:", upsertErr.message);
       }
+
+      // 2. Update user profile for immediate permission sync
+      const { error: userUpdateErr } = await supabaseAdmin
+        .from("users")
+        .update({ plan_id: planId, updated_at: new Date().toISOString() })
+        .eq("id", userId);
+
+      if (userUpdateErr) {
+        console.error("Failed to update user plan_id:", userUpdateErr.message);
+      }
+
+      console.info(`Successfully activated plan ${planName} (${planId}) for user ${userId}`);
 
       return new Response(JSON.stringify({ received: true }), { headers: corsHeaders });
     } else if (cancelledEvents.includes(event)) {
