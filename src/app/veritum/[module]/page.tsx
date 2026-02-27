@@ -24,7 +24,7 @@ import PersonManagement from '@/components/modules/person-management';
 import { EmailSettingsManager } from '@/components/modules/email-config';
 import { ModuleId } from '@/types';
 import { BASE_SUITE_ITEMS } from '@/utils/module-meta';
-import { GitBranch, FileEdit, DollarSign, BarChart3, MessageSquare, ShieldAlert, Users, Settings, Crown, Calendar as CalendarIcon, Mail, Shield, Zap, User as UserIcon } from 'lucide-react';
+import { GitBranch, FileEdit, DollarSign, BarChart3, MessageSquare, ShieldAlert, Users, Settings, Crown, Calendar as CalendarIcon, Mail, Shield, Zap, User as UserIcon, CreditCard } from 'lucide-react';
 import { useTranslation } from '@/contexts/language-context';
 
 export default function DynamicModulePage() {
@@ -142,6 +142,7 @@ export default function DynamicModulePage() {
         { id: ModuleId.PLANS, label: t('management.master.plans.title'), icon: DollarSign, color: 'text-indigo-500' },
         { id: ModuleId.SCHEDULING, label: t('management.master.scheduling.title'), icon: CalendarIcon, color: 'text-rose-500' },
         { id: ModuleId.EMAIL_CONFIG, label: t('management.master.email.title'), icon: Mail, color: 'text-cyan-500' },
+        { id: ModuleId.FINTECH, label: 'Gestão Fintech', icon: CreditCard, color: 'text-emerald-500' },
         { id: ModuleId.TEAM, label: t('management.master.team.title'), icon: Users, color: 'text-indigo-600' },
         { id: ModuleId.PERSONS, label: t('management.master.crm.title'), icon: UserIcon, color: 'text-emerald-600' },
     ];

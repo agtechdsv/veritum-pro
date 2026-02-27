@@ -327,7 +327,13 @@ Deno.serve(async (req: Request) => {
     };
 
     if (normalizedBillingType === "CREDIT_CARD") {
-      commonPayload.creditCard = { token: cardToken };
+      commonPayload.creditCard = {
+        token: cardToken
+      };
+
+      // Personalização da fatura do cartão (Max 13 caracteres)
+      commonPayload.creditCardStatementDescriptor = "VERITUM PRO";
+
       const holderInfo = creditCardHolderInfo && typeof creditCardHolderInfo === "object" ? { ...creditCardHolderInfo } : {
         name: user.name ?? jwtUser.user_metadata?.full_name ?? "Cliente",
         email: emailToSearch,

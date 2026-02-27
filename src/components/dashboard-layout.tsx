@@ -30,7 +30,8 @@ import {
     MessageSquare, ShieldAlert, Users, Settings, LogOut,
     PanelLeftClose, PanelLeftOpen, Sun, Moon, Bell, Search,
     ChevronRight, Crown, Camera, Check, User as UserIcon,
-    Calendar as CalendarIcon, Mail, Shield, GitBranch, Key, Zap, Lock
+    Calendar as CalendarIcon, Mail, Shield, GitBranch, Key, Zap, Lock,
+    CreditCard
 } from 'lucide-react';
 import SuiteManagement from './modules/suite-management';
 import { useTheme } from 'next-themes';
@@ -140,6 +141,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
         { id: ModuleId.PLANS, label: t('management.master.plans.menu'), icon: DollarSign, color: 'text-indigo-500' },
         { id: ModuleId.SCHEDULING, label: t('management.master.scheduling.menu'), icon: CalendarIcon, color: 'text-rose-500' },
         { id: ModuleId.EMAIL_CONFIG, label: t('management.master.email.menu'), icon: Mail, color: 'text-cyan-500' },
+        { id: ModuleId.FINTECH, label: 'Gestão Fintech', icon: CreditCard, color: 'text-emerald-500' },
         { id: ModuleId.TEAM, label: t('management.master.team.menu'), icon: Users, color: 'text-indigo-600' },
         { id: ModuleId.PERSONS, label: t('management.master.persons.menu'), icon: UserIcon, color: 'text-emerald-600' },
     ];

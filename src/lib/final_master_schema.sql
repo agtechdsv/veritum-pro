@@ -239,6 +239,28 @@ create table if not exists public.audit_logs (
   created_at timestamptz default now()
 );
 
+-- 4.2. GESTÃO FINTECH (ASAAS SUB-ACCOUNTS / MARKETPLACE)
+create table if not exists public.asaas_sub_accounts (
+    id uuid primary key default gen_random_uuid(),
+    admin_id uuid references public.users(id) on delete cascade,
+    asaas_id text not null unique,                  -- ID da conta no Asaas (ex: '612345')
+    api_key text not null,                          -- Chave de API da subconta (DEVE ser criptografada em prod)
+    wallet_id text,                                 -- ID da carteira para transferências
+    account_type text check (account_type in ('product', 'user')), -- 'product' (Veritum/Trader) ou 'user' (Cliente final)
+    branding_name text not null,                    -- O "Nome Fantasia" que aparecerá no boleto/pix
+    status text default 'active',
+    created_at timestamptz default now(),
+    updated_at timestamptz default now()
+);
+
+alter table public.asaas_sub_accounts enable row level security;
+
+CREATE POLICY "Master and Admins can view sub-accounts" ON public.asaas_sub_accounts
+FOR SELECT USING (
+    (auth.jwt() -> 'user_metadata' ->> 'role') = 'Master' OR 
+    auth.uid() = admin_id
+);
+
 -- ==========================================
 -- 5. FUNCTION & TRIGGERS MASTER (Somente para a camada Master)
 -- ==========================================

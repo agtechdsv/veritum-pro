@@ -20,7 +20,21 @@ export enum ModuleId {
     EMAIL_CONFIG = 'email_config',
     ACCESS_GROUPS = 'access_groups',
     TEAM = 'team',
-    PERSONS = 'persons'
+    PERSONS = 'persons',
+    FINTECH = 'fintech'
+}
+
+export interface AsaasSubAccount {
+    id: string;
+    admin_id: string;
+    asaas_id: string;
+    api_key: string;
+    wallet_id?: string;
+    account_type: 'product' | 'user';
+    branding_name: string;
+    status: string;
+    created_at?: string;
+    updated_at?: string;
 }
 
 export interface AccessGroup {
