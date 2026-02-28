@@ -242,20 +242,20 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
         <div className="min-h-screen transition-colors duration-500 bg-white text-slate-900 dark:bg-slate-950 dark:text-white">
             {/* Navigation */}
             <nav className="fixed top-0 w-full z-50 glass border-b transition-colors duration-300 backdrop-blur-md bg-white/70 dark:bg-slate-950/70 border-slate-200 dark:border-slate-800">
-                <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                <div className="max-w-[1400px] mx-auto px-4 h-20 flex items-center justify-between whitespace-nowrap">
+                    <div className="flex items-center gap-2 shrink-0">
                         <Logo />
-                        <span className="font-extrabold text-2xl tracking-tighter text-slate-900 dark:text-white">VERITUM <span className="text-branding-gradient">PRO</span></span>
+                        <span className="font-extrabold text-xl tracking-tighter text-slate-900 dark:text-white whitespace-nowrap">VERITUM <span className="text-branding-gradient">PRO</span></span>
                     </div>
 
-                    <div className="hidden md:flex items-center gap-8">
+                    <div className="hidden lg:flex items-center gap-5">
                         <a href="#" className="font-medium hover:text-indigo-600 transition-colors text-slate-800 dark:text-white">{t('nav.home')}</a>
                         <a href="#modules" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">{t('nav.modules')}</a>
                         <a href="#pricing" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">{t('nav.pricing')}</a>
                         <Link href="/history" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">{t('nav.story')}</Link>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
                         <button onClick={toggleTheme} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all text-slate-600 dark:text-slate-400">
                             {resolvedTheme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
                         </button>
@@ -267,7 +267,7 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                             <div className="flex items-center gap-3">
                                 <Link
                                     href="/veritum"
-                                    className="hidden sm:flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-bold text-sm shadow-xl shadow-indigo-600/20 transition-all hover:scale-105"
+                                    className="hidden xl:flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-bold text-sm shadow-xl shadow-indigo-600/20 transition-all hover:scale-105"
                                 >
                                     <LayoutDashboard size={18} />
                                     Painel Pro

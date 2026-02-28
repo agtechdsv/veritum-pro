@@ -621,6 +621,8 @@ export const es = {
                 "perMonth": "/mes",
                 "perYear": "/año",
                 "monthly": "Mensual",
+                "quarterly": "Trimestral",
+                "semiannual": "Semestral",
                 "yearly": "Anual",
                 "liberated": "Liberado",
                 "current": "Actual",
@@ -1041,6 +1043,11 @@ export const es = {
             "comparison": "Comparativo",
             "modules": "Módulos Sueltos",
             "faq": "Dudas"
+        },
+        "modules": {
+            "badge": "Flexibilidad Total",
+            "title": "Módulos Individuales",
+            "subtitle": "¿Necesita una solución puntual? No tiene que llevar todo el ecosistema si solo desea resolver un desafío inmediato."
         },
         "hero": {
             "title": "Su momento en la abogacía,",

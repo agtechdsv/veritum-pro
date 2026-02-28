@@ -29,8 +29,8 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
     const [activeTab, setActiveTab] = useState<'infra' | 'org' | 'plan'>(initialTab || (isRootAdmin ? 'infra' : 'plan'));
     const [formPrefs, setFormPrefs] = useState(preferences);
     const [saving, setSaving] = useState(false);
-    const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
-    const [modulesBillingCycle, setModulesBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+    const [billingCycle, setBillingCycle] = useState<'monthly' | 'quarterly' | 'semiannual' | 'yearly'>('monthly');
+    const [modulesBillingCycle, setModulesBillingCycle] = useState<'monthly' | 'quarterly' | 'semiannual' | 'yearly'>('monthly');
     const [loadingPlanData, setLoadingPlanData] = useState(false);
     const [planData, setPlanData] = useState<{
         plans: Plan[];
@@ -384,6 +384,18 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                                                 {t('management.settings.plan.monthly') || 'MENSAL'}
                                             </button>
                                             <button
+                                                onClick={() => setBillingCycle('quarterly')}
+                                                className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${billingCycle === 'quarterly' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                            >
+                                                {t('management.settings.plan.quarterly') || 'TRIMESTRAL'}
+                                            </button>
+                                            <button
+                                                onClick={() => setBillingCycle('semiannual')}
+                                                className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${billingCycle === 'semiannual' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                            >
+                                                {t('management.settings.plan.semiannual') || 'SEMESTRAL'}
+                                            </button>
+                                            <button
                                                 onClick={() => setBillingCycle('yearly')}
                                                 className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${billingCycle === 'yearly' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                                             >
@@ -396,11 +408,28 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                                         {planData.plans.filter(p => p.is_combo).map((p) => {
                                             const isCurrentPlan = p.id === user.plan_id;
                                             const lang = locale as 'pt' | 'en' | 'es';
-                                            const isYearly = billingCycle === 'yearly';
-                                            const basePrice = isYearly ? p.yearly_price : p.monthly_price;
-                                            const discount = isYearly ? p.yearly_discount : p.monthly_discount;
-                                            const finalPrice = discount > 0 ? basePrice * (1 - discount / 100) : basePrice;
-                                            const installmentValue = finalPrice / (p.installments || 12);
+                                            const cycle = billingCycle;
+                                            const basePrice = p.monthly_price || 0;
+                                            let months = 1;
+                                            let discount = 0;
+
+                                            if (cycle === 'monthly') {
+                                                months = 1;
+                                                discount = p.monthly_discount || 0;
+                                            } else if (cycle === 'quarterly') {
+                                                months = 3;
+                                                discount = p.quarterly_discount || 0;
+                                            } else if (cycle === 'semiannual') {
+                                                months = 6;
+                                                discount = p.semiannual_discount || 0;
+                                            } else if (cycle === 'yearly') {
+                                                months = 12;
+                                                discount = p.yearly_discount || 0;
+                                            }
+
+                                            const fullPrice = basePrice * months;
+                                            const finalPrice = discount > 0 ? fullPrice * (1 - discount / 100) : fullPrice;
+                                            const installmentValue = finalPrice / (p.installments || (cycle === 'monthly' ? 1 : months));
                                             const cashValue = finalPrice * (1 - (p.yearly_cash_discount || 0) / 100);
 
                                             return (
@@ -430,7 +459,7 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                                                             <div className="flex items-baseline gap-1">
                                                                 <span className="text-4xl font-black text-slate-800 dark:text-white">R$ {(finalPrice || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                                                 <span className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">
-                                                                    {isYearly ? (t('management.settings.plan.perYear') || '/ ano') : (t('management.settings.plan.perMonth') || '/ mês')}
+                                                                    {billingCycle === 'yearly' ? (t('management.settings.plan.perYear') || '/ ano') : billingCycle === 'monthly' ? (t('management.settings.plan.perMonth') || '/ mês') : billingCycle === 'quarterly' ? '/ 3 meses' : '/ 6 meses'}
                                                                 </span>
                                                                 {discount > 0 && (
                                                                     <div className="absolute -top-6 right-0 md:-right-6 px-3 py-1.5 rounded-full text-[10px] font-black shadow-[0_0_15px_rgba(16,185,129,0.5)] animate-pulse whitespace-nowrap bg-emerald-500 text-slate-950 ring-2 ring-emerald-400/50 scale-110 z-20">
@@ -438,9 +467,9 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                                                                     </div>
                                                                 )}
                                                             </div>
-                                                            {isYearly && discount > 0 && (
+                                                            {billingCycle !== 'monthly' && discount > 0 && (
                                                                 <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-1 animate-in fade-in slide-in-from-left-2 duration-500">
-                                                                    <p>ou em até {p.installments || 12}x de R$ {(installmentValue || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} sem juros</p>
+                                                                    <p>ou em até {p.installments || months}x de R$ {(installmentValue || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} sem juros</p>
                                                                     {(p.yearly_cash_discount || 0) > 0 && (
                                                                         <p className="mt-1 text-slate-900 dark:text-white font-black uppercase tracking-widest">
                                                                             * À Vista: R$ {cashValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({p.yearly_cash_discount}% OFF) *
@@ -497,6 +526,18 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                                                     {t('management.settings.plan.monthly') || 'MENSAL'}
                                                 </button>
                                                 <button
+                                                    onClick={() => setModulesBillingCycle('quarterly')}
+                                                    className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${modulesBillingCycle === 'quarterly' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                                >
+                                                    {t('management.settings.plan.quarterly') || 'TRIMESTRAL'}
+                                                </button>
+                                                <button
+                                                    onClick={() => setModulesBillingCycle('semiannual')}
+                                                    className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${modulesBillingCycle === 'semiannual' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                                >
+                                                    {t('management.settings.plan.semiannual') || 'SEMESTRAL'}
+                                                </button>
+                                                <button
                                                     onClick={() => setModulesBillingCycle('yearly')}
                                                     className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${modulesBillingCycle === 'yearly' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                                                 >
@@ -509,11 +550,28 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                                             {planData.plans.filter(p => !p.is_combo).map((p) => {
                                                 const isCurrentPlan = p.id === user.plan_id;
                                                 const lang = locale as 'pt' | 'en' | 'es';
-                                                const isYearly = modulesBillingCycle === 'yearly';
-                                                const basePrice = isYearly ? p.yearly_price : p.monthly_price;
-                                                const discount = isYearly ? p.yearly_discount : p.monthly_discount;
-                                                const finalPrice = discount > 0 ? basePrice * (1 - discount / 100) : basePrice;
-                                                const installmentValue = finalPrice / (p.installments || 12);
+                                                const cycle = modulesBillingCycle;
+                                                const basePrice = p.monthly_price || 0;
+                                                let months = 1;
+                                                let discount = 0;
+
+                                                if (cycle === 'monthly') {
+                                                    months = 1;
+                                                    discount = p.monthly_discount || 0;
+                                                } else if (cycle === 'quarterly') {
+                                                    months = 3;
+                                                    discount = p.quarterly_discount || 0;
+                                                } else if (cycle === 'semiannual') {
+                                                    months = 6;
+                                                    discount = p.semiannual_discount || 0;
+                                                } else if (cycle === 'yearly') {
+                                                    months = 12;
+                                                    discount = p.yearly_discount || 0;
+                                                }
+
+                                                const fullPrice = basePrice * months;
+                                                const finalPrice = discount > 0 ? fullPrice * (1 - discount / 100) : fullPrice;
+                                                const installmentValue = finalPrice / (p.installments || (cycle === 'monthly' ? 1 : months));
                                                 const cashValue = finalPrice * (1 - (p.yearly_cash_discount || 0) / 100);
 
                                                 return (
@@ -538,7 +596,7 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                                                                 <div className="flex items-baseline gap-1">
                                                                     <span className="text-4xl font-black text-slate-800 dark:text-white">R$ {(finalPrice || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                                                     <span className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">
-                                                                        {isYearly ? (t('management.settings.plan.perYear') || '/ ano') : (t('management.settings.plan.perMonth') || '/ mês')}
+                                                                        {modulesBillingCycle === 'yearly' ? (t('management.settings.plan.perYear') || '/ ano') : modulesBillingCycle === 'monthly' ? (t('management.settings.plan.perMonth') || '/ mês') : modulesBillingCycle === 'quarterly' ? '/ 3 meses' : '/ 6 meses'}
                                                                     </span>
                                                                     {discount > 0 && (
                                                                         <div className="absolute -top-6 right-0 md:-right-6 px-3 py-1.5 rounded-full text-[10px] font-black shadow-[0_0_15px_rgba(16,185,129,0.5)] animate-pulse whitespace-nowrap bg-emerald-500 text-slate-950 ring-2 ring-emerald-400/50 scale-110 z-20">
@@ -546,9 +604,9 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                                                                         </div>
                                                                     )}
                                                                 </div>
-                                                                {isYearly && discount > 0 && (
+                                                                {modulesBillingCycle !== 'monthly' && discount > 0 && (
                                                                     <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-1 animate-in fade-in slide-in-from-left-2 duration-500">
-                                                                        <p>ou em até {p.installments || 12}x de R$ {(installmentValue || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} sem juros</p>
+                                                                        <p>ou em até {p.installments || months}x de R$ {(installmentValue || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} sem juros</p>
                                                                         {(p.yearly_cash_discount || 0) > 0 && (
                                                                             <p className="mt-1 text-slate-900 dark:text-white font-black uppercase tracking-widest">
                                                                                 * À Vista: R$ {cashValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({p.yearly_cash_discount}% OFF) *

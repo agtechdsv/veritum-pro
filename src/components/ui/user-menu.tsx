@@ -85,9 +85,9 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, supabase, onPlanClick 
 
     return (
         <>
-            <div className="flex items-center gap-4 pl-0 sm:pl-6 sm:border-l border-slate-200 dark:border-slate-800" id="user-menu-root">
+            <div className="flex items-center gap-3 pl-0 sm:pl-4 sm:border-l border-slate-200 dark:border-slate-800 whitespace-nowrap" id="user-menu-root">
                 <div className="text-right hidden sm:block">
-                    <div className="text-sm font-bold text-slate-800 dark:text-white flex items-center justify-end gap-2">
+                    <div className="text-sm font-bold text-slate-800 dark:text-white flex items-center justify-end gap-1.5 whitespace-nowrap">
                         {displayName}
                         {planName && (
                             <Tooltip content="Clique para fazer upgrade ou gerenciar seu plano" enabled={true} side="bottom">
@@ -100,7 +100,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, supabase, onPlanClick 
                             </Tooltip>
                         )}
                     </div>
-                    <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mt-0.5">{displayRole}</p>
+                    <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mt-0.5 whitespace-nowrap">{displayRole}</p>
                 </div>
 
                 <div

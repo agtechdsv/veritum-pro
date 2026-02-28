@@ -603,6 +603,8 @@ export const en = {
                 perMonth: '/month',
                 perYear: '/year',
                 monthly: 'Monthly',
+                quarterly: 'Quarterly',
+                semiannual: 'Semi-annual',
                 yearly: 'Annual',
                 liberated: 'Liberated',
                 current: 'Current',
@@ -1023,6 +1025,11 @@ export const en = {
             comparison: 'Comparison',
             modules: 'Individual Modules',
             faq: 'FAQ'
+        },
+        modules: {
+            badge: 'Total Flexibility',
+            title: 'Individual Modules',
+            subtitle: 'Need a specific solution? You don\'t have to take the entire ecosystem if you just want to solve an immediate challenge.'
         },
         hero: {
             title: 'Your moment in law,',

@@ -603,6 +603,8 @@ export const pt = {
                 perMonth: '/mês',
                 perYear: '/ano',
                 monthly: 'Mensal',
+                quarterly: 'Trimestral',
+                semiannual: 'Semestral',
                 yearly: 'Anual',
                 liberated: 'Liberado',
                 current: 'Atual',
@@ -1023,6 +1025,11 @@ export const pt = {
             comparison: 'Comparativo',
             modules: 'Módulos Avulsos',
             faq: 'Dúvidas'
+        },
+        modules: {
+            badge: 'Flexibilidade Total',
+            title: 'Módulos Avulsos',
+            subtitle: 'Precisa de uma solução pontual? Você não precisa levar o ecossistema inteiro se quiser resolver apenas um desafio imediato.'
         },
         hero: {
             title: 'Seu momento na advocacia,',

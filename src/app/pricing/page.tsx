@@ -234,17 +234,17 @@ export default function PricingPage() {
         <div id="top" className="min-h-screen bg-white dark:bg-slate-950 transition-colors duration-300 font-sans selection:bg-indigo-100 selection:text-indigo-900">
             {/* Navbar */}
             <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-900">
-                <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                <div className="max-w-[1400px] mx-auto px-4 h-20 flex items-center justify-between whitespace-nowrap">
+                    <div className="flex items-center gap-2 shrink-0">
                         <Link href="/" className="flex items-center gap-2 group">
                             <Logo />
-                            <span className="text-xl font-black tracking-tighter text-slate-900 dark:text-white group-hover:opacity-80 transition-opacity uppercase">
+                            <span className="text-xl font-black tracking-tighter text-slate-900 dark:text-white group-hover:opacity-80 transition-opacity uppercase whitespace-nowrap">
                                 VERITUM <span className="text-branding-gradient">PRO</span>
                             </span>
                         </Link>
                     </div>
 
-                    <div className="hidden md:flex items-center gap-8">
+                    <div className="hidden lg:flex items-center gap-5">
                         <Link href="/" className="font-medium text-branding-gradient hover:opacity-80 transition-all">{t('pricingPage.nav.portal')}</Link>
                         <a href="#top" className="font-medium text-slate-800 dark:text-white">{t('pricingPage.nav.home')}</a>
                         <a href="#modulos-avulsos" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">{t('pricingPage.nav.modules')}</a>
@@ -252,7 +252,7 @@ export default function PricingPage() {
                         <a href="#faq" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">{t('pricingPage.nav.faq')}</a>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
                         <button onClick={toggleTheme} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all text-slate-600 dark:text-slate-400">
                             {resolvedTheme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
                         </button>
@@ -263,7 +263,7 @@ export default function PricingPage() {
                             <div className="flex items-center gap-3">
                                 <Link
                                     href="/veritum"
-                                    className="hidden sm:flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-bold text-sm shadow-xl shadow-indigo-600/20 transition-all hover:scale-105"
+                                    className="hidden xl:flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-bold text-sm shadow-xl shadow-indigo-600/20 transition-all hover:scale-105"
                                 >
                                     <LayoutDashboard size={18} />
                                     Painel Pro
@@ -330,13 +330,13 @@ export default function PricingPage() {
                                 onClick={() => setBillingCycle('quarterly')}
                                 className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${billingCycle === 'quarterly' ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-md translate-y-[-1px]' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                             >
-                                {t('management.master.plans.form.quarterlyDiscount').split(' ')[0] || 'TRIMESTRAL'}
+                                {t('management.settings.plan.quarterly') || 'TRIMESTRAL'}
                             </button>
                             <button
                                 onClick={() => setBillingCycle('semiannual')}
                                 className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${billingCycle === 'semiannual' ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-md translate-y-[-1px]' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                             >
-                                {t('management.master.plans.form.semiannualDiscount').split(' ')[0] || 'SEMESTRAL'}
+                                {t('management.settings.plan.semiannual') || 'SEMESTRAL'}
                             </button>
                             <button
                                 onClick={() => setBillingCycle('yearly')}
@@ -476,9 +476,9 @@ export default function PricingPage() {
                     {dbPlans.filter(p => !p.is_combo).length > 0 && (
                         <div id="modulos-avulsos" className="mt-40 scroll-mt-32">
                             <div className="text-center mb-16">
-                                <span className="text-indigo-600 dark:text-indigo-400 font-black tracking-[0.2em] uppercase text-sm">Flexibilidade Total</span>
-                                <h2 className="text-4xl md:text-5xl font-black mt-4 text-slate-900 dark:text-white uppercase tracking-tighter">Módulos Avulsos</h2>
-                                <p className="text-xl text-slate-500 dark:text-slate-400 mt-4 leading-relaxed font-medium max-w-3xl mx-auto">Precisa de uma solução pontual? Você não precisa levar o ecossistema inteiro se quiser resolver apenas um desafio imediato.</p>
+                                <span className="text-indigo-600 dark:text-indigo-400 font-black tracking-[0.2em] uppercase text-sm">{t('pricingPage.modules.badge')}</span>
+                                <h2 className="text-4xl md:text-5xl font-black mt-4 text-slate-900 dark:text-white uppercase tracking-tighter">{t('pricingPage.modules.title')}</h2>
+                                <p className="text-xl text-slate-500 dark:text-slate-400 mt-4 leading-relaxed font-medium max-w-3xl mx-auto">{t('pricingPage.modules.subtitle')}</p>
 
                                 <div className="flex justify-center mt-12 mb-4">
                                     <div className="flex flex-wrap justify-center items-center bg-slate-100 dark:bg-slate-800/50 p-1.5 rounded-2xl gap-1">
@@ -492,13 +492,13 @@ export default function PricingPage() {
                                             onClick={() => setModulesBillingCycle('quarterly')}
                                             className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${modulesBillingCycle === 'quarterly' ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-md translate-y-[-1px]' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                                         >
-                                            {t('management.master.plans.form.quarterlyDiscount').split(' ')[0] || 'TRIMESTRAL'}
+                                            {t('management.settings.plan.quarterly') || 'TRIMESTRAL'}
                                         </button>
                                         <button
                                             onClick={() => setModulesBillingCycle('semiannual')}
                                             className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${modulesBillingCycle === 'semiannual' ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-md translate-y-[-1px]' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                                         >
-                                            {t('management.master.plans.form.semiannualDiscount').split(' ')[0] || 'SEMESTRAL'}
+                                            {t('management.settings.plan.semiannual') || 'SEMESTRAL'}
                                         </button>
                                         <button
                                             onClick={() => setModulesBillingCycle('yearly')}
