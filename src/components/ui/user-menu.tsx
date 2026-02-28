@@ -10,9 +10,10 @@ import { toast } from './toast';
 interface UserMenuProps {
     user: any;
     supabase: any;
+    onPlanClick?: () => void;
 }
 
-export const UserMenu: React.FC<UserMenuProps> = ({ user, supabase }) => {
+export const UserMenu: React.FC<UserMenuProps> = ({ user, supabase, onPlanClick }) => {
     const { t } = useTranslation();
     const [isOpen, setIsOpen] = useState(false);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -47,7 +48,19 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, supabase }) => {
     const isSocioAdminGroup = profile.access_group_name && superAdminGroupsNames.some(g => profile.access_group_name?.includes(g));
     const isRootAdmin = profile.role === 'Master' || isSocioAdminRole || isSocioAdminGroup;
 
-    const handlePlanClick = () => {
+    const handlePlanClick = (e?: React.MouseEvent) => {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        console.log("UserMenu: Plan clicked. onPlanClick exists?", !!onPlanClick);
+
+        if (onPlanClick) {
+            onPlanClick();
+            return;
+        }
+
         if (isRootAdmin) {
             router.push('/veritum/settings?tab=plan');
         } else {

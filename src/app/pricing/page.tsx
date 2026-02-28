@@ -71,8 +71,8 @@ export default function PricingPage() {
     const [currentMonth, setCurrentMonth] = useState(new Date());
 
     const [dbPlans, setDbPlans] = useState<any[]>([]);
-    const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
-    const [modulesBillingCycle, setModulesBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+    const [billingCycle, setBillingCycle] = useState<'monthly' | 'quarterly' | 'semiannual' | 'yearly'>('monthly');
+    const [modulesBillingCycle, setModulesBillingCycle] = useState<'monthly' | 'quarterly' | 'semiannual' | 'yearly'>('monthly');
 
     const formatWhatsApp = (value: string) => {
         const numbers = value.replace(/\D/g, '');
@@ -268,7 +268,14 @@ export default function PricingPage() {
                                     <LayoutDashboard size={18} />
                                     Painel Pro
                                 </Link>
-                                <UserMenu user={currentUser} supabase={createMasterClient()} />
+                                <UserMenu
+                                    user={currentUser}
+                                    supabase={createMasterClient()}
+                                    onPlanClick={() => {
+                                        setCheckoutData({ type: 'plan', planName: currentUser?.profile?.plan_name });
+                                        setIsCheckoutOpen(true);
+                                    }}
+                                />
                             </div>
                         ) : (
                             <div className="flex items-center gap-3">
@@ -312,16 +319,28 @@ export default function PricingPage() {
             <section id="plans" className="pb-32 px-6">
                 <div className="max-w-7xl mx-auto">
                     <div className="flex justify-center mb-12">
-                        <div className="flex items-center bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl">
+                        <div className="flex flex-wrap justify-center items-center bg-slate-100 dark:bg-slate-800/50 p-1.5 rounded-2xl gap-1">
                             <button
                                 onClick={() => setBillingCycle('monthly')}
-                                className={`px-6 py-3 rounded-lg text-sm font-black uppercase tracking-widest transition-all ${billingCycle === 'monthly' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${billingCycle === 'monthly' ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-md translate-y-[-1px]' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                             >
                                 {t('management.settings.plan.monthly') || 'MENSAL'}
                             </button>
                             <button
+                                onClick={() => setBillingCycle('quarterly')}
+                                className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${billingCycle === 'quarterly' ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-md translate-y-[-1px]' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                            >
+                                {t('management.master.plans.form.quarterlyDiscount').split(' ')[0] || 'TRIMESTRAL'}
+                            </button>
+                            <button
+                                onClick={() => setBillingCycle('semiannual')}
+                                className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${billingCycle === 'semiannual' ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-md translate-y-[-1px]' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                            >
+                                {t('management.master.plans.form.semiannualDiscount').split(' ')[0] || 'SEMESTRAL'}
+                            </button>
+                            <button
                                 onClick={() => setBillingCycle('yearly')}
-                                className={`px-6 py-3 rounded-lg text-sm font-black uppercase tracking-widest transition-all ${billingCycle === 'yearly' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${billingCycle === 'yearly' ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-md translate-y-[-1px]' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                             >
                                 {t('management.settings.plan.yearly') || 'ANUAL'}
                             </button>
@@ -333,12 +352,32 @@ export default function PricingPage() {
                             const isCurrentPlan = currentUser?.profile?.plan_id === plan.id;
                             const isSocioAdmin = currentUser?.profile?.role === 'Master' || (currentUser?.profile?.access_groups && currentUser.profile.access_groups.name?.includes('Sócio-Administra'));
 
-                            const isYearly = billingCycle === 'yearly';
-                            const basePrice = isYearly ? plan.yearly_price : plan.monthly_price;
-                            const discount = isYearly ? plan.yearly_discount : plan.monthly_discount;
-                            const finalPrice = discount > 0 ? basePrice * (1 - discount / 100) : basePrice;
-                            const installmentValue = finalPrice / (plan.installments || 12);
-                            const cashValue = finalPrice * (1 - (plan.yearly_cash_discount || 0) / 100);
+                            const basePrice = plan.monthly_price || 0;
+                            let months = 1;
+                            let discount = 0;
+                            let cycleLabel = '/ mês';
+
+                            if (billingCycle === 'monthly') {
+                                months = 1;
+                                discount = plan.monthly_discount || 0;
+                                cycleLabel = (t('management.settings.plan.perMonth') || '/ mês');
+                            } else if (billingCycle === 'quarterly') {
+                                months = 3;
+                                discount = plan.quarterly_discount || 0;
+                                cycleLabel = '/ 3 meses';
+                            } else if (billingCycle === 'semiannual') {
+                                months = 6;
+                                discount = plan.semiannual_discount || 0;
+                                cycleLabel = '/ 6 meses';
+                            } else if (billingCycle === 'yearly') {
+                                months = 12;
+                                discount = plan.yearly_discount || 0;
+                                cycleLabel = (t('management.settings.plan.perYear') || '/ ano');
+                            }
+
+                            const fullPrice = basePrice * months;
+                            const finalPrice = discount > 0 ? fullPrice * (1 - discount / 100) : fullPrice;
+                            const monthlyEquivalentPrice = finalPrice / months;
 
                             const lang = locale as 'pt' | 'en' | 'es';
                             const features = (plan.features?.[lang] || plan.features?.pt || []);
@@ -368,7 +407,7 @@ export default function PricingPage() {
                                                 <div className="flex items-baseline gap-1">
                                                     <span className="text-5xl font-black text-slate-900 dark:text-white">R$ {(finalPrice || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                                     <span className="text-sm font-bold text-slate-400 uppercase tracking-widest ml-1">
-                                                        {isYearly ? (t('management.settings.plan.perYear') || '/ ano') : (t('management.settings.plan.perMonth') || '/ mês')}
+                                                        {cycleLabel}
                                                     </span>
                                                     {discount > 0 && (
                                                         <div className="absolute -top-6 right-0 md:-right-6 px-3 py-1.5 rounded-full text-[10px] font-black shadow-[0_0_15px_rgba(16,185,129,0.5)] animate-pulse whitespace-nowrap bg-emerald-500 text-slate-950 ring-2 ring-emerald-400/50 scale-110 z-20">
@@ -376,14 +415,9 @@ export default function PricingPage() {
                                                         </div>
                                                     )}
                                                 </div>
-                                                {isYearly && discount > 0 && (
+                                                {billingCycle !== 'monthly' && (
                                                     <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-2 animate-in fade-in slide-in-from-left-2 duration-500">
-                                                        <p>ou em até {plan.installments || 12}x de R$ {(installmentValue || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} sem juros</p>
-                                                        {(plan.yearly_cash_discount || 0) > 0 && (
-                                                            <p className="mt-1 text-slate-900 dark:text-white font-black uppercase tracking-widest">
-                                                                * À Vista: R$ {cashValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({plan.yearly_cash_discount}% OFF) *
-                                                            </p>
-                                                        )}
+                                                        <p>Equivalente a R$ {monthlyEquivalentPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / mês</p>
                                                     </div>
                                                 )}
                                             </div>
@@ -447,16 +481,28 @@ export default function PricingPage() {
                                 <p className="text-xl text-slate-500 dark:text-slate-400 mt-4 leading-relaxed font-medium max-w-3xl mx-auto">Precisa de uma solução pontual? Você não precisa levar o ecossistema inteiro se quiser resolver apenas um desafio imediato.</p>
 
                                 <div className="flex justify-center mt-12 mb-4">
-                                    <div className="flex items-center bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl">
+                                    <div className="flex flex-wrap justify-center items-center bg-slate-100 dark:bg-slate-800/50 p-1.5 rounded-2xl gap-1">
                                         <button
                                             onClick={() => setModulesBillingCycle('monthly')}
-                                            className={`px-6 py-3 rounded-lg text-sm font-black uppercase tracking-widest transition-all ${modulesBillingCycle === 'monthly' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                            className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${modulesBillingCycle === 'monthly' ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-md translate-y-[-1px]' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                                         >
                                             {t('management.settings.plan.monthly') || 'MENSAL'}
                                         </button>
                                         <button
+                                            onClick={() => setModulesBillingCycle('quarterly')}
+                                            className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${modulesBillingCycle === 'quarterly' ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-md translate-y-[-1px]' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                        >
+                                            {t('management.master.plans.form.quarterlyDiscount').split(' ')[0] || 'TRIMESTRAL'}
+                                        </button>
+                                        <button
+                                            onClick={() => setModulesBillingCycle('semiannual')}
+                                            className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${modulesBillingCycle === 'semiannual' ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-md translate-y-[-1px]' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                        >
+                                            {t('management.master.plans.form.semiannualDiscount').split(' ')[0] || 'SEMESTRAL'}
+                                        </button>
+                                        <button
                                             onClick={() => setModulesBillingCycle('yearly')}
-                                            className={`px-6 py-3 rounded-lg text-sm font-black uppercase tracking-widest transition-all ${modulesBillingCycle === 'yearly' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                            className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${modulesBillingCycle === 'yearly' ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-md translate-y-[-1px]' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                                         >
                                             {t('management.settings.plan.yearly') || 'ANUAL'}
                                         </button>
@@ -469,12 +515,32 @@ export default function PricingPage() {
                                     const isCurrentPlan = currentUser?.profile?.plan_id === plan.id;
                                     const isSocioAdmin = currentUser?.profile?.role === 'Master' || (currentUser?.profile?.access_groups && currentUser.profile.access_groups.name?.includes('Sócio-Administra'));
 
-                                    const isYearly = modulesBillingCycle === 'yearly';
-                                    const basePrice = isYearly ? plan.yearly_price : plan.monthly_price;
-                                    const discount = isYearly ? plan.yearly_discount : plan.monthly_discount;
-                                    const finalPrice = discount > 0 ? basePrice * (1 - discount / 100) : basePrice;
-                                    const installmentValue = finalPrice / (plan.installments || 12);
-                                    const cashValue = finalPrice * (1 - (plan.yearly_cash_discount || 0) / 100);
+                                    const basePrice = plan.monthly_price || 0;
+                                    let months = 1;
+                                    let discount = 0;
+                                    let cycleLabel = '/ mês';
+
+                                    if (modulesBillingCycle === 'monthly') {
+                                        months = 1;
+                                        discount = plan.monthly_discount || 0;
+                                        cycleLabel = (t('management.settings.plan.perMonth') || '/ mês');
+                                    } else if (modulesBillingCycle === 'quarterly') {
+                                        months = 3;
+                                        discount = plan.quarterly_discount || 0;
+                                        cycleLabel = '/ 3 meses';
+                                    } else if (modulesBillingCycle === 'semiannual') {
+                                        months = 6;
+                                        discount = plan.semiannual_discount || 0;
+                                        cycleLabel = '/ 6 meses';
+                                    } else if (modulesBillingCycle === 'yearly') {
+                                        months = 12;
+                                        discount = plan.yearly_discount || 0;
+                                        cycleLabel = (t('management.settings.plan.perYear') || '/ ano');
+                                    }
+
+                                    const fullPrice = basePrice * months;
+                                    const finalPrice = discount > 0 ? fullPrice * (1 - discount / 100) : fullPrice;
+                                    const monthlyEquivalentPrice = finalPrice / months;
 
                                     const lang = locale as 'pt' | 'en' | 'es';
 
@@ -498,7 +564,7 @@ export default function PricingPage() {
                                                         <div className="flex items-baseline gap-1">
                                                             <span className="text-3xl font-black text-slate-900 dark:text-white">R$ {(finalPrice || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                                             <span className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">
-                                                                {isYearly ? (t('management.settings.plan.perYear') || '/ ano') : (t('management.settings.plan.perMonth') || '/ mês')}
+                                                                {cycleLabel}
                                                             </span>
                                                             {discount > 0 && (
                                                                 <div className="absolute -top-4 -right-1 px-2 py-1 rounded-full text-[8px] font-black shadow-[0_0_15px_rgba(16,185,129,0.5)] animate-pulse whitespace-nowrap bg-emerald-500 text-slate-950 ring-2 ring-emerald-400/50 rotate-6 z-20">
@@ -506,14 +572,9 @@ export default function PricingPage() {
                                                                 </div>
                                                             )}
                                                         </div>
-                                                        {isYearly && discount > 0 && (
+                                                        {modulesBillingCycle !== 'monthly' && (
                                                             <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mt-1 animate-in fade-in slide-in-from-left-2 duration-500">
-                                                                <p>ou em até {plan.installments || 12}x de R$ {(installmentValue || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} sem juros</p>
-                                                                {(plan.yearly_cash_discount || 0) > 0 && (
-                                                                    <p className="mt-1 text-slate-900 dark:text-white font-black uppercase tracking-widest">
-                                                                        * À Vista: R$ {cashValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({plan.yearly_cash_discount}% OFF) *
-                                                                    </p>
-                                                                )}
+                                                                <p>Equivalente a R$ {monthlyEquivalentPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / mês</p>
                                                             </div>
                                                         )}
                                                     </div>

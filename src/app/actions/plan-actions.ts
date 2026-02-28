@@ -13,15 +13,14 @@ export async function createPlan(formData: any) {
             short_desc: formData.short_desc,
             monthly_price: formData.monthly_price,
             monthly_discount: formData.monthly_discount,
-            yearly_price: formData.yearly_price,
+            quarterly_discount: formData.quarterly_discount,
+            semiannual_discount: formData.semiannual_discount,
             yearly_discount: formData.yearly_discount,
             features: formData.features,
             recommended: formData.recommended,
             active: formData.active,
             order_index: formData.order_index,
-            is_combo: formData.is_combo,
-            installments: formData.installments,
-            yearly_cash_discount: formData.yearly_cash_discount
+            is_combo: formData.is_combo
         }])
         .select()
 
@@ -48,15 +47,14 @@ export async function updatePlan(planId: string, formData: any) {
             short_desc: formData.short_desc,
             monthly_price: formData.monthly_price,
             monthly_discount: formData.monthly_discount,
-            yearly_price: formData.yearly_price,
+            quarterly_discount: formData.quarterly_discount,
+            semiannual_discount: formData.semiannual_discount,
             yearly_discount: formData.yearly_discount,
             features: formData.features,
             recommended: formData.recommended,
             active: formData.active,
             order_index: formData.order_index,
-            is_combo: formData.is_combo,
-            installments: formData.installments,
-            yearly_cash_discount: formData.yearly_cash_discount
+            is_combo: formData.is_combo
         })
         .eq('id', planId)
         .select()

@@ -127,20 +127,22 @@ Deno.serve(async (req: Request) => {
       return jsonResponse({ error: "Missing required params: planName, returnUrl" }, 400, origin);
     }
 
-    // Validate returnUrl origin
+    // Validate returnUrl origin - RESTORED & ENHANCED
     const returnOrigin = getOriginFromUrl(returnUrl);
+    console.log("Validation Info:", { returnOrigin, SUPPORTED_ORIGINS });
+
+    const isLocal = returnOrigin?.includes("localhost") || returnOrigin?.includes("127.0.0.1");
+    const isOfficialDomain = returnOrigin === "https://www.veritumpro.com";
+
     if (SUPPORTED_ORIGINS.length > 0) {
-      if (!returnOrigin || !SUPPORTED_ORIGINS.includes(returnOrigin)) {
+      if (!returnOrigin || (!SUPPORTED_ORIGINS.includes(returnOrigin) && !isLocal && !isOfficialDomain)) {
         console.error("returnUrl origin not allowed:", { returnOrigin, SUPPORTED_ORIGINS });
-        return jsonResponse({ error: `returnUrl origin is not allowed: ${returnOrigin}` }, 400, origin);
+        return jsonResponse({ error: `Origin not authorized: ${returnOrigin}` }, 400, origin);
       }
     } else {
-      if (!returnOrigin || !returnOrigin.startsWith("https://")) {
-        // Allow localhost for dev
-        if (!returnOrigin?.includes("localhost") && !returnOrigin?.includes("127.0.0.1")) {
-          console.error("returnUrl must be https:", { returnOrigin });
-          return jsonResponse({ error: "returnUrl must be a valid https URL" }, 400, origin);
-        }
+      if (!returnOrigin || (!returnOrigin.startsWith("https://") && !isLocal)) {
+        console.error("returnUrl must be https or local:", { returnOrigin });
+        return jsonResponse({ error: "returnUrl must be a valid https URL (except for localhost)" }, 400, origin);
       }
     }
 
@@ -172,14 +174,34 @@ Deno.serve(async (req: Request) => {
     if (planError || !plan) return jsonResponse({ error: "Plano não encontrado ou inativo." }, 404, origin);
 
     // Calculate Price
-    const isMonthly = billingCycle === 'monthly';
-    const basePrice = isMonthly ? plan.monthly_price : plan.yearly_price;
-    const discountPerc = isMonthly ? (plan.monthly_discount || 0) : (plan.yearly_discount || 0);
-    let totalValue = basePrice * (1 - (discountPerc / 100));
+    const basePrice = plan.monthly_price || 0;
+    let months = 1;
+    let discountPerc = 0;
 
-    if (!isMonthly && isCash && plan.yearly_cash_discount) {
-      totalValue = totalValue * (1 - (plan.yearly_cash_discount / 100));
+    switch (billingCycle) {
+      case 'monthly':
+        months = 1;
+        discountPerc = plan.monthly_discount || 0;
+        break;
+      case 'quarterly':
+        months = 3;
+        discountPerc = plan.quarterly_discount || 0;
+        break;
+      case 'semiannual':
+        months = 6;
+        discountPerc = plan.semiannual_discount || 0;
+        break;
+      case 'yearly':
+        months = 12;
+        discountPerc = plan.yearly_discount || 0;
+        break;
+      default:
+        months = 1;
+        discountPerc = plan.monthly_discount || 0;
     }
+
+    const fullPrice = basePrice * months;
+    const totalValue = fullPrice * (1 - (discountPerc / 100));
 
     // Update profile only if provided in body
     const updates: any = {};
@@ -267,7 +289,7 @@ Deno.serve(async (req: Request) => {
               headers: { "Content-Type": "application/json", "access_token": String(ASAAS_API_KEY) },
               body: JSON.stringify({
                 cpfCnpj: normalizedDoc,
-                mobilePhone: bodyPhone ?? user.phone ?? null,
+                // mobilePhone: bodyPhone ?? user.phone ?? null, // Removido para não exibir no checkout Asaas
                 notificationDisabled: true
               }),
             });
@@ -290,7 +312,7 @@ Deno.serve(async (req: Request) => {
         notificationDisabled: true,
       };
       if (normalizedDoc) customerPayload.cpfCnpj = normalizedDoc;
-      if (bodyPhone || user.phone) customerPayload.mobilePhone = bodyPhone ?? user.phone;
+      // if (bodyPhone || user.phone) customerPayload.mobilePhone = bodyPhone ?? user.phone; // Removido para não exibir no checkout Asaas
 
       try {
         const createCustomerRes = await retry(async () => {
@@ -326,12 +348,25 @@ Deno.serve(async (req: Request) => {
     // Build payment payload
     const dueDate = new Date(Date.now() + 86400000).toISOString().split("T")[0];
 
+    let asaasCycle = "MONTHLY";
+    let cycleLabel = "Mensal";
+    if (billingCycle === 'quarterly') {
+      asaasCycle = "QUARTERLY";
+      cycleLabel = "Trimestral";
+    } else if (billingCycle === 'semiannual') {
+      asaasCycle = "SEMIANNUALLY";
+      cycleLabel = "Semestral";
+    } else if (billingCycle === 'yearly') {
+      asaasCycle = "YEARLY";
+      cycleLabel = "Anual";
+    }
+
     const commonPayload: any = {
       customer: asaasCustomerId,
       value: Number(totalValue),
       externalReference,
-      description: description ?? `Plano ${safePlan} - ${isMonthly ? 'Mensal' : 'Anual'}`,
-      billingType: (isMonthly && normalizedBillingType === "UNDEFINED") ? "PIX" : normalizedBillingType,
+      description: description ?? `${safePlan.toLowerCase().startsWith("plano") ? safePlan : `Plano ${safePlan}`} - ${cycleLabel}`,
+      billingType: normalizedBillingType,
     };
 
     if (normalizedBillingType === "CREDIT_CARD") {
@@ -346,14 +381,15 @@ Deno.serve(async (req: Request) => {
         name: user.name ?? jwtUser.user_metadata?.full_name ?? "Cliente",
         email: emailToSearch,
         cpfCnpj: normalizedDoc ?? undefined,
-        phone: bodyPhone ?? user.phone ?? undefined,
+        // phone: bodyPhone ?? user.phone ?? undefined, // Removido para não exibir no checkout Asaas
       };
       if (!holderInfo.cpfCnpj && normalizedDoc) holderInfo.cpfCnpj = normalizedDoc;
       commonPayload.creditCardHolderInfo = holderInfo;
     }
 
     // Determine Endpoint and specific fields
-    let endpoint = `${ASAAS_URL}/payments`;
+    // UNIFICAÇÃO: Toda cobrança de plano/módulo agora é uma ASSINATURA no Asaas
+    let endpoint = `${ASAAS_URL}/subscriptions`;
 
     // Sanitize returnUrl for Asaas (it forbids localhost in production)
     const sanitizedReturnUrl = (returnUrl.includes("localhost") || returnUrl.includes("127.0.0.1"))
@@ -365,34 +401,21 @@ Deno.serve(async (req: Request) => {
     let finalPayload: any = {
       ...commonPayload,
       dueDate,
+      cycle: asaasCycle,
+      nextDueDate: dueDate,
+      // As assinaturas não usam o objeto 'callback' da mesma forma que pagamentos avulsos na API v3,
+      // mas mantemos para compatibilidade caso a conta suporte. 
+      // Idealmente o redirect é configurado no painel do Asaas para o Checkout Mobile/Links.
       callback: {
         successUrl: sanitizedReturnUrl,
-        autoRedirect: true
+        autoRedirect: false
       }
     };
 
-    if (isMonthly) {
-      // For monthly, we create a SUBSCRIPTION
-      endpoint = `${ASAAS_URL}/subscriptions`;
-      finalPayload = {
-        ...finalPayload, // Keep the rest
-        cycle: "MONTHLY",
-        nextDueDate: dueDate,
-      };
-      // Note: Subscriptions typically don't use the 'callback' object in the same way.
-      // If needed, it would be configured in the Asaas Dashboard.
-    } else {
-      // For yearly, check for installments (e.g. 10x)
-      const installmentCount = body.installments ? Number(body.installments) : 1;
-      if (installmentCount > 1) {
-        finalPayload.installmentCount = installmentCount;
-        delete finalPayload.value;
-        finalPayload.totalValue = Number(totalValue);
-      }
-    }
-
     console.log(`Endpoint: ${endpoint}`);
-    console.log("Final Payload to Asaas:", JSON.stringify(finalPayload, null, 2));
+    console.log("Final Payload to Asaas (Subscription):", JSON.stringify(finalPayload, null, 2));
+
+
 
     // create payment/subscription with retry
     let asaasResponse;
@@ -427,14 +450,16 @@ Deno.serve(async (req: Request) => {
       console.error(`Final Error caught: ${description} (${errorCode})`);
 
       // Update payment record with the failure
-      await supabaseAdmin.from("payments").update({
-        status: "failed",
-        asaas_response: {
-          gatewayError: description,
-          errorCode,
-          payloadSent: finalPayload
-        },
-      }).eq("id", insertedPayment.id);
+      if (insertedPayment?.id) {
+        await supabaseAdmin.from("payments").update({
+          status: "failed",
+          asaas_response: {
+            gatewayError: description,
+            errorCode,
+            payloadSent: finalPayload
+          },
+        }).eq("id", insertedPayment.id);
+      }
 
       return jsonResponse({
         error: "Falha no Asaas",
@@ -444,6 +469,8 @@ Deno.serve(async (req: Request) => {
     }
 
     const asaasData = asaasResponse.body;
+    console.log("Asaas Success Response:", JSON.stringify(asaasData));
+
     // For Subscriptions, sometimes the URL is in invoiceUrl, for Payments it might be bankSlipUrl.
     let invoiceUrl =
       asaasData.invoiceUrl ||
@@ -455,13 +482,16 @@ Deno.serve(async (req: Request) => {
     const asaasId = asaasData.id ?? null;
 
     // FEAT: If it's a subscription and we don't have a URL yet, fetch the first payment
-    if (!invoiceUrl && isMonthly && asaasId && (normalizedBillingType === 'PIX' || normalizedBillingType === 'BOLETO')) {
+    // Removida restrição 'isMonthly' e tipo de cobrança para abranger faturamentos anuais e indefinidos
+    if (!invoiceUrl && asaasId && endpoint.includes('subscriptions')) {
       try {
+        console.log(`Searching for first payment of subscription ${asaasId}...`);
         const paymentsRes = await fetchJson(`${ASAAS_URL}/payments?subscription=${asaasId}&limit=1`, {
           headers: { "access_token": String(ASAAS_API_KEY) },
         });
         if (paymentsRes.ok && paymentsRes.body?.data?.length > 0) {
-          invoiceUrl = paymentsRes.body.data[0].invoiceUrl || paymentsRes.body.data[0].bankSlipUrl || null;
+          const firstPayment = paymentsRes.body.data[0];
+          invoiceUrl = firstPayment.invoiceUrl || firstPayment.bankSlipUrl || firstPayment.checkoutUrl || null;
           console.log(`Found subscription payment URL: ${invoiceUrl}`);
         }
       } catch (e) {

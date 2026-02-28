@@ -272,7 +272,14 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                                     <LayoutDashboard size={18} />
                                     Painel Pro
                                 </Link>
-                                <UserMenu user={currentUser} supabase={supabase} />
+                                <UserMenu
+                                    user={currentUser}
+                                    supabase={supabase}
+                                    onPlanClick={() => {
+                                        setCheckoutData({ type: 'plan', planName: currentUser?.profile?.plan_name });
+                                        setIsCheckoutOpen(true);
+                                    }}
+                                />
                             </div>
                         ) : (
                             <div className="flex items-center gap-3">

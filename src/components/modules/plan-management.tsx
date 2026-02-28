@@ -70,10 +70,9 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
         short_desc: { pt: '', en: '', es: '' },
         monthly_price: 0,
         monthly_discount: 0,
-        yearly_price: 0,
+        quarterly_discount: 0,
+        semiannual_discount: 0,
         yearly_discount: 0,
-        installments: 12,
-        yearly_cash_discount: 0,
         features: { pt: [], en: [], es: [] },
         recommended: false,
         active: true,
@@ -156,10 +155,9 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
                 features: cleanFeatures,
                 monthly_price: Number(formData.monthly_price) || 0,
                 monthly_discount: Number(formData.monthly_discount) || 0,
-                yearly_price: Number(formData.yearly_price) || 0,
+                quarterly_discount: Number(formData.quarterly_discount) || 0,
+                semiannual_discount: Number(formData.semiannual_discount) || 0,
                 yearly_discount: Number(formData.yearly_discount) || 0,
-                installments: Number(formData.installments) || 12,
-                yearly_cash_discount: Number(formData.yearly_cash_discount) || 0,
                 order_index: editingPlan ? Number(formData.order_index) : plans.length
             };
 
@@ -539,7 +537,6 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
                                                     className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-indigo-600 outline-none dark:text-white transition-all shadow-sm"
                                                     value={formData.monthly_price}
                                                     onChange={val => setFormData({ ...formData, monthly_price: val })}
-                                                    onBlur={() => setFormData(prev => ({ ...prev, yearly_price: (prev.monthly_price || 0) * 12 }))}
                                                     locale={activeLang}
                                                     isFractional={true}
                                                 />
@@ -556,50 +553,33 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                             <div className="space-y-1.5">
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{t('management.master.plans.form.yearlyPrice')}</label>
-                                                <MaskedNumberInput
-                                                    className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-indigo-600 outline-none dark:text-white transition-all shadow-sm"
-                                                    value={formData.yearly_price}
-                                                    onChange={val => setFormData({ ...formData, yearly_price: val })}
-                                                    locale={activeLang}
-                                                    isFractional={true}
-                                                />
-                                            </div>
-                                            <div className="space-y-1.5">
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{t('management.master.plans.form.discount')}</label>
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{t('management.master.plans.form.quarterlyDiscount')}</label>
                                                 <MaskedNumberInput
                                                     className="w-full px-4 py-4 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-800/50 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none text-emerald-600 transition-all shadow-sm"
-                                                    value={formData.yearly_discount}
-                                                    onChange={val => setFormData({ ...formData, yearly_discount: val })}
+                                                    value={formData.quarterly_discount}
+                                                    onChange={val => setFormData({ ...formData, quarterly_discount: val })}
                                                     locale={activeLang}
                                                     isFractional={false}
                                                 />
                                             </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-4 mt-4">
                                             <div className="space-y-1.5">
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{t('management.master.plans.form.installments')}</label>
-                                                <div className="relative group">
-                                                    <Hash className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" size={18} />
-                                                    <input
-                                                        type="number"
-                                                        className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-indigo-600 outline-none dark:text-white transition-all shadow-sm"
-                                                        value={formData.installments || 12}
-                                                        onChange={e => setFormData({ ...formData, installments: parseInt(e.target.value) || 0 })}
-                                                        min={1}
-                                                        max={12}
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div className="space-y-1.5">
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{t('management.master.plans.form.yearlyCashDiscount')}</label>
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{t('management.master.plans.form.semiannualDiscount')}</label>
                                                 <MaskedNumberInput
                                                     className="w-full px-4 py-4 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-800/50 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none text-emerald-600 transition-all shadow-sm"
-                                                    value={formData.yearly_cash_discount}
-                                                    onChange={val => setFormData({ ...formData, yearly_cash_discount: val })}
+                                                    value={formData.semiannual_discount}
+                                                    onChange={val => setFormData({ ...formData, semiannual_discount: val })}
+                                                    locale={activeLang}
+                                                    isFractional={false}
+                                                />
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{t('management.master.plans.form.yearlyDiscount')}</label>
+                                                <MaskedNumberInput
+                                                    className="w-full px-4 py-4 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-800/50 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none text-emerald-600 transition-all shadow-sm"
+                                                    value={formData.yearly_discount}
+                                                    onChange={val => setFormData({ ...formData, yearly_discount: val })}
                                                     locale={activeLang}
                                                     isFractional={false}
                                                 />

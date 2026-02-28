@@ -6,6 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import {
     CheckCircle2,
     LockIcon,
     X,
@@ -47,15 +54,16 @@ export function CheckoutModal({
     const { locale } = useTranslation();
     const [plans, setPlans] = useState<Plan[]>([]);
     const [currentPlanIndex, setCurrentPlanIndex] = useState(0);
-    const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+    const [billingCycle, setBillingCycle] = useState<'monthly' | 'quarterly' | 'semiannual' | 'yearly'>('monthly');
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('pix');
     const [step, setStep] = useState<1 | 2>(1);
 
     // Form fields
     const [cpfCnpj, setCpfCnpj] = useState("");
     const [whatsapp, setWhatsapp] = useState("");
+    const [hasPrepopulated, setHasPrepopulated] = useState(false);
     const [installments, setInstallments] = useState("1");
-    const [isCash, setIsCash] = useState(false);
+    const [isCash, setIsCash] = useState(true); // Default to full payment (incentivizes PIX)
 
     // Card fields
     const [cardNumber, setCardNumber] = useState("");
@@ -64,6 +72,7 @@ export function CheckoutModal({
     const [cardCvv, setCardCvv] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [paymentResult, setPaymentResult] = useState<any>(null);
+    const [isPopupBlocked, setIsPopupBlocked] = useState(false);
 
     const supabase = createBrowserClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -76,6 +85,8 @@ export function CheckoutModal({
         pt: {
             selectedSub: "Assinatura Selecionada",
             monthly: "Mensal",
+            quarterly: "Trimestral",
+            semiannual: "Semestral",
             yearly: "Anual",
             original: "Original",
             savings: "Economia",
@@ -100,12 +111,22 @@ export function CheckoutModal({
             cashPrice: "À vista no PIX/Boleto",
             cashLabel: "à vista",
             interestFree: "sem juros",
+            payFull: "Pagar à Vista",
+            payInstallments: "Parcelar (até 12x)",
             redirectMsg: "Você será redirecionado para o ambiente de pagamento seguro do Asaas.",
-            incentiveMsg: "Prepare-se para transformar sua produtividade com as ferramentas exclusivas do Veritum Pro. Estamos quase lá!"
+            incentiveMsg: "Prepare-se para transformar sua produtividade com as ferramentas exclusivas do Veritum Pro. Estamos quase lá!",
+            paymentReady: "PAGAMENTO GERADO!",
+            paymentReadyMsg: "Sua cobrança foi preparada. Clique no botão abaixo para abrir o ambiente seguro de pagamento do Asaas e concluir a ativação.",
+            goToPayment: "Abrir Checkout Asaas",
+            planDiscountLabel: "Desconto Plano",
+            cashDiscountLabel: "Bônus à Vista",
+            popupBlocked: "⚠️ Janela bloqueada pelo navegador. Clique no botão 'Permitir' na barra de endereços para autorizar o checkout do ASAAS, ou clique no botão abaixo para concluir o pagamento agora.",
         },
         en: {
             selectedSub: "Selected Subscription",
             monthly: "Monthly",
+            quarterly: "Quarterly",
+            semiannual: "Semi-Annual",
             yearly: "Yearly",
             original: "Original",
             savings: "Savings",
@@ -130,12 +151,22 @@ export function CheckoutModal({
             cashPrice: "Cash on PIX/Ticket",
             cashLabel: "cash",
             interestFree: "interest free",
+            payFull: "Pay in Full",
+            payInstallments: "Installments (up to 12x)",
             redirectMsg: "You will be redirected to the secure Asaas payment environment.",
-            incentiveMsg: "Get ready to transform your productivity with Veritum Pro's exclusive tools. We're almost there!"
+            incentiveMsg: "Get ready to transform your productivity with Veritum Pro's exclusive tools. We're almost there!",
+            paymentReady: "PAYMENT READY!",
+            paymentReadyMsg: "Your payment has been prepared. Click the button below to open the secure Asaas payment environment and complete the activation.",
+            goToPayment: "Open Asaas Checkout",
+            planDiscountLabel: "Plan Discount",
+            cashDiscountLabel: "Cash Bonus",
+            popupBlocked: "⚠️ Popup blocked by browser! Click the 'Allow' button in the address bar to authorize the ASAAS checkout, or click the button below to complete the payment now.",
         },
         es: {
             selectedSub: "Suscripción Seleccionada",
             monthly: "Mensual",
+            quarterly: "Trimestral",
+            semiannual: "Semestral",
             yearly: "Anual",
             original: "Original",
             savings: "Ahorro",
@@ -160,9 +191,17 @@ export function CheckoutModal({
             cashPrice: "Al contado en PIX/Boleto",
             cashLabel: "al contado",
             interestFree: "sin intereses",
+            payFull: "Pagar al Contado",
+            payInstallments: "Cuotas (hasta 12x)",
             redirectMsg: "Será redirigido al entorno de pago seguro de Asaas.",
-            incentiveMsg: "¡Prepárate para transformar tu productividad con as ferramentas exclusivas de Veritum Pro. ¡Ya quase chegamos!"
-        }
+            incentiveMsg: "¡Prepárate para transformar tu productividad con las herramientas exclusivas de Veritum Pro. ¡Ya casi llegamos!",
+            paymentReady: "¡PAGO GENERADO!",
+            paymentReadyMsg: "Su cobro ha sido preparado. Haga clic en el botón de abajo para abrir el entorno seguro de pago de Asaas y completar la activación.",
+            goToPayment: "Abrir Checkout Asaas",
+            planDiscountLabel: "Descuento Plan",
+            cashDiscountLabel: "Bono al Contado",
+            popupBlocked: "⚠️ ¡Ventana bloqueada! Sugerimos hacer clic en 'Siempre permitir ventanas emergentes' en la barra de direcciones de su navegador, o use el botón de abajo para completar ahora.",
+        },
     };
 
     const t = translations[lang];
@@ -224,62 +263,123 @@ export function CheckoutModal({
     };
 
     useEffect(() => {
-        const loadPlans = async () => {
+        const loadPlansAndUser = async () => {
+            // Load Plans
             const result = await getPlans();
             if (result.success && result.plans) {
                 setPlans(result.plans);
                 const index = result.plans.findIndex((p: Plan) => p.name === initialPlanName);
                 if (index !== -1) setCurrentPlanIndex(index);
             }
+
+            // Load User Data for pre-population
+            const { data: { user: authUser } } = await supabase.auth.getUser();
+            if (authUser) {
+                const { data: profile } = await supabase
+                    .from("users")
+                    .select("cpf_cnpj, phone")
+                    .eq("id", authUser.id)
+                    .maybeSingle();
+
+                if (profile) {
+                    if (profile.cpf_cnpj && !cpfCnpj) {
+                        // Apply CPF/CNPJ mask
+                        let val = profile.cpf_cnpj.replace(/\D/g, "");
+                        if (val.length <= 11) {
+                            val = val.replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+                        } else {
+                            val = val.replace(/^(\d{2})(\d)/, "$1.$2").replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3").replace(/\.(\d{3})(\d)/, ".$1/$2").replace(/(\d{4})(\d{1,2})$/, "$1-$2");
+                        }
+                        setCpfCnpj(val);
+                    }
+                    if (profile.phone && !whatsapp) {
+                        // Apply WhatsApp mask
+                        let val = profile.phone.replace(/\D/g, "");
+                        if (val.length > 10) {
+                            val = val.replace(/^(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
+                        } else if (val.length > 5) {
+                            val = val.replace(/^(\d{2})(\d{4})(\d{0,4})/, "($1) $2-$3");
+                        } else if (val.length > 2) {
+                            val = val.replace(/^(\d{2})(\d{0,5})/, "($1) $2");
+                        } else if (val.length > 0) {
+                            val = val.replace(/^(\d*)/, "($1");
+                        }
+                        setWhatsapp(val);
+                    }
+                }
+            }
         };
+
         if (isOpen) {
-            loadPlans();
+            loadPlansAndUser();
         }
     }, [isOpen, initialPlanName]);
 
     const handleClose = () => {
         setStep(1);
+        setIsPopupBlocked(false);
         onClose();
     };
 
-    const nextPlan = () => {
-        setCurrentPlanIndex((prev) => (prev + 1) % plans.length);
-    };
+
 
     const prevPlan = () => {
+        if (plans.length === 0) return;
         setCurrentPlanIndex((prev) => (prev - 1 + plans.length) % plans.length);
     };
 
+    const nextPlan = () => {
+        if (plans.length === 0) return;
+        setCurrentPlanIndex((prev) => (prev + 1) % plans.length);
+    };
+
     const currentPlan = plans[currentPlanIndex];
-    if (!currentPlan && isOpen) return null;
 
     const calculatePricing = () => {
-        if (!currentPlan) return { full: 0, discount: 0, total: 0, cashTotal: 0, discountPerc: 0 };
-        const isMonthly = billingCycle === 'monthly';
-        const basePrice = isMonthly ? currentPlan.monthly_price : currentPlan.yearly_price;
-        const discountPerc = isMonthly ? (currentPlan.monthly_discount || 0) : (currentPlan.yearly_discount || 0);
-        const discountValue = basePrice * (discountPerc / 100);
-        const totalValue = basePrice - discountValue;
+        if (!currentPlan) return { full: 0, currentDiscountValue: 0, currentTotal: 0, currentDiscountPerc: 0, monthlyEquivalent: 0 };
 
-        let cashTotal = 0;
-        if (!isMonthly && currentPlan.yearly_cash_discount) {
-            cashTotal = totalValue * (1 - (currentPlan.yearly_cash_discount / 100));
+        const basePrice = currentPlan.monthly_price || 0;
+        let months = 1;
+        let discountPerc = 0;
+
+        switch (billingCycle) {
+            case 'monthly':
+                months = 1;
+                discountPerc = currentPlan.monthly_discount || 0;
+                break;
+            case 'quarterly':
+                months = 3;
+                discountPerc = currentPlan.quarterly_discount || 0;
+                break;
+            case 'semiannual':
+                months = 6;
+                discountPerc = currentPlan.semiannual_discount || 0;
+                break;
+            case 'yearly':
+                months = 12;
+                discountPerc = currentPlan.yearly_discount || 0;
+                break;
         }
 
+        const fullPrice = basePrice * months;
+        const currentTotal = fullPrice * (1 - (discountPerc / 100));
+        const currentDiscountValue = fullPrice - currentTotal;
+        const monthlyEquivalent = currentTotal / months;
+
         return {
-            full: basePrice,
-            discount: discountValue,
-            total: totalValue,
-            cashTotal,
-            discountPerc
+            full: fullPrice,
+            currentDiscountValue,
+            currentTotal,
+            currentDiscountPerc: discountPerc,
+            monthlyEquivalent
         };
     };
 
-    const { full, discount, total, cashTotal, discountPerc } = calculatePricing();
+    const { full, currentDiscountValue, currentTotal, currentDiscountPerc, monthlyEquivalent } = calculatePricing();
 
-    const totalDisplay = isCash
-        ? cashTotal
-        : (billingCycle === 'monthly' ? total * parseInt(installments) : total);
+    const totalDisplay = currentTotal;
+
+    const hasAnyDiscount = currentDiscountValue > 0;
 
     const formatPrice = (value: number) => {
         return new Intl.NumberFormat(lang === 'pt' ? 'pt-BR' : lang === 'es' ? 'es-ES' : 'en-US', {
@@ -288,24 +388,11 @@ export function CheckoutModal({
         }).format(value);
     };
 
-    const installments_options = Array.from({
-        length: billingCycle === 'monthly' ? 12 : (currentPlan?.installments || 1)
-    }, (_, i) => {
-        const count = i + 1;
-        if (billingCycle === 'monthly') {
-            return {
-                value: `${count}`,
-                label: `${count}x de ${formatPrice(total)}`
-            };
-        }
-        return {
-            value: `${count}`,
-            label: `${count}x de ${formatPrice(total / count)} ${count === 1 ? t.cashLabel : t.interestFree}`
-        };
-    });
-
     const getSummaryText = () => {
-        const cycleText = billingCycle === 'monthly' ? t.monthly : t.yearly;
+        let cycleText = t.monthly;
+        if (billingCycle === 'quarterly') cycleText = t.quarterly;
+        if (billingCycle === 'semiannual') cycleText = t.semiannual;
+        if (billingCycle === 'yearly') cycleText = t.yearly;
         return `Você selecionou o plano ${currentPlan?.name} com faturamento ${cycleText.toLowerCase()}.`;
     };
 
@@ -316,6 +403,7 @@ export function CheckoutModal({
         }
 
         setIsLoading(true);
+        setIsPopupBlocked(false);
 
         try {
             const { data: { session } } = await supabase.auth.getSession();
@@ -331,7 +419,7 @@ export function CheckoutModal({
                 billingType: "UNDEFINED", // Let Asaas handle choice
                 cpfCnpj: cpfCnpj.replace(/\D/g, ''),
                 phone: whatsapp.replace(/\D/g, ''),
-                // Usando apenas o domínio base para garantir aceitação do Asaas
+                installments: "1", // Recurrence is 1 cycle at a time
                 returnUrl: window.location.hostname === 'localhost'
                     ? 'https://www.veritumpro.com'
                     : window.location.origin,
@@ -347,12 +435,18 @@ export function CheckoutModal({
             setPaymentResult(data);
             console.log("Asaas Checkout Response Data:", data);
 
-            // Redirect to Asaas Checkout
+            // Redirect to Asaas Checkout (Opening in a new tab as before)
             if (data.invoiceUrl) {
-                window.location.href = data.invoiceUrl;
-            } else {
-                setStep(2);
+                // Try automatic open, but Step 2 will have the fallback button
+                const popup = window.open(data.invoiceUrl, '_blank');
+                if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+                    setIsPopupBlocked(true);
+                } else {
+                    setIsPopupBlocked(false);
+                }
             }
+
+            setStep(2);
         } catch (err: any) {
             console.error("Payment error details:", err);
             const errorMsg = err.message || "Erro ao processar redirecionamento.";
@@ -362,6 +456,76 @@ export function CheckoutModal({
             setIsLoading(false);
         }
     };
+
+    // Realtime Listener for payment status OR user plan update
+    useEffect(() => {
+        if (step !== 2) return;
+
+        const subscriptions: any[] = [];
+
+        // 1. Listen to the specific payment
+        if (paymentResult?.localPaymentId) {
+            const paymentChannel = supabase
+                .channel(`payment-${paymentResult.localPaymentId}`)
+                .on(
+                    'postgres_changes',
+                    {
+                        event: 'UPDATE',
+                        schema: 'public',
+                        table: 'payments',
+                        filter: `id=eq.${paymentResult.localPaymentId}`
+                    },
+                    (payload) => {
+                        const newStatus = payload.new.status;
+                        if (newStatus === 'paid' || newStatus === 'received' || newStatus === 'confirmed') {
+                            toast.success(lang === 'pt' ? "Pagamento confirmado! Atualizando..." : "Payment confirmed! Refreshing...");
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1500);
+                        }
+                    }
+                )
+                .subscribe();
+            subscriptions.push(paymentChannel);
+        }
+
+        // 2. Listen to the user's profile for plan updates (Fallback/Double-check)
+        const setupUserListener = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user?.id) {
+                const userChannel = supabase
+                    .channel(`user-plan-${session.user.id}`)
+                    .on(
+                        'postgres_changes',
+                        {
+                            event: 'UPDATE',
+                            schema: 'public',
+                            table: 'users',
+                            filter: `id=eq.${session.user.id}`
+                        },
+                        (payload) => {
+                            if (payload.new.plan_id !== payload.old.plan_id || payload.new.plan_name !== payload.old.plan_name) {
+                                toast.success(lang === 'pt' ? "Sua assinatura foi ativada! Atualizando agora..." : "Your subscription has been activated! Refreshing now...");
+                                setTimeout(() => {
+                                    window.location.reload();
+                                }, 1500);
+                            }
+                        }
+                    )
+                    .subscribe();
+                subscriptions.push(userChannel);
+            }
+        };
+
+        setupUserListener();
+
+        return () => {
+            subscriptions.forEach(s => {
+                if (s && typeof s.unsubscribe === 'function') s.unsubscribe();
+                else supabase.removeChannel(s);
+            });
+        };
+    }, [paymentResult?.localPaymentId, step, supabase, lang]);
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
@@ -405,17 +569,28 @@ export function CheckoutModal({
                                     </p>
                                 </div>
 
-                                {/* Billing Cycle Toggle */}
-                                <div className="flex bg-slate-200/50 dark:bg-slate-800/50 p-1 rounded-2xl w-fit mb-10 border border-slate-200/50 dark:border-slate-700/50">
+                                <div className="grid grid-cols-2 gap-1.5 bg-slate-200/50 dark:bg-slate-800/50 p-1 rounded-2xl w-full mb-10 border border-slate-200/50 dark:border-slate-700/50">
                                     <button
                                         onClick={() => setBillingCycle('monthly')}
-                                        className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${billingCycle === 'monthly' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-md' : 'text-slate-400 hover:text-slate-500 dark:hover:text-slate-300'}`}
+                                        className={`px-3 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all ${billingCycle === 'monthly' ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-md' : 'text-slate-400 hover:text-slate-500'}`}
                                     >
                                         {t.monthly}
                                     </button>
                                     <button
+                                        onClick={() => setBillingCycle('quarterly')}
+                                        className={`px-3 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all ${billingCycle === 'quarterly' ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-md' : 'text-slate-400 hover:text-slate-500'}`}
+                                    >
+                                        {t.quarterly}
+                                    </button>
+                                    <button
+                                        onClick={() => setBillingCycle('semiannual')}
+                                        className={`px-3 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all ${billingCycle === 'semiannual' ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-md' : 'text-slate-400 hover:text-slate-500'}`}
+                                    >
+                                        {t.semiannual}
+                                    </button>
+                                    <button
                                         onClick={() => setBillingCycle('yearly')}
-                                        className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${billingCycle === 'yearly' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-md' : 'text-slate-400 hover:text-slate-500 dark:hover:text-slate-300'}`}
+                                        className={`px-3 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all ${billingCycle === 'yearly' ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-md' : 'text-slate-400 hover:text-slate-500'}`}
                                     >
                                         {t.yearly}
                                     </button>
@@ -424,31 +599,27 @@ export function CheckoutModal({
                                 {/* Values Breakdown */}
                                 <div className="bg-white/40 dark:bg-white/5 backdrop-blur-md rounded-3xl p-6 border border-white/50 dark:border-white/10 mb-10 shadow-sm">
                                     <div className="space-y-2">
-                                        {discountPerc > 0 && (
+                                        {hasAnyDiscount && (
                                             <>
                                                 <div className="flex justify-between text-[11px] font-bold text-slate-400 uppercase tracking-widest">
                                                     <span>{t.original}</span>
-                                                    <span className="line-through">{formatPrice(full * (billingCycle === 'monthly' ? parseInt(installments) : 1))}</span>
+                                                    <span className="line-through">{formatPrice(full)}</span>
                                                 </div>
                                                 <div className="flex justify-between text-[11px] font-bold text-emerald-500 uppercase tracking-widest">
-                                                    <span>{t.savings} ({discountPerc}%)</span>
-                                                    <span>- {formatPrice(discount * (billingCycle === 'monthly' ? parseInt(installments) : 1))}</span>
+                                                    <span>{t.planDiscountLabel} ({currentDiscountPerc}%)</span>
+                                                    <span>- {formatPrice(currentDiscountValue)}</span>
                                                 </div>
                                             </>
                                         )}
-                                        <div className={`${discountPerc > 0 ? 'pt-4 border-t border-slate-200/30 dark:border-white/10' : ''} flex flex-col items-end gap-1`}>
+                                        <div className={`${hasAnyDiscount ? 'pt-4 border-t border-slate-200/30 dark:border-white/10' : ''} flex flex-col items-end gap-1`}>
                                             <div className="flex justify-between items-end w-full">
                                                 <span className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-tighter">{t.totalValue}</span>
                                                 <span className="text-4xl font-black text-slate-950 dark:text-white tracking-tighter">{formatPrice(totalDisplay)}</span>
                                             </div>
-                                            {billingCycle === 'yearly' && cashTotal > 0 && (
-                                                <motion.div
-                                                    animate={{ opacity: [0.6, 1, 0.6] }}
-                                                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                                                    className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mt-1"
-                                                >
-                                                    {t.cashPrice}: {formatPrice(cashTotal)} (-{currentPlan.yearly_cash_discount}%)
-                                                </motion.div>
+                                            {billingCycle !== 'monthly' && (
+                                                <div className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mt-1">
+                                                    Equivalente a {formatPrice(monthlyEquivalent)} / mês
+                                                </div>
                                             )}
                                         </div>
                                     </div>
@@ -510,6 +681,7 @@ export function CheckoutModal({
                                             className="h-12 rounded-xl bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800 font-bold px-6 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm"
                                         />
                                     </div>
+                                    <div className="hidden"></div>
                                 </div>
                             </div>
 
@@ -580,6 +752,12 @@ export function CheckoutModal({
                             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                             className="absolute inset-0 z-[100] bg-white dark:bg-slate-950 flex flex-col items-center justify-center p-12 text-center"
                         >
+                            <button
+                                onClick={handleClose}
+                                className="absolute top-10 right-10 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all z-[110] p-3 bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full shadow-lg border border-slate-200/50 dark:border-slate-700/50"
+                            >
+                                <X size={20} strokeWidth={3} />
+                            </button>
                             <div className="w-28 h-28 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-2xl shadow-emerald-500/40 mb-10 relative">
                                 <motion.div
                                     animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.2, 0.5] }}
@@ -588,18 +766,30 @@ export function CheckoutModal({
                                 />
                                 <CheckCircle2 size={56} strokeWidth={3} className="relative z-10" />
                             </div>
-                            <h2 className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter mb-4 italic leading-none">{t.congrats}</h2>
+                            <h2 className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter mb-4 italic leading-none">
+                                {paymentResult?.invoiceUrl ? t.paymentReady : t.congrats}
+                            </h2>
                             <p className="text-slate-500 dark:text-slate-400 font-bold text-lg max-w-sm mx-auto leading-relaxed mb-12">
-                                {t.successMsg}
+                                {paymentResult?.invoiceUrl ? t.paymentReadyMsg : t.successMsg}
                             </p>
-                            <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl mb-12 border border-slate-100 dark:border-slate-800">
+                            <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl mb-8 border border-slate-100 dark:border-slate-800">
                                 <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">{t.totalValue}</p>
                                 <p className="text-3xl font-black text-indigo-600">{formatPrice(totalDisplay)}</p>
                             </div>
+
+                            {isPopupBlocked && (
+                                <motion.div
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    className="mb-10 p-6 bg-amber-50 dark:bg-amber-900/20 border-2 border-dashed border-amber-300 dark:border-amber-800 rounded-[2rem] text-amber-800 dark:text-amber-400 text-xs font-bold leading-relaxed max-w-sm"
+                                >
+                                    {t.popupBlocked}
+                                </motion.div>
+                            )}
                             <Button
                                 className="h-16 px-16 rounded-2xl bg-indigo-600 text-white font-black uppercase tracking-widest hover:scale-105 transition-all shadow-xl"
                                 onClick={() => {
-                                    if (paymentResult?.invoiceUrl && (paymentMethod === 'pix' || paymentMethod === 'boleto')) {
+                                    if (paymentResult?.invoiceUrl) {
                                         window.open(paymentResult.invoiceUrl, '_blank');
                                     } else {
                                         setStep(1);
@@ -608,14 +798,12 @@ export function CheckoutModal({
                                     }
                                 }}
                             >
-                                {paymentResult?.invoiceUrl && (paymentMethod === 'pix' || paymentMethod === 'boleto')
-                                    ? (lang === 'pt' ? 'PAGAR PIX / BOLETO' : 'PAY PIX / BOLETO')
-                                    : t.startNow}
+                                {paymentResult?.invoiceUrl ? t.goToPayment : t.startNow}
                             </Button>
                         </motion.div>
                     )}
                 </AnimatePresence>
             </DialogContent>
-        </Dialog>
+        </Dialog >
     );
 }
