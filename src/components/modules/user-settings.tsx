@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { User, UserPreferences, Plan, Suite, Feature, ModuleId } from '@/types';
 import {
     Database, Key, Globe, Save, ShieldCheck, AlertCircle, Building2,
@@ -17,7 +18,7 @@ interface Props {
     preferences: UserPreferences;
     onUpdateUser: (u: User) => void;
     onUpdatePrefs: (p: UserPreferences) => void;
-    initialTab?: 'infra' | 'org' | 'plan';
+    initialTab?: 'infra' | 'org' | 'plan' | 'cancel';
 }
 
 const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initialTab }) => {
@@ -26,7 +27,7 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
         ['Sócio-Administrador', 'Sócio Administrador'].includes(user.role) ||
         (user.access_group_name && ['Sócio-Administrador', 'Sócio Administrador'].some(g => user.access_group_name?.includes(g)));
     const isRootAdmin = ['Master', 'Administrador', 'Sócio-Administrador', 'Sócio Administrador'].includes(user.role);
-    const [activeTab, setActiveTab] = useState<'infra' | 'org' | 'plan'>(initialTab || (isRootAdmin ? 'infra' : 'plan'));
+    const [activeTab, setActiveTab] = useState<'infra' | 'org' | 'plan' | 'cancel'>(initialTab || (isRootAdmin ? 'infra' : 'plan'));
     const [formPrefs, setFormPrefs] = useState(preferences);
     const [saving, setSaving] = useState(false);
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'quarterly' | 'semiannual' | 'yearly'>('monthly');
@@ -40,11 +41,46 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
     } | null>(null);
     const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
     const [checkoutData, setCheckoutData] = useState<{ planName?: string; moduleName?: string; type: 'plan' | 'module' }>({ type: 'plan' });
+    const [cancelReasons, setCancelReasons] = useState<number[]>([]);
+    const [cancelFeedback, setCancelFeedback] = useState<string>('');
+    const [isCancelling, setIsCancelling] = useState(false);
+    const [showCancelConfirm, setShowCancelConfirm] = useState(false);
     const supabase = createMasterClient();
 
     const handleCheckout = (type: 'plan' | 'module', name: string) => {
         setCheckoutData({ type, [type === 'plan' ? 'planName' : 'moduleName']: name });
         setIsCheckoutOpen(true);
+    };
+
+    const handleCancelSubscription = async () => {
+        if (cancelReasons.length === 0) {
+            toast.error(t('management.settings.plan.cancelReasonLabel'));
+            return;
+        }
+
+        setIsCancelling(true);
+        try {
+            const reasonText = cancelReasons
+                .map(idx => t(`management.settings.plan.cancelReasonOption${idx}`))
+                .join(', ');
+
+            const { data, error } = await supabase.functions.invoke('asaas-cancel-subscription', {
+                body: { reason: reasonText, feedback: cancelFeedback }
+            });
+
+            if (error) throw error;
+            if (data.error) throw new Error(data.error);
+
+            toast.success(t('management.settings.plan.cancelSuccess'));
+            setShowCancelConfirm(false);
+            // Optionally redirect or refresh
+            setTimeout(() => window.location.reload(), 2000);
+        } catch (err: any) {
+            console.error('Cancellation error:', err);
+            toast.error(t('management.settings.plan.cancelError'));
+        } finally {
+            setIsCancelling(false);
+        }
     };
 
     useEffect(() => {
@@ -122,19 +158,19 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
     };
 
     return (
-        <div className="max-w-4xl mx-auto space-y-10 pb-12 animate-in fade-in duration-500">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div>
+        <div className="max-w-4xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500">
+            <div className="flex flex-col items-center">
+                <div className="flex flex-col md:flex-row items-center md:items-baseline gap-2 md:gap-4 mb-8">
                     <h1 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">{t('management.settings.title')}</h1>
-                    <p className="text-slate-500 dark:text-slate-400 font-medium tracking-tight uppercase text-xs">{t('management.settings.subtitle')}</p>
+                    <p className="text-slate-500 dark:text-slate-400 font-bold tracking-tight uppercase text-[10px] opacity-70">{t('management.settings.subtitle')}</p>
                 </div>
 
                 {isRootAdmin && (
-                    <div className="flex bg-slate-100 dark:bg-slate-900 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800">
+                    <div className="flex bg-slate-100 dark:bg-slate-950/50 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800/50 shadow-sm backdrop-blur-xl">
                         <button
                             onClick={() => setActiveTab('infra')}
                             className={`px-6 py-2.5 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all flex items-center gap-2 ${activeTab === 'infra'
-                                ? 'bg-white dark:bg-slate-800 text-indigo-600 shadow-sm border border-slate-200 dark:border-slate-700'
+                                ? 'bg-white dark:bg-slate-800 text-indigo-600 shadow-xl shadow-indigo-500/10 border border-slate-200 dark:border-slate-700'
                                 : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
                                 }`}
                         >
@@ -143,7 +179,7 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                         <button
                             onClick={() => setActiveTab('org')}
                             className={`px-6 py-2.5 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all flex items-center gap-2 ${activeTab === 'org'
-                                ? 'bg-white dark:bg-slate-800 text-indigo-600 shadow-sm border border-slate-200 dark:border-slate-700'
+                                ? 'bg-white dark:bg-slate-800 text-indigo-600 shadow-xl shadow-indigo-500/10 border border-slate-200 dark:border-slate-700'
                                 : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
                                 }`}
                         >
@@ -152,11 +188,21 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                         <button
                             onClick={() => setActiveTab('plan')}
                             className={`px-6 py-2.5 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all flex items-center gap-2 ${activeTab === 'plan'
-                                ? 'bg-white dark:bg-slate-800 text-amber-600 shadow-sm border border-slate-200 dark:border-slate-700'
+                                ? 'bg-white dark:bg-slate-800 text-amber-600 shadow-xl shadow-amber-500/10 border border-slate-200 dark:border-slate-700'
                                 : 'text-slate-400 hover:text-slate-600 dark:hover:text-amber-500'
                                 }`}
                         >
                             <Crown size={14} /> {t('management.settings.tabs.plan') || 'Minha Assinatura'}
+                        </button>
+
+                        <button
+                            onClick={() => setActiveTab('cancel')}
+                            className={`px-6 py-2.5 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all flex items-center gap-2 ${activeTab === 'cancel'
+                                ? 'bg-white dark:bg-slate-800 text-rose-600 shadow-xl shadow-rose-500/10 border border-slate-200 dark:border-slate-700'
+                                : 'text-slate-400 hover:text-slate-600 dark:hover:text-rose-500'
+                                }`}
+                        >
+                            <AlertCircle size={14} /> {t('management.settings.plan.cancelSubscription') || 'Cancelar Assinatura'}
                         </button>
                     </div>
                 )}
@@ -651,6 +697,135 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                         ) : null}
                     </div>
                 )}
+
+                {activeTab === 'cancel' && (
+                    <div className="max-w-2xl mx-auto py-10 px-4">
+                        <section className="text-center mb-12">
+                            <div className="w-20 h-20 rounded-[2rem] bg-rose-50 dark:bg-rose-900/20 text-rose-500 flex items-center justify-center mx-auto mb-6 shadow-xl shadow-rose-500/10">
+                                <AlertCircle size={40} />
+                            </div>
+                            <h2 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter mb-4 capitalize">
+                                {t('management.settings.plan.cancelTitle')}
+                            </h2>
+                            <p className="text-slate-500 dark:text-slate-400 font-bold max-w-lg mx-auto leading-relaxed italic">
+                                {t('management.settings.plan.cancelSubtitle')}
+                            </p>
+                        </section>
+
+                        <div className="space-y-8 bg-slate-50 dark:bg-slate-900/50 p-10 rounded-[3rem] border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+                            <div className="space-y-4">
+                                <label className="block text-[10px] font-black text-rose-600 uppercase tracking-[0.2em] ml-2">
+                                    {t('management.settings.plan.cancelReasonLabel')} *
+                                </label>
+                                <div className="grid grid-cols-1 gap-3">
+                                    {[1, 2, 3, 4, 5].map((idx) => {
+                                        const reasonLabel = t(`management.settings.plan.cancelReasonOption${idx}`);
+                                        const isSelected = cancelReasons.includes(idx);
+                                        return (
+                                            <button
+                                                key={idx}
+                                                onClick={() => {
+                                                    setCancelReasons(prev =>
+                                                        prev.includes(idx)
+                                                            ? prev.filter(r => r !== idx)
+                                                            : [...prev, idx]
+                                                    );
+                                                }}
+                                                className={`w-full text-left p-4 rounded-2xl border-2 transition-all font-bold flex items-center justify-between group ${isSelected
+                                                    ? 'bg-rose-600 border-rose-600 text-white shadow-xl shadow-rose-600/30'
+                                                    : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-rose-400'
+                                                    }`}
+                                            >
+                                                <span>{reasonLabel}</span>
+                                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${isSelected
+                                                    ? 'bg-white border-white scale-110'
+                                                    : 'border-slate-200 dark:border-slate-600'
+                                                    }`}>
+                                                    {isSelected && (
+                                                        <div className="w-2.5 h-2.5 rounded-full bg-rose-600 animate-in zoom-in" />
+                                                    )}
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">
+                                    {t('management.settings.plan.cancelFeedbackPlaceholder')}
+                                </label>
+                                <textarea
+                                    value={cancelFeedback}
+                                    onChange={(e) => setCancelFeedback(e.target.value)}
+                                    placeholder="..."
+                                    rows={4}
+                                    className="w-full p-6 bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-[2rem] outline-none focus:ring-4 focus:ring-rose-500/10 focus:border-rose-400 transition-all font-medium text-slate-800 dark:text-slate-200 placeholder:text-slate-300 shadow-sm"
+                                />
+                            </div>
+
+                            {!showCancelConfirm ? (
+                                <button
+                                    onClick={() => {
+                                        if (cancelReasons.length === 0) {
+                                            toast.error(t('management.settings.plan.cancelReasonLabel'));
+                                            return;
+                                        }
+                                        setShowCancelConfirm(true);
+                                    }}
+                                    className="w-full h-16 rounded-2xl bg-rose-600 text-white font-black uppercase tracking-[0.2em] text-[10px] shadow-2xl shadow-rose-600/30 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 mt-4"
+                                >
+                                    <Zap size={18} className="fill-current text-white/50" />
+                                    {t('management.settings.plan.cancelButton')}
+                                </button>
+                            ) : (
+                                <motion.div
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    className="p-8 rounded-[2rem] bg-rose-600 text-white shadow-2xl shadow-rose-600/40 space-y-6 border-4 border-white/20"
+                                >
+                                    <div className="flex items-start gap-4">
+                                        <div className="p-3 bg-white/20 rounded-xl">
+                                            <AlertCircle size={24} />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-xl font-black uppercase tracking-tighter mb-1">
+                                                {t('management.settings.plan.cancelConfirmTitle')}
+                                            </h4>
+                                            <p className="text-rose-100 text-[11px] font-bold leading-relaxed italic opacity-90">
+                                                {t('management.settings.plan.cancelConfirmMessage')}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-4 pt-4">
+                                        <button
+                                            onClick={() => setShowCancelConfirm(false)}
+                                            className="flex-1 h-12 rounded-xl bg-white text-rose-600 font-black uppercase tracking-widest text-[9px] hover:bg-rose-50 transition-all"
+                                        >
+                                            {t('common.cancel') || 'Voltar'}
+                                        </button>
+                                        <button
+                                            onClick={handleCancelSubscription}
+                                            disabled={isCancelling}
+                                            className="flex-1 h-12 rounded-xl bg-slate-900/50 text-white font-black uppercase tracking-widest text-[9px] hover:bg-slate-900 transition-all flex items-center justify-center gap-2 border border-white/20 disabled:opacity-50"
+                                        >
+                                            {isCancelling ? <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <CheckCircle2 size={14} />}
+                                            {isCancelling ? '...' : t('management.settings.plan.cancelButton')}
+                                        </button>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </div>
+
+                        <div className="mt-8 flex items-center justify-center gap-3 py-4 text-slate-400">
+                            <ShieldCheck size={16} />
+                            <span className="text-[10px] font-black uppercase tracking-widest opacity-60">
+                                {t('management.settings.plan.secureOperation') || 'Operação Segura via Veritum PRO Cloud'}
+                            </span>
+                        </div>
+                    </div>
+                )}
             </div>
 
             <CheckoutModal
@@ -658,7 +833,7 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                 onClose={() => setIsCheckoutOpen(false)}
                 {...checkoutData}
             />
-        </div>
+        </div >
     );
 };
 

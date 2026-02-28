@@ -610,7 +610,23 @@ export const en = {
                 current: 'Current',
                 acquirePlan: 'Acquire Plan',
                 aLaCarteModules: 'A La Carte Modules',
-                acquireModule: 'Acquire Module'
+                acquireModule: 'Acquire Module',
+                cancelSubscription: 'Cancel Subscription',
+                cancelTitle: 'Do you really want to cancel your subscription?',
+                cancelSubtitle: 'We are sorry to see you go. Please tell us why you are canceling so we can improve.',
+                cancelReasonLabel: 'Reason for cancellation',
+                cancelReasonOption1: 'Price too high',
+                cancelReasonOption2: 'Difficulty of use',
+                cancelReasonOption3: 'Lack of necessary features',
+                cancelReasonOption4: 'Migrating to another software',
+                cancelReasonOption5: 'Other reason',
+                cancelFeedbackPlaceholder: 'Tell us a little more about your experience (optional)',
+                cancelButton: 'Confirm Cancellation',
+                cancelConfirmTitle: 'Are you absolutely sure?',
+                cancelConfirmMessage: 'Your subscription will be canceled at the end of the current period. You will lose access to premium features.',
+                cancelSuccess: 'Your subscription has been successfully canceled.',
+                cancelError: 'An error occurred while canceling your subscription. Please contact support.',
+                secureOperation: 'Secure Operation via Veritum PRO Cloud'
             }
         },
         organization: {

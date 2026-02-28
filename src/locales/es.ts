@@ -628,7 +628,23 @@ export const es = {
                 "current": "Actual",
                 "acquirePlan": "Adquirir Plan",
                 "aLaCarteModules": "Módulos a la Carta",
-                "acquireModule": "Adquirir Módulo"
+                "acquireModule": "Adquirir Módulo",
+                "cancelSubscription": "Cancelar Suscripción",
+                "cancelTitle": "¿Realmente desea cancelar su suscripción?",
+                "cancelSubtitle": "Lamentamos verlo partir. Por favor, cuéntenos por qué está cancelando para que podamos mejorar.",
+                "cancelReasonLabel": "Motivo de la cancelación",
+                "cancelReasonOption1": "Precio demasiado alto",
+                "cancelReasonOption2": "Dificultad de uso",
+                "cancelReasonOption3": "Falta de funciones necesarias",
+                "cancelReasonOption4": "Migrando a otro software",
+                "cancelReasonOption5": "Otro motivo",
+                "cancelFeedbackPlaceholder": "Cuéntenos un poco más sobre su experiencia (opcional)",
+                "cancelButton": "Confirmar Cancelación",
+                "cancelConfirmTitle": "¿Está absolutamente seguro?",
+                "cancelConfirmMessage": "Su suscripción se cancelará al final del período actual. Perderá el acceso a las funciones premium.",
+                "cancelSuccess": "Su suscripción ha sido cancelada con éxito.",
+                "cancelError": "Ocurrió un error ao cancelar su suscripción. Por favor, póngase en contacto con el soporte.",
+                "secureOperation": "Operación Segura vía Veritum PRO Cloud"
             }
         },
         "organization": {
