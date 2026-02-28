@@ -247,7 +247,7 @@ export const pt = {
     pricing: {
         title: 'Planos que acompanham o seu crescimento.',
         subtitle: 'Nós não vendemos apenas software, entregamos a arquitetura exata para o seu momento na advocacia.',
-        cancelGuarantee: 'O Veritum PRO não tem taxa de adesão, não tem fidelidade e não tem letras miúdas. Você fica porque encontrou a paz mental para advogar, não porque está preso a nós. Escolha o seu plano, cancele quando quiser.',
+        cancelGuarantee: 'No Veritum PRO, sua paz mental é nossa prioridade. Sem taxas de adesão, sem fidelidade e sem letras miúdas. Premie sua previsibilidade com descontos progressivos e tenha a liberdade de cancelar quando quiser, sem burocracia.',
         compare: 'Comparar Planos e Valores',
         plans: {
             start: {
@@ -306,7 +306,7 @@ export const pt = {
     hero: {
         title: 'O Ecossistema Jurídico',
         titleAccent: 'Modular & Inteligente',
-        subtitle: 'Uma arquitetura BYODB (Bring Your Own Database) completa para escritórios de alta performance. Seu dado, sua infraestrutura, nossos módulos inteligentes.',
+        subtitle: 'A plataforma de gestão jurídica que se adapta à sua rotina. Assine o plano ideal para você e pague de forma flexível, com a tranquilidade que você merece.',
         ctaPrimary: 'Começar Agora',
         ctaSecondary: 'Ver planos e preços',
     },
@@ -1051,7 +1051,7 @@ export const pt = {
             title: 'Seu momento na advocacia,',
             titleAccent: 'nosso melhor plano.',
             subtitle: 'Escolha o plano que acompanha o seu ritmo. Do autônomo ao departamento jurídico corporativo, temos a arquitetura exata para o seu crescimento.',
-            cancelGuarantee: 'O ecossistema jurídico sem taxa de adesão, sem multas contratuais e sem fidelidade. Assine hoje, cancele quando quiser.'
+            cancelGuarantee: 'Liberdade total: pague mensal, trimestral ou anual e aproveite descontos progressivos por sua previsibilidade financeira. Sem pegadinhas, sem amarras e com a garantia de cancelamento a qualquer momento.'
         },
         plans: {
             start: {
@@ -1139,10 +1139,10 @@ export const pt = {
             titleAccent: 'Ecossistema?',
             subtitle: 'Ferramentas isoladas geram retrabalho. Desenhamos nossos planos para garantir o Flow perfeito. Um módulo alimenta o outro, eliminando 100% da digitação manual de dados.',
             items: [
-                { title: 'Sentinel Captura', desc: 'Identifica o processo na distribuição.' },
-                { title: 'Nexus Delega', desc: 'Cria a tarefa para sua equipe.' },
-                { title: 'Scriptor Redige', desc: 'IA gera a defesa em minutos.' },
-                { title: 'Vox Notifica', desc: 'Avisa o cliente automaticamente.' }
+                { title: 'Flexibilidade Total', desc: 'Escolha o ciclo de pagamento que melhor se adapta ao seu fluxo de caixa: mensal, trimestral, semestral ou anual.' },
+                { title: 'Previsibilidade Financeira', desc: 'Sem juros ou surpresas. Planeje o futuro do seu escritório com total controle sobre seus investimentos em tecnologia.' },
+                { title: 'Descontos Progressivos', desc: 'Recompensamos sua confiança. Quanto maior o ciclo escolhido, maior o desconto aplicado automaticamente.' },
+                { title: 'Paz Mental Garantida', desc: 'Cancelamento simples e rápido. Você fica conosco pela clareza e eficiência que entregamos, não por um contrato.' }
             ]
         },
         aLaCarte: {
@@ -1160,11 +1160,25 @@ export const pt = {
                 cta: 'Agendar Demo'
             }
         },
+        subscriptionModel: {
+            title: 'Assinatura Inteligente vs. Parcelamento Comum',
+            subtitle: 'Entenda por que nosso modelo é o aliado definitivo do seu fluxo de caixa e limite bancário.',
+            subscription: {
+                title: 'Modelo Veritum (Assinatura)',
+                desc: 'Apenas o valor do ciclo (mensal, trimestral etc.) é debitado no seu cartão. Seu limite de crédito fica livre para as necessidades do dia a dia do escritório.'
+            },
+            installment: {
+                title: 'Modelo Comum (Parcelado)',
+                desc: 'O valor total do ano é bloqueado de uma só vez no seu cartão, consumindo seu limite e dificultando novas operações financeiras.'
+            },
+            modelDescription: "Diferente de uma compra parcelada tradicional, que bloqueia o limite total do seu cartão logo no primeiro dia, o Veritum PRO utiliza um modelo de Assinatura Recorrente Inteligente. Isso significa que cobramos apenas o valor exato do ciclo atual (mensal, trimestral, semestral ou anual) a cada renovação. O seu limite de crédito permanece livre e o fluxo de caixa do seu escritório fica protegido. Acesso premium à nossa tecnologia, sem o peso de uma dívida longa."
+        },
         faq: {
             title: 'Dúvidas Frequentes',
             questions: [
                 { q: 'O que acontece se eu quiser cancelar meu plano?', a: 'Nada de ligações demoradas ou multas escondidas. Você cancela com um clique direto no seu painel. Sem carência e sem fidelidade. No Veritum PRO, nós não te prendemos por contrato, nós te conquistamos pela excelência do serviço. Caso decida sair, você poderá exportar todos os seus dados livremente antes do encerramento.' },
                 { q: 'Preciso de cartão de crédito para o teste grátis?', a: 'Não. Acreditamos na nossa tecnologia. Você testa os planos Start ou Growth por 14 dias com acesso total, sem burocracia.' },
+                { q: 'Qual a diferença entre a Assinatura do Veritum PRO e uma compra parcelada?', a: 'Diferente de uma compra parcelada, onde o valor total (ex: anual) bloqueia o limite do seu cartão de crédito, o modelo de assinatura do Veritum PRO realiza cobranças periódicas (mensal, trimestral, etc.). Isso significa que apenas o valor do ciclo atual é processado, mantendo seu limite livre para outras necessidades do escritório. Além disso, as assinaturas são renovadas automaticamente, mas com a liberdade de cancelar sem as burocracias de estorno de parcelas bancárias.' },
                 { q: 'Como funciona o limite de processos?', a: 'O sistema não cobra por "processo arquivado". Nós precificamos baseados nos seus casos ativos, garantindo que você pague apenas pelo que gera esforço real.' },
                 { q: 'Posso mudar de plano depois?', a: 'A qualquer momento. O Veritum PRO tem uma arquitetura modular. Faça upgrade ou downgrade com apenas um clique a partir das suas configurações.' }
             ]

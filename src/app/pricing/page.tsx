@@ -7,7 +7,7 @@ import {
     Shield, BarChart3, MessageSquare, Wallet,
     PenTool, Radar, HelpCircle, Briefcase,
     Building2, Users2, Sparkles, Send, Calendar as CalendarIcon,
-    ChevronLeft, LogOut, LayoutDashboard
+    ChevronLeft, LogOut, LayoutDashboard, X
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
@@ -446,8 +446,12 @@ export default function PricingPage() {
                                         (!currentUser || isSocioAdmin) && (
                                             <button
                                                 onClick={() => {
-                                                    if (plan.name.toLowerCase().includes('strategy') || plan.name.toLowerCase().includes('estrategia')) {
-                                                        setIsDemoModalOpen(true);
+                                                    const isStrategy = plan.name.toLowerCase().includes('strategy') || plan.name.toLowerCase().includes('estrategia');
+                                                    if (isStrategy && !currentUser) {
+                                                        setIsAuthModalOpen(true);
+                                                    } else if (isStrategy && currentUser) {
+                                                        setCheckoutData({ type: 'plan', planName: plan.name });
+                                                        setIsCheckoutOpen(true);
                                                     } else if (currentUser) {
                                                         setCheckoutData({ type: 'plan', planName: plan.name });
                                                         setIsCheckoutOpen(true);
@@ -460,7 +464,7 @@ export default function PricingPage() {
                                                     : 'bg-indigo-600 text-white shadow-2xl shadow-indigo-600/40 hover:bg-indigo-700 hover:scale-[1.02]'
                                                     }`}
                                             >
-                                                {currentUser ? (t('management.settings.plan.acquirePlan') || 'Adquirir Plano') : (plan.name.toLowerCase().includes('strategy') || plan.name.toLowerCase().includes('estrategia') ? (t('pricingPage.plans.strategy.cta') || 'Agendar Demonstração') : (t('pricingPage.plans.start.cta') || 'Começar Teste Grátis'))}
+                                                {currentUser ? (t('management.settings.plan.acquirePlan') || 'Adquirir Plano') : (t('pricingPage.plans.start.cta') || 'Começar Teste Grátis')}
                                             </button>
                                         )
                                     )}
@@ -693,7 +697,60 @@ export default function PricingPage() {
                     </div>
                 </div>
             </section>
+            {/* Subscription vs Installment Breakdown */}
+            <section className="py-20 px-6">
+                <div className="max-w-6xl mx-auto">
+                    <div className="bg-white dark:bg-slate-900 rounded-[3.5rem] p-10 md:p-16 border border-slate-100 dark:border-slate-800 shadow-2xl relative overflow-hidden">
+                        <div className="relative z-10 flex flex-col lg:flex-row items-center gap-16">
+                            <div className="lg:w-1/2 space-y-8">
+                                <span className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest">
+                                    Diferencial Veritum
+                                </span>
+                                <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white leading-tight uppercase tracking-tighter">
+                                    {t('pricingPage.subscriptionModel.title')}
+                                </h2>
+                                <p className="text-lg text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
+                                    {t('pricingPage.subscriptionModel.subtitle')}
+                                </p>
+                            </div>
+                            <div className="lg:w-1/2 grid grid-cols-1 gap-6 w-full">
+                                <div className="p-8 rounded-[2rem] bg-indigo-600 text-white shadow-xl shadow-indigo-600/20 transform hover:scale-[1.02] transition-all">
+                                    <div className="flex items-center gap-4 mb-4">
+                                        <div className="bg-white/20 p-2 rounded-xl">
+                                            <Check className="text-white" size={24} strokeWidth={3} />
+                                        </div>
+                                        <h4 className="text-xl font-bold">{t('pricingPage.subscriptionModel.subscription.title')}</h4>
+                                    </div>
+                                    <p className="text-indigo-50 font-medium leading-relaxed">
+                                        {t('pricingPage.subscriptionModel.subscription.desc')}
+                                    </p>
+                                </div>
+                                <div className="p-8 rounded-[2rem] bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 opacity-60 grayscale-[0.5]">
+                                    <div className="flex items-center gap-4 mb-4">
+                                        <div className="bg-slate-200 dark:bg-slate-700 p-2 rounded-xl text-slate-400">
+                                            <X size={24} strokeWidth={3} />
+                                        </div>
+                                        <h4 className="text-xl font-bold text-slate-700 dark:text-slate-300">{t('pricingPage.subscriptionModel.installment.title')}</h4>
+                                    </div>
+                                    <p className="text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
+                                        {t('pricingPage.subscriptionModel.installment.desc')}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
 
+                        <div className="mt-16 pt-12 border-t border-slate-100 dark:border-slate-800 relative z-10 text-center">
+                            <p className="text-slate-600 dark:text-slate-400 font-bold leading-relaxed italic max-w-4xl mx-auto px-4">
+                                "{t('pricingPage.subscriptionModel.modelDescription')}"
+                            </p>
+                        </div>
+
+                        {/* Abstract background shapes */}
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 blur-[100px] rounded-full pointer-events-none"></div>
+                        <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/5 blur-[100px] rounded-full pointer-events-none"></div>
+                    </div>
+                </div>
+            </section>
 
 
             {/* FAQ */}

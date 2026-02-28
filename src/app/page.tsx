@@ -317,11 +317,18 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                         {t('hero.subtitle')}
                     </p>
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                        {(hasAccess || currentUser) && (
-                            <button onClick={() => openAuth('register')} className="w-full sm:w-auto bg-indigo-600 text-white px-10 py-4 rounded-[2rem] font-bold text-lg shadow-2xl shadow-indigo-600/40 hover:scale-105 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 cursor-pointer">
-                                {t('hero.ctaPrimary')} <ArrowRight size={20} />
-                            </button>
-                        )}
+                        <button
+                            onClick={() => {
+                                if (currentUser) {
+                                    router.push('/veritum');
+                                } else {
+                                    openAuth('register');
+                                }
+                            }}
+                            className="w-full sm:w-auto bg-indigo-600 text-white px-10 py-4 rounded-[2rem] font-bold text-lg shadow-2xl shadow-indigo-600/40 hover:scale-105 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                        >
+                            {t('hero.ctaPrimary')} <ArrowRight size={20} />
+                        </button>
                         <Link href="/pricing" className="w-full sm:w-auto px-10 py-4 rounded-[2rem] border border-slate-200 dark:border-slate-800 font-bold text-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-center cursor-pointer">
                             {t('hero.ctaSecondary')}
                         </Link>

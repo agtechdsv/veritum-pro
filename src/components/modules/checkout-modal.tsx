@@ -24,6 +24,7 @@ import {
     Check,
     User,
     ShieldCheck,
+    Shield,
     Lock,
     Loader2
 } from "lucide-react";
@@ -102,7 +103,7 @@ export function CheckoutModal({
             boleto: "BOLETO",
             card: "CARTÃO",
             installments: "Parcelamento",
-            secureEnv: "Ambiente seguro e criptografado. Sua assinatura será ativada instantaneamente após a confirmação.",
+            secureEnv: "Ambiente 100% seguro. Pagamento processado via Asaas. Sem juros, sem taxas ocultas e cancelamento a qualquer momento direto pelo seu painel.",
             confirmPay: "Confirmar e Pagar",
             securePayment: "Pagamento Seguro via ASAAS S.A.",
             congrats: "PARABÉNS!",
@@ -114,13 +115,15 @@ export function CheckoutModal({
             payFull: "Pagar à Vista",
             payInstallments: "Parcelar (até 12x)",
             redirectMsg: "Você será redirecionado para o ambiente de pagamento seguro do Asaas.",
-            incentiveMsg: "Prepare-se para transformar sua produtividade com as ferramentas exclusivas do Veritum Pro. Estamos quase lá!",
+            incentiveMsg: "Prepare-se para transformar sua produtividade. Escolha o ciclo que garante sua paz mental e aproveite nossos descontos progressivos — sua advocacia agradece a previsibilidade!",
             paymentReady: "PAGAMENTO GERADO!",
             paymentReadyMsg: "Sua cobrança foi preparada. Clique no botão abaixo para abrir o ambiente seguro de pagamento do Asaas e concluir a ativação.",
             goToPayment: "Abrir Checkout Asaas",
             planDiscountLabel: "Desconto Plano",
             cashDiscountLabel: "Bônus à Vista",
             popupBlocked: "⚠️ Janela bloqueada pelo navegador. Clique no botão 'Permitir' na barra de endereços para autorizar o checkout do ASAAS, ou clique no botão abaixo para concluir o pagamento agora.",
+            subscriptionNoteTitle: "Economize seu limite",
+            subscriptionNoteDesc: "Diferente de uma compra comum, apenas o valor do ciclo atual será lançado no seu cartão. Seu limite de crédito permanece livre!",
         },
         en: {
             selectedSub: "Selected Subscription",
@@ -132,6 +135,8 @@ export function CheckoutModal({
             savings: "Savings",
             totalValue: "Total",
             benefits: "Included Benefits",
+            subscriptionNoteTitle: "Save your card limit",
+            subscriptionNoteDesc: "Unlike a regular purchase, only the current cycle value will be charged. Your credit limit stays free for your daily needs!",
             identification: "Identification",
             step1: "Step 1: Your details",
             document: "Document (ID or Tax ID)",
@@ -172,6 +177,8 @@ export function CheckoutModal({
             savings: "Ahorro",
             totalValue: "Total",
             benefits: "Beneficios Incluidos",
+            subscriptionNoteTitle: "Ahorre su límite",
+            subscriptionNoteDesc: "A diferencia de una compra normal, solo se cargará el valor del ciclo actual en su tarjeta. ¡Su límite de crédito permanece libre!",
             identification: "Identificación",
             step1: "Paso 1: Sus datos",
             document: "Documento (DNI o RUC)",
@@ -594,6 +601,19 @@ export function CheckoutModal({
                                     >
                                         {t.yearly}
                                     </button>
+                                </div>
+                                <div className="mb-10 p-5 rounded-3xl bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800/50 flex gap-4 items-start shadow-sm">
+                                    <div className="bg-indigo-100 dark:bg-indigo-800 p-2 rounded-xl text-indigo-600 dark:text-indigo-400">
+                                        <Shield size={18} strokeWidth={3} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <h5 className="text-[11px] font-black uppercase tracking-wider text-indigo-700 dark:text-indigo-300">
+                                            {t.subscriptionNoteTitle}
+                                        </h5>
+                                        <p className="text-[10px] font-bold text-indigo-600/70 dark:text-indigo-400/70 leading-relaxed">
+                                            {t.subscriptionNoteDesc}
+                                        </p>
+                                    </div>
                                 </div>
 
                                 {/* Values Breakdown */}
