@@ -606,7 +606,9 @@ export const pt = {
                 yearly: 'Anual',
                 liberated: 'Liberado',
                 current: 'Atual',
-                acquirePlan: 'Adquirir Plano'
+                acquirePlan: 'Adquirir Plano',
+                aLaCarteModules: 'Módulos Avulsos',
+                acquireModule: 'Adquirir Módulo'
             }
         },
         organization: {

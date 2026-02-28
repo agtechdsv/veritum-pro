@@ -78,6 +78,9 @@ export interface Plan {
     quarterly_discount: number;
     semiannual_discount: number;
     yearly_discount: number;
+    yearly_price: number;
+    installments: number;
+    yearly_cash_discount: number;
     features: {
         en: string[];
         es: string[];

@@ -32,13 +32,28 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, supabase, onPlanClick 
     // Normalize data
     const profile = user.profile || user;
     const displayName = profile.name || user.user_metadata?.full_name || t('common.user');
-    const displayRole = profile.translated_group_name || profile.access_group_name || (
-        profile.role?.toLowerCase().includes('master') ? t('management.users.roles.master') :
-            profile.role?.toLowerCase().includes('sócio') ? t('management.users.roles.partnerAdmin') :
-                profile.role?.toLowerCase().includes('admin') ? t('management.users.roles.admin') :
-                    profile.role?.toLowerCase().includes('operador') ? t('management.users.roles.operator') :
-                        profile.role || t('common.user')
-    );
+    const getDisplayRole = () => {
+        if (profile.translated_group_name) return profile.translated_group_name;
+
+        const groupName = profile.access_group_name || '';
+        const roleName = profile.role || '';
+
+        // Match against known role keys for translation
+        if (groupName.toLowerCase().includes('master') || roleName.toLowerCase().includes('master')) return t('management.users.roles.master');
+        if (groupName.toLowerCase().includes('sócio-administrador') || roleName.toLowerCase().includes('sócio-administrador') ||
+            groupName.toLowerCase().includes('sócio administrador') || roleName.toLowerCase().includes('sócio administrador')) return t('management.users.roles.partnerAdmin');
+        if (groupName.toLowerCase().includes('administrador') || roleName.toLowerCase().includes('administrador')) return t('management.users.roles.admin');
+        if (groupName.toLowerCase().includes('operador') || roleName.toLowerCase().includes('operador')) return t('management.users.roles.operator');
+        if (groupName.toLowerCase().includes('estagiário') || roleName.toLowerCase().includes('estagiário')) return t('management.users.roles.intern');
+        if (groupName.toLowerCase().includes('paralegal') || roleName.toLowerCase().includes('paralegal')) return t('management.users.roles.paralegal');
+        if (groupName.toLowerCase().includes('financeiro') || roleName.toLowerCase().includes('financeiro')) return t('management.users.roles.financial');
+        if (groupName.toLowerCase().includes('sênior') || roleName.toLowerCase().includes('sênior')) return t('management.users.roles.senior');
+        if (groupName.toLowerCase().includes('coordenador') || roleName.toLowerCase().includes('coordenador')) return t('management.users.roles.coordinator');
+
+        return groupName || roleName || t('common.user');
+    };
+
+    const displayRole = getDisplayRole();
     const planName = profile.plan_name;
     const avatarUrl = profile.avatar_url || user.user_metadata?.avatar_url || user.user_metadata?.picture;
 

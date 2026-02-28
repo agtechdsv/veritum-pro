@@ -624,7 +624,9 @@ export const es = {
                 "yearly": "Anual",
                 "liberated": "Liberado",
                 "current": "Actual",
-                "acquirePlan": "Adquirir Plan"
+                "acquirePlan": "Adquirir Plan",
+                "aLaCarteModules": "Módulos a la Carta",
+                "acquireModule": "Adquirir Módulo"
             }
         },
         "organization": {

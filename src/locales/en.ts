@@ -606,7 +606,9 @@ export const en = {
                 yearly: 'Annual',
                 liberated: 'Liberated',
                 current: 'Current',
-                acquirePlan: 'Acquire Plan'
+                acquirePlan: 'Acquire Plan',
+                aLaCarteModules: 'A La Carte Modules',
+                acquireModule: 'Acquire Module'
             }
         },
         organization: {

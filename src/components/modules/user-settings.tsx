@@ -487,7 +487,7 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 ml-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-1.5 h-6 bg-indigo-500 rounded-full" />
-                                                <h3 className="text-lg font-black uppercase tracking-tighter text-slate-800 dark:text-white">Módulos Avulsos</h3>
+                                                <h3 className="text-lg font-black uppercase tracking-tighter text-slate-800 dark:text-white">{t('management.settings.plan.aLaCarteModules') || 'Módulos Avulsos'}</h3>
                                             </div>
                                             <div className="flex items-center bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl self-start md:self-auto">
                                                 <button
@@ -580,7 +580,7 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                                                                 onClick={() => handleCheckout('module', p.name)}
                                                                 className="w-full py-4 bg-slate-900 text-white dark:bg-white dark:text-slate-900 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:scale-105 transition-all shadow-lg"
                                                             >
-                                                                Adquirir Módulo
+                                                                {t('management.settings.plan.acquireModule') || 'Adquirir Módulo'}
                                                             </button>
                                                         )}
                                                     </div>
