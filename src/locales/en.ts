@@ -1160,11 +1160,25 @@ export const en = {
                 cta: 'Schedule Demo'
             }
         },
+        subscriptionModel: {
+            title: 'Intelligent Subscription vs. Common Installment',
+            subtitle: 'Understand why our model is the ultimate ally for your cash flow and bank limit.',
+            subscription: {
+                title: 'Veritum Model (Subscription)',
+                desc: 'Only the exact amount of the current cycle (monthly, quarterly, etc.) is charged to your card. Your credit limit remains free for the daily needs of the firm.'
+            },
+            installment: {
+                title: 'Common Model (Installment)',
+                desc: 'The total amount for the year is blocked all at once on your card, consuming your limit and making new financial operations difficult.'
+            },
+            modelDescription: "Unlike a traditional installment purchase, which blocks your card's total limit on the first day, Veritum PRO uses an Intelligent Recurring Subscription model. This means we charge only the exact amount of the current cycle (monthly, quarterly, semiannual, or annual) at each renewal. Your credit limit remains free and your office's cash flow is protected. Premium access to our technology, without the weight of long-term debt."
+        },
         faq: {
             title: 'Frequently Asked Questions',
             questions: [
                 { q: 'What happens if I want to cancel my plan?', a: 'No long phone calls or hidden fees. You cancel with one click directly in your dashboard. No grace periods and no lock-in. At Veritum PRO, we don\'t trap you with contracts, we win you over with service excellence. If you decide to leave, you can freely export all your data before closing.' },
                 { q: 'Do I need a credit card for the free trial?', a: 'No. We believe in our technology. You test the Start or Growth plans for 14 days with full access, no strings attached.' },
+                { q: 'What is the difference between a Veritum PRO Subscription and an installment purchase?', a: 'Unlike an installment purchase, where the total amount (e.g., annual) blocks your credit card limit, the Veritum PRO subscription model performs periodic charges (monthly, quarterly, etc.). This means only the current cycle amount is processed, keeping your limit free for other office needs. Additionally, subscriptions are automatically renewed, but with the freedom to cancel without the bureaucracy of bank installment reversals.' },
                 { q: 'How does the case limit work?', a: 'The system doesn\'t charge per "archived case". We price based on your active cases, ensuring you pay only for what generates real effort.' },
                 { q: 'Can I change plans later?', a: 'At any time. Veritum PRO has a modular architecture. Upgrade or downgrade with just one click in your settings.' }
             ]

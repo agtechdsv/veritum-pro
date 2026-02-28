@@ -1116,6 +1116,19 @@ export const es = {
                 "cta": "Agendar Demostración"
             }
         },
+        "subscriptionModel": {
+            "title": "Suscripción Inteligente vs. Pago en Cuotas Común",
+            "subtitle": "Entienda por qué nuestro modelo es el aliado definitivo de su flujo de caja y límite bancario.",
+            "subscription": {
+                "title": "Modelo Veritum (Suscripción)",
+                "desc": "Solo el valor del ciclo (mensual, trimestral, etc.) se debita en su tarjeta. Su límite de crédito queda libre para las necesidades diarias del despacho."
+            },
+            "installment": {
+                "title": "Modelo Común (Cuotas)",
+                "desc": "El valor total del año se bloquea de una sola vez en su tarjeta, consumiendo su límite y dificultando nuevas operaciones financieras."
+            },
+            "modelDescription": "A diferencia de una compra en cuotas tradicional, que bloqueia el límite total de su tarjeta desde el primer día, Veritum PRO utiliza un modelo de Suscripción Recurrente Inteligente. Esto significa que cobramos solo el valor exacto del ciclo actual (mensual, trimestral, semestral o anual) en cada renovación. Su límite de crédito permanece libre y el flujo de caja de su oficina queda protegido. Acceso premium a nuestra tecnología, sin el peso de una deuda larga."
+        },
         "comparison": {
             "label": "¿Quiere analizar cada detalle técnico?",
             "hide": "Ocultar",
@@ -1199,7 +1212,11 @@ export const es = {
                 },
                 {
                     "q": "¿Necesito tarjeta de crédito para la prueba gratis?",
-                    "a": "No. Creemos en nuestra tecnología. Usted prueba los planes Start o Growth por 14 días con acceso total, sin burocracia."
+                    "a": "No. Creemos en nuestra tecnología. Usted prueba los planes Start o Growth por 14 dias con acceso total, sin burocracia."
+                },
+                {
+                    "q": "¿Cuál es la diferencia entre la Suscripción de Veritum PRO y una compra en cuotas?",
+                    "a": "A diferencia de una compra en cuotas, donde el valor total (ej: anual) bloquea el límite de su tarjeta de crédito, el modelo de suscripción de Veritum PRO realiza cobros periódicos (mensual, trimestral, etc.). Esto significa que solo se procesa el valor del ciclo actual, manteniendo su límite libre para otras necesidades del despacho. Además, las suscripciones se renuevan automáticamente, pero con la libertad de cancelar sin las burocracias de reembolsos de cuotas bancarias."
                 },
                 {
                     "q": "¿Cómo funciona el límite de procesos?",
