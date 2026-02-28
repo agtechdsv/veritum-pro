@@ -190,6 +190,18 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
 
                 window.location.href = '/veritum';
             } else {
+                // Front-end validation for Register
+                if (password !== confirmPassword) {
+                    setLoading(false);
+                    setError(t('auth.errors.passwordsDoNotMatch'));
+                    return;
+                }
+                if (password.length < 6) {
+                    setLoading(false);
+                    setError(t('auth.errors.passwordTooShort'));
+                    return;
+                }
+
                 const result = await registerPublicUser({
                     email,
                     password,
@@ -420,8 +432,8 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
 
                                 <button
                                     type="submit"
-                                    disabled={loading || password !== confirmPassword || password.length < 6}
-                                    className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-2xl shadow-indigo-600/40 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                    disabled={loading}
+                                    className="w-full bg-branding-gradient animate-gradient text-white py-4 rounded-2xl font-bold shadow-2xl shadow-blue-600/20 hover:scale-[1.01] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                                 >
                                     {loading ? t('common.loading') : t('auth.resetTitle')} <ArrowRight size={20} />
                                 </button>
@@ -496,10 +508,10 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
 
                                 <button
                                     type="submit"
-                                    disabled={loading || (currentMode === 'register' && (password !== confirmPassword || password.length < 6))}
-                                    className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-2xl shadow-indigo-600/40 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                    disabled={loading}
+                                    className="w-full bg-branding-gradient animate-gradient text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-2xl shadow-blue-600/20 hover:scale-[1.01] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                                 >
-                                    {loading ? t('common.loading') : (currentMode === 'login' ? t('auth.loginButton') : t('auth.registerButton'))} <ArrowRight size={20} />
+                                    {loading ? t('common.loading') : (currentMode === 'login' ? t('auth.loginButton') : t('auth.registerButton'))} <ArrowRight size={20} strokeWidth={3} />
                                 </button>
 
                                 {currentMode === 'register' && password && confirmPassword && password !== confirmPassword && (

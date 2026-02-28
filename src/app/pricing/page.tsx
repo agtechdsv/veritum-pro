@@ -445,14 +445,21 @@ export default function PricingPage() {
                                     ) : (
                                         (!currentUser || isSocioAdmin) && (
                                             <button
-                                                onClick={() => {
+                                                onClick={async () => {
+                                                    let userToUse = currentUser;
+                                                    if (userToUse === undefined) {
+                                                        const supabase = createMasterClient();
+                                                        const { data: { user } } = await supabase.auth.getUser();
+                                                        userToUse = user;
+                                                    }
+
                                                     const isStrategy = plan.name.toLowerCase().includes('strategy') || plan.name.toLowerCase().includes('estrategia');
-                                                    if (isStrategy && !currentUser) {
+                                                    if (isStrategy && !userToUse) {
                                                         setIsAuthModalOpen(true);
-                                                    } else if (isStrategy && currentUser) {
+                                                    } else if (isStrategy && userToUse) {
                                                         setCheckoutData({ type: 'plan', planName: plan.name });
                                                         setIsCheckoutOpen(true);
-                                                    } else if (currentUser) {
+                                                    } else if (userToUse) {
                                                         setCheckoutData({ type: 'plan', planName: plan.name });
                                                         setIsCheckoutOpen(true);
                                                     } else {
@@ -461,7 +468,7 @@ export default function PricingPage() {
                                                 }}
                                                 className={`w-full py-5 rounded-2xl font-black text-lg transition-all ${!plan.recommended
                                                     ? 'border-2 border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400 bg-transparent hover:bg-indigo-50 dark:hover:bg-indigo-900/10 shadow-none'
-                                                    : 'bg-indigo-600 text-white shadow-2xl shadow-indigo-600/40 hover:bg-indigo-700 hover:scale-[1.02]'
+                                                    : 'bg-branding-gradient animate-gradient text-white shadow-2xl shadow-blue-600/30 hover:scale-[1.02]'
                                                     }`}
                                             >
                                                 {currentUser ? (t('management.settings.plan.acquirePlan') || 'Adquirir Plano') : (t('pricingPage.plans.start.cta') || 'Começar Teste Grátis')}
@@ -596,8 +603,15 @@ export default function PricingPage() {
                                                 ) : (
                                                     (!currentUser || isSocioAdmin) && (
                                                         <button
-                                                            onClick={() => {
-                                                                if (currentUser) {
+                                                            onClick={async () => {
+                                                                let userToUse = currentUser;
+                                                                if (userToUse === undefined) {
+                                                                    const supabase = createMasterClient();
+                                                                    const { data: { user } } = await supabase.auth.getUser();
+                                                                    userToUse = user;
+                                                                }
+
+                                                                if (userToUse) {
                                                                     setCheckoutData({ type: 'module', moduleName: plan.name });
                                                                     setIsCheckoutOpen(true);
                                                                 } else {

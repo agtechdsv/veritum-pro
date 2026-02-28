@@ -400,7 +400,7 @@ export function CheckoutModal({
         if (billingCycle === 'quarterly') cycleText = t.quarterly;
         if (billingCycle === 'semiannual') cycleText = t.semiannual;
         if (billingCycle === 'yearly') cycleText = t.yearly;
-        return `Você selecionou o plano ${currentPlan?.name} com faturamento ${cycleText.toLowerCase()}.`;
+        return `Você selecionou o ${currentPlan?.name} com faturamento ${cycleText.toLowerCase()}.`;
     };
 
     const handlePayment = async () => {

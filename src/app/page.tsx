@@ -120,8 +120,9 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
 
 
     useEffect(() => {
-        const fetchUser = async () => {
+        const loadInitialData = async () => {
             const { data: { user } } = await supabase.auth.getUser();
+
             if (user) {
                 const { data: profile, error } = await supabase
                     .from('users')
@@ -208,19 +209,15 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
             } else {
                 setCurrentUser(null);
             }
-        };
-        fetchUser();
 
-        const fetchData = async () => {
             const { data: suitesRes } = await supabase.from('suites').select('*').eq('active', true).order('order_index', { ascending: true });
             if (suitesRes) setSuites(suitesRes);
 
-            // Now resolve auth and everything else
-            await fetchUser();
             setIsLoading(false);
         };
-        fetchData();
-    }, [supabase]);
+
+        loadInitialData();
+    }, [supabase, locale]);
 
     const openAuth = (mode: 'login' | 'register') => {
         setAuthMode(mode);
@@ -318,16 +315,22 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                     </p>
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                         <button
-                            onClick={() => {
-                                if (currentUser) {
+                            onClick={async () => {
+                                let userToUse = currentUser;
+                                if (userToUse === undefined) {
+                                    const { data: { user } } = await supabase.auth.getUser();
+                                    userToUse = user;
+                                }
+
+                                if (userToUse) {
                                     router.push('/veritum');
                                 } else {
                                     openAuth('register');
                                 }
                             }}
-                            className="w-full sm:w-auto bg-indigo-600 text-white px-10 py-4 rounded-[2rem] font-bold text-lg shadow-2xl shadow-indigo-600/40 hover:scale-105 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                            className="w-full sm:w-auto bg-branding-gradient animate-gradient text-white px-10 py-4 rounded-[2rem] font-black text-lg shadow-2xl shadow-blue-600/30 hover:scale-105 transition-all flex items-center justify-center gap-2 cursor-pointer"
                         >
-                            {t('hero.ctaPrimary')} <ArrowRight size={20} />
+                            {t('hero.ctaPrimary')} <ArrowRight size={20} strokeWidth={3} />
                         </button>
                         <Link href="/pricing" className="w-full sm:w-auto px-10 py-4 rounded-[2rem] border border-slate-200 dark:border-slate-800 font-bold text-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-center cursor-pointer">
                             {t('hero.ctaSecondary')}
