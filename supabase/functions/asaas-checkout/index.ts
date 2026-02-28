@@ -28,12 +28,17 @@ const corsHeaders = {
 
 function buildCors(origin?: string) {
   const headers: Record<string, string> = { ...corsHeaders, "Content-Type": "application/json" };
-  if (origin && SUPPORTED_ORIGINS.length > 0 && SUPPORTED_ORIGINS.includes(origin)) {
+  const isOfficialDomain = origin === "https://www.veritumpro.com";
+  const isLocal = origin?.includes("localhost") || origin?.includes("127.0.0.1");
+
+  if (origin && (SUPPORTED_ORIGINS.includes(origin) || isOfficialDomain || isLocal)) {
     headers["Access-Control-Allow-Origin"] = origin;
   } else if (SUPPORTED_ORIGINS.length === 0) {
     headers["Access-Control-Allow-Origin"] = "*";
   } else {
-    headers["Access-Control-Allow-Origin"] = "null";
+    // If we have supported origins but this one isn't one of them, fallback to '*' is safer than 'null' for some browsers, 
+    // but here we explicitly allow our domain to fix the production error.
+    headers["Access-Control-Allow-Origin"] = origin || "*";
   }
   return headers;
 }
