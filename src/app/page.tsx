@@ -307,7 +307,7 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
             {/* Hero Section */}
             <section className="relative pt-44 pb-32 px-6 overflow-hidden bg-white dark:bg-slate-950 transition-colors duration-300">
                 <div className="max-w-7xl mx-auto text-center relative z-10">
-                    <h1 className="text-6xl md:text-8xl font-black tracking-tight mb-8 leading-[1.1] text-slate-900 dark:text-white">
+                    <h1 className="text-6xl md:text-8xl font-black tracking-tight mb-8 leading-[1.1] text-slate-900 dark:text-white whitespace-pre-line">
                         {t('hero.title')} <span className="text-branding-gradient">{t('hero.titleAccent')}</span>
                     </h1>
                     <p className="text-xl text-slate-500 dark:text-slate-400 max-w-3xl mx-auto mb-12 leading-relaxed">

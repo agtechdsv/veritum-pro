@@ -304,8 +304,8 @@ export const pt = {
         masterGenericDesc: 'Ajustes estruturais de {name}.'
     },
     hero: {
-        title: 'O Ecossistema Jurídico',
-        titleAccent: 'Modular & Inteligente',
+        title: 'Veritum PRO',
+        titleAccent: '\nA verdade sobre o seu escritório, o controle sobre o seu futuro.',
         subtitle: 'A plataforma de gestão jurídica que se adapta à sua rotina. Assine o plano ideal para você e pague de forma flexível, com a tranquilidade que você merece.',
         ctaPrimary: 'Começar Agora',
         ctaSecondary: 'Ver planos e preços',

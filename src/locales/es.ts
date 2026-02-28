@@ -322,8 +322,8 @@ export const es = {
         "masterGenericDesc": "Ajustes estructurales de {name}."
     },
     "hero": {
-        "title": "El Ecosistema Jurídico",
-        "titleAccent": "Modular e Inteligente",
+        "title": "Veritum PRO",
+        "titleAccent": "\nLa verdad sobre su despacho, el control sobre su futuro.",
         "subtitle": "Una arquitectura BYODB (Bring Your Own Database) completa para despachos de alto rendimiento. Sus datos, su infraestructura, nuestros módulos inteligentes.",
         "ctaPrimary": "Comenzar Ahora",
         "ctaSecondary": "Ver planes y precios"

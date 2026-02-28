@@ -304,8 +304,8 @@ export const en = {
         masterGenericDesc: 'Structural adjustments of {name}.'
     },
     hero: {
-        title: 'The Legal System',
-        titleAccent: 'Modular & Intelligent',
+        title: 'Veritum PRO',
+        titleAccent: '\nThe truth about your office, the control over your future.',
         subtitle: 'A complete BYODB (Bring Your Own Database) architecture for high-performance law firms. Your data, your infrastructure, our intelligent modules.',
         ctaPrimary: 'Get Started',
         ctaSecondary: 'View plans and pricing',
