@@ -152,7 +152,7 @@ export async function updateUserDirectly(userId: string, formData: any) {
         .update({
             name: formData.name,
             role: formData.role,
-            username: formData.email,
+            email: formData.email,
             plan_id: formData.plan_id || null,
             access_group_id: formData.access_group_id || null
         })

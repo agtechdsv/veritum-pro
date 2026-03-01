@@ -1,16 +1,16 @@
 
 import React, { useState, useEffect } from 'react';
-import { Credentials, FinancialTransaction, Lawsuit, Person } from '@/types';
+import { Credentials, FinancialTransaction, Lawsuit, Person, User } from '@/types';
 import {
     TrendingUp, TrendingDown, Clock, CreditCard, PieChart, Plus,
     Search, Filter, Calendar, MoreHorizontal, DollarSign,
     CheckCircle2, XCircle, AlertCircle, ArrowUpRight, ArrowDownRight,
-    Wallet, Receipt, Landmark, BarChart3, ChevronRight, Scale, User
+    Wallet, Receipt, Landmark, BarChart3, ChevronRight, Scale, User as UserIcon
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, AreaChart, Area } from 'recharts';
 import { createClient } from '@supabase/supabase-js';
 
-const Valorem: React.FC<{ credentials: Credentials; permissions: any }> = ({ credentials, permissions }) => {
+const Valorem: React.FC<{ credentials: Credentials; user: User; permissions: any }> = ({ credentials, user, permissions }) => {
     // Data State
     const [transactions, setTransactions] = useState<FinancialTransaction[]>([]);
     const [lawsuits, setLawsuits] = useState<Lawsuit[]>([]);
@@ -215,8 +215,8 @@ const Valorem: React.FC<{ credentials: Credentials; permissions: any }> = ({ cre
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${tx.status === 'Pago' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
-                                                        tx.status === 'Pendente' ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                                                            'bg-slate-100 text-slate-400 border-slate-200'
+                                                    tx.status === 'Pendente' ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                                        'bg-slate-100 text-slate-400 border-slate-200'
                                                     }`}>
                                                     {tx.status}
                                                 </span>

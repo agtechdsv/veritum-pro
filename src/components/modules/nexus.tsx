@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Credentials, Lawsuit, Task, TeamMember, Person } from '@/types';
-import { Plus, MoreHorizontal, Calendar, Scale, Search, Filter, ArrowRight, AlertTriangle, CheckCircle2, Clock, MapPin, Shield, User, Users, Save, XCircle, Pencil, ChevronRight, Zap } from 'lucide-react';
+import { Credentials, Lawsuit, Task, User, Person } from '@/types';
+import { Plus, MoreHorizontal, Calendar, Scale, Search, Filter, ArrowRight, AlertTriangle, CheckCircle2, Clock, MapPin, Shield, User as UserIcon, Users, Save, XCircle, Pencil, ChevronRight, Zap } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 import IntelligenceWidget from '../shared/intelligence-widget';
 import { useTranslation } from '@/contexts/language-context';
 
-const Nexus: React.FC<{ credentials: Credentials; permissions: any }> = ({ credentials, permissions }) => {
+const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }> = ({ credentials, user, permissions }) => {
     const { t } = useTranslation();
     const [view, setView] = useState<'kanban' | 'list'>('kanban');
     const [lawsuits, setLawsuits] = useState<Lawsuit[]>([]);
     const [tasks, setTasks] = useState<Task[]>([]);
-    const [team, setTeam] = useState<TeamMember[]>([]);
+    const [team, setTeam] = useState<User[]>([]);
     const [persons, setPersons] = useState<Person[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -31,10 +31,17 @@ const Nexus: React.FC<{ credentials: Credentials; permissions: any }> = ({ crede
     const fetchAll = async () => {
         setLoading(true);
         try {
+            // Hierarchy Logic for Team (Responsibles)
+            const conditions = [`id.eq.${user.id}`, `parent_user_id.eq.${user.id}`];
+            if (user.parent_user_id) {
+                conditions.push(`id.eq.${user.parent_user_id}`);
+                conditions.push(`parent_user_id.eq.${user.parent_user_id}`);
+            }
+
             const [lawData, taskData, teamData, personData] = await Promise.all([
                 supabase.from('lawsuits').select('*').is('deleted_at', null).limit(50),
                 supabase.from('tasks').select('*').is('deleted_at', null).limit(100),
-                supabase.from('team_members').select('*').is('deleted_at', null),
+                supabase.from('users').select('*').or(conditions.join(',')).eq('active', true),
                 supabase.from('persons').select('*').is('deleted_at', null)
             ]);
             setLawsuits(lawData.data || []);
@@ -255,10 +262,10 @@ const Nexus: React.FC<{ credentials: Credentials; permissions: any }> = ({ crede
 
                                         <div className="flex items-center justify-between mt-auto pt-3 border-t border-slate-50 dark:border-slate-800">
                                             <div className="flex items-center gap-2">
-                                                <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[8px] font-black border border-slate-200 dark:border-slate-700" title={resp?.full_name}>
-                                                    {resp?.full_name?.charAt(0) || <User size={10} />}
+                                                <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[8px] font-black border border-slate-200 dark:border-slate-700" title={resp?.name}>
+                                                    {resp?.name?.charAt(0) || <UserIcon size={10} />}
                                                 </div>
-                                                <span className="text-[10px] font-bold text-slate-400">{resp?.full_name?.split(' ')[0]}</span>
+                                                <span className="text-[10px] font-bold text-slate-400">{resp?.name?.split(' ')[0]}</span>
                                             </div>
                                             <div className="flex items-center gap-1 text-slate-400">
                                                 <Calendar size={10} />
@@ -357,7 +364,7 @@ const Nexus: React.FC<{ credentials: Credentials; permissions: any }> = ({ crede
                                                 className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white font-bold"
                                             >
                                                 <option value="">{t('modules.nexus.modals.lawsuit.selectTeam')}</option>
-                                                {team.map(t => <option key={t.id} value={t.id}>{t.full_name} ({t.role})</option>)}
+                                                {team.map(t => <option key={t.id} value={t.id}>{t.name} ({t.role})</option>)}
                                             </select>
                                         </div>
 
@@ -445,7 +452,7 @@ const Nexus: React.FC<{ credentials: Credentials; permissions: any }> = ({ crede
                                         className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white font-bold text-xs"
                                     >
                                         <option value="">{t('modules.nexus.modals.task.selectTeam')}</option>
-                                        {team.map(t => <option key={t.id} value={t.id}>{t.full_name} ({t.role})</option>)}
+                                        {team.map(t => <option key={t.id} value={t.id}>{t.name} ({t.role})</option>)}
                                     </select>
                                 </div>
 

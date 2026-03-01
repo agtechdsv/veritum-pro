@@ -1,22 +1,22 @@
 
 import React, { useState, useEffect } from 'react';
-import { Credentials, KnowledgeArticle, HistoricalOutcome, TeamMember, Lawsuit } from '@/types';
+import { Credentials, KnowledgeArticle, HistoricalOutcome, User, Lawsuit } from '@/types';
 import { GeminiService } from '@/services/gemini';
 import {
     Brain, Search, Info, CheckCircle, AlertTriangle, BookOpen,
     Sparkles, TrendingUp, Filter, History, ChevronRight,
     BarChart3, PieChart as PieChartIcon, Layout, Scale, Gavel,
-    Tag, User, Calendar, Plus, Save, Trash2, ExternalLink, XCircle
+    Tag, User as UserIcon, Calendar, Plus, Save, Trash2, ExternalLink, XCircle
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { createClient } from '@supabase/supabase-js';
 import IntelligenceWidget from '../shared/intelligence-widget';
 
-const Cognitio: React.FC<{ credentials: Credentials; permissions: any }> = ({ credentials, permissions }) => {
+const Cognitio: React.FC<{ credentials: Credentials; user: User; permissions: any }> = ({ credentials, user, permissions }) => {
     // Data State
     const [articles, setArticles] = useState<KnowledgeArticle[]>([]);
     const [outcomes, setOutcomes] = useState<HistoricalOutcome[]>([]);
-    const [team, setTeam] = useState<TeamMember[]>([]);
+    const [team, setTeam] = useState<User[]>([]);
     const [lawsuits, setLawsuits] = useState<Lawsuit[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -42,10 +42,17 @@ const Cognitio: React.FC<{ credentials: Credentials; permissions: any }> = ({ cr
     const fetchData = async () => {
         setLoading(true);
         try {
+            // Hierarchy Logic for Team (Responsibles)
+            const conditions = [`id.eq.${user.id}`, `parent_user_id.eq.${user.id}`];
+            if (user.parent_user_id) {
+                conditions.push(`id.eq.${user.parent_user_id}`);
+                conditions.push(`parent_user_id.eq.${user.parent_user_id}`);
+            }
+
             const [artRes, outRes, teamRes, lawRes] = await Promise.all([
                 supabase.from('knowledge_articles').select('*').order('created_at', { ascending: false }),
                 supabase.from('historical_outcomes').select('*'),
-                supabase.from('team_members').select('*').eq('is_active', true),
+                supabase.from('users').select('*').or(conditions.join(',')).eq('active', true),
                 supabase.from('lawsuits').select('*')
             ]);
             setArticles(artRes.data || []);
@@ -288,7 +295,7 @@ const Cognitio: React.FC<{ credentials: Credentials; permissions: any }> = ({ cr
                                 </p>
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2 text-[9px] font-bold text-slate-400">
-                                        <User size={12} /> Equipe Veritum
+                                        <UserIcon size={12} /> Equipe Veritum
                                         <span className="opacity-30">•</span>
                                         <Calendar size={12} /> {new Date(art.created_at || '').toLocaleDateString('pt-BR')}
                                     </div>

@@ -19,7 +19,6 @@ export enum ModuleId {
     SCHEDULING = 'scheduling',
     EMAIL_CONFIG = 'email_config',
     ACCESS_GROUPS = 'access_groups',
-    TEAM = 'team',
     PERSONS = 'persons',
     FINTECH = 'fintech'
 }
@@ -127,7 +126,6 @@ export interface Credentials {
 export interface User {
     id: string;
     name: string;
-    username: string;
     role: 'Master' | 'Administrador' | 'Operador' |
     'Sócio-Administrador' | 'Advogado Sênior / Coordenador' |
     'Advogado Associado / Júnior' | 'Estagiário / Paralegal' |
@@ -144,6 +142,7 @@ export interface User {
     access_group_name?: string;
     translated_group_name?: string;
     plan_name?: string;
+    oab_number?: string;
 }
 
 export interface Role {
@@ -209,16 +208,6 @@ export interface Lawsuit {
     value: number;
 }
 
-export interface TeamMember {
-    id: string;
-    full_name: string;
-    email: string;
-    phone?: string;
-    role: 'Sócio' | 'Advogado Associado' | 'Estagiário' | 'Paralegal' | 'Financeiro';
-    oab_number?: string;
-    is_active: boolean;
-    created_at?: string;
-}
 
 export interface Person {
     id: string;

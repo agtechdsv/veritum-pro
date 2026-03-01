@@ -51,7 +51,6 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
     const [formData, setFormData] = useState({
         name: '',
         email: '',
-        username: '',
         password: '',
         role: '',
         plan_id: '',
@@ -98,7 +97,7 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
     const fetchClients = async () => {
         const { data } = await supabase
             .from('users')
-            .select('id, name, username, role, active')
+            .select('id, name, email, role, active')
             .in('role', ['Sócio-Administrador', 'Sócio Administrador'])
             .order('name');
         if (data) setClients(data);
@@ -219,7 +218,7 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
 
     const filteredUsers = sortedUsers.filter(u => {
         const matchesSearch = u.name.toLowerCase().includes(filters.search.toLowerCase()) ||
-            u.username.toLowerCase().includes(filters.search.toLowerCase());
+            u.email.toLowerCase().includes(filters.search.toLowerCase());
         const matchesRole = filters.role === 'all' || u.role === filters.role;
         const matchesStatus = filters.status === 'all' ||
             (filters.status === 'active' ? u.active : !u.active);
@@ -331,7 +330,7 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
             setShowAddModal(false);
             setEditingUser(null);
             fetchUsers();
-            setFormData({ name: '', email: '', username: '', password: '', role: 'Operador', plan_id: '', access_group_id: '' });
+            setFormData({ name: '', email: '', password: '', role: 'Operador', plan_id: '', access_group_id: '' });
         } catch (err: any) {
             toast.error(err.message || t('management.users.toast.errorProcess'));
         }
@@ -374,8 +373,7 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
         setEditingUser(user);
         setFormData({
             name: user.name,
-            email: user.username,
-            username: user.username,
+            email: user.email || '',
             password: '',
             role: user.role as any,
             plan_id: user.plan_id || '',
@@ -404,7 +402,7 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                     <option value={currentUser.id}>{t('management.users.masterFilter.self')}</option>
                                     <optgroup label={t('management.users.masterFilter.clients')}>
                                         {clients.map(c => (
-                                            <option key={c.id} value={c.id}>🏢 {c.name} ({c.username})</option>
+                                            <option key={c.id} value={c.id}>🏢 {c.name} ({c.email})</option>
                                         ))}
                                     </optgroup>
                                 </select>
@@ -416,7 +414,7 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                         <button
                             onClick={() => {
                                 setEditingUser(null);
-                                setFormData({ name: '', email: '', username: '', password: '', role: 'Operador', plan_id: '', access_group_id: '' });
+                                setFormData({ name: '', email: '', password: '', role: 'Operador', plan_id: '', access_group_id: '' });
                                 setShowAddModal(true);
                             }}
                             className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold shadow-xl shadow-indigo-600/20 hover:scale-105 transition-all flex items-center gap-2 cursor-pointer"
@@ -536,7 +534,7 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                         </div>
                                         <div>
                                             <p className="font-black text-slate-800 dark:text-white leading-tight uppercase tracking-tight">{u.name}</p>
-                                            <p className="text-xs text-slate-400 font-medium">{u.username}</p>
+                                            <p className="text-xs text-slate-400 font-medium">{u.email}</p>
                                         </div>
                                     </div>
                                 </td>
@@ -628,7 +626,7 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                 </div>
                                 <div className="relative">
                                     <Mail className="absolute left-5 top-5 text-slate-400" size={20} />
-                                    <input required type="email" placeholder={t('management.users.modal.email')} disabled={!!editingUser} className="w-full pl-14 pr-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl font-bold focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white shadow-sm disabled:opacity-50" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value, username: e.target.value })} />
+                                    <input required type="email" placeholder={t('management.users.modal.email')} disabled={!!editingUser} className="w-full pl-14 pr-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl font-bold focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white shadow-sm disabled:opacity-50" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
                                 </div>
                                 <div className="relative">
                                     <Lock className="absolute left-5 top-5 text-slate-400" size={20} />

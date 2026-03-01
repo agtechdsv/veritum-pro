@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Credentials, MonitoringAlert, Clipping, Lawsuit } from '@/types';
+import { Credentials, MonitoringAlert, Clipping, Lawsuit, User } from '@/types';
 import {
     Search, Plus, AlertCircle, TrendingUp, TrendingDown, Minus,
     Shield, Activity, Bell, Filter, MoreHorizontal, ExternalLink,
@@ -11,7 +11,7 @@ import { createClient } from '@supabase/supabase-js';
 import { GeminiService } from '@/services/gemini';
 import { useTranslation } from '@/contexts/language-context';
 
-const Sentinel: React.FC<{ credentials: Credentials; permissions: any }> = ({ credentials, permissions }) => {
+const Sentinel: React.FC<{ credentials: Credentials; user: User; permissions: any }> = ({ credentials, user, permissions }) => {
     const { t } = useTranslation();
     const [alerts, setAlerts] = useState<MonitoringAlert[]>([]);
     const [clippings, setClippings] = useState<Clipping[]>([]);

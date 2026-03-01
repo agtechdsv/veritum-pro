@@ -13,7 +13,6 @@ import Vox from './modules/vox';
 import UserSettings from './modules/user-settings';
 import UserManagement from './modules/user-management';
 import PlanManagement from './modules/plan-management';
-import TeamManagement from './modules/team-management';
 import PersonManagement from './modules/person-management';
 import IntelligenceHub from './modules/intelligence-hub';
 import { createMasterClient } from '@/lib/supabase/master';
@@ -71,26 +70,52 @@ const Logo = () => (
 export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModule, activeSuites = [], planPermissions = [], groupPermissions = [], allFeatures = [], onModuleChange, onLogout, onUpdateUser, onUpdatePrefs, children }) => {
     const { t, locale } = useTranslation();
     const router = useRouter();
+    const lastProvisioned = React.useRef<string>('');
+
     // BYODB Shadow Provisioning: Ensure user exists in Tenant DB
     React.useEffect(() => {
         const provisionShadowUser = async () => {
-            if (!preferences?.custom_supabase_url || !preferences?.custom_supabase_key) return;
+            if (!preferences?.custom_supabase_url || !preferences?.custom_supabase_key || !user?.id) return;
+
+            // Avoid self-provisioning if the "Custom DB" is actually the Master DB
+            const masterUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').toLowerCase().trim();
+            const customUrl = (preferences.custom_supabase_url || '').toLowerCase().trim();
+
+            // Extract the project ref (e.g. 'rmcjxcxmzsinkjnolfek')
+            const getRef = (url: string) => url.split('//')[1]?.split('.')[0] || url;
+            const customRef = getRef(customUrl);
+            const masterRef = getRef(masterUrl);
+
+            if (!customUrl || customRef === masterRef || customUrl.includes(masterRef)) {
+                return;
+            }
+
+            // Prevent loop: only provision if user ID or URL changed
+            const provisionKey = `${user.id}-${customUrl}`;
+            if (lastProvisioned.current === provisionKey) return;
+
             try {
                 const tenantClient = createDynamicClient(preferences.custom_supabase_url, preferences.custom_supabase_key);
-                await tenantClient.from('users').upsert({
+                const userData: any = {
                     id: user.id,
                     name: user.name,
-                    email: user.email,
                     role: user.role,
                     avatar_url: user.avatar_url,
                     active: true
-                });
+                };
+
+                if (user.email) userData.email = user.email;
+
+                const { error } = await tenantClient.from('users').upsert(userData);
+                if (!error) {
+                    lastProvisioned.current = provisionKey;
+                }
             } catch (err) {
                 console.error('Failed to provision shadow user on Tenant DB:', err);
             }
         };
         provisionShadowUser();
-    }, [user, preferences?.custom_supabase_url, preferences?.custom_supabase_key]);
+    }, [user?.id, preferences?.custom_supabase_url, preferences?.custom_supabase_key]);
 
 
     // Key Normalization for matching DB keys (e.g. SCRIPTOR_KEY) with internal IDs
@@ -132,6 +157,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
 
     const adminItems = [
         { id: ModuleId.USERS, label: t('management.users.menu'), icon: Users, color: 'text-slate-500' },
+        { id: ModuleId.PERSONS, label: t('management.master.persons.menu'), icon: UserIcon, color: 'text-emerald-600' },
         { id: ModuleId.ACCESS_GROUPS, label: t('management.access.menu'), icon: Shield, color: 'text-indigo-600' },
         { id: ModuleId.SETTINGS, label: t('management.settings.menu'), icon: Settings, color: 'text-slate-500' },
     ];
@@ -142,8 +168,8 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
         { id: ModuleId.SCHEDULING, label: t('management.master.scheduling.menu'), icon: CalendarIcon, color: 'text-rose-500' },
         { id: ModuleId.EMAIL_CONFIG, label: t('management.master.email.menu'), icon: Mail, color: 'text-cyan-500' },
         { id: ModuleId.FINTECH, label: 'Gestão Fintech', icon: CreditCard, color: 'text-emerald-500' },
-        { id: ModuleId.TEAM, label: t('management.master.team.menu'), icon: Users, color: 'text-indigo-600' },
-        { id: ModuleId.PERSONS, label: t('management.master.persons.menu'), icon: UserIcon, color: 'text-emerald-600' },
+
+
     ];
 
     const isAdmin = user.role === 'Master' || ['Administrador', 'Sócio-Administrador', 'Sócio Administrador'].includes(user.role);
@@ -209,10 +235,9 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
         }).map(bs => ({ ...bs, isLocked: false }));
 
     const filteredAdminItems = adminItems.filter(item => {
-        if (item.id === ModuleId.USERS) {
-            // USERS: Visible for Master, Admins, and potentially Advogados (as they are in the 'user level' but should see management if allowed)
-            // The user said "Menu Gestão de Usuários foi oculto, mas o user tem acesso" for Advogado.
-            return isAdmin || user.role.includes('Advogado');
+        if (item.id === ModuleId.USERS || item.id === ModuleId.PERSONS) {
+            // USERS & PERSONS (CRM): Visible for Master, Admins, and Sócio-Administradores
+            return isAdmin;
         }
         // ACCESS_GROUPS and SETTINGS: Restricted to SuperAdmin (Sócio-Administrativo group)
         return isSuperAdmin;
@@ -274,13 +299,13 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
         const moduleToRender = normalize(activeModule);
 
         switch (moduleToRender) {
-            case 'sentinel': return <Sentinel credentials={creds} permissions={planPermissions.find(p => normalize(p.suite_key) === 'sentinel')} />;
-            case 'nexus': return <Nexus credentials={creds} permissions={planPermissions.find(p => normalize(p.suite_key) === 'nexus')} />;
-            case 'scriptor': return <Scriptor credentials={creds} permissions={planPermissions.find(p => normalize(p.suite_key) === 'scriptor')} />;
-            case 'valorem': return <Valorem credentials={creds} permissions={planPermissions.find(p => normalize(p.suite_key) === 'valorem')} />;
-            case 'cognitio': return <Cognitio credentials={creds} permissions={planPermissions.find(p => normalize(p.suite_key) === 'cognitio')} />;
-            case 'vox': return <Vox credentials={creds} permissions={planPermissions.find(p => normalize(p.suite_key) === 'vox')} />;
-            case 'intelligence': return <IntelligenceHub credentials={creds} permissions={planPermissions.find(p => normalize(p.suite_key) === 'intelligence')} />;
+            case 'sentinel': return <Sentinel credentials={creds} user={user} permissions={planPermissions.find(p => normalize(p.suite_key) === 'sentinel')} />;
+            case 'nexus': return <Nexus credentials={creds} user={user} permissions={planPermissions.find(p => normalize(p.suite_key) === 'nexus')} />;
+            case 'scriptor': return <Scriptor credentials={creds} user={user} permissions={planPermissions.find(p => normalize(p.suite_key) === 'scriptor')} />;
+            case 'valorem': return <Valorem credentials={creds} user={user} permissions={planPermissions.find(p => normalize(p.suite_key) === 'valorem')} />;
+            case 'cognitio': return <Cognitio credentials={creds} user={user} permissions={planPermissions.find(p => normalize(p.suite_key) === 'cognitio')} />;
+            case 'vox': return <Vox credentials={creds} user={user} permissions={planPermissions.find(p => normalize(p.suite_key) === 'vox')} />;
+            case 'intelligence': return <IntelligenceHub credentials={creds} user={user} permissions={planPermissions.find(p => normalize(p.suite_key) === 'intelligence')} />;
             case 'settings': return <UserSettings user={user} preferences={preferences} onUpdateUser={onUpdateUser} onUpdatePrefs={onUpdatePrefs} />;
             case 'users': return <UserManagement currentUser={user} />;
             case 'suites': return <SuiteManagement credentials={creds} />;
@@ -290,10 +315,9 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                 return <EmailSettingsManager />;
             case ModuleId.ACCESS_GROUPS:
                 return <AccessManagement currentUser={user} />;
-            case ModuleId.TEAM:
-                return <TeamManagement credentials={creds} />;
+
             case ModuleId.PERSONS:
-                return <PersonManagement credentials={creds} />;
+                return <PersonManagement credentials={creds} preferences={preferences} />;
             case 'dashboard_suites': return <SuiteDashboard items={suiteItems} onModuleChange={onModuleChange} />;
             case 'dashboard_admin': return <AdminDashboard items={filteredAdminItems} onModuleChange={onModuleChange} />;
             case 'dashboard_master': return <MasterDashboard items={masterItems} onModuleChange={onModuleChange} />;

@@ -1,16 +1,16 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Credentials, Chat, ChatMessage, Person, Lawsuit } from '@/types';
+import { Credentials, Chat, ChatMessage, Person, Lawsuit, User } from '@/types';
 import { GeminiService } from '@/services/gemini';
 import {
-    MessageCircle, Phone, Globe, Send, User, Check,
+    MessageCircle, Phone, Globe, Send, Check,
     Search, MoreHorizontal, Plus, Shield, Clock,
     CheckCircle2, AlertCircle, FileText, Sparkles,
     ChevronLeft, Scale, Info, Archive, Trash2, XCircle
 } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 
-const Vox: React.FC<{ credentials: Credentials; permissions: any }> = ({ credentials, permissions }) => {
+const Vox: React.FC<{ credentials: Credentials; user: User; permissions: any }> = ({ credentials, user, permissions }) => {
     // Data State
     const [chats, setChats] = useState<Chat[]>([]);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -165,8 +165,8 @@ const Vox: React.FC<{ credentials: Credentials; permissions: any }> = ({ credent
                             key={chat.id}
                             onClick={() => handleSelectChat(chat)}
                             className={`p-5 flex items-center gap-4 cursor-pointer transition-all border-l-4 ${activeChat?.id === chat.id
-                                    ? 'bg-indigo-50/50 dark:bg-indigo-900/10 border-l-indigo-600'
-                                    : 'hover:bg-slate-50 dark:hover:bg-slate-800/30 border-l-transparent'
+                                ? 'bg-indigo-50/50 dark:bg-indigo-900/10 border-l-indigo-600'
+                                : 'hover:bg-slate-50 dark:hover:bg-slate-800/30 border-l-transparent'
                                 }`}
                         >
                             <div className="relative">
@@ -243,8 +243,8 @@ const Vox: React.FC<{ credentials: Credentials; permissions: any }> = ({ credent
                                     className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[85%] ${isMe ? 'ml-auto' : 'mr-auto'} animate-in fade-in slide-in-from-bottom-2 duration-300`}
                                 >
                                     <div className={`p-4 rounded-3xl text-[11px] leading-relaxed font-medium shadow-sm border ${isMe
-                                            ? 'bg-indigo-600 text-white border-indigo-500 rounded-tr-none shadow-indigo-600/20'
-                                            : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-100 dark:border-slate-700 rounded-tl-none'
+                                        ? 'bg-indigo-600 text-white border-indigo-500 rounded-tr-none shadow-indigo-600/20'
+                                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-100 dark:border-slate-700 rounded-tl-none'
                                         }`}>
                                         {msg.content}
                                     </div>
@@ -268,8 +268,8 @@ const Vox: React.FC<{ credentials: Credentials; permissions: any }> = ({ credent
                                         onClick={handleVoxify}
                                         disabled={isTranslating || !inputText}
                                         className={`flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest ${isTranslating
-                                                ? 'bg-amber-50 text-amber-600 animate-pulse'
-                                                : 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100'
+                                            ? 'bg-amber-50 text-amber-600 animate-pulse'
+                                            : 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100'
                                             }`}
                                     >
                                         <Sparkles size={14} className={isTranslating ? 'animate-spin' : ''} />

@@ -1,21 +1,21 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Credentials, LegalDocument, DocumentTemplate, Lawsuit, TeamMember } from '@/types';
+import { Credentials, LegalDocument, DocumentTemplate, Lawsuit, User } from '@/types';
 import {
     Wand2, Save, FileText, Download, Wand, ChevronDown, Plus,
     Search, Filter, History, Trash2, Layout, Sparkles,
-    ChevronRight, Scale, User, Clock, CheckCircle2, AlertCircle,
+    ChevronRight, Scale, User as UserIcon, Clock, CheckCircle2, AlertCircle,
     BookOpen, FilePlus, Copy, Send
 } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 import { GeminiService } from '@/services/gemini';
 
-const Scriptor: React.FC<{ credentials: Credentials; permissions: any }> = ({ credentials, permissions }) => {
+const Scriptor: React.FC<{ credentials: Credentials; user: User; permissions: any }> = ({ credentials, user, permissions }) => {
     // Data State
     const [documents, setDocuments] = useState<LegalDocument[]>([]);
     const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
     const [lawsuits, setLawsuits] = useState<Lawsuit[]>([]);
-    const [team, setTeam] = useState<TeamMember[]>([]);
+    const [team, setTeam] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
 
     // Editor State
@@ -38,11 +38,18 @@ const Scriptor: React.FC<{ credentials: Credentials; permissions: any }> = ({ cr
     const fetchData = async () => {
         setLoading(true);
         try {
+            // Hierarchy Logic for Team (Responsibles)
+            const conditions = [`id.eq.${user.id}`, `parent_user_id.eq.${user.id}`];
+            if (user.parent_user_id) {
+                conditions.push(`id.eq.${user.parent_user_id}`);
+                conditions.push(`parent_user_id.eq.${user.parent_user_id}`);
+            }
+
             const [docsRes, tempRes, lawRes, teamRes] = await Promise.all([
                 supabase.from('legal_documents').select('*').order('updated_at', { ascending: false }),
                 supabase.from('document_templates').select('*').order('category'),
                 supabase.from('lawsuits').select('*'),
-                supabase.from('team_members').select('*').eq('is_active', true)
+                supabase.from('users').select('*').or(conditions.join(',')).eq('active', true)
             ]);
             setDocuments(docsRes.data || []);
             setTemplates(tempRes.data || []);
@@ -151,9 +158,9 @@ const Scriptor: React.FC<{ credentials: Credentials; permissions: any }> = ({ cr
                 </div>
                 <div className="flex items-center gap-3">
                     <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all ${saveStatus === 'saving' ? 'bg-amber-50 text-amber-600 border-amber-200 animate-pulse' :
-                            saveStatus === 'saved' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' :
-                                saveStatus === 'error' ? 'bg-rose-50 text-rose-600 border-rose-200' :
-                                    'bg-slate-50 text-slate-400 border-slate-200 opacity-50'
+                        saveStatus === 'saved' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' :
+                            saveStatus === 'error' ? 'bg-rose-50 text-rose-600 border-rose-200' :
+                                'bg-slate-50 text-slate-400 border-slate-200 opacity-50'
                         }`}>
                         {saveStatus === 'saving' && <Clock size={12} />}
                         {saveStatus === 'saved' && <CheckCircle2 size={12} />}

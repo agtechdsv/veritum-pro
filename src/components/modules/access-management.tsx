@@ -69,7 +69,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
     const fetchClients = async () => {
         const { data } = await supabase
             .from('users')
-            .select('id, name, username, role, active')
+            .select('id, name, email, role, active')
             .in('role', ['Sócio-Administrador', 'Sócio Administrador'])
             .order('name');
         if (data) setClients(data);
@@ -557,7 +557,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                     <option value={currentUser.id}>{t('management.access.masterGroups') || 'Master (Meus Grupos)'}</option>
                                     <optgroup label={t('management.access.privateAdmins') || 'Sócio-Administradores Privados'}>
                                         {clients.map(c => (
-                                            <option key={c.id} value={c.id}>🏢 {c.name} ({c.username})</option>
+                                            <option key={c.id} value={c.id}>🏢 {c.name} ({c.email})</option>
                                         ))}
                                     </optgroup>
                                 </select>

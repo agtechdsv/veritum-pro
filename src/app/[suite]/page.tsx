@@ -46,7 +46,7 @@ export default function SuitePage({ params }: { params: Promise<{ suite: string 
             setUser({
                 id: authUser.id,
                 name: profile?.name || authUser.user_metadata.full_name || 'Usuário',
-                username: profile?.username || authUser.email?.split('@')[0] || 'user',
+                email: profile?.email || authUser.email || '',
                 role: profile?.role || 'Operador',
                 active: profile?.active ?? true,
                 avatar_url: profile?.avatar_url || authUser.user_metadata.avatar_url || authUser.user_metadata.picture,

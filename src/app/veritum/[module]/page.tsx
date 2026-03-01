@@ -19,7 +19,6 @@ import AdminDashboard from '@/components/modules/dashboards/admin-dashboard';
 import MasterDashboard from '@/components/modules/dashboards/master-dashboard';
 import AccessManagement from '@/components/modules/access-management';
 import IntelligenceHub from '@/components/modules/intelligence-hub';
-import TeamManagement from '@/components/modules/team-management';
 import PersonManagement from '@/components/modules/person-management';
 import { EmailSettingsManager } from '@/components/modules/email-config';
 import { ModuleId } from '@/types';
@@ -126,12 +125,13 @@ export default function DynamicModulePage() {
 
     const adminItems = [
         { id: ModuleId.USERS, label: t('management.users.title'), icon: Users, color: 'text-slate-500' },
+        { id: ModuleId.PERSONS, label: t('management.master.crm.title'), icon: UserIcon, color: 'text-emerald-600' },
         { id: ModuleId.ACCESS_GROUPS, label: t('management.accessGroups.title'), icon: Shield, color: 'text-indigo-600' },
         { id: ModuleId.SETTINGS, label: t('management.settings.title'), icon: Settings, color: 'text-slate-500' },
     ];
 
     const filteredAdminItems = adminItems.filter(item => {
-        if (item.id === ModuleId.USERS) {
+        if (item.id === ModuleId.USERS || item.id === ModuleId.PERSONS) {
             return isAdmin || (user.role && user.role.includes('Advogado'));
         }
         return isSuperAdmin;
@@ -143,18 +143,16 @@ export default function DynamicModulePage() {
         { id: ModuleId.SCHEDULING, label: t('management.master.scheduling.title'), icon: CalendarIcon, color: 'text-rose-500' },
         { id: ModuleId.EMAIL_CONFIG, label: t('management.master.email.title'), icon: Mail, color: 'text-cyan-500' },
         { id: ModuleId.FINTECH, label: 'Gestão Fintech', icon: CreditCard, color: 'text-emerald-500' },
-        { id: ModuleId.TEAM, label: t('management.master.team.title'), icon: Users, color: 'text-indigo-600' },
-        { id: ModuleId.PERSONS, label: t('management.master.crm.title'), icon: UserIcon, color: 'text-emerald-600' },
     ];
 
     switch (moduleToRender) {
-        case 'sentinel': return <Sentinel credentials={credentials} permissions={planPermissions.find(p => normalize(p.suite_key) === 'sentinel')} />;
-        case 'nexus': return <Nexus credentials={credentials} permissions={planPermissions.find(p => normalize(p.suite_key) === 'nexus')} />;
-        case 'scriptor': return <Scriptor credentials={credentials} permissions={planPermissions.find(p => normalize(p.suite_key) === 'scriptor')} />;
-        case 'valorem': return <Valorem credentials={credentials} permissions={planPermissions.find(p => normalize(p.suite_key) === 'valorem')} />;
-        case 'cognitio': return <Cognitio credentials={credentials} permissions={planPermissions.find(p => normalize(p.suite_key) === 'cognitio')} />;
-        case 'vox': return <Vox credentials={credentials} permissions={planPermissions.find(p => normalize(p.suite_key) === 'vox')} />;
-        case 'intelligence': return <IntelligenceHub credentials={credentials} permissions={planPermissions.find(p => normalize(p.suite_key) === 'intelligence')} />;
+        case 'sentinel': return <Sentinel credentials={credentials} user={user} permissions={planPermissions.find(p => normalize(p.suite_key) === 'sentinel')} />;
+        case 'nexus': return <Nexus credentials={credentials} user={user} permissions={planPermissions.find(p => normalize(p.suite_key) === 'nexus')} />;
+        case 'scriptor': return <Scriptor credentials={credentials} user={user} permissions={planPermissions.find(p => normalize(p.suite_key) === 'scriptor')} />;
+        case 'valorem': return <Valorem credentials={credentials} user={user} permissions={planPermissions.find(p => normalize(p.suite_key) === 'valorem')} />;
+        case 'cognitio': return <Cognitio credentials={credentials} user={user} permissions={planPermissions.find(p => normalize(p.suite_key) === 'cognitio')} />;
+        case 'vox': return <Vox credentials={credentials} user={user} permissions={planPermissions.find(p => normalize(p.suite_key) === 'vox')} />;
+        case 'intelligence': return <IntelligenceHub credentials={credentials} user={user} permissions={planPermissions.find(p => normalize(p.suite_key) === 'intelligence')} />;
         case 'settings': return <UserSettings user={user} preferences={preferences} onUpdateUser={onUpdateUser} onUpdatePrefs={onUpdatePrefs} initialTab={tabParam || undefined} />;
         case 'users': return <UserManagement currentUser={user} />;
         case 'suites': return <SuiteManagement credentials={credentials} />;
@@ -162,8 +160,8 @@ export default function DynamicModulePage() {
         case 'scheduling': return <SchedulingManagement />;
         case 'email_config': return <EmailSettingsManager />;
         case 'access_groups': return <AccessManagement currentUser={user} />;
-        case 'team': return <TeamManagement credentials={credentials} />;
-        case 'persons': return <PersonManagement credentials={credentials} />;
+
+        case 'persons': return <PersonManagement credentials={credentials} preferences={preferences} />;
         case 'dashboard_suites': return <SuiteDashboard items={suiteItems} onModuleChange={onModuleChange} />;
         case 'dashboard_admin': return <AdminDashboard items={filteredAdminItems} onModuleChange={onModuleChange} />;
         case 'dashboard_master': return <MasterDashboard items={masterItems} onModuleChange={onModuleChange} />;

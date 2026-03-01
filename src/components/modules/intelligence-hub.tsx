@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Credentials, GoldenAlert, Clipping, KnowledgeArticle } from '@/types';
+import { Credentials, GoldenAlert, Clipping, KnowledgeArticle, User } from '@/types';
 import {
     Sparkles, Brain, Zap, Target, ArrowRight, CheckCircle,
     XCircle, Clock, Filter, AlertTriangle, TrendingUp,
@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 
-const IntelligenceHub: React.FC<{ credentials: Credentials; permissions: any }> = ({ credentials, permissions }) => {
+const IntelligenceHub: React.FC<{ credentials: Credentials; user: User; permissions: any }> = ({ credentials, user, permissions }) => {
     const [alerts, setAlerts] = useState<(GoldenAlert & { clipping?: Clipping, knowledge?: KnowledgeArticle })[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<'all' | 'unread' | 'actioned'>('all');

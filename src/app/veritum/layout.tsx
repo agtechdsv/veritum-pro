@@ -45,14 +45,17 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
     const [loading, setLoading] = useState(true);
     const router = useRouter();
     const pathname = usePathname();
-    const supabase = createMasterClient();
+    // 5. Memoize Supabase Client to prevent unnecessary re-renders/re-fetches
+    const supabaseClient = React.useMemo(() => createMasterClient(), []);
+
     const { t, locale, setLocale } = useTranslation();
     const { theme, setTheme } = useTheme();
     const [isInitialLoad, setIsInitialLoad] = useState(true);
 
     const fetchData = React.useCallback(async () => {
         if (isInitialLoad) setLoading(true);
-        const { data: { user: authUser } } = await supabase.auth.getUser();
+        const { data: auth } = await supabaseClient.auth.getUser();
+        const authUser = auth.user;
 
         if (!authUser) {
             router.push('/?login=true');
@@ -61,17 +64,18 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
 
         // 1. Parallelize initial critical data fetching
         const [profileRes, prefsRes] = await Promise.all([
-            supabase
+            supabaseClient
                 .from('users')
                 .select('*, access_groups(name, name_loc), plans:plan_id(name)')
                 .eq('id', authUser.id)
                 .single(),
-            supabase
+            supabaseClient
                 .from('user_preferences')
                 .select('*')
                 .eq('user_id', authUser.id)
                 .maybeSingle()
         ]);
+
 
         const profile = profileRes.data;
         const profileError = profileRes.error;
@@ -107,8 +111,7 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
             setUser({
                 id: authUser.id,
                 name: profile?.name || authUser.user_metadata.full_name || 'Usuário',
-                username: profile?.username || authUser.email?.split('@')[0] || 'user',
-                email: authUser.email,
+                email: profile?.email || authUser.email || '',
                 role: (profile?.role || authUser.user_metadata.role || 'Operador') as any,
                 active: profile?.active ?? true,
                 avatar_url: profile?.avatar_url || authUser.user_metadata.avatar_url || authUser.user_metadata.picture,
@@ -130,17 +133,17 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
         const parentId = profile?.parent_user_id || authUser.user_metadata.parent_user_id;
 
         const queries: any[] = [
-            supabase
+            supabaseClient
                 .from('suites')
                 .select('*')
                 .eq('active', true)
                 .order('order_index', { ascending: true }),
-            supabase.from('features').select('id, suite_id')
+            supabaseClient.from('features').select('id, suite_id')
         ];
 
         if (planId) {
             queries.push(
-                supabase
+                supabaseClient
                     .from('plan_permissions')
                     .select('feature_id, features(feature_key, suite_id, suites(suite_key))')
                     .eq('plan_id', planId)
@@ -149,7 +152,7 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
 
         if (parentId) {
             queries.push(
-                supabase
+                supabaseClient
                     .from('user_preferences')
                     .select('custom_supabase_url, custom_supabase_key, custom_gemini_key')
                     .eq('user_id', parentId)
@@ -191,7 +194,7 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
         }
 
         if (profile?.access_group_id && profile?.role !== 'Master') {
-            const { data: permData } = await supabase
+            const { data: permData } = await supabaseClient
                 .from('group_permissions')
                 .select('*')
                 .eq('group_id', profile.access_group_id);
@@ -200,26 +203,18 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
 
         setLoading(false);
         setIsInitialLoad(false);
-    }, [router, supabase, locale, isInitialLoad]);
+    }, [supabaseClient, locale, router, isInitialLoad]);
 
     useEffect(() => {
         fetchData();
 
-        // Refresh when user returns to this tab (e.g. from Asaas checkout)
-        const handleVisibilityChange = () => {
-            if (document.visibilityState === 'visible') {
-                console.log("Usuário voltou para a aba. Atualizando dados...");
-                fetchData();
-            }
-        };
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-
         const setupRealtime = async () => {
-            const { data: { user: authUser } } = await supabase.auth.getUser();
+            const { data: auth } = await supabaseClient.auth.getUser();
+            const authUser = auth.user;
             if (!authUser) return;
 
             // Real-time synchronization for user profile (Plan changes, etc)
-            const userChannel = supabase
+            const userChannel = supabaseClient
                 .channel(`user-profile-${authUser.id}`)
                 .on(
                     'postgres_changes',
@@ -229,16 +224,15 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
                         table: 'users',
                         filter: `id=eq.${authUser.id}`
                     },
-                    (payload) => {
+                    (payload: any) => {
                         console.log("Perfil atualizado em tempo real:", payload.new);
-                        // Force a fresh fetch to ensure all relates (plans, etc) are correct
                         fetchData();
                     }
                 )
                 .subscribe();
 
             // Real-time synchronization for suites table
-            const suitesChannel = supabase
+            const suitesChannel = supabaseClient
                 .channel('suites-sidebar-sync')
                 .on(
                     'postgres_changes',
@@ -250,17 +244,16 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
                 .subscribe();
 
             return () => {
-                supabase.removeChannel(userChannel);
-                supabase.removeChannel(suitesChannel);
+                supabaseClient.removeChannel(userChannel);
+                supabaseClient.removeChannel(suitesChannel);
             };
         };
 
         const cleanupPromise = setupRealtime();
         return () => {
-            document.removeEventListener('visibilitychange', handleVisibilityChange);
             cleanupPromise.then(cleanup => cleanup && cleanup());
         };
-    }, [fetchData, supabase]);
+    }, [fetchData, supabaseClient]);
 
     // Update active module based on current pathname
     useEffect(() => {
@@ -288,7 +281,7 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
         if (newPrefs.theme !== theme) setTheme(newPrefs.theme);
 
         // Persistent DB update for cloud-only preferences (Keys, Google tokens, etc)
-        await supabase
+        await supabaseClient
             .from('user_preferences')
             .update({
                 custom_supabase_url: newPrefs.custom_supabase_url,
@@ -299,7 +292,7 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
     };
 
     const handleLogout = async () => {
-        await supabase.auth.signOut();
+        await supabaseClient.auth.signOut();
         router.push('/');
     };
 

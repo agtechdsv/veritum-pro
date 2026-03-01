@@ -160,7 +160,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user, onUp
                             <div className="relative">
                                 <Check className="absolute left-4 top-3.5 text-slate-300" size={18} />
                                 <input
-                                    value={formUser.email || formUser.username || ''}
+                                    value={formUser.email || ''}
                                     disabled
                                     className="w-full pl-12 pr-4 py-3.5 bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl text-slate-400 dark:text-slate-500 font-bold cursor-not-allowed"
                                 />

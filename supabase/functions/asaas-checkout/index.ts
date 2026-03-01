@@ -162,7 +162,7 @@ Deno.serve(async (req: Request) => {
     // Fetch user from DB
     const { data: user, error: userError } = await supabaseAdmin
       .from("users")
-      .select("id, name, username, cpf_cnpj, phone")
+      .select("id, name, email, cpf_cnpj, phone")
       .eq("id", userId)
       .maybeSingle();
 
@@ -268,7 +268,7 @@ Deno.serve(async (req: Request) => {
 
 
     // Search or create Asaas customer
-    const emailToSearch = user.username ?? jwtUser.email;
+    const emailToSearch = user.email ?? jwtUser.email;
     const q = new URLSearchParams({ email: String(emailToSearch) });
     const targetUrl = `${ASAAS_URL}/customers?${q.toString()}`;
 
