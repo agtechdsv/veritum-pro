@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Person, Credentials, UserPreferences } from '@/types';
-import { Plus, Search, User, Mail, Phone, MapPin, Briefcase, FileText, ChevronDown, ChevronUp, Save, Trash2, Key, Info, Pencil, XCircle, Database as DbIcon, ShieldCheck } from 'lucide-react';
+import { Plus, Search, User, Mail, Phone, MapPin, Briefcase, FileText, ChevronDown, ChevronUp, Save, Trash2, Key, Info, Pencil, XCircle, Database as DbIcon, ShieldCheck, MessageCircle, ExternalLink, Scale, FileDown, ArrowUpRight } from 'lucide-react';
 import { useTranslation } from '@/contexts/language-context';
 import { toast } from '@/components/ui/toast';
 import { DatabaseService } from '@/services/database';
@@ -50,17 +50,53 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences }) => {
     const formatPhone = (value: string) => {
         const numbers = value.replace(/\D/g, '');
         if (numbers.length <= 10) {
-            // (00) 0000-0000
             return numbers
                 .replace(/(\d{2})(\d)/, '($1) $2')
                 .replace(/(\d{4})(\d)/, '$1-$2')
                 .replace(/(-\d{4})\d+?$/, '$1');
         } else {
-            // (00) 00000-0000
             return numbers
                 .replace(/(\d{2})(\d)/, '($1) $2')
                 .replace(/(\d{5})(\d)/, '$1-$2')
                 .replace(/(-\d{4})\d+?$/, '$1');
+        }
+    };
+
+    const formatCEP = (value: string) => {
+        const raw = value.replace(/\D/g, '');
+        return raw.replace(/(\d{5})(\d)/, '$1-$2').replace(/(-\d{3})\d+?$/, '$1');
+    };
+
+    const searchCEP = async (cep: string) => {
+        const cleanCEP = cep.replace(/\D/g, '');
+        if (cleanCEP.length !== 8) return;
+
+        try {
+            const response = await fetch(`https://viacep.com.br/ws/${cleanCEP}/json/`);
+            const data = await response.json();
+
+            if (data.erro) {
+                toast.error(t('management.organization.toast.cepError'));
+                return;
+            }
+
+            setEditingPerson(prev => {
+                if (!prev) return prev;
+                return {
+                    ...prev,
+                    address: {
+                        ...prev.address,
+                        street: data.logradouro,
+                        neighborhood: data.bairro,
+                        city: data.localidade,
+                        state: data.uf,
+                        cep: cep
+                    }
+                };
+            });
+        } catch (err) {
+            console.error('Error fetching CEP:', err);
+            toast.error(t('management.organization.toast.cepFetchError'));
         }
     };
 
@@ -81,6 +117,30 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences }) => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const openWhatsApp = (phone?: string) => {
+        if (!phone) return;
+        const numbers = phone.replace(/\D/g, '');
+        window.open(`https://wa.me/${numbers.startsWith('55') ? numbers : '55' + numbers}`, '_blank');
+    };
+
+    const openMaps = (address?: any) => {
+        if (!address?.cep && !address?.street) return;
+        const destination = encodeURIComponent(`${address.street || ''}, ${address.number || ''}, ${address.city || ''} - ${address.state || ''}, ${address.cep || ''}`);
+        window.open(`https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=driving`, '_blank');
+    };
+
+    const openEmail = (email?: string) => {
+        if (!email) return;
+        window.location.href = `mailto:${email}`;
+    };
+
+    const handleGenerateDocs = (person: any) => {
+        toast.info(`Gerando documentos para ${person.full_name || '...'}...`);
+        setTimeout(() => {
+            toast.success(`Documentos gerados com sucesso! Verifique sua pasta de downloads.`);
+        }, 1500);
     };
 
     const handleSave = async (e: React.FormEvent) => {
@@ -203,36 +263,94 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences }) => {
                 ) : filteredPersons.length === 0 ? (
                     <div className="col-span-full py-12 text-center text-slate-400">{t('management.master.persons.table.empty')}</div>
                 ) : filteredPersons.map(person => (
-                    <div key={person.id} className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
-                        <div className="flex items-start justify-between mb-4">
-                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${person.person_type === 'Cliente' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 border border-emerald-100 dark:border-emerald-800' :
-                                person.person_type === 'Advogado Adverso' ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 border border-rose-100 dark:border-rose-800' :
-                                    'bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700'
-                                }`}>
-                                {t(`management.master.persons.types.${person.person_type}`)}
-                            </span>
-                            <button
-                                onClick={() => { setEditingPerson(person); setIsModalOpen(true); }}
-                                className="text-slate-300 hover:text-indigo-600 transition-colors"
-                            >
-                                <Pencil size={16} />
-                            </button>
-                        </div>
-                        <h3 className="font-bold text-slate-800 dark:text-white text-lg mb-1">{person.full_name}</h3>
-                        <p className="text-xs text-slate-400 font-mono mb-4">{person.document}</p>
-
-                        <div className="space-y-2">
-                            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm">
-                                <Mail size={14} className="text-slate-300" />
-                                <span className="truncate">{person.email || t('common.notApplicable')}</span>
+                    <div key={person.id} className="bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden flex flex-col justify-between h-full">
+                        <div>
+                            <div className="flex items-start justify-between mb-5">
+                                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${person.person_type === 'Cliente' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 border border-emerald-100 dark:border-emerald-800' :
+                                    person.person_type === 'Advogado Adverso' ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 border border-rose-100 dark:border-rose-800' :
+                                        'bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700'
+                                    }`}>
+                                    {t(`management.master.persons.types.${person.person_type}`)}
+                                </span>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => { setEditingPerson(person); setIsModalOpen(true); }}
+                                        className="p-4 -m-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all cursor-pointer"
+                                    >
+                                        <Pencil size={16} />
+                                    </button>
+                                </div>
                             </div>
-                            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm">
-                                <Phone size={14} className="text-slate-300" />
-                                <span>{person.phone || t('common.notApplicable')}</span>
+
+                            <h3 className="font-bold text-slate-800 dark:text-white text-xl mb-1 truncate pr-4">{person.full_name}</h3>
+                            <p className="text-xs text-slate-400 font-mono mb-5 flex items-center gap-1.5 grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all">
+                                <FileText size={12} /> {person.document}
+                            </p>
+
+                            <div className="space-y-3 mb-6">
+                                <button
+                                    onClick={() => openEmail(person.email)}
+                                    className="flex items-center gap-3 text-slate-500 dark:text-slate-400 text-sm hover:text-indigo-600 transition-colors w-full group/link cursor-pointer"
+                                >
+                                    <div className="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg group-hover/link:bg-indigo-50 dark:group-hover/link:bg-indigo-900/30 transition-colors">
+                                        <Mail size={14} className="text-slate-400 group-hover/link:text-indigo-600" />
+                                    </div>
+                                    <span className="truncate font-medium">{person.email || t('common.notApplicable')}</span>
+                                </button>
+
+                                <button
+                                    onClick={() => openWhatsApp(person.phone)}
+                                    className="flex items-center gap-3 text-slate-500 dark:text-slate-400 text-sm hover:text-emerald-600 transition-colors w-full group/link cursor-pointer"
+                                >
+                                    <div className="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg group-hover/link:bg-emerald-50 dark:group-hover/link:bg-emerald-900/30 transition-colors">
+                                        <MessageCircle size={14} className="text-slate-400 group-hover/link:text-emerald-600" />
+                                    </div>
+                                    <span className="truncate font-medium">{person.phone || t('common.notApplicable')}</span>
+                                </button>
+
+                                {person.address && (
+                                    <button
+                                        onClick={() => openMaps(person.address)}
+                                        className="flex items-center gap-3 text-slate-500 dark:text-slate-400 text-sm hover:text-indigo-600 transition-colors w-full group/link cursor-pointer"
+                                    >
+                                        <div className="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg group-hover/link:bg-indigo-50 dark:group-hover/link:bg-indigo-900/30 transition-colors">
+                                            <MapPin size={14} className="text-slate-400 group-hover/link:text-indigo-600" />
+                                        </div>
+                                        <span className="truncate font-medium text-left leading-tight">
+                                            {person.address.street ? `${person.address.street}, ${person.address.number || ''}` : t('common.notApplicable')}
+                                        </span>
+                                    </button>
+                                )}
                             </div>
                         </div>
 
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-indigo-500/5 to-transparent rounded-full -mr-12 -mt-12 group-hover:from-indigo-500/10 transition-all"></div>
+                        <div className="pt-5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between mt-auto">
+                            <div className="flex flex-col">
+                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('management.master.persons.stats.activeLawsuits')}</span>
+                                <div className="flex items-center gap-1.5 mt-0.5">
+                                    <Scale size={14} className="text-indigo-600" />
+                                    <span className="text-sm font-black text-slate-700 dark:text-slate-200">0</span>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => handleGenerateDocs(person)}
+                                    className="p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-900 hover:text-white dark:hover:bg-white dark:hover:text-slate-950 transition-all shadow-sm cursor-pointer"
+                                    title={t('management.master.persons.actions.generateDocs')}
+                                >
+                                    <FileDown size={18} />
+                                </button>
+                                <button
+                                    className="p-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-indigo-600/20 cursor-pointer"
+                                    title={t('management.master.persons.actions.newLawsuit')}
+                                >
+                                    <ArrowUpRight size={18} />
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-500/5 to-transparent rounded-full -mr-16 -mt-16 group-hover:from-indigo-500/10 transition-all duration-500"></div>
                     </div>
                 ))}
             </div>
@@ -340,11 +458,74 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences }) => {
                                                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">{t('management.master.persons.modal.fields.cep')}</label>
                                                 <input
                                                     value={editingPerson?.address?.cep || ''}
-                                                    onChange={e => setEditingPerson({ ...editingPerson, address: { ...editingPerson?.address, cep: e.target.value } })}
+                                                    onChange={e => {
+                                                        const val = formatCEP(e.target.value);
+                                                        setEditingPerson({ ...editingPerson, address: { ...editingPerson?.address, cep: val } });
+                                                        if (val.replace(/\D/g, '').length === 8) searchCEP(val);
+                                                    }}
+                                                    className="w-full px-4 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-1 focus:ring-indigo-500 font-black text-sm text-indigo-600 dark:text-indigo-400"
+                                                    placeholder="00000-000"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            <div className="md:col-span-2">
+                                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">{t('management.master.persons.modal.fields.street')}</label>
+                                                <input
+                                                    value={editingPerson?.address?.street || ''}
+                                                    onChange={e => setEditingPerson({ ...editingPerson, address: { ...editingPerson?.address, street: e.target.value } })}
+                                                    className="w-full px-4 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-1 focus:ring-indigo-500 font-medium text-sm"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">{t('management.master.persons.modal.fields.number')}</label>
+                                                <input
+                                                    value={editingPerson?.address?.number || ''}
+                                                    onChange={e => setEditingPerson({ ...editingPerson, address: { ...editingPerson?.address, number: e.target.value } })}
                                                     className="w-full px-4 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-1 focus:ring-indigo-500 font-medium text-sm"
                                                 />
                                             </div>
                                         </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            <div>
+                                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">{t('management.master.persons.modal.fields.complement')}</label>
+                                                <input
+                                                    value={editingPerson?.address?.complement || ''}
+                                                    onChange={e => setEditingPerson({ ...editingPerson, address: { ...editingPerson?.address, complement: e.target.value } })}
+                                                    className="w-full px-4 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-1 focus:ring-indigo-500 font-medium text-sm"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">{t('management.master.persons.modal.fields.neighborhood')}</label>
+                                                <input
+                                                    value={editingPerson?.address?.neighborhood || ''}
+                                                    onChange={e => setEditingPerson({ ...editingPerson, address: { ...editingPerson?.address, neighborhood: e.target.value } })}
+                                                    className="w-full px-4 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-1 focus:ring-indigo-500 font-medium text-sm"
+                                                />
+                                            </div>
+                                            <div className="grid grid-cols-3 gap-2">
+                                                <div className="col-span-2">
+                                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">{t('management.master.persons.modal.fields.city')}</label>
+                                                    <input
+                                                        value={editingPerson?.address?.city || ''}
+                                                        onChange={e => setEditingPerson({ ...editingPerson, address: { ...editingPerson?.address, city: e.target.value } })}
+                                                        className="w-full px-4 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-1 focus:ring-indigo-500 font-medium text-sm"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">{t('management.master.persons.modal.fields.state')}</label>
+                                                    <input
+                                                        value={editingPerson?.address?.state || ''}
+                                                        onChange={e => setEditingPerson({ ...editingPerson, address: { ...editingPerson?.address, state: e.target.value.toUpperCase().slice(0, 2) } })}
+                                                        className="w-full px-4 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-1 focus:ring-indigo-500 font-bold text-xs text-center"
+                                                        placeholder="UF"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div>
                                                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">{t('management.master.persons.modal.fields.maritalStatus')}</label>

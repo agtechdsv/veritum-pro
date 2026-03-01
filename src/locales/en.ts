@@ -1007,7 +1007,13 @@ export const en = {
                         email: 'Primary Email',
                         emailPlaceholder: 'contact@client.com',
                         rg: 'RG',
-                        cep: 'ZIP Code',
+                        cep: 'ZIP Code (Auto-Search)',
+                        street: 'Street / Address',
+                        number: 'Number',
+                        complement: 'Complement',
+                        neighborhood: 'Neighborhood',
+                        city: 'City',
+                        state: 'State',
                         maritalStatus: 'Marital Status',
                         profession: 'Profession',
                         history: 'History of Roles / Notes',
@@ -1030,6 +1036,18 @@ export const en = {
                     saveError: 'Error saving: Check if the CPF/CNPJ already exists or if the fields are correct.',
                     deleteSuccess: 'Record deleted successfully!',
                     deleteError: 'Error deleting record.'
+                },
+                actions: {
+                    whatsapp: 'WhatsApp',
+                    maps: 'Location',
+                    email: 'Email',
+                    newLawsuit: 'New Lawsuit',
+                    generateDocs: 'Generate Documents',
+                    viewLawsuits: 'View Lawsuits'
+                },
+                stats: {
+                    label: 'CRM Database',
+                    activeLawsuits: 'Active Lawsuits'
                 }
             }
         }

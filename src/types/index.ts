@@ -228,10 +228,12 @@ export interface Person {
         cep?: string;
         street?: string;
         number?: string;
+        complement?: string;
         neighborhood?: string;
         city?: string;
         state?: string;
     };
+    organization_id?: string;
 }
 
 export interface Task {

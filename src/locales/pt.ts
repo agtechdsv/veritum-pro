@@ -969,9 +969,6 @@ export const pt = {
                 subtitle: 'Repositório central de dados estruturados para processos e IA.',
                 newEntry: 'Novo Cadastro CRM',
                 searchPlaceholder: 'Buscar por nome ou CPF/CNPJ...',
-                stats: {
-                    label: 'Base de Dados CRM'
-                },
                 table: {
                     member: 'Membro',
                     classification: 'Classificação',
@@ -1007,7 +1004,13 @@ export const pt = {
                         email: 'E-mail Principal',
                         emailPlaceholder: 'contato@cliente.com',
                         rg: 'RG',
-                        cep: 'CEP',
+                        cep: 'CEP (Busca Automática)',
+                        street: 'Rua / Logradouro',
+                        number: 'Número',
+                        complement: 'Complemento',
+                        neighborhood: 'Bairro',
+                        city: 'Cidade',
+                        state: 'UF',
                         maritalStatus: 'Estado Civil',
                         profession: 'Profissão',
                         history: 'Histórico de Funções / Notas',
@@ -1030,6 +1033,18 @@ export const pt = {
                     saveError: 'Erro ao salvar: Verifique se o CPF/CNPJ já existe ou se os campos estão corretos.',
                     deleteSuccess: 'Registro excluído com sucesso!',
                     deleteError: 'Erro ao excluir registro.'
+                },
+                actions: {
+                    whatsapp: 'WhatsApp',
+                    maps: 'Localização',
+                    email: 'E-mail',
+                    newLawsuit: 'Novo Processo',
+                    generateDocs: 'Gerar Documentos',
+                    viewLawsuits: 'Ver Processos'
+                },
+                stats: {
+                    label: 'Base de Dados CRM',
+                    activeLawsuits: 'Processos Ativos'
                 }
             }
         }
