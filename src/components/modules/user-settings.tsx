@@ -13,6 +13,7 @@ import OrganizationForm from '../ui/organization-form';
 import { useTranslation } from '@/contexts/language-context';
 import { getFeatures, getPlanPermissions } from '@/app/actions/plan-actions';
 import { CheckoutModal } from './checkout-modal';
+import { Filter, ChevronDown } from 'lucide-react';
 
 interface Props {
     user: User;
@@ -50,15 +51,69 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
     const [isCancelling, setIsCancelling] = useState(false);
     const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
+    // Master Selector States
+    const isMaster = user.role === 'Master';
+    const [allUsers, setAllUsers] = useState<User[]>([]);
+    const [selectedUserId, setSelectedUserId] = useState<string>(user.id);
+    const [targetUser, setTargetUser] = useState<User>(user);
+    const [loadingTarget, setLoadingTarget] = useState(false);
+
     const supabase = createMasterClient();
 
     useEffect(() => {
-        if (activeTab === 'plan' && !planData && isSubscriptionAdmin) {
-            fetchPlanData();
+        if (isMaster && allUsers.length === 0) {
+            fetchAllUsers();
         }
-    }, [activeTab, planData, isSubscriptionAdmin]);
+    }, [isMaster]);
 
-    const fetchPlanData = async () => {
+    useEffect(() => {
+        if (selectedUserId === user.id) {
+            setTargetUser(user);
+            if (activeTab === 'plan') fetchPlanData(user.id);
+        } else {
+            fetchTargetUser(selectedUserId);
+        }
+    }, [selectedUserId, activeTab]);
+
+    const fetchAllUsers = async () => {
+        const { data, error } = await supabase
+            .from('users')
+            .select('*')
+            .in('role', ['Sócio-Administrador', 'Sócio Administrador'])
+            .order('name', { ascending: true });
+
+        if (!error && data) {
+            setAllUsers(data as User[]);
+        }
+    };
+
+    const fetchTargetUser = async (uid: string) => {
+        setLoadingTarget(true);
+        try {
+            const { data, error } = await supabase
+                .from('users')
+                .select('*, plans(name)')
+                .eq('id', uid)
+                .single();
+
+            if (!error && data) {
+                const u = data as any;
+                // Normalize plan name if fetched from join
+                const targetU: User = {
+                    ...u,
+                    plan_name: u.plans?.name || u.plan_name
+                };
+                setTargetUser(targetU);
+                if (activeTab === 'plan') fetchPlanData(uid);
+            }
+        } catch (err) {
+            console.error('Error fetching target user:', err);
+        } finally {
+            setLoadingTarget(false);
+        }
+    };
+
+    const fetchPlanData = async (uid: string) => {
         setLoadingPlanData(true);
         try {
             const [suitesRes, plansRes, featuresRes] = await Promise.all([
@@ -67,13 +122,16 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                 getFeatures()
             ]);
 
+            // Need the specific user's plan for permissions
+            const { data: userCurrent } = await supabase.from('users').select('plan_id, role').eq('id', uid).single();
+
             let userPermissions: string[] = [];
-            if (user.plan_id) {
-                const permRes = await getPlanPermissions(user.plan_id);
+            if (userCurrent?.plan_id) {
+                const permRes = await getPlanPermissions(userCurrent.plan_id);
                 if (permRes.success) {
                     userPermissions = permRes.permissions || [];
                 }
-            } else if (user.role === 'Master') {
+            } else if (userCurrent?.role === 'Master') {
                 if (featuresRes.success && featuresRes.features) {
                     userPermissions = featuresRes.features.map(f => f.id);
                 }
@@ -138,16 +196,41 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
         const fullPrice = basePrice * months;
         const finalPrice = discount > 0 ? fullPrice * (1 - discount / 100) : fullPrice;
         const installmentValue = finalPrice / (p.installments || (cycle === 'monthly' ? 1 : months));
+        const originalPrice = fullPrice;
 
-        return { finalPrice, discount, installmentValue, months };
+        return { finalPrice, discount, installmentValue, months, originalPrice };
     };
 
     return (
         <div className="max-w-6xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500">
+            {/* Master Context Selector */}
+            {isMaster && (
+                <div className="flex justify-center mb-0">
+                    <div className="relative group/filter z-50">
+                        <div className="flex items-center gap-2 px-6 py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm text-sm font-bold text-slate-700 dark:text-slate-300">
+                            <Filter size={18} className="text-amber-500" />
+                            <select
+                                className="bg-transparent outline-none appearance-none pr-8 cursor-pointer font-black uppercase tracking-tight"
+                                value={selectedUserId}
+                                onChange={e => setSelectedUserId(e.target.value)}
+                            >
+                                <option value={user.id}>{t('management.users.masterFilter.self') || 'MEU PRÓPRIO CONTEXTO'}</option>
+                                <optgroup label={t('management.users.masterFilter.clients') || 'CLIENTES'}>
+                                    {allUsers.filter(u => u.id !== user.id).map(c => (
+                                        <option key={c.id} value={c.id}>🏢 {(typeof c.name === 'object' ? ((c.name as any).pt || (c.name as any).en || '') : (c.name || '')).toUpperCase()} ({c.email})</option>
+                                    ))}
+                                </optgroup>
+                            </select>
+                            <ChevronDown size={16} className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Header & Tabs */}
             <div className="flex flex-col items-center">
                 <div className="flex flex-col md:flex-row items-center md:items-baseline gap-2 md:gap-4 mb-8">
-                    <h1 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">{t('management.settings.title')}</h1>
+                    <h1 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">{isMaster && selectedUserId !== user.id ? `Perfil: ${typeof targetUser.name === 'object' ? ((targetUser.name as any).pt || (targetUser.name as any).en) : targetUser.name}` : t('management.settings.title')}</h1>
                     <p className="text-slate-500 dark:text-slate-400 font-bold tracking-tight uppercase text-[10px] opacity-70">Workspace Hub</p>
                 </div>
 
@@ -183,7 +266,7 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
             </div>
 
             <div className="bg-white dark:bg-slate-900/50 p-8 md:p-12 rounded-[3.5rem] border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none">
-                {activeTab === 'org' && <OrganizationForm adminId={user.id} />}
+                {activeTab === 'org' && <OrganizationForm adminId={targetUser.id} />}
 
                 {activeTab === 'plan' && (
                     <div className="space-y-12 animate-in slide-in-from-right-8 duration-500">
@@ -203,7 +286,7 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                                                 <span className="text-[10px] font-black uppercase tracking-widest text-amber-50">{t('management.settings.plan.currentPlan')}</span>
                                             </div>
                                             <h3 className="text-5xl font-black uppercase tracking-tighter mb-2">
-                                                {typeof user.plan_name === 'object' ? ((user.plan_name as any)[locale] || (user.plan_name as any).pt) : (user.plan_name || (planData?.plans.find(p => p.id === user.plan_id)?.name as any)?.[locale] || (planData?.plans.find(p => p.id === user.plan_id)?.name as any)?.pt || 'Veritum PRO trial')}
+                                                {typeof targetUser.plan_name === 'object' ? ((targetUser.plan_name as any)[locale] || (targetUser.plan_name as any).pt) : (targetUser.plan_name || (planData?.plans.find(p => p.id === targetUser.plan_id)?.name as any)?.[locale] || (planData?.plans.find(p => p.id === targetUser.plan_id)?.name as any)?.pt || 'Veritum PRO trial')}
                                             </h3>
                                             <p className="text-amber-100 font-bold opacity-80 uppercase tracking-widest text-xs">{t('management.settings.plan.planAccess')}</p>
                                         </div>
@@ -277,23 +360,33 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
 
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                                         {planData.plans.filter(p => p.is_combo).map((p) => {
-                                            const { finalPrice, discount, installmentValue, months } = renderPriceDetails(p, billingCycle);
-                                            const isCurrent = p.id === user.plan_id;
+                                            const { finalPrice, discount, installmentValue, months, originalPrice } = renderPriceDetails(p, billingCycle);
+                                            const isCurrent = p.id === targetUser.plan_id;
 
                                             return (
                                                 <div key={p.id} className={`relative p-8 rounded-[2.5rem] border flex flex-col h-full transition-all group ${isCurrent ? 'bg-white border-amber-300 shadow-2xl scale-105 z-10' : 'bg-slate-50 dark:bg-slate-900/40 border-slate-200'}`}>
                                                     {p.recommended && (
                                                         <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-[9px] font-black uppercase px-6 py-2 rounded-full shadow-lg z-20">Recomendado</div>
                                                     )}
-                                                    <h4 className={`text-xl font-black uppercase tracking-tighter mb-6 ${isCurrent ? 'text-indigo-600' : 'text-slate-800 dark:text-white'}`}>
+                                                    <h4 className={`text-xl font-black uppercase tracking-tighter mb-2 ${isCurrent ? 'text-indigo-600' : 'text-slate-800 dark:text-white'}`}>
                                                         {(p.name as any)?.[locale] || (p.name as any)?.pt}
                                                     </h4>
+                                                    <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-6 min-h-[20px]">
+                                                        {(p as any).short_desc?.[locale] || (p as any).short_desc?.pt || (p as any).description?.[locale] || (p as any).description?.pt}
+                                                    </p>
 
                                                     <div className="mb-8 items-baseline">
-                                                        <div className="flex items-baseline gap-1 relative">
-                                                            <span className={`text-xs font-bold uppercase tracking-widest ${isCurrent ? 'text-slate-500' : 'text-slate-400'}`}>R$</span>
-                                                            <span className={`text-5xl font-black ${isCurrent ? 'text-slate-900' : 'text-slate-900 dark:text-white'}`}>{(finalPrice).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                                                            {discount > 0 && <span className="absolute -top-6 right-0 bg-emerald-500 text-white text-[10px] font-black px-2 py-1 rounded-lg animate-pulse">{discount}% OFF</span>}
+                                                        <div className="flex flex-col mb-1">
+                                                            {discount > 0 && (
+                                                                <span className="text-xs text-rose-500 font-black line-through opacity-70 mb-1">
+                                                                    R$ {originalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                                                </span>
+                                                            )}
+                                                            <div className="flex items-baseline gap-1 relative">
+                                                                <span className={`text-xs font-bold uppercase tracking-widest ${isCurrent ? 'text-slate-500' : 'text-slate-400'}`}>R$</span>
+                                                                <span className={`text-5xl font-black ${isCurrent ? 'text-slate-900' : 'text-slate-900 dark:text-white'}`}>{(finalPrice).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                                                                {discount > 0 && <span className="absolute -top-6 right-0 bg-emerald-500 text-white text-[10px] font-black px-2 py-1 rounded-lg animate-pulse">{discount}% OFF</span>}
+                                                            </div>
                                                         </div>
                                                         {billingCycle !== 'monthly' && (
                                                             <p className="text-[10px] font-bold text-emerald-600 mt-2 italic">ou {months}x de R$ {installmentValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} sem juros</p>
@@ -301,7 +394,7 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                                                     </div>
 
                                                     <ul className="space-y-4 mb-10 flex-1">
-                                                        {(p.features?.[locale as keyof typeof p.features] || p.features?.pt || []).slice(0, 5).map((feat: string, i: number) => (
+                                                        {((p.features as any)?.[locale] || (p.features as any)?.pt || []).map((feat: string, i: number) => (
                                                             <li key={i} className={`flex items-start gap-2 text-[10px] font-bold ${isCurrent ? 'text-slate-700' : 'text-slate-600 dark:text-slate-400'}`}>
                                                                 <CheckCircle2 size={14} className="text-emerald-500 shrink-0 mt-0.5" /> {feat}
                                                             </li>
@@ -343,7 +436,7 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
 
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                                         {planData.plans.filter(p => !p.is_combo).map((p) => {
-                                            const { finalPrice, discount, installmentValue, months } = renderPriceDetails(p, modulesBillingCycle);
+                                            const { finalPrice, discount, installmentValue, months, originalPrice } = renderPriceDetails(p, modulesBillingCycle);
                                             const pNamePt = (p.name as any)?.pt || '';
                                             const hasModule = planData.userPermissions.some(perm => pNamePt.toLocaleLowerCase().includes(perm.toLocaleLowerCase()));
 
@@ -355,11 +448,18 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                                                     <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-6">{t('management.settings.plan.individualModule')}</p>
 
                                                     <div className="mb-8 items-baseline">
-                                                        <div className="flex items-baseline gap-1 relative">
-                                                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">R$</span>
-                                                            <span className="text-4xl font-black text-slate-900 dark:text-white">{(finalPrice).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                                                            <span className="text-[10px] font-bold text-slate-400 ml-1 uppercase">/mês</span>
-                                                            {discount > 0 && <span className="absolute -top-6 right-0 bg-indigo-500 text-white text-[9px] font-black px-2 py-1 rounded-lg">-{discount}% Off</span>}
+                                                        <div className="flex flex-col mb-1">
+                                                            {discount > 0 && (
+                                                                <span className="text-[10px] text-rose-500 font-black line-through opacity-70 mb-1">
+                                                                    R$ {originalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                                                </span>
+                                                            )}
+                                                            <div className="flex items-baseline gap-1 relative">
+                                                                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">R$</span>
+                                                                <span className="text-4xl font-black text-slate-900 dark:text-white">{(finalPrice).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                                                                <span className="text-[10px] font-bold text-slate-400 ml-1 uppercase">/mês</span>
+                                                                {discount > 0 && <span className="absolute -top-6 right-0 bg-indigo-500 text-white text-[9px] font-black px-2 py-1 rounded-lg">-{discount}% Off</span>}
+                                                            </div>
                                                         </div>
                                                         {modulesBillingCycle !== 'monthly' && (
                                                             <p className="text-[9px] font-bold text-indigo-600 mt-2 italic">ou {months} meses de contrato</p>

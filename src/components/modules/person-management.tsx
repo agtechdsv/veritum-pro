@@ -248,7 +248,6 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                                 onChange={e => setSelectedUserId(e.target.value)}
                             >
                                 <option value="">{t('management.users.masterFilter.selectClient') || '--- SELECIONE UM CLIENTE ---'}</option>
-                                <option value={currentUser.id}>{t('management.users.masterFilter.self') || 'MEU PRÓPRIO CONTEXTO'}</option>
                                 <optgroup label={t('management.users.masterFilter.clients') || 'CLIENTES'}>
                                     {allUsers.filter(u => u.id !== currentUser.id).map(c => (
                                         <option key={c.id} value={c.id}>🏢 {(typeof c.name === 'object' ? ((c.name as any).pt || (c.name as any).en || '') : (c.name || '')).toUpperCase()} ({c.email})</option>

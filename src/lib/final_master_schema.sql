@@ -295,7 +295,7 @@ BEGIN
     SELECT ng.id, gp.feature_id, gp.can_access
     FROM public.group_permissions gp
     JOIN public.access_groups og ON og.id = gp.group_id
-    JOIN public.access_groups ng ON ng.name = og.name AND ng.admin_id = new_admin_id
+    JOIN public.access_groups ng ON ng.name->>'pt' = og.name->>'pt' AND ng.admin_id = new_admin_id
     WHERE og.admin_id = master_id ON CONFLICT DO NOTHING;
 END;
 $$;
@@ -317,7 +317,7 @@ BEGIN
 
   -- 2. Definir Plano de Trial se não houver um
   IF user_plan_id IS NULL THEN 
-    SELECT id INTO user_plan_id FROM public.plans WHERE name ILIKE '%Trial%' LIMIT 1; 
+    SELECT id INTO user_plan_id FROM public.plans WHERE name->>'pt' ILIKE '%Trial%' LIMIT 1; 
   END IF;
 
   -- 3. Criar o usuário na tabela pública
@@ -378,7 +378,8 @@ BEGIN
   
   -- 8. Vincular ao grupo Sócio-Administrador e Atualizar Token Final
   IF (new.raw_user_meta_data->>'parent_user_id') IS NULL THEN
-      SELECT id INTO generated_group_id FROM public.access_groups WHERE admin_id = new.id AND name = 'Sócio-Administrador' LIMIT 1;
+      SELECT id INTO generated_group_id FROM public.access_groups 
+      WHERE admin_id = new.id AND name->>'pt' = 'Sócio-Administrador' LIMIT 1;
       
       IF generated_group_id IS NOT NULL THEN
           UPDATE public.users 
