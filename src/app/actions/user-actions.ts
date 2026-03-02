@@ -3,6 +3,16 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 
+export async function getTemplates() {
+    const supabase = createAdminClient();
+    const { data, error } = await supabase.from('group_templates').select('*');
+    if (error) {
+        console.error('Error fetching templates:', error);
+        return { success: false, data: [] };
+    }
+    return { success: true, data };
+}
+
 export async function createUserDirectly(formData: any, parentUserId: string | null) {
     const supabase = createAdminClient();
 

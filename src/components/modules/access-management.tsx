@@ -7,6 +7,7 @@ import { createMasterClient } from '@/lib/supabase/master';
 import { toast } from '../ui/toast';
 import { useModule } from '@/app/veritum/layout';
 import { useTranslation } from '@/contexts/language-context';
+import { getTemplates } from '@/app/actions/user-actions';
 
 interface Props {
     currentUser: User;
@@ -130,8 +131,8 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
     }, [suites, features]);
 
     const fetchTemplates = async () => {
-        const { data } = await supabase.from('group_templates').select('*').order('name');
-        if (data) setTemplates(data);
+        const { success, data } = await getTemplates();
+        if (success && data) setTemplates(data);
     };
 
     const fetchGroups = async () => {
@@ -752,8 +753,11 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                             className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl text-xs font-bold text-slate-600 dark:text-slate-400 outline-none focus:ring-2 focus:ring-indigo-600 appearance-none cursor-pointer transition-all hover:border-slate-300 dark:hover:border-slate-700"
                                             defaultValue=""
                                         >
-                                            {templates.map(t => {
-                                                const tName = getLoc(t.name, locale);
+                                            <option value="" disabled className="text-slate-400">
+                                                {t('management.access.modal.templatePlaceholder') || 'Selecione um template para preenchimento rápido...'}
+                                            </option>
+                                            {[...templates].sort((a, b) => getLoc(a.name, activeLang).localeCompare(getLoc(b.name, activeLang))).map(t => {
+                                                const tName = getLoc(t.name, activeLang);
                                                 return <option key={t.id} value={t.id}>✨ {tName}</option>
                                             })}
                                             <option value="clear" className="text-rose-500 font-bold border-t border-slate-200 mt-2">🛑 {t('management.access.modal.clearSelection')}</option>
@@ -845,7 +849,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                                             const groupRoles = groupedRoles[groupId];
                                                             const group = groups.find(g => g.id === groupId);
                                                             const groupName = group
-                                                                ? (getLoc(group.name, locale))
+                                                                ? (getLoc(group.name, activeLang))
                                                                 : t('management.access.modal.others');
 
                                                             return (
@@ -932,7 +936,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                                         </div>
                                                         <div className="flex-1">
                                                             <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight leading-none mb-1">
-                                                                {getLoc(suite.name, locale)}
+                                                                {getLoc(suite.name, activeLang)}
                                                             </h4>
                                                             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{t('management.access.modal.featuresActive', { count: enabledInSuite.length, total: suiteFeatures.length })}</p>
                                                         </div>
@@ -976,11 +980,11 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                                                     </div>
                                                                     <div className="flex-1">
                                                                         <span className={`block text-xs font-black uppercase tracking-tight transition-colors ${isActive ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-300'}`}>
-                                                                            {getLoc(f.display_name, locale, f.feature_key)}
+                                                                            {getLoc(f.display_name, activeLang, f.feature_key)}
                                                                         </span>
                                                                         {f.description?.pt && (
                                                                             <span className={`text-[9px] font-bold normal-case block leading-relaxed mt-1 transition-opacity ${isActive ? 'opacity-100 text-emerald-600/80 dark:text-emerald-500/80' : 'opacity-60 text-slate-500 dark:text-slate-500'}`}>
-                                                                                {getLoc(f.description, locale)}
+                                                                                {getLoc(f.description, activeLang)}
                                                                             </span>
                                                                         )}
                                                                     </div>
