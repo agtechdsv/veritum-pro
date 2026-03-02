@@ -1,0 +1,505 @@
+-- ============================================================================
+-- VERITUM PRO: SEED DE DADOS MESTRE (INFRAESTRUTURA)
+-- ============================================================================
+-- Descrição: Popula as tabelas de controle do SaaS: Suítes, Features, Planos e RBAC.
+-- Recomendação: Executar após o 'final_master_schema.sql'.
+-- ============================================================================
+
+-- 0. LIMPEZA DE SEGURANÇA (Opcional - Descomente se quiser resetar tudo)
+-- TRUNCATE public.plan_permissions, public.group_permissions, public.roles, public.access_groups, public.group_templates, public.features, public.suites, public.plans, public.email_settings CASCADE;
+
+-- ----------------------------------------------------------------------------
+-- 1. SUÍTES (MÓDULOS DO ECOSSISTEMA)
+-- ----------------------------------------------------------------------------
+INSERT INTO public.suites (id, suite_key, name, short_desc, detailed_desc, features, icon_svg, active, order_index) VALUES 
+-- SENTINEL PRO (Index 0)
+(
+  'f0fb201d-7ab3-4002-955e-f8c702118adf', 'sentinel', '{"pt": "SENTINEL PRO", "en": "SENTINEL PRO", "es": "SENTINEL PRO"}'::jsonb, 
+  '{"en":"Surveillance and Monitoring","es":"Vigilancia y Monitoreo","pt":"Vigilância e Monitoramento"}'::jsonb, 
+  '{"en":"Intelligent clipping and early capture of judicial proceedings","es":"Clipping inteligente y captura anticipada de procesos judiciales","pt":"Clipping inteligente e captura antecipada de processos judiciais"}'::jsonb, 
+  '["O \"Radar\" do Ecossistema. De acordo com sua visão, esta suíte foca na captura de dados externos","Clipping Inteligente: Monitoramento de termos, nomes de empresas ou sócios em jornais, revistas e fóruns, atuando como um sensor de riscos reputacionais e tendências.","Captura Antecipada: Monitoramento da distribuição de novas ações (inclusive antes da citação oficial) para evitar a revelia e preparar defesas proativas.","Análise de Sentimento: Uso de IA para ler notícias e classificar se o conteúdo é positivo, negativo ou neutro, gerando alertas de crise."]'::jsonb, 
+  $$ <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg> $$, 
+  true, 0
+),
+-- NEXUS PRO (Index 1)
+(
+  '0bc36740-4107-484c-972e-a4f61aaef829', 'nexus', '{"pt": "NEXUS PRO", "en": "NEXUS PRO", "es": "NEXUS PRO"}'::jsonb, 
+  '{"en":"Workflow Management","es":"Gestión de Flujos de Trabalho","pt":"Gestão de Fluxo de Trabalho"}'::jsonb, 
+  '{"en":"Legal Kanban and automation of recurring tasks","es":"Kanban Jurídico y automatización de tareas recurrentes","pt":"Kanban Jurídico e automação de tarefas recorrentes"}'::jsonb, 
+  '["O \"Coração\" Operacional. Esta suíte cuida da gestão de processos e prazos, garantindo que o escritório ou departamento jurídico funcione como um relógio","Workflow Automatizado: Criação de fluxos de tarefas recorrentes (ex: \"Protocolar Contestação\" gera automaticamente tarefas de revisão para o sócio), com atualização automática de status.","Agenda Inteligente: Visualização de compromissos por dia/mês e integração com prazos fatais, permitindo delegar demandas e acompanhar o time.","Integração com Tribunais (Robôs): Sincronização automática com sistemas como PJe e e-SAJ para puxar andamentos e publicações sem intervenção manual.","Kanban Jurídico: Visualização de processos em cartões (To Do, Doing, Done) para gestão visual ágil."]'::jsonb, 
+  $$ <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" x2="6" y1="3" y2="15"/><circle cx="18" cy="9" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg> $$, 
+  true, 1
+),
+-- SCRIPTOR PRO (Index 2)
+(
+  '11a3a5b3-49dd-4f46-95d0-db97a1226a7a', 'scriptor', '{"pt": "SCRIPTOR PRO", "en": "SCRIPTOR PRO", "es": "SCRIPTOR PRO"}'::jsonb, 
+  '{"en":"Document Intelligence","es":"Inteligencia Documental","pt":"Inteligência Documental"}'::jsonb, 
+  '{"en":"AI-assisted drafting and contract lifecycle management (CLM)","es":"Redacción asistida por IA y gestión de contratos (CLM)","pt":"Redação assistida por IA e gestão de contratos (CLM)"}'::jsonb, 
+  '["O \"Cérebro\" Criativo e Arquivista. Focada na redação assistida e gestão do ciclo de vida de documentos (CLM)","Redação Assistida por IA: Geração automática de minutas, cláusulas contratuais e peças processuais baseadas em dados do caso, reduzindo o tempo de elaboração.","Análise de Riscos: A IA lê contratos recebidos e aponta cláusulas perigosas ou fora do padrão da empresa.","Repositório Seguro: Gestão de versões de documentos e assinatura digital integrada, garantindo que nada se perca."]'::jsonb, 
+  $$ <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13.5V4a2 2 0 0 1 2-2h8.5L20 7.5V20a2 2 0 0 1-2 2h-5.5"/><polyline points="14 2 14 8 20 8"/><path d="M10.42 12.61a2.1 2.1 0 1 1 2.97 2.97L7.95 21 4 22l1-3.95 5.42-5.44Z"/></svg> $$, 
+  true, 2
+),
+-- VALOREM PRO (Index 3)
+(
+  '2a448445-a236-41f9-bbaa-0d2fa5f8c803', 'valorem', '{"pt": "VALOREM PRO", "en": "VALOREM PRO", "es": "VALOREM PRO"}'::jsonb, 
+  '{"en":"Financial Controllership","es":"Controlaría Financiera","pt":"Controladoria Financeira"}'::jsonb, 
+  '{"en":"Management of fees and precise legal calculations","es":"Gestión de honorarios y cálculos judiciales precisos","pt":"Gestão de honorários e cálculos judiciais precisos"}'::jsonb, 
+  '["O \"Cofre\" Estratégico. Para a controladoria jurídica, gestão de honorários e faturamento","Gestão de Honorários: Emissão automatizada de boletos e integração com PIX para recebimento de honorários.","Cálculos Trabalhistas e Cíveis: Integração ou módulo similar ao PJe-Calc para liquidação de sentenças e atualização monetária precisa, evitando perdas na fase de execução.","Provisionamento: Relatórios de contingência para departamentos jurídicos, calculando o risco financeiro de cada processo."]'::jsonb, 
+  $$ <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> $$, 
+  true, 3
+),
+-- COGNITIO PRO (Index 4)
+(
+  '6221e886-1af4-4679-b7fa-aac29f01b2bf', 'cognitio', '{"pt": "COGNITIO PRO", "en": "COGNITIO PRO", "es": "COGNITIO PRO"}'::jsonb, 
+  '{"en":"Advanced Jurimetrics","es":"Jurimetría Avanzada","pt":"Jurimetria Avançada"}'::jsonb, 
+  '{"en":"Predictive analysis and dashboards for decision-making","es":"Análisis predictivo y tableros para la toma de decisiones","pt":"Análise preditiva e dashboards para tomada de decisão"}'::jsonb, 
+  '["O \"Oráculo\" de Dados. Focado em transformar dados brutos em decisões estratégicas","Análise Preditiva: Estimativa da probabilidade de êxito ou perda em uma ação judicial baseada no histórico do juiz ou tribunal específico.","Dashboards Executivos: Gráficos visuais para monitorar KPIs como \"Taxa de Acordo\", \"Tempo Médio de Processo\" e \"Valor Médio de Condenação\".","Visualização de Dados: Mapas de calor e gráficos de tendências para identificar onde estão os maiores gargalos do escritório."]'::jsonb, 
+  $$ <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg> $$, 
+  true, 4
+),
+-- VOX CLIENTIS (Index 5)
+(
+  'f193e0e0-9065-4442-a58d-1bd22d03119e', 'vox', '{"pt": "VOX CLIENTIS", "en": "VOX CLIENTIS", "es": "VOX CLIENTIS"}'::jsonb, 
+  '{"en":"CRM and Client Portal","es":"CRM y Portal del Cliente","pt":"CRM e Portal do Cliente"}'::jsonb, 
+  '{"en":"Transparent communication and translation of \"legalese\"","es":"Comunicación transparente y traducción del lenguaje jurídico","pt":"Comunicación transparente e tradução do \"juridiquês\""}'::jsonb, 
+  '["A \"Voz\" do Ecossistema. Portal do cliente e gestão de relacionamento","Portal do Cliente: Um aplicativo ou área web onde o cliente pode verificar o status do processo em tempo real, sem precisar ligar para o advogado.","Tradução Jurídica via IA: O sistema extrai o \"juridiquês\" das atualizações processuais (ex: \"Concluso para decisão\") e envia uma mensagem automática via WhatsApp ao cliente explicando o significado em linguagem simples.","Histórico de Relacionamento: CRM integrado para registrar todas as interações, propostas e documentos trocados."]'::jsonb, 
+  $$ <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> $$, 
+  true, 5
+),
+-- INTELLIGENCE HUB (Index 6)
+(
+  'd3e8b0e0-9065-4442-a58d-1bd22d03119c', 'intelligence', '{"pt": "INTELLIGENCE HUB", "en": "INTELLIGENCE HUB", "es": "INTELLIGENCE HUB"}'::jsonb, 
+  '{"en":"Proactive Intelligence","es":"Inteligencia Proactiva","pt":"Inteligência Proativa"}'::jsonb, 
+  '{"en":"Strategic insights and proactive legal opportunities","es":"Insights estratégicos y oportunidades legales proactivas","pt":"Insights estratégicos e oportunidades jurídicas proativas"}'::jsonb, 
+  '["O \"Farol\" de Oportunidades. Identifica riscos e chances de êxito antes mesmo da judicialização.","Golden Alerts: Alertas automáticos baseados em teses do escritório.","Busca Semântica IA: Cruzamento inteligente de publicações com base de conhecimento."]'::jsonb, 
+  $$ <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> $$, 
+  true, 6
+)
+ON CONFLICT (suite_key) DO UPDATE SET 
+  name = EXCLUDED.name, 
+  short_desc = EXCLUDED.short_desc, 
+  detailed_desc = EXCLUDED.detailed_desc,
+  features = EXCLUDED.features,
+  icon_svg = EXCLUDED.icon_svg,
+  order_index = EXCLUDED.order_index;
+
+-- ----------------------------------------------------------------------------
+-- 2. FEATURES (FUNCIONALIDADES)
+-- ----------------------------------------------------------------------------
+INSERT INTO "public"."features" ("feature_key", "suite_id", "display_name", "description") VALUES 
+-- NEXUS PRO (Gestão)
+('nexus_gestao_prazos', (SELECT id FROM public.suites WHERE suite_key = 'nexus'), '{"pt": "Gestão de Processos e Prazos", "en": "Process and Deadline Management", "es": "Gestión de Procesos y Plazos"}'::jsonb, '{"pt": "Kanban, agenda e controle de prazos processuais.", "en": "Kanban, calendar and control of procedural deadlines.", "es": "Kanban, agenda y control de plazos procesais."}'::jsonb),
+('nexus_workflows', (SELECT id FROM public.suites WHERE suite_key = 'nexus'), '{"pt": "Workflows Avançados", "en": "Advanced Workflows", "es": "Workflows Avanzados"}'::jsonb, '{"pt": "Automação de fluxos de trabalho e delegação inteligente de tarefas.", "en": "Workflow automation and intelligent task delegation.", "es": "Automatización de flujos de trabalho y delegación inteligente de tareas."}'::jsonb),
+('nexus_gestao_ativos', (SELECT id FROM public.suites WHERE suite_key = 'nexus'), '{"pt": "Gestão de Ativos e Bens", "en": "Asset Management", "es": "Gestión de Activos"}'::jsonb, '{"pt": "Controle de garantias, imóveis e frotas em litígio.", "en": "Control of guarantees, real estate and fleets in litigation.", "es": "Control de garantias, inmuebles y flotas en litigio."}'::jsonb),
+('nexus_controle_societario', (SELECT id FROM public.suites WHERE suite_key = 'nexus'), '{"pt": "Controle Societário", "en": "Corporate Control", "es": "Control Societario"}'::jsonb, '{"pt": "Gestão do ciclo de vida de contratos não-financeiros.", "en": "Non-financial contract lifecycle management.", "es": "Gestión del ciclo de vida de contratos no financieros."}'::jsonb),
+('nexus_gestao_equipe', (SELECT id FROM public.suites WHERE suite_key = 'nexus'), '{"pt": "Gestão de Equipe e Workspace", "en": "Team and Workspace Management", "es": "Gestión de Equipo y Workspace"}'::jsonb, '{"pt": "Controle de usuários, cargos (RBAC) e configurações do escritório.", "en": "Control of users, roles (RBAC) and office settings.", "es": "Control de usuarios, cargos (RBAC) y configuraciones de la oficina."}'::jsonb),
+('nexus_gestao_pessoas', (SELECT id FROM public.suites WHERE suite_key = 'nexus'), '{"pt": "Gestão de Pessoas (CRM Básico)", "en": "People Management (Basic CRM)", "es": "Gestión de Personas (CRM Básico)"}'::jsonb, '{"pt": "Cadastro centralizado de clientes, reclamados e testemunhas.", "en": "Centralized registration of clients, defendants and witnesses.", "es": "Registro centralizado de clientes, demandados y testigos."}'::jsonb),
+
+-- SENTINEL PRO (Vigilância)
+('sentinel_diarios', (SELECT id FROM public.suites WHERE suite_key = 'sentinel'), '{"pt": "Monitoramento de Diários", "en": "Gazette Monitoring", "es": "Monitoreo de Diarios"}'::jsonb, '{"pt": "Varredura automática de publicações em Diários Oficiais e de Justiça.", "en": "Automatic scanning of publications in Official and Justice Gazettes.", "es": "Búsqueda automática de publicaciones en Diarios Oficiales y de Justicia."}'::jsonb),
+('sentinel_captura_antecipada', (SELECT id FROM public.suites WHERE suite_key = 'sentinel'), '{"pt": "Captura Antecipada", "en": "Early Capture", "es": "Captura Anticipada"}'::jsonb, '{"pt": "Monitoramento de distribuição de novas ações antes da citação oficial.", "en": "Monitoring of new lawsuit distributions before official summons.", "es": "Monitoreo de distribución de nuevas acciones antes de la citación oficial."}'::jsonb),
+('sentinel_clipping_midia', (SELECT id FROM public.suites WHERE suite_key = 'sentinel'), '{"pt": "Clipping Inteligente", "en": "Smart Clipping", "es": "Clipping Inteligente"}'::jsonb, '{"pt": "Monitoramento de marcas, empresas e sócios em jornais e portais de notícias.", "en": "Brand, company and partner monitoring in newspapers and news portals.", "es": "Monitoreo de marcas, empresas y socios en periódicos y portales de noticias."}'::jsonb),
+('sentinel_analise_sentimento', (SELECT id FROM public.suites WHERE suite_key = 'sentinel'), '{"pt": "Análise de Sentimento (IA)", "en": "Sentiment Analysis (AI)", "es": "Análisis de Sentimiento (IA)"}'::jsonb, '{"pt": "Classificação automática de risco em notícias e andamentos processuais.", "en": "Automatic risk classification in news and procedural updates.", "es": "Clasificación automática de riesgo en noticias y actualizaciones procesales."}'::jsonb),
+
+-- SCRIPTOR PRO (Documental)
+('scriptor_ged', (SELECT id FROM public.suites WHERE suite_key = 'scriptor'), '{"pt": "Repositório de Documentos (GED)", "en": "Document Repository (DMS)", "es": "Repositorio de Documentos (GED)"}'::jsonb, '{"pt": "Armazenamento seguro em nuvem e versionamento de arquivos.", "en": "Secure cloud storage and file versioning.", "es": "Almacenamiento seguro en la nube y control de versiones de archivos."}'::jsonb),
+('scriptor_gerador_ia', (SELECT id FROM public.suites WHERE suite_key = 'scriptor'), '{"pt": "Gerador de Peças (IA)", "en": "Pleading Generator (AI)", "es": "Generador de Escritos (IA)"}'::jsonb, '{"pt": "Redação automatizada de contratos e petições via inteligência artificial.", "en": "Automated drafting of contracts and petitions via artificial intelligence.", "es": "Redacción automatizada de contratos y peticiones vía inteligencia artificial."}'::jsonb),
+('scriptor_auditoria_risco', (SELECT id FROM public.suites WHERE suite_key = 'scriptor'), '{"pt": "Auditoria de Risco (IA)", "en": "Risk Audit (AI)", "es": "Auditoria de Riesgo (IA)"}'::jsonb, '{"pt": "Análise de documentos para identificação automática de cláusulas abusivas.", "en": "Document analysis for automatic identification of abusive clauses.", "es": "Análisis de documentos para identificación automática de cláusulas abusivas."}'::jsonb),
+('scriptor_assinatura', (SELECT id FROM public.suites WHERE suite_key = 'scriptor'), '{"pt": "Assinatura Digital", "en": "Digital Signature", "es": "Firma Digital"}'::jsonb, '{"pt": "Envio e controle de assinaturas de documentos com validade jurídica.", "en": "Document signature control with legal validity.", "es": "Envío y control de firmas de documentos con validez jurídica."}'::jsonb),
+
+-- VALOREM PRO (Financeiro)
+('valorem_financeiro', (SELECT id FROM public.suites WHERE suite_key = 'valorem'), '{"pt": "Gestão Financeira", "en": "Financial Management", "es": "Gestión Financiera"}'::jsonb, '{"pt": "Controle de honorários, contas a pagar/receber e fluxo de caixa.", "en": "Fee control, accounts payable/receivable and cash flow.", "es": "Control de honorarios, cuentas a pagar/cobrar y flujo de caja."}'::jsonb),
+('valorem_boletos_pix', (SELECT id FROM public.suites WHERE suite_key = 'valorem'), '{"pt": "Emissão de Boletos e PIX", "en": "Invoicing and PIX", "es": "Emisión de Boletos y PIX"}'::jsonb, '{"pt": "Geração de cobranças integradas com baixa automática para os clientes.", "en": "Integrated charge generation with automatic reconciliation for clients.", "es": "Generación de cobros integrados con conciliación automática para los clientes."}'::jsonb),
+('valorem_pjecalc', (SELECT id FROM public.suites WHERE suite_key = 'valorem'), '{"pt": "Integração PJe-Calc e Atualizações", "en": "PJe-Calc Integration and Updates", "es": "Integración PJe-Calc y Actualizaciones"}'::jsonb, '{"pt": "Importação e leitura de cálculos trabalhistas e atualização monetária.", "en": "Import and reading of labor calculations and monetary updates.", "es": "Importación y lectura de cálculos laborales y actualización monetaria."}'::jsonb),
+('valorem_provisionamento', (SELECT id FROM public.suites WHERE suite_key = 'valorem'), '{"pt": "Relatórios de Contingência", "en": "Contingency Reports", "es": "Informes de Contingencias"}'::jsonb, '{"pt": "Cálculo de provisão e valores retidos em garantia para diretoria.", "en": "Provision calculation and values retained in guarantee for management.", "es": "Cálculo de provisión y valores retenidos en garantía para la dirección."}'::jsonb),
+
+-- COGNITIO PRO (Jurimetria)
+('cognitio_dashboards', (SELECT id FROM public.suites WHERE suite_key = 'cognitio'), '{"pt": "Dashboards Analíticos", "en": "Analytical Dashboards", "es": "Tableros Analíticos"}'::jsonb, '{"pt": "Gráficos gerais de produtividade, volume processual e financeiro.", "en": "General charts of productivity, case volume and finance.", "es": "Gráficos generales de productividad, volumen procesal y financiero."}'::jsonb),
+('cognitio_preditiva', (SELECT id FROM public.suites WHERE suite_key = 'cognitio'), '{"pt": "Análise Preditiva (IA)", "en": "Predictive Analysis (IA)", "es": "Análisis Predictivo (IA)"}'::jsonb, '{"pt": "Previsão de êxito e desfechos judiciais baseada em dados históricos.", "en": "Success and outcome prediction based on historical data.", "es": "Predicción de éxito y desenlaces judiciales basada en datos históricos."}'::jsonb),
+('cognitio_magistrados', (SELECT id FROM public.suites WHERE suite_key = 'cognitio'), '{"pt": "Perfil de Magistrados", "en": "Magistrate Profile", "es": "Perfil de Magistrados"}'::jsonb, '{"pt": "Mapeamento comportamental e taxa de condenações de juízes e varas.", "en": "Behavioral mapping and condemnation rate of judges and courts.", "es": "Mapeo conductual y tasa de condenas de jueces y juzgados."}'::jsonb),
+
+-- VOX CLIENTIS (Comunicação)
+('vox_portal', (SELECT id FROM public.suites WHERE suite_key = 'vox'), '{"pt": "Portal do Cliente", "en": "Client Portal", "es": "Portal del Cliente"}'::jsonb, '{"pt": "Acesso seguro e exclusivo para o cliente acompanhar seus próprios processos.", "en": "Secure and exclusive access for clients to monitor their own cases.", "es": "Acceso seguro y exclusivo para el cliente seguir sus propios procesos."}'::jsonb),
+('vox_traducao_ia', (SELECT id FROM public.suites WHERE suite_key = 'vox'), '{"pt": "Tradução de Juridiquês (IA)", "en": "Legalese Translation (AI)", "es": "Traducción Jurídica (IA)"}'::jsonb, '{"pt": "Tradução automática de andamentos complexos para linguagem acessível.", "en": "Automatic translation of complex updates to accessible language.", "es": "Traducción automática de actualizaciones complejas a lenguaje accesible."}'::jsonb),
+('vox_whatsapp', (SELECT id FROM public.suites WHERE suite_key = 'vox'), '{"pt": "Automação de WhatsApp", "en": "WhatsApp Automation", "es": "Automatización de WhatsApp"}'::jsonb, '{"pt": "Envio ativo de alertas de audiências e atualizações diretamente no celular.", "en": "Active sending of hearing alerts and updates directly to the phone.", "es": "Envío activo de alertas de audiencias y actualizaciones directamente al móvil."}'::jsonb),
+
+-- INTELLIGENCE HUB (Proativo)
+('intelligence_golden_alerts', (SELECT id FROM public.suites WHERE suite_key = 'intelligence'), '{"pt": "Golden Alerts", "en": "Golden Alerts", "es": "Golden Alerts"}'::jsonb, '{"pt": "Monitoramento de oportunidades estratégicas baseado em teses.", "en": "Strategic opportunity monitoring based on legal theories.", "es": "Monitoreo de oportunidades estratégicas basado en tesis legales."}'::jsonb),
+('intelligence_matcher', (SELECT id FROM public.suites WHERE suite_key = 'intelligence'), '{"pt": "Semantic Matcher", "en": "Semantic Matcher", "es": "Semantic Matcher"}'::jsonb, '{"pt": "Busca semântica em base de conhecimento.", "en": "Semantic search in knowledge base.", "es": "Búsqueda semántica en base de conocimientos."}'::jsonb)
+ON CONFLICT (feature_key) DO UPDATE SET 
+  suite_id = EXCLUDED.suite_id,
+  display_name = EXCLUDED.display_name, 
+  description = EXCLUDED.description;
+
+-- ----------------------------------------------------------------------------
+-- 3. PLANOS (GRADE DE VENDAS)
+-- ----------------------------------------------------------------------------
+INSERT INTO "public"."plans" ("name", "short_desc", "monthly_price", "monthly_discount", "quarterly_discount", "semiannual_discount", "yearly_discount", "features", "recommended", "active", "order_index", "is_combo") VALUES 
+-- COMBOS (is_combo = true)
+(
+  '{"pt": "Plano START", "en": "START Plan", "es": "Plan START"}'::jsonb, 
+  '{"pt":"A base sólida para advogados autônomos e pequenos escritórios entrarem na era digital.","en":"The solid foundation for solo attorneys and small firms to enter the digital age.","es":"La base sólida para abogados autónomos y pequeños despachos para entrar en la era digital."}'::jsonb, 
+  149.00, 5, 7, 10, 15, 
+  '["NEXUS PRO (Básico)","VALOREM PRO (Financeiro)","Gestão de Processos (Kanban)","Agenda e Prazos","Emissão de Boletos/Recibos","Suporte via Ticket"]'::jsonb, 
+  false, true, 0, true
+),
+(
+  '{"pt": "Plano GROWTH", "en": "GROWTH Plan", "es": "Plan GROWTH"}'::jsonb, 
+  '{"pt":"O ecossistema completo para alta performance jurídica com IA e automação de atendimento.","en":"The complete ecosystem for high legal performance with AI and service automation.","es":"El ecosistema completo para alto rendimiento legal con IA y automatización de procesos."}'::jsonb, 
+  450.00, 5, 10, 15, 20, 
+  '["Tudo do Plano START","SCRIPTOR PRO (IA de Redação)","SENTINEL PRO (Monitoramento Tribunais)","VOX CLIENTIS (Canal do Cliente)","Envio Automático WhatsApp","IA Ilimitada (BYODB)"]'::jsonb, 
+  true, true, 1, true
+),
+(
+  '{"pt": "Plano STRATEGY", "en": "STRATEGY Plan", "es": "Plan STRATEGY"}'::jsonb, 
+  '{"pt":"Infraestrutura estratégica para grandes bancas. Foco em inteligência preditiva e dados.","en":"Strategic infrastructure for large firms. Focus on predictive intelligence and data.","es":"Infraestructura estratégica para grandes despachos. Foco en inteligencia predictiva y datos."}'::jsonb, 
+  1500.00, 5, 10, 15, 20, 
+  '["Tudo do Plano GROWTH","COGNITIO PRO (Jurimetria)","SENTINEL 360 (Clipping de Mídia)","NEXUS Advanced (Workflows)","Nível de Serviço (SLA) VIP","Auditoria de Risco Mensual"]'::jsonb, 
+  false, true, 2, true
+),
+
+-- STANDALONES (is_combo = false)
+(
+  '{"pt": "Sentinel Radar", "en": "Sentinel Radar", "es": "Sentinel Radar"}'::jsonb, 
+  '{"pt":"Monitoramento inteligente de processos e diários oficiais com Captura Antecipada.","en":"Smart case and official gazette monitoring with Early Capture.","es":"Monitoreo inteligente de procesos y diarios oficiales con Captura Anticipada."}'::jsonb, 
+  89.90, 5, 7, 10, 15, 
+  '["Monitoramento de Processos","Recortes de Diários Oficiais","Captura na Distribuição","Alertas via E-mail/Push"]'::jsonb, 
+  false, true, 3, false
+),
+(
+  '{"pt": "Sentinel 360º", "en": "Sentinel 360º", "es": "Sentinel 360º"}'::jsonb, 
+  '{"pt":"Inteligência total: Tribunais + Clipping de notícias, jornais e monitoramento de marca.","en":"Total intelligence: Courts + News clipping, newspapers and brand monitoring.","es":"Inteligencia total: Tribunales + Clipping de noticias, periódicos y monitoreo de marca."}'::jsonb, 
+  249.00, 5, 7, 10, 15, 
+  '["Tudo do Sentinel Radar","Clipping de Web e Jornais","Rastreamento de Marca/Nomes","Relatórios de Reputação"]'::jsonb, 
+  false, true, 4, false
+),
+(
+  '{"pt": "Cognitio Pro", "en": "Cognitio Pro", "es": "Cognitio Pro"}'::jsonb, 
+  '{"pt":"Jurimetria de entrada para decisões baseadas em dados e probabilidade de êxito.","en":"Entry-level jurimetrics for data-driven decisions and success probability.","es":"Jurimetría básica para decisiones basadas en datos y probabilidad de éxito."}'::jsonb, 
+  399.00, 5, 7, 10, 15, 
+  '["Perfil de Juízes e Comarcas","Probabilidade de Êxito","Dashboards de BI Integrados","Análise de Jurisprudência IA"]'::jsonb, 
+  false, true, 5, false
+),
+(
+  '{"pt": "Scriptor Pro", "en": "Scriptor Pro", "es": "Scriptor Pro"}'::jsonb, 
+  '{"pt":"O copiloto definitivo para elaboração de peças processuais com IA generativa.","en":"The ultimate copilot for drafting procedural pieces with generative AI.","es":"El copiloto definitivo para la elaboración de piezas procesales con IA generativa."}'::jsonb, 
+  149.00, 5, 7, 10, 15, 
+  '["Gerador de Peças via IA","Analisador de Documentos","Revisão Jurídica Inteligente","Exportação Multi-formato"]'::jsonb, 
+  true, true, 6, false
+),
+-- TRIAL (is_combo = false)
+(
+  '{"pt": "Trial 14 Dias", "en": "14-Day Trial", "es": "Prueba 14 Días"}'::jsonb, 
+  '{"pt":"Acesso total gratuito por 14 dias.","en":"Full free access for 14 days.","es":"Acceso total gratuito por 14 días."}'::jsonb, 
+  0, 0, 0, 0, 0, 
+  '["Acesso Total"]'::jsonb, 
+  false, true, 99, false
+)
+ON CONFLICT (name) DO UPDATE SET 
+  short_desc = EXCLUDED.short_desc,
+  monthly_price = EXCLUDED.monthly_price,
+  monthly_discount = EXCLUDED.monthly_discount,
+  quarterly_discount = EXCLUDED.quarterly_discount,
+  semiannual_discount = EXCLUDED.semiannual_discount,
+  yearly_discount = EXCLUDED.yearly_discount,
+  features = EXCLUDED.features,
+  active = EXCLUDED.active,
+  order_index = EXCLUDED.order_index,
+  is_combo = EXCLUDED.is_combo;
+
+-- ----------------------------------------------------------------------------
+-- 4. MAPEAMENTO DE PERMISSÕES (PLAN PERMISSIONS)
+-- ----------------------------------------------------------------------------
+DELETE FROM "public"."plan_permissions";
+
+WITH p_ids AS (SELECT id, name->>'pt' as name FROM public.plans),
+     f_ids AS (SELECT id, feature_key FROM public.features)
+INSERT INTO public.plan_permissions (plan_id, feature_id)
+SELECT p.id, f.id
+FROM (
+    VALUES
+    -- 1. Plano START (Essencial + RBAC básico)
+    ('Plano START', 'nexus_gestao_prazos'),
+    ('Plano START', 'nexus_gestao_pessoas'),
+    ('Plano START', 'nexus_gestao_equipe'),
+    ('Plano START', 'sentinel_diarios'),
+    ('Plano START', 'scriptor_ged'),
+    ('Plano START', 'valorem_financeiro'),
+    ('Plano START', 'valorem_boletos_pix'),
+    ('Plano START', 'valorem_pjecalc'),
+
+    -- 2. Plano GROWTH (START + Automação)
+    ('Plano GROWTH', 'nexus_gestao_prazos'),
+    ('Plano GROWTH', 'nexus_gestao_pessoas'),
+    ('Plano GROWTH', 'nexus_gestao_equipe'),
+    ('Plano GROWTH', 'sentinel_diarios'),
+    ('Plano GROWTH', 'scriptor_ged'),
+    ('Plano GROWTH', 'valorem_financeiro'),
+    ('Plano GROWTH', 'valorem_boletos_pix'),
+    ('Plano GROWTH', 'valorem_pjecalc'),
+    ('Plano GROWTH', 'nexus_workflows'),
+    ('Plano GROWTH', 'sentinel_captura_antecipada'),
+    ('Plano GROWTH', 'sentinel_analise_sentimento'),
+    ('Plano GROWTH', 'scriptor_gerador_ia'),
+    ('Plano GROWTH', 'scriptor_assinatura'),
+    ('Plano GROWTH', 'vox_portal'),
+    ('Plano GROWTH', 'vox_whatsapp'),
+    ('Plano GROWTH', 'vox_traducao_ia'),
+
+    -- 3. Plano STRATEGY (GROWTH + Inteligência Total)
+    ('Plano STRATEGY', 'nexus_gestao_prazos'),
+    ('Plano STRATEGY', 'nexus_gestao_pessoas'),
+    ('Plano STRATEGY', 'nexus_gestao_equipe'),
+    ('Plano STRATEGY', 'intelligence_golden_alerts'),
+    ('Plano STRATEGY', 'intelligence_matcher'),
+    ('Plano STRATEGY', 'sentinel_diarios'),
+    ('Plano STRATEGY', 'scriptor_ged'),
+    ('Plano STRATEGY', 'valorem_financeiro'),
+    ('Plano STRATEGY', 'valorem_boletos_pix'),
+    ('Plano STRATEGY', 'valorem_pjecalc'),
+    ('Plano STRATEGY', 'nexus_workflows'),
+    ('Plano STRATEGY', 'sentinel_captura_antecipada'),
+    ('Plano STRATEGY', 'sentinel_analise_sentimento'),
+    ('Plano STRATEGY', 'scriptor_gerador_ia'),
+    ('Plano STRATEGY', 'scriptor_assinatura'),
+    ('Plano STRATEGY', 'vox_portal'),
+    ('Plano STRATEGY', 'vox_whatsapp'),
+    ('Plano STRATEGY', 'vox_traducao_ia'),
+    ('Plano STRATEGY', 'nexus_gestao_ativos'),
+    ('Plano STRATEGY', 'nexus_controle_societario'),
+    ('Plano STRATEGY', 'sentinel_clipping_midia'),
+    ('Plano STRATEGY', 'scriptor_auditoria_risco'),
+    ('Plano STRATEGY', 'valorem_provisionamento'),
+    ('Plano STRATEGY', 'cognitio_dashboards'),
+    ('Plano STRATEGY', 'cognitio_preditiva'),
+    ('Plano STRATEGY', 'cognitio_magistrados'),
+
+    -- 4. Sentinel Radar (Standalone)
+    ('Sentinel Radar', 'sentinel_diarios'),
+    ('Sentinel Radar', 'sentinel_captura_antecipada'),
+
+    -- 5. Sentinel 360º (Standalone)
+    ('Sentinel 360º', 'sentinel_diarios'),
+    ('Sentinel 360º', 'sentinel_captura_antecipada'),
+    ('Sentinel 360º', 'sentinel_clipping_midia'),
+    ('Sentinel 360º', 'sentinel_analise_sentimento'),
+
+    -- 6. Cognitio Pro (Standalone)
+    ('Cognitio Pro', 'cognitio_dashboards'),
+    ('Cognitio Pro', 'cognitio_preditiva'),
+    ('Cognitio Pro', 'cognitio_magistrados'),
+
+    -- 7. Scriptor Pro (Standalone)
+    ('Scriptor Pro', 'scriptor_ged'),
+    ('Scriptor Pro', 'scriptor_gerador_ia'),
+    ('Scriptor Pro', 'scriptor_auditoria_risco'),
+    ('Scriptor Pro', 'scriptor_assinatura'),
+
+    -- 8. Trial 14 Dias (Para teste inicial)
+    ('Trial 14 Dias', 'nexus_gestao_prazos'),
+    ('Trial 14 Dias', 'nexus_gestao_pessoas'),
+    ('Trial 14 Dias', 'scriptor_gerador_ia')
+
+) AS mapping(p_name, f_key)
+JOIN p_ids p ON p.name = mapping.p_name
+JOIN f_ids f ON f.feature_key = mapping.f_key;
+
+-- ----------------------------------------------------------------------------
+-- 5. CONFIGURAÇÕES DE E-MAIL (EMAIL SETTINGS)
+-- ----------------------------------------------------------------------------
+INSERT INTO "public"."email_settings" ("scenario_key", "config") VALUES 
+('general', $$ {
+  "pt": {"email": "contato@veritumpro.com", "name": "Veritum PRO"},
+  "en": {"email": "contact@veritumpro.com", "name": "Veritum PRO"}
+} $$::jsonb), 
+('sales', $$ {
+  "pt": {"email": "sucesso@veritumpro.com", "name": "Veritum Sucesso"},
+  "en": {"email": "success@veritumpro.com", "name": "Veritum Success"}
+} $$::jsonb),
+('billing', $$ {
+  "pt": {"email": "financeiro@veritumpro.com", "name": "Veritum Financeiro"},
+  "en": {"email": "billing@veritumpro.com", "name": "Veritum Billing"}
+} $$::jsonb), 
+('support', $$ {
+  "pt": {"email": "suporte@veritumpro.com", "name": "Veritum Suporte"},
+  "en": {"email": "support@veritumpro.com", "name": "Veritum Support"}
+} $$::jsonb)
+ON CONFLICT (scenario_key) DO UPDATE SET 
+  config = EXCLUDED.config,
+  updated_at = now();
+
+-- ----------------------------------------------------------------------------
+-- 6. TEMPLATES DE GRUPOS (PERSONAS COMPLETAS)
+-- ----------------------------------------------------------------------------
+DELETE FROM "public"."group_templates";
+
+-- Sócio-Administrador: O dono do castelo
+INSERT INTO "public"."group_templates" ("name", "description", "default_features")
+SELECT '{"pt": "Sócio-Administrador", "en": "Partner-Administrator", "es": "Socio-Administrador"}'::jsonb, 
+       '{"pt": "Acesso total a todos os módulos e configurações.", "en": "Full access to all modules and settings.", "es": "Acceso total a todos los módulos y configuraciones."}'::jsonb, 
+       array_agg(id) FROM public.features;
+
+-- Advogado Sênior / Coordenador: O capitão do time
+INSERT INTO "public"."group_templates" ("name", "description", "default_features")
+SELECT '{"pt": "Advogado Sênior / Coordenador", "en": "Senior Lawyer / Coordinator", "es": "Abogado Senior / Coordinador"}'::jsonb, 
+       '{"pt": "Gestão de prazos, redação e jurimetria.", "en": "Management of deadlines, drafting and jurimetrics.", "es": "Gestión de plazos, redacción y jurimetría."}'::jsonb, 
+       array_agg(id) FROM public.features 
+WHERE feature_key IN ('nexus_gestao_prazos', 'nexus_workflows', 'scriptor_gerador_ia', 'nexus_controle_societario', 'sentinel_diarios', 'cognitio_preditiva', 'vox_whatsapp');
+
+-- Advogado Associado / Júnior: O motor operacional
+INSERT INTO "public"."group_templates" ("name", "description", "default_features")
+SELECT '{"pt": "Advogado Associado / Júnior", "en": "Associate / Junior Lawyer", "es": "Abogado Asociado / Junior"}'::jsonb, 
+       '{"pt": "Focado na execução de tarefas e redação.", "en": "Focused on task execution and drafting.", "es": "Enfocado en la ejecución de tareas y redacción."}'::jsonb, 
+       array_agg(id) FROM public.features 
+WHERE feature_key IN ('nexus_gestao_prazos', 'scriptor_gerador_ia', 'vox_whatsapp');
+
+-- Estagiário / Paralegal: Suporte e cadastro
+INSERT INTO "public"."group_templates" ("name", "description", "default_features")
+SELECT '{"pt": "Estagiário / Paralegal", "en": "Intern / Paralegal", "es": "Pasante / Paralegal"}'::jsonb, 
+       '{"pt": "Auxiliar em cadastros e monitoramento básico.", "en": "Assist in registrations and basic monitoring.", "es": "Auxiliar en registros y monitoreo básico."}'::jsonb, 
+       array_agg(id) FROM public.features 
+WHERE feature_key IN ('nexus_gestao_pessoas', 'sentinel_diarios');
+
+-- Departamento Financeiro / Faturamento: O cofre
+INSERT INTO "public"."group_templates" ("name", "description", "default_features")
+SELECT '{"pt": "Departamento Financeiro / Faturamento", "en": "Finance / Billing Department", "es": "Departamento de Finanzas / Facturación"}'::jsonb, 
+       '{"pt": "Gestão de honorários e faturamento.", "en": "Management of fees and billing.", "es": "Gestión de honorarios y facturación."}'::jsonb, 
+       array_agg(id) FROM public.features 
+WHERE feature_key IN ('valorem_financeiro', 'valorem_pjecalc', 'valorem_boletos_pix', 'nexus_gestao_pessoas');
+
+-- Controladoria Jurídica (Legal Ops): Estratégia e Dados
+INSERT INTO "public"."group_templates" ("name", "description", "default_features")
+SELECT '{"pt": "Controladoria Jurídica (Legal Ops)", "en": "Legal Controller (Legal Ops)", "es": "Controladoría Jurídica (Legal Ops)"}'::jsonb, 
+       '{"pt": "Monitoramento de performance e jurimetria.", "en": "Performance monitoring and jurimetrics.", "es": "Monitoreo de rendimiento y jurimetría."}'::jsonb, 
+       array_agg(id) FROM public.features 
+WHERE feature_key IN ('nexus_gestao_prazos', 'cognitio_dashboards', 'sentinel_captura_antecipada');
+
+-- Secretariado / Recepção: Atendimento inicial
+INSERT INTO "public"."group_templates" ("name", "description", "default_features")
+SELECT '{"pt": "Secretariado / Recepção", "en": "Secretariat / Reception", "es": "Secretariado / Recepción"}'::jsonb, 
+       '{"pt": "Atendimento via Vox e gerenciamento de pessoas.", "en": "Service via Vox and people management.", "es": "Atención vía Vox y gestión de personas."}'::jsonb, 
+       array_agg(id) FROM public.features 
+WHERE feature_key IN ('nexus_gestao_pessoas', 'vox_whatsapp');
+
+-- Cliente (Acesso Externo B2B2C): Acesso restrito para consulta
+INSERT INTO "public"."group_templates" ("name", "description", "default_features")
+SELECT '{"pt": "Cliente (Acesso Externo B2B2C)", "en": "Client (External Access B2B2C)", "es": "Cliente (Acceso Externo B2B2C)"}'::jsonb, 
+       '{"pt": "Acesso restrito e seguro ao Portal do Cliente para consulta de processos.", "en": "Restricted and secure access to the Client Portal for case consultation.", "es": "Acceso restringido y seguro al Portal del Cliente para consulta de procesos."}'::jsonb, 
+       array_agg(id) FROM public.features 
+WHERE feature_key IN ('vox_portal', 'vox_traducao_ia', 'vox_whatsapp');
+
+-- ----------------------------------------------------------------------------
+-- 7. LÓGICA DE AUTO-SETUP MASTER (MULTI-ROLES GRANULARES)
+-- ----------------------------------------------------------------------------
+DO $$
+DECLARE
+  master_id uuid;
+BEGIN
+  -- Tenta encontrar o usuário Master
+  SELECT id INTO master_id FROM public.users WHERE role = 'Master' LIMIT 1;
+
+  IF master_id IS NOT NULL THEN
+    -- Limpa registros prévios para evitar duplicidade no re-run
+    DELETE FROM "public"."access_groups" WHERE admin_id = master_id;
+    DELETE FROM "public"."roles" WHERE admin_id = master_id;
+
+    -- 1. Cria os Access Groups a partir dos templates (8 Grupos Principais)
+    INSERT INTO "public"."access_groups" ("name", "admin_id")
+    SELECT name, master_id FROM "public"."group_templates";
+    
+    -- 2. Vincula permissões aos grupos do Master
+    INSERT INTO "public"."group_permissions" ("group_id", "feature_id")
+    SELECT g.id, unnest(t.default_features)
+    FROM "public"."access_groups" g
+    JOIN "public"."group_templates" t ON t.name->>'pt' = g.name->>'pt'
+    WHERE g.admin_id = master_id;
+
+    -- 3. MAPEAMENTO GRANULAR DE ROLES PARA GRUPOS
+    -- 3.1 Grupo: Sócio-Administrador
+    INSERT INTO "public"."roles" (name, access_group_id, admin_id)
+    SELECT jsonb_build_object('pt', r_pt, 'en', r_en, 'es', r_es), g.id, master_id
+    FROM (VALUES 
+      ('Sócio Administrador', 'Partner Administrator', 'Socio Administrador'), 
+      ('Sócio Fundador', 'Founding Partner', 'Socio Fundador'), 
+      ('Diretor Jurídico', 'Legal Director', 'Director Jurídico'), 
+      ('Gestor Geral', 'General Manager', 'Gestor General')
+    ) AS roles(r_pt, r_en, r_es)
+    JOIN "public"."access_groups" g ON g.name->>'pt' = 'Sócio-Administrador' AND g.admin_id = master_id;
+
+    -- 3.2 Grupo: Advogado Sênior / Coordenador
+    INSERT INTO "public"."roles" (name, access_group_id, admin_id)
+    SELECT jsonb_build_object('pt', r_pt, 'en', r_en, 'es', r_es), g.id, master_id
+    FROM (VALUES 
+      ('Advogado Sênior', 'Senior Lawyer', 'Abogado Sênior'), 
+      ('Coordenador Jurídico', 'Legal Coordinator', 'Coordinador Jurídico'), 
+      ('Head de Área', 'Head of Area', 'Head de Área'), 
+      ('Gestor Contencioso', 'Litigation Manager', 'Gestor Contencioso')
+    ) AS roles(r_pt, r_en, r_es)
+    JOIN "public"."access_groups" g ON g.name->>'pt' = 'Advogado Sênior / Coordenador' AND g.admin_id = master_id;
+
+    -- 3.3 Grupo: Advogado Associado / Júnior
+    INSERT INTO "public"."roles" (name, access_group_id, admin_id)
+    SELECT jsonb_build_object('pt', r_pt, 'en', r_en, 'es', r_es), g.id, master_id
+    FROM (VALUES 
+      ('Advogado Associado', 'Associate Lawyer', 'Abogado Asociado'), 
+      ('Advogado Júnior', 'Junior Lawyer', 'Abogado Júnior'), 
+      ('Advogado Pleno', 'Mid-Level Lawyer', 'Abogado Pleno'), 
+      ('Advogado Trabalhista', 'Labor Lawyer', 'Abogado Laboral')
+    ) AS roles(r_pt, r_en, r_es)
+    JOIN "public"."access_groups" g ON g.name->>'pt' = 'Advogado Associado / Júnior' AND g.admin_id = master_id;
+
+    -- 3.4 Grupo: Controladoria Jurídica (Legal Ops)
+    INSERT INTO "public"."roles" (name, access_group_id, admin_id)
+    SELECT jsonb_build_object('pt', r_pt, 'en', r_en, 'es', r_es), g.id, master_id
+    FROM (VALUES 
+      ('Controller Jurídico', 'Legal Controller', 'Controller Jurídico'), 
+      ('Analista de Legal Ops', 'Legal Ops Analyst', 'Analista de Legal Ops'), 
+      ('Analista de Dados Jurídicos', 'Legal Data Analyst', 'Analista de Datos Jurídicos'), 
+      ('Engenheiro Jurídico', 'Legal Engineer', 'Ingeniero Jurídico')
+    ) AS roles(r_pt, r_en, r_es)
+    JOIN "public"."access_groups" g ON g.name->>'pt' = 'Controladoria Jurídica (Legal Ops)' AND g.admin_id = master_id;
+
+    -- 3.5 Grupo: Estagiário / Paralegal
+    INSERT INTO "public"."roles" (name, access_group_id, admin_id)
+    SELECT jsonb_build_object('pt', r_pt, 'en', r_en, 'es', r_es), g.id, master_id
+    FROM (VALUES 
+      ('Estagiário', 'Intern', 'Pasante'), 
+      ('Paralegal', 'Paralegal', 'Paralegal'), 
+      ('Assistente Jurídico', 'Legal Assistant', 'Asistente Jurídico'), 
+      ('Auxiliar Administrativo', 'Administrative Assistant', 'Auxiliar Administrativo')
+    ) AS roles(r_pt, r_en, r_es)
+    JOIN "public"."access_groups" g ON g.name->>'pt' = 'Estagiário / Paralegal' AND g.admin_id = master_id;
+
+    -- 3.6 Grupo: Departamento Financeiro / Faturamento
+    INSERT INTO "public"."roles" (name, access_group_id, admin_id)
+    SELECT jsonb_build_object('pt', r_pt, 'en', r_en, 'es', r_es), g.id, master_id
+    FROM (VALUES 
+      ('Gerente Financeiro', 'Finance Manager', 'Gerente Financiero'), 
+      ('Analista Financeiro', 'Finance Analyst', 'Analista Financiero'), 
+      ('Assistente de Faturamento', 'Billing Assistant', 'Asistente de Facturación'), 
+      ('Auxiliar de Cobrança', 'Collection Assistant', 'Auxiliar de Cobranza')
+    ) AS roles(r_pt, r_en, r_es)
+    JOIN "public"."access_groups" g ON g.name->>'pt' = 'Departamento Financeiro / Faturamento' AND g.admin_id = master_id;
+
+    -- 3.7 Grupo: Secretariado / Recepção
+    INSERT INTO "public"."roles" (name, access_group_id, admin_id)
+    SELECT jsonb_build_object('pt', r_pt, 'en', r_en, 'es', r_es), g.id, master_id
+    FROM (VALUES 
+      ('Secretária Executiva', 'Executive Secretary', 'Secretaría Ejecutiva'), 
+      ('Recepcionista', 'Receptionist', 'Recepcionista'), 
+      ('Assistente de Atendimento', 'Service Assistant', 'Asistente de Atención'), 
+      ('Telefonista', 'Switchboard Operator', 'Telefonista')
+    ) AS roles(r_pt, r_en, r_es)
+    JOIN "public"."access_groups" g ON g.name->>'pt' = 'Secretariado / Recepção' AND g.admin_id = master_id;
+
+    -- 3.8 Grupo: Cliente
+    INSERT INTO "public"."roles" (name, access_group_id, admin_id)
+    SELECT jsonb_build_object('pt', r_pt, 'en', r_en, 'es', r_es), g.id, master_id
+    FROM (VALUES 
+      ('Cliente (Pessoa Física)', 'Client (Individual)', 'Cliente (Persona Física)'), 
+      ('Representante Legal (Empresa)', 'Legal Representative (Company)', 'Representante Legal (Empresa)')
+    ) AS roles(r_pt, r_en, r_es)
+    JOIN "public"."access_groups" g ON g.name->>'pt' = 'Cliente (Acesso Externo B2B2C)' AND g.admin_id = master_id;
+
+  END IF;
+END $$;

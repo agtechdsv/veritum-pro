@@ -27,7 +27,7 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
 
     const initialFormData: Partial<Suite> = {
         suite_key: '',
-        name: '',
+        name: { pt: '', en: '', es: '' },
         short_desc: { pt: '', en: '', es: '' },
         detailed_desc: { pt: '', en: '', es: '' },
         features: { pt: [], en: [], es: [] },
@@ -171,6 +171,7 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
 
         try {
             const payload = {
+                name: formData.name?.[activeLang] || '',
                 short_desc: formData.short_desc![activeLang],
                 detailed_desc: formData.detailed_desc![activeLang],
                 features: suiteFeatures.map(f => ({
@@ -183,11 +184,13 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
             const targetLangs = (['pt', 'en', 'es'] as const).filter(l => l !== activeLang);
             const translations = await gemini.translateSuite(payload, targetLangs as unknown as string[]);
 
+            const newName = { ...formData.name };
             const newShortDesc = { ...formData.short_desc };
             const newDetailedDesc = { ...formData.detailed_desc };
             const newSuiteFeatures = [...suiteFeatures];
 
             Object.keys(translations).forEach((lang: any) => {
+                newName[lang as 'pt' | 'en' | 'es'] = translations[lang].name;
                 newShortDesc[lang as 'pt' | 'en' | 'es'] = translations[lang].short_desc;
                 newDetailedDesc[lang as 'pt' | 'en' | 'es'] = translations[lang].detailed_desc;
 
@@ -212,6 +215,7 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
 
             setFormData({
                 ...formData,
+                name: newName as any,
                 short_desc: newShortDesc as any,
                 detailed_desc: newDetailedDesc as any
             });
@@ -292,7 +296,9 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
                                                 dangerouslySetInnerHTML={{ __html: s.icon_svg || '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>' }}
                                             />
                                             <div className="min-w-0">
-                                                <span className="font-bold text-slate-800 dark:text-white block leading-tight text-[11px] truncate">{s.name}</span>
+                                                <span className="font-bold text-slate-800 dark:text-white block leading-tight text-[11px] truncate">
+                                                    {typeof s.name === 'object' ? (s.name[locale as keyof typeof s.name] || s.name.pt) : s.name}
+                                                </span>
                                                 <code className="text-[9px] text-slate-400 uppercase font-bold tracking-widest truncate block">{s.suite_key}</code>
                                             </div>
                                         </div>
@@ -438,8 +444,8 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
                                                 required
                                                 placeholder="EX: Vox Clientis"
                                                 className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none dark:text-white transition-all"
-                                                value={formData.name}
-                                                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                                value={formData.name?.[activeLang] || ''}
+                                                onChange={e => setFormData({ ...formData, name: { ...formData.name!, [activeLang]: e.target.value } })}
                                             />
                                         </div>
                                     </div>
@@ -564,7 +570,7 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
                         <div className="space-y-2">
                             <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">{t('management.master.suites.delete.title')}</h3>
                             <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
-                                {t('management.master.suites.delete.message', { name: suiteToDelete.name })}
+                                {t('management.master.suites.delete.message', { name: typeof suiteToDelete.name === 'object' ? (suiteToDelete.name[locale as keyof typeof suiteToDelete.name] || suiteToDelete.name.pt) : suiteToDelete.name })}
                             </p>
                         </div>
                         <div className="flex gap-4 pt-4">

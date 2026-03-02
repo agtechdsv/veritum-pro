@@ -620,8 +620,9 @@ export const en = {
                 cancelReasonOption3: 'Lack of necessary features',
                 cancelReasonOption4: 'Migrating to another software',
                 cancelReasonOption5: 'Other reason',
-                cancelFeedbackPlaceholder: 'Tell us a little more about your experience (optional)',
+                cancelFeedbackPlaceholder: 'Tell us a little more about the reason for cancellation and how we can improve our service...',
                 cancelButton: 'Confirm Cancellation',
+                keepPlan: 'Keep Plan',
                 cancelConfirmTitle: 'Are you absolutely sure?',
                 cancelConfirmMessage: 'Your subscription will be canceled at the end of the current period. You will lose access to premium features.',
                 cancelSuccess: 'Your subscription has been successfully canceled.',
@@ -970,7 +971,8 @@ export const en = {
                 newEntry: 'New CRM Entry',
                 searchPlaceholder: 'Search by name or CPF/CNPJ...',
                 stats: {
-                    label: 'CRM Database'
+                    label: 'CRM Database',
+                    activeLawsuits: 'Active Lawsuits'
                 },
                 table: {
                     member: 'Member',
@@ -1022,7 +1024,13 @@ export const en = {
                     actions: {
                         cancel: 'Cancel',
                         update: 'Update Record',
-                        save: 'Save to CRM'
+                        save: 'Save to CRM',
+                        whatsapp: 'WhatsApp',
+                        maps: 'Location',
+                        email: 'Email',
+                        newLawsuit: 'New Lawsuit',
+                        generateDocs: 'Generate Documents',
+                        viewLawsuits: 'View Lawsuits'
                     }
                 },
                 validations: {
@@ -1037,18 +1045,6 @@ export const en = {
                     deleteSuccess: 'Record deleted successfully!',
                     deleteError: 'Error deleting record.'
                 },
-                actions: {
-                    whatsapp: 'WhatsApp',
-                    maps: 'Location',
-                    email: 'Email',
-                    newLawsuit: 'New Lawsuit',
-                    generateDocs: 'Generate Documents',
-                    viewLawsuits: 'View Lawsuits'
-                },
-                stats: {
-                    label: 'CRM Database',
-                    activeLawsuits: 'Active Lawsuits'
-                }
             }
         }
     },

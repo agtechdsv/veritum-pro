@@ -134,17 +134,27 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
 
                 if (profile) {
                     const profileData = profile as any;
-                    const groupNameRaw = Array.isArray(profileData?.access_groups)
-                        ? profileData.access_groups[0]?.name
-                        : profileData?.access_groups?.name;
+                    const groupRes = Array.isArray(profileData?.access_groups) ? profileData.access_groups[0] : profileData?.access_groups;
 
-                    const groupNameTranslated = Array.isArray(profileData?.access_groups)
-                        ? (profileData.access_groups[0]?.name_loc?.[locale] || profileData.access_groups[0]?.name)
-                        : (profileData?.access_groups?.name_loc?.[locale] || profileData?.access_groups?.name);
+                    const groupNameRaw = typeof groupRes?.name === 'object' ? (groupRes.name.pt || groupRes.name.en || '') : (groupRes?.name || '');
+                    const groupNameTranslated = typeof groupRes?.name === 'object' ? (groupRes.name[locale] || groupNameRaw) : groupNameRaw;
 
-                    const planName = profileData?.plans?.name || (Array.isArray(profileData?.plans) ? profileData?.plans[0]?.name : undefined);
+                    const userName = typeof profileData?.name === 'object'
+                        ? (profileData.name[locale] || profileData.name.pt || profileData.name.en || 'Usuário')
+                        : (profileData?.name || user.user_metadata?.full_name || user.user_metadata?.name || 'Usuário');
 
-                    profileData.plan_name = planName;
+                    const rawPlanName = profileData?.plans
+                        ? (typeof (profileData.plans as any).name === 'object'
+                            ? ((profileData.plans as any).name[locale] || (profileData.plans as any).name.pt || (profileData.plans as any).name.en || 'Pro')
+                            : ((profileData.plans as any).name || 'Pro'))
+                        : (Array.isArray(profileData?.plans) && profileData.plans[0]
+                            ? (typeof (profileData.plans[0] as any).name === 'object'
+                                ? ((profileData.plans[0] as any).name[locale] || (profileData.plans[0] as any).name.pt || (profileData.plans[0] as any).name.en || 'Pro')
+                                : ((profileData.plans[0] as any).name || 'Pro'))
+                            : 'Pro');
+
+                    profileData.name = userName;
+                    profileData.plan_name = rawPlanName;
                     profileData.access_group_name = groupNameRaw;
                     profileData.translated_group_name = groupNameTranslated;
 
@@ -410,11 +420,14 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                                                 <Icon size={32} />
                                             </div>
                                             <h3 className="text-2xl font-bold mb-1 text-slate-800 dark:text-white">
-                                                {suite.name.split(/\b(PRO)\b/i).map((part, i) =>
-                                                    part.toUpperCase() === 'PRO' ? (
-                                                        <span key={i} className="text-branding-gradient">{part}</span>
-                                                    ) : part
-                                                )}
+                                                {(() => {
+                                                    const suiteName = typeof suite.name === 'object' ? (suite.name[locale] || suite.name.pt || '') : (suite.name || '');
+                                                    return suiteName.split(/\b(PRO)\b/i).map((part: string, i: number) =>
+                                                        part.toUpperCase() === 'PRO' ? (
+                                                            <span key={i} className="text-branding-gradient">{part}</span>
+                                                        ) : part
+                                                    );
+                                                })()}
                                             </h3>
                                             <h4 className="text-indigo-600 dark:text-indigo-400 text-sm font-bold versalete mb-4">
                                                 {suite.short_desc?.[locale] || suite.short_desc?.pt || ''}
@@ -431,8 +444,9 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
 
                                             <button
                                                 onClick={() => {
+                                                    const actualSuiteName = typeof suite.name === 'object' ? (suite.name[locale as keyof typeof suite.name] || (suite.name as any).pt || '') : (suite.name || '');
                                                     if (isLocked) {
-                                                        setCheckoutData({ type: 'module', moduleName: suite.name });
+                                                        setCheckoutData({ type: 'module', moduleName: actualSuiteName });
                                                         setIsCheckoutOpen(true);
                                                     } else if (showLearnMore) {
                                                         const suiteSlug = suite.suite_key.toLowerCase().replace('_key', '');

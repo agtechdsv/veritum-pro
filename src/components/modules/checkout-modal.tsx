@@ -275,7 +275,12 @@ export function CheckoutModal({
             const result = await getPlans();
             if (result.success && result.plans) {
                 setPlans(result.plans);
-                const index = result.plans.findIndex((p: Plan) => p.name === initialPlanName);
+                const index = result.plans.findIndex((p: Plan) => {
+                    if (typeof p.name === 'object') {
+                        return p.name.pt === initialPlanName || p.name.en === initialPlanName || p.name.es === initialPlanName;
+                    }
+                    return p.name === initialPlanName;
+                });
                 if (index !== -1) setCurrentPlanIndex(index);
             }
 
@@ -400,7 +405,12 @@ export function CheckoutModal({
         if (billingCycle === 'quarterly') cycleText = t.quarterly;
         if (billingCycle === 'semiannual') cycleText = t.semiannual;
         if (billingCycle === 'yearly') cycleText = t.yearly;
-        return `Você selecionou o ${currentPlan?.name} com faturamento ${cycleText.toLowerCase()}.`;
+
+        const name = typeof currentPlan?.name === 'object' ? (currentPlan.name[lang as keyof typeof currentPlan.name] || currentPlan.name.pt) : currentPlan?.name;
+
+        return lang === 'pt' ? `Você selecionou o ${name} com faturamento ${cycleText.toLowerCase()}.` :
+            lang === 'es' ? `Has seleccionado el ${name} con facturación ${cycleText.toLowerCase()}.` :
+                `You selected the ${name} with ${cycleText.toLowerCase()} billing.`;
     };
 
     const handlePayment = async () => {
@@ -569,7 +579,7 @@ export function CheckoutModal({
                                         {t.selectedSub}
                                     </h2>
                                     <DialogTitle className="text-4xl font-black tracking-tighter text-slate-900 dark:text-white leading-tight">
-                                        {currentPlan?.name}
+                                        {typeof currentPlan?.name === 'object' ? (currentPlan.name[lang as keyof typeof currentPlan.name] || currentPlan.name.pt) : currentPlan?.name}
                                     </DialogTitle>
                                     <p className="text-slate-600 dark:text-slate-400 text-sm font-bold leading-relaxed">
                                         {currentPlan?.short_desc?.[lang]}
@@ -649,7 +659,7 @@ export function CheckoutModal({
                                 <div className="space-y-4">
                                     <h3 className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 mb-2">{t.benefits}</h3>
                                     <ul className="space-y-3">
-                                        {(currentPlan?.features?.[lang] || []).map((feature, i) => (
+                                        {(currentPlan?.features?.[lang] || currentPlan?.features?.pt || []).map((feature: any, i: number) => (
                                             <li key={i} className="flex items-start gap-4 text-xs text-slate-700 dark:text-slate-300">
                                                 <div className="rounded-full p-1 bg-emerald-500 text-white shrink-0 shadow-lg shadow-emerald-500/20">
                                                     <Check size={10} strokeWidth={4} />

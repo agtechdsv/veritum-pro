@@ -10,29 +10,28 @@ import { Credentials, UserPreferences } from '@/types';
 export class DatabaseService {
     private static clients: Map<string, SupabaseClient> = new Map();
 
-    /**
-     * Gets the appropriate Supabase client for a given user.
-     * If the user has custom Supabase credentials in their preferences, 
-     * it returns a client connected to that specific database.
-     * Otherwise, it returns the standard client.
-     * 
-     * @param credentials The standard application credentials (Master)
-     * @param preferences The user's preferences, which might contain custom DB credentials
-     */
-    static getClient(credentials: Credentials, preferences?: UserPreferences): SupabaseClient {
-        // If the user has both custom URL and custom Key, we use the BYODB route
-        if (preferences?.custom_supabase_url && preferences?.custom_supabase_key) {
-            const cacheKey = `${preferences.custom_supabase_url}-${preferences.custom_supabase_key}`;
+    static getClient(credentials: Credentials): SupabaseClient {
+        // Normalização p/ comparação robusta
+        const normalize = (url: string | undefined) => url?.replace(/\/$/, '').toLowerCase() || '';
 
-            // Return cached client if available to prevent multiple initializations
+        const masterUrlNormalized = normalize(process.env.NEXT_PUBLIC_SUPABASE_URL);
+        const masterKeyNormalized = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+        const currentUrlNormalized = normalize(credentials.supabaseUrl);
+        const currentKeyNormalized = credentials.supabaseAnonKey || '';
+
+        const isCustom = currentUrlNormalized && currentKeyNormalized &&
+            (currentUrlNormalized !== masterUrlNormalized || currentKeyNormalized !== masterKeyNormalized);
+
+        if (isCustom) {
+            const cacheKey = `${currentUrlNormalized}-${currentKeyNormalized}`;
+
             if (this.clients.has(cacheKey)) {
                 return this.clients.get(cacheKey)!;
             }
 
-            // Create and cache new custom client
             const customClient = createClient(
-                preferences.custom_supabase_url,
-                preferences.custom_supabase_key
+                credentials.supabaseUrl,
+                credentials.supabaseAnonKey
             );
             this.clients.set(cacheKey, customClient);
             return customClient;

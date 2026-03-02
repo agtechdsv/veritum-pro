@@ -401,7 +401,8 @@ export const pt = {
             allAdmins: 'Todos os Administradores',
             masterFilter: {
                 self: 'Master (Meus Usuários)',
-                clients: 'Sócio-Administradores Privados'
+                clients: 'Sócio-Administradores Privados',
+                selectClient: '--- SELECIONE UM CLIENTE ---'
             },
             table: {
                 member: 'Integrante',
@@ -620,8 +621,9 @@ export const pt = {
                 cancelReasonOption3: 'Falta de recursos necessários',
                 cancelReasonOption4: 'Migrando para outro software',
                 cancelReasonOption5: 'Outro motivo',
-                cancelFeedbackPlaceholder: 'Conte-nos um pouco mais sobre sua experiência (opcional)',
+                cancelFeedbackPlaceholder: 'Nos conte um pouco mais sobre o motivo do cancelamento e como podemos melhorar nosso serviço...',
                 cancelButton: 'Confirmar Cancelamento',
+                keepPlan: 'Manter Plano',
                 cancelConfirmTitle: 'Tem certeza absoluta?',
                 cancelConfirmMessage: 'Sua assinatura será cancelada ao final do período atual. Você perderá o acesso às funcionalidades premium.',
                 cancelSuccess: 'Sua assinatura foi cancelada com sucesso.',
@@ -1026,7 +1028,8 @@ export const pt = {
                     invalidDocument: 'Formato de Documento Inválido! Use 000.000.000-00 ou 00.000.000/0000-00'
                 },
                 confirmations: {
-                    softDelete: 'Tem certeza que deseja ocultar este cadastro? O dado permanecerá no servidor para recuperação.'
+                    softDeleteTitle: 'Excluir Registro?',
+                    softDeleteMessage: 'Você tem certeza que deseja excluir "{name}"? O dado poderá ser recuperado pelo administrador futuramente.'
                 },
                 toasts: {
                     saveSuccess: 'Registro salvo com sucesso!',

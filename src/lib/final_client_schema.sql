@@ -1,316 +1,348 @@
 -- ============================================================================
--- VERITUM PRO: FINAL CLIENT SCHEMA (TENANT / BYODB)
+-- VERITUM PRO: FINAL CLIENT SCHEMA (TENANT / BYODB / PRIVATE CLOUD)
 -- ============================================================================
--- Description: Banco de Dados do Cliente da Trademaster Pro.
+-- Banco de Dados do Cliente da Veritum Pro.
 -- Responsável por: Processos, Tarefas, Inteligência, IA e Dados Operacionais.
 
--- 0. LIMPEZA (DROP)
-drop table if exists public.golden_alerts cascade;
-drop table if exists public.knowledge_articles cascade;
-drop table if exists public.historical_outcomes cascade;
-drop table if exists public.clippings cascade;
-drop table if exists public.monitoring_alerts cascade;
-drop table if exists public.movements cascade;
-drop table if exists public.legal_documents cascade;
-drop table if exists public.document_templates cascade;
-drop table if exists public.document_embeddings cascade;
-drop table if exists public.financial_records cascade;
-drop table if exists public.financial_transactions cascade;
-drop table if exists public.tasks cascade;
-drop table if exists public.lawsuits cascade;
-drop table if exists public.persons cascade;
-drop table if exists public.team_members cascade;
-drop table if exists public.chat_messages cascade;
-drop table if exists public.chats cascade;
-drop table if exists public.users cascade; -- Shadow table
-drop function if exists handle_updated_at() cascade;
-drop function if exists match_knowledge(vector, float, int) cascade;
+-- ============================================================================
+-- 0. RESET NUCLEAR (LIMPEZA TOTAL DO SCHEMA PUBLIC PRIVACIVO)
+-- ============================================================================
+-- ATENÇÃO: Os comandos abaixo apagam ABSOLUTAMENTE TUDO no schema public do Tenant.
 
--- 1. INFRAESTRUTURA
-create extension if not exists "uuid-ossp";
-create extension if not exists "vector";
+DROP SCHEMA IF EXISTS public CASCADE;
+CREATE SCHEMA public;
 
-create or replace function handle_updated_at()
-returns trigger as $$
-begin
-    new.updated_at = now();
-    return new;
-end;
-$$ language plpgsql;
+-- Restaura Permissões do Supabase (Essencial para funcionamento no DB Privado)
+GRANT USAGE ON SCHEMA public TO postgres, anon, authenticated, service_role;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO postgres, anon, authenticated, service_role;
+GRANT ALL PRIVILEGES ON ALL ROUTINES IN SCHEMA public TO postgres, anon, authenticated, service_role;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO postgres, anon, authenticated, service_role;
 
-create or replace function match_knowledge (
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO postgres, anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON ROUTINES TO postgres, anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO postgres, anon, authenticated, service_role;
+
+-- ============================================================================
+-- 1. INFRAESTRUTURA & EXTENSÕES
+-- ============================================================================
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp" SCHEMA public;
+CREATE EXTENSION IF NOT EXISTS "vector" SCHEMA public; -- Habilita IA / Semantic Search
+
+CREATE OR REPLACE FUNCTION public.handle_updated_at()
+RETURNS trigger AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Função de Busca Semântica (Embeddings)
+CREATE OR REPLACE FUNCTION public.match_knowledge (
   query_embedding vector(768),
   match_threshold float,
   match_count int
-) returns table ( id uuid, title text, content text, category text, similarity float ) language plpgsql as $$
-begin
-  return query select ka.id, ka.title, ka.content, ka.category, 1 - (ka.embedding <=> query_embedding) as similarity
-  from public.knowledge_articles ka
-  where 1 - (ka.embedding <=> query_embedding) > match_threshold order by ka.embedding <=> query_embedding limit match_count;
-end;
+) RETURNS table ( id uuid, title text, content text, category text, similarity float ) LANGUAGE plpgsql AS $$
+BEGIN
+  RETURN QUERY SELECT ka.id, ka.title, ka.content, ka.category, 1 - (ka.embedding <=> query_embedding) as similarity
+  FROM public.knowledge_articles ka
+  WHERE 1 - (ka.embedding <=> query_embedding) > match_threshold 
+  ORDER BY ka.embedding <=> query_embedding 
+  LIMIT match_count;
+END;
 $$;
 
--- 2. SHADOW USERS TABLE
--- (Armazena uma cópia básica do usuário espelhada via API do Master para preservar Foreign Keys no Tenant)
-create table if not exists public.users (
-  id uuid primary key, -- MESMO ID DO MASTER, MAS SEM REFERENCE AO AUTH.USERS!!!
-  name text not null,
-  email text,
-  role text,
-  active boolean default true,
-  avatar_url text
+-- ============================================================================
+-- 2. TABELA DE USUÁRIOS (ESPELHO / SHADOW)
+-- ============================================================================
+CREATE TABLE public.users (
+  id UUID PRIMARY KEY,                   -- MESMO ID DO MASTER
+  name TEXT NOT NULL,
+  email TEXT,
+  role TEXT,
+  active BOOLEAN DEFAULT TRUE,
+  avatar_url TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Membros da Equipe (Staff)
-create table if not exists public.team_members (
-    id uuid primary key default gen_random_uuid(),
-    full_name text not null,
-    email text unique not null,
-    phone text,
-    role text,
-    oab_number text,
-    is_active boolean default true,
-    created_at timestamptz default now(),
-    updated_at timestamptz default now()
+-- Membros da Equipe (Configuração Local do Cliente - Ex: Estagiários, Secretárias)
+CREATE TABLE public.team_members (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    full_name TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    phone TEXT,
+    role TEXT,
+    oab_number TEXT,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    deleted_at TIMESTAMPTZ
 );
 
--- 3. MÓDULOS CORE: NEXUS PRO (Operacional)
-create table if not exists public.persons (
-  id uuid primary key default gen_random_uuid(),
-  person_type text check (person_type in ('Cliente', 'Reclamado', 'Testemunha', 'Preposto', 'Advogado Adverso')),
-  full_name text not null,
-  document text unique not null,
-  email text,
-  phone text,
-  rg text,
-  legal_data jsonb,
-  address jsonb,
-  workspace_id uuid,
-  created_at timestamptz default now(),
-  updated_at timestamptz default now(),
-  deleted_at timestamptz
+-- ============================================================================
+-- 3. MÓDULOS CORE - NEXUS PRO (CRM & OPERACIONAL)
+-- ============================================================================
+CREATE TABLE public.persons (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  person_type TEXT CHECK (person_type IN ('Cliente', 'Reclamado', 'Testemunha', 'Preposto', 'Advogado Adverso')),
+  full_name TEXT NOT NULL,
+  document TEXT UNIQUE NOT NULL, -- CPF ou CNPJ
+  email TEXT,
+  phone TEXT,
+  rg TEXT,
+  legal_data JSONB, 
+  address JSONB,
+  workspace_id UUID,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ
 );
 
-create table if not exists public.lawsuits (
-  id uuid primary key default gen_random_uuid(),
-  cnj_number text unique not null,
-  case_title text,
-  author_id uuid references public.persons(id),
-  defendant_id uuid references public.persons(id),
-  responsible_lawyer_id uuid references public.users(id),
-  status text check (status in ('Ativo', 'Suspenso', 'Arquivado', 'Encerrado')),
-  sphere text,
-  court text,
-  chamber text,
-  city text,
-  state text,
-  value numeric(15, 2),
-  created_at timestamptz default now(),
-  updated_at timestamptz default now(),
-  deleted_at timestamptz
+CREATE TABLE public.lawsuits (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  cnj_number TEXT UNIQUE NOT NULL,
+  case_title TEXT,
+  author_id UUID REFERENCES public.persons(id),
+  defendant_id UUID REFERENCES public.persons(id),
+  responsible_lawyer_id UUID REFERENCES public.users(id),
+  status TEXT CHECK (status IN ('Ativo', 'Suspenso', 'Arquivado', 'Encerrado')),
+  sphere TEXT, court TEXT, chamber TEXT, city TEXT, state TEXT,
+  value NUMERIC(15, 2),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ
 );
 
-create table if not exists public.tasks (
-  id uuid primary key default gen_random_uuid(),
-  title text not null,
-  description text,
-  lawsuit_id uuid references public.lawsuits(id) on delete cascade,
-  responsible_id uuid references public.users(id),
-  status text check (status in ('A Fazer', 'Em Andamento', 'Concluído', 'Atrasado')) default 'A Fazer',
-  priority text check (priority in ('Baixa', 'Média', 'Alta', 'Urgente')) default 'Média',
-  due_date timestamptz not null,
-  created_at timestamptz default now(),
-  updated_at timestamptz default now(),
-  deleted_at timestamptz
+CREATE TABLE public.tasks (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title TEXT NOT NULL,
+  description TEXT,
+  lawsuit_id UUID REFERENCES public.lawsuits(id) ON DELETE CASCADE,
+  responsible_id UUID REFERENCES public.users(id),
+  status TEXT CHECK (status IN ('A Fazer', 'Em Andamento', 'Concluído', 'Atrasado')) DEFAULT 'A Fazer',
+  priority TEXT CHECK (priority IN ('Baixa', 'Média', 'Alta', 'Urgente')) DEFAULT 'Média',
+  due_date TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ
 );
 
--- 4. SENTINEL PRO (Vigilância)
-create table if not exists public.monitoring_alerts (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid references public.users(id),
-  title text not null,
-  term text not null,
-  alert_type text check (alert_type in ('OAB', 'CNJ', 'Keyword', 'Company', 'Person')),
-  is_active boolean default true,
-  created_at timestamptz default now(),
-  deleted_at timestamptz
+CREATE TABLE public.movements (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  lawsuit_id UUID REFERENCES public.lawsuits(id) ON DELETE CASCADE,
+  original_text TEXT,
+  translated_text TEXT,        -- Tradução de Juridiquês (Vox Clientis)
+  sentiment_score FLOAT,
+  source TEXT DEFAULT 'Manual',
+  is_notified BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ
 );
 
-create table if not exists public.clippings (
-  id uuid primary key default gen_random_uuid(),
-  alert_id uuid references public.monitoring_alerts(id) on delete cascade,
-  source text,
-  content text not null,
-  sentiment text check (sentiment in ('Positivo', 'Negativo', 'Neutro')),
-  score float,
-  url text,
-  lawsuit_id uuid references public.lawsuits(id) on delete set null,
-  captured_at timestamptz default now(),
+-- ============================================================================
+-- 4. SENTINEL PRO (MONITORAMENTO)
+-- ============================================================================
+CREATE TABLE public.monitoring_alerts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES public.users(id),
+  title TEXT NOT NULL,
+  term TEXT NOT NULL,
+  alert_type TEXT CHECK (alert_type IN ('OAB', 'CNJ', 'Keyword', 'Company', 'Person')),
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ
+);
+
+CREATE TABLE public.clippings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  alert_id UUID REFERENCES public.monitoring_alerts(id) ON DELETE CASCADE,
+  source TEXT,
+  content TEXT NOT NULL,
+  sentiment TEXT CHECK (sentiment IN ('Positivo', 'Negativo', 'Neutro')),
+  score FLOAT,
+  url TEXT,
+  lawsuit_id UUID REFERENCES public.lawsuits(id) ON DELETE SET NULL,
+  captured_at TIMESTAMPTZ DEFAULT NOW(),
   embedding vector(768)
 );
 
-create table if not exists public.chats (
-  id uuid primary key default gen_random_uuid(),
-  person_id uuid references public.persons(id) on delete cascade,
-  lawsuit_id uuid references public.lawsuits(id) on delete set null,
-  status text default 'Ativo',
-  created_at timestamptz default now(),
-  updated_at timestamptz default now(),
-  deleted_at timestamptz
+-- ============================================================================
+-- 5. VOX CLIENTIS (COMUNICAÇÃO)
+-- ============================================================================
+CREATE TABLE public.chats (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  person_id UUID REFERENCES public.persons(id) ON DELETE CASCADE,
+  lawsuit_id UUID REFERENCES public.lawsuits(id) ON DELETE SET NULL,
+  status TEXT DEFAULT 'Ativo',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ
 );
 
-create table if not exists public.chat_messages (
-  id uuid primary key default gen_random_uuid(),
-  chat_id uuid references public.chats(id) on delete cascade,
-  sender_id uuid, -- Mantido sem restrição para permitir IA / Clientes não autenticados via Portal
-  sender_type text check (sender_type in ('Lawyer', 'Client', 'AI')) default 'Lawyer',
-  content text not null,
-  is_read boolean default false,
-  created_at timestamptz default now(),
-  deleted_at timestamptz
+CREATE TABLE public.chat_messages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  chat_id UUID REFERENCES public.chats(id) ON DELETE CASCADE,
+  sender_id UUID,                     -- Referência opcional (IA ou cliente externo)
+  sender_type TEXT CHECK (sender_type IN ('Lawyer', 'Client', 'AI')) DEFAULT 'Lawyer',
+  content TEXT NOT NULL,
+  is_read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ
 );
 
--- 5. NOTEBOOKLM: COGNITIO & GOLDEN ALERTS (Inteligência Proativa)
-create table if not exists public.knowledge_articles (
-    id uuid primary key default gen_random_uuid(),
-    title text not null,
-    content text not null,
-    category text,
-    tags text[],
-    embedding vector(768),
-    created_at timestamptz default now(),
-    updated_at timestamptz default now()
-);
-create index if not exists idx_knowledge_embedding on public.knowledge_articles using hnsw (embedding vector_cosine_ops);
-
-create table if not exists public.historical_outcomes (
-    id uuid primary key default gen_random_uuid(),
-    judge_name text,
-    court text,
-    case_type text,
-    outcome text,
-    created_at timestamptz default now()
+-- ============================================================================
+-- 6. SCRIPTOR PRO (DOCUMENTOS & IA)
+-- ============================================================================
+CREATE TABLE public.document_templates (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title TEXT NOT NULL,
+  category TEXT,
+  base_prompt TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ
 );
 
-create table if not exists public.golden_alerts (
-    id uuid primary key default gen_random_uuid(),
-    clipping_id uuid not null references public.clippings(id) on delete cascade,
-    matched_knowledge_id uuid references public.knowledge_articles(id) on delete set null,
-    matched_lawsuit_id uuid references public.lawsuits(id) on delete set null,
-    match_score float not null,
-    intelligence_type text check (intelligence_type in ('Opportunity', 'Risk', 'Similar Success')),
-    priority text check (priority in ('High', 'Medium', 'Low')) default 'Medium',
-    reasoning text,
-    status text default 'unread' check (status in ('unread', 'dismissed', 'actioned')),
-    created_at timestamptz default now(),
-    updated_at timestamptz default now()
+CREATE TABLE public.legal_documents (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title TEXT NOT NULL,
+  content TEXT,
+  lawsuit_id UUID REFERENCES public.lawsuits(id) ON DELETE SET NULL,
+  author_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
+  template_id UUID REFERENCES public.document_templates(id) ON DELETE SET NULL,
+  version INTEGER DEFAULT 1,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-create table if not exists public.movements (
-  id uuid primary key default gen_random_uuid(),
-  lawsuit_id uuid references public.lawsuits(id) on delete cascade,
-  original_text text,
-  translated_text text,
-  sentiment_score float,
-  source text default 'Manual',
-  is_notified boolean default false,
-  created_at timestamptz default now(),
-  deleted_at timestamptz
-);
-
--- 6. SCRIPTOR PRO (Documentos & IA)
-create table if not exists public.document_templates (
-  id uuid primary key default gen_random_uuid(),
-  title text not null,
-  category text,
-  base_prompt text not null,
-  created_at timestamptz default now(),
-  deleted_at timestamptz
-);
-
-create table if not exists public.legal_documents (
-  id uuid primary key default gen_random_uuid(),
-  title text not null,
-  content text,
-  lawsuit_id uuid references public.lawsuits(id) on delete set null,
-  author_id uuid references public.users(id) on delete set null,
-  template_id uuid references public.document_templates(id) on delete set null,
-  version integer default 1,
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
-);
-
-create table if not exists public.document_embeddings (
-  id uuid primary key default gen_random_uuid(),
-  lawsuit_id uuid references public.lawsuits(id) on delete cascade,
-  filename text,
-  content text,
+CREATE TABLE public.document_embeddings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  lawsuit_id UUID REFERENCES public.lawsuits(id) ON DELETE CASCADE,
+  filename TEXT,
+  content TEXT,
   embedding vector(768),
-  created_at timestamptz default now()
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
-create index if not exists idx_doc_embeddings_vector on public.document_embeddings using hnsw (embedding vector_cosine_ops);
+CREATE INDEX idx_doc_embeddings_vector ON public.document_embeddings USING hnsw (embedding vector_cosine_ops);
 
--- 7. VALOREM PRO (Financeiro)
-create table if not exists public.financial_records (
-  id uuid primary key default gen_random_uuid(),
-  lawsuit_id uuid references public.lawsuits(id) on delete set null,
-  description text,
-  type text check (type in ('fee', 'cost', 'settlement', 'honorarium')),
-  amount numeric,
-  due_date date,
-  is_paid boolean default false,
-  created_at timestamptz default now()
-);
-
-create table if not exists public.financial_transactions (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid references public.users(id),
-  title text not null,
-  amount numeric(12,2) not null,
-  entry_type text check (entry_type in ('Credit', 'Debit')),
-  category text,
-  transaction_date timestamptz default now(),
-  lawsuit_id uuid references public.lawsuits(id) on delete set null,
-  person_id uuid references public.persons(id) on delete set null,
-  status text check (status in ('Pago', 'Pendente', 'Cancelado')) default 'Pendente',
-  created_at timestamptz default now(),
-  updated_at timestamptz default now(),
-  deleted_at timestamptz
+-- ============================================================================
+-- 7. VALOREM PRO (FINANCEIRO)
+-- ============================================================================
+CREATE TABLE public.financial_transactions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES public.users(id),
+  title TEXT NOT NULL,
+  amount NUMERIC(15,2) NOT NULL,
+  entry_type TEXT CHECK (entry_type IN ('Credit', 'Debit')),
+  category TEXT,
+  transaction_date TIMESTAMPTZ DEFAULT NOW(),
+  lawsuit_id UUID REFERENCES public.lawsuits(id) ON DELETE SET NULL,
+  person_id UUID REFERENCES public.persons(id) ON DELETE SET NULL,
+  status TEXT CHECK (status IN ('Pago', 'Pendente', 'Cancelado')) DEFAULT 'Pendente',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- TRIGGERS DE ATUALIZAÇÃO
-create trigger tr_persons_updated before update on public.persons for each row execute function handle_updated_at();
-create trigger tr_lawsuits_updated before update on public.lawsuits for each row execute function handle_updated_at();
-create trigger tr_tasks_updated before update on public.tasks for each row execute function handle_updated_at();
-create trigger tr_legal_docs_updated before update on public.legal_documents for each row execute function handle_updated_at();
-create trigger tr_financial_updated before update on public.financial_transactions for each row execute function handle_updated_at();
-create trigger tr_golden_alerts_updated before update on public.golden_alerts for each row execute function handle_updated_at();
-create trigger tr_knowledge_updated before update on public.knowledge_articles for each row execute function handle_updated_at();
-create trigger tr_team_updated before update on public.team_members for each row execute function handle_updated_at();
-create trigger tr_chats_updated before update on public.chats for each row execute function handle_updated_at();
+-- ============================================================================
+-- 8. INTELIGÊNCIA & IA (COGNITIO)
+-- ============================================================================
+CREATE TABLE public.knowledge_articles (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    category TEXT,
+    tags TEXT[],
+    embedding vector(768),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX idx_knowledge_embedding ON public.knowledge_articles USING hnsw (embedding vector_cosine_ops);
 
--- REALTIME EXCLUSIVO CLIENTE
-alter publication supabase_realtime add table public.tasks;
-alter publication supabase_realtime add table public.financial_transactions;
-alter publication supabase_realtime add table public.movements;
-alter publication supabase_realtime add table public.golden_alerts;
-alter publication supabase_realtime add table public.clippings;
+CREATE TABLE public.historical_outcomes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    judge_name TEXT,
+    court TEXT,
+    case_type TEXT,
+    outcome TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
 
--- HABILITAR RLS CLIENTE
-alter table public.persons enable row level security;
-alter table public.lawsuits enable row level security;
-alter table public.tasks enable row level security;
-alter table public.monitoring_alerts enable row level security;
-alter table public.clippings enable row level security;
-alter table public.movements enable row level security;
-alter table public.document_templates enable row level security;
-alter table public.legal_documents enable row level security;
-alter table public.document_embeddings enable row level security;
-alter table public.financial_records enable row level security;
-alter table public.financial_transactions enable row level security;
-alter table public.golden_alerts enable row level security;
-alter table public.knowledge_articles enable row level security;
-alter table public.historical_outcomes enable row level security;
-alter table public.team_members enable row level security;
-alter table public.chats enable row level security;
-alter table public.users enable row level security;
+CREATE TABLE public.golden_alerts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    clipping_id UUID NOT NULL REFERENCES public.clippings(id) ON DELETE CASCADE,
+    matched_knowledge_id UUID REFERENCES public.knowledge_articles(id) ON DELETE SET NULL,
+    matched_lawsuit_id UUID REFERENCES public.lawsuits(id) ON DELETE SET NULL,
+    match_score FLOAT NOT NULL,
+    intelligence_type TEXT CHECK (intelligence_type IN ('Opportunity', 'Risk', 'Similar Success')),
+    priority TEXT CHECK (priority IN ('High', 'Medium', 'Low')) DEFAULT 'Medium',
+    reasoning TEXT,
+    status TEXT DEFAULT 'unread' CHECK (status IN ('unread', 'dismissed', 'actioned')),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================================================
+-- 9. TRIGGERS, REALTIME & SEGURANÇA (RLS)
+-- ============================================================================
+
+-- Triggers de Auditoria
+CREATE TRIGGER tr_users_upd BEFORE UPDATE ON public.users FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+CREATE TRIGGER tr_team_upd BEFORE UPDATE ON public.team_members FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+CREATE TRIGGER tr_persons_upd BEFORE UPDATE ON public.persons FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+CREATE TRIGGER tr_law_upd BEFORE UPDATE ON public.lawsuits FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+CREATE TRIGGER tr_task_upd BEFORE UPDATE ON public.tasks FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+CREATE TRIGGER tr_alerts_upd BEFORE UPDATE ON public.monitoring_alerts FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+CREATE TRIGGER tr_fin_upd BEFORE UPDATE ON public.financial_transactions FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+CREATE TRIGGER tr_kb_upd BEFORE UPDATE ON public.knowledge_articles FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+CREATE TRIGGER tr_golden_upd BEFORE UPDATE ON public.golden_alerts FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+CREATE TRIGGER tr_legal_docs_upd BEFORE UPDATE ON public.legal_documents FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+CREATE TRIGGER tr_chats_upd BEFORE UPDATE ON public.chats FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+-- Habilitar RLS em tudo
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.team_members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.persons ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.lawsuits ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.tasks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.movements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.monitoring_alerts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.clippings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.financial_transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.knowledge_articles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.golden_alerts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.chats ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.document_templates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.legal_documents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.document_embeddings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.historical_outcomes ENABLE ROW LEVEL SECURITY;
+
+-- Política Global para BYODB: Todos do escritório acessam tudo
+CREATE POLICY "Tenant Session: Full Access" ON public.users FOR ALL USING (TRUE);
+CREATE POLICY "Tenant Session: Full Access" ON public.team_members FOR ALL USING (TRUE);
+CREATE POLICY "Tenant Session: Full Access" ON public.persons FOR ALL USING (TRUE);
+CREATE POLICY "Tenant Session: Full Access" ON public.lawsuits FOR ALL USING (TRUE);
+CREATE POLICY "Tenant Session: Full Access" ON public.tasks FOR ALL USING (TRUE);
+CREATE POLICY "Tenant Session: Full Access" ON public.movements FOR ALL USING (TRUE);
+CREATE POLICY "Tenant Session: Full Access" ON public.monitoring_alerts FOR ALL USING (TRUE);
+CREATE POLICY "Tenant Session: Full Access" ON public.clippings FOR ALL USING (TRUE);
+CREATE POLICY "Tenant Session: Full Access" ON public.financial_transactions FOR ALL USING (TRUE);
+CREATE POLICY "Tenant Session: Full Access" ON public.knowledge_articles FOR ALL USING (TRUE);
+CREATE POLICY "Tenant Session: Full Access" ON public.golden_alerts FOR ALL USING (TRUE);
+CREATE POLICY "Tenant Session: Full Access" ON public.chats FOR ALL USING (TRUE);
+CREATE POLICY "Tenant Session: Full Access" ON public.chat_messages FOR ALL USING (TRUE);
+CREATE POLICY "Tenant Session: Full Access" ON public.document_templates FOR ALL USING (TRUE);
+CREATE POLICY "Tenant Session: Full Access" ON public.legal_documents FOR ALL USING (TRUE);
+CREATE POLICY "Tenant Session: Full Access" ON public.document_embeddings FOR ALL USING (TRUE);
+CREATE POLICY "Tenant Session: Full Access" ON public.historical_outcomes FOR ALL USING (TRUE);
+
+-- CONFIGURAÇÃO DE REALTIME (TABELAS QUE PRECISAM DE ATUALIZAÇÃO AO VIVO)
+DROP PUBLICATION IF EXISTS supabase_realtime;
+CREATE PUBLICATION supabase_realtime FOR TABLE 
+    public.tasks, 
+    public.lawsuits, 
+    public.financial_transactions, 
+    public.golden_alerts,
+    public.monitoring_alerts,
+    public.movements,
+    public.chat_messages;

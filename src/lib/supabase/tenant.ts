@@ -30,29 +30,36 @@ export async function createTenantServerClient() {
 
     const targetUserId = profile?.parent_user_id || user.id;
 
-    // 3. Retrieve BYODB credentials from public.user_preferences
-    const { data: prefs, error: prefsError } = await masterClient
-        .from('user_preferences')
-        .select('custom_supabase_url, custom_supabase_key')
-        .eq('user_id', targetUserId)
-        .single()
+    // 3. Retrieve BYODB credentials from public.tenant_configs
+    const { data: config, error: configError } = await masterClient
+        .from('tenant_configs')
+        .select('custom_supabase_url, custom_supabase_key_encrypted')
+        .eq('owner_id', targetUserId)
+        .maybeSingle()
 
-    if (prefsError) {
-        console.error('Error fetching tenant preferences:', prefsError)
-        throw new Error('Could not retrieve database preferences for this tenant.')
+    if (configError) {
+        console.error('Error fetching tenant config:', configError)
+        throw new Error('Could not retrieve database configurations for this tenant.')
     }
 
-    if (!prefs.custom_supabase_url || !prefs.custom_supabase_key) {
-        // BYODB not configured yet. 
-        // TODO: Consider returning the master client as fallback for trial users,
-        // or specific error codes to trigger an onboarding redirect.
+    if (!config?.custom_supabase_url || !config?.custom_supabase_key_encrypted) {
         throw new Error('BYODB_NOT_CONFIGURED')
     }
 
-    // 4. Instantiate the dynamic Tenant client using SSR
+    // 4. Decrypt credentials
+    const { decrypt } = require('@/lib/security');
+    const safeDecrypt = (val: string) => {
+        if (!val || val.startsWith('http') || !val.includes(':')) return val;
+        try { return decrypt(val); } catch (e) { return val; }
+    };
+
+    const supabaseUrl = safeDecrypt(config.custom_supabase_url);
+    const supabaseKey = safeDecrypt(config.custom_supabase_key_encrypted);
+
+    // 5. Instantiate the dynamic Tenant client using SSR
     return createServerClient(
-        prefs.custom_supabase_url,
-        prefs.custom_supabase_key,
+        supabaseUrl,
+        supabaseKey,
         {
             cookies: {
                 getAll() {

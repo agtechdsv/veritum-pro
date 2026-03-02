@@ -18,6 +18,7 @@ export enum ModuleId {
     DASHBOARD_ROOT = 'dashboard_root',
     SCHEDULING = 'scheduling',
     EMAIL_CONFIG = 'email_config',
+    INFRA = 'infra',
     ACCESS_GROUPS = 'access_groups',
     PERSONS = 'persons',
     FINTECH = 'fintech'
@@ -38,8 +39,7 @@ export interface AsaasSubAccount {
 
 export interface AccessGroup {
     id: string;
-    name: string;
-    name_loc?: {
+    name: {
         pt: string;
         en: string;
         es: string;
@@ -58,15 +58,27 @@ export interface GroupPermission {
 
 export interface GroupTemplate {
     id: string;
-    name: string;
-    description: string;
+    name: {
+        pt: string;
+        en: string;
+        es: string;
+    };
+    description: {
+        pt: string;
+        en: string;
+        es: string;
+    };
     default_features: string[]; // Array of feature IDs
     created_at?: string;
 }
 
 export interface Plan {
     id: string;
-    name: string;
+    name: {
+        en: string;
+        es: string;
+        pt: string;
+    };
     short_desc: {
         en: string;
         es: string;
@@ -123,14 +135,15 @@ export interface Credentials {
     geminiKey: string;
 }
 
+export type UserRole = 'Master' | 'Administrador' | 'Sócio-Administrador' | 'Sócio Administrador' | 'Operador' |
+    'Advogado Sênior / Coordenador' | 'Advogado Associado / Júnior' | 'Estagiário / Paralegal' |
+    'Departamento Financeiro / Faturamento' | 'Cliente (Acesso Externo B2B2C)' |
+    'Controladoria Jurídica (Legal Ops)' | 'Secretariado / Recepção';
+
 export interface User {
     id: string;
     name: string;
-    role: 'Master' | 'Administrador' | 'Operador' |
-    'Sócio-Administrador' | 'Advogado Sênior / Coordenador' |
-    'Advogado Associado / Júnior' | 'Estagiário / Paralegal' |
-    'Departamento Financeiro / Faturamento' | 'Cliente (Acesso Externo B2B2C)' |
-    'Controladoria Jurídica (Legal Ops)' | 'Secretariado / Recepção';
+    role: UserRole;
     active: boolean;
     avatar_url?: string;
     email?: string;
@@ -147,8 +160,7 @@ export interface User {
 
 export interface Role {
     id: string;
-    name: string;
-    name_loc?: {
+    name: {
         pt: string;
         en: string;
         es: string;
@@ -164,13 +176,33 @@ export interface UserPreferences {
     custom_supabase_url?: string;
     custom_supabase_key?: string;
     custom_gemini_key?: string;
-    google_refresh_token?: string;
+}
+
+export type DbProvider = 'postgres' | 'oracle' | 'mssql' | 'mysql' | 'supabase';
+
+export interface TenantConfig {
+    id: string;
+    owner_id: string;
+    db_provider: DbProvider;
+    db_connection_encrypted?: string;
+    custom_supabase_url?: string;
+    custom_supabase_key_encrypted?: string;
+    custom_gemini_key_encrypted?: string;
+    migration_mode: 'auto' | 'manual';
+    is_active: boolean;
+    health_status?: 'up' | 'down' | 'maintenance';
+    last_health_check?: string;
+    created_at?: string;
 }
 
 export interface Suite {
     id: string;
     suite_key: string;
-    name: string;
+    name: {
+        pt: string;
+        en: string;
+        es: string;
+    };
     short_desc: {
         en: string;
         es: string;
@@ -233,7 +265,7 @@ export interface Person {
         city?: string;
         state?: string;
     };
-    organization_id?: string;
+    workspace_id?: string;
 }
 
 export interface Task {

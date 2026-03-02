@@ -18,6 +18,19 @@ const ES_FLAG = "https://flagcdn.com/w40/es.png";
 
 const AccessManagement: React.FC<Props> = ({ currentUser }) => {
     const { t, locale } = useTranslation();
+    const getLoc = (val: any, lang: string, fallback?: string): string => {
+        if (!val) return fallback || '';
+        if (typeof val === 'string') return val;
+        if (typeof val === 'object') {
+            let res = val[lang] || val.pt || val.en || val.es || fallback;
+            if (typeof res === 'object' && res !== null) {
+                res = res[lang] || res.pt || res.en || res.es || JSON.stringify(res);
+            }
+            return typeof res === 'string' ? res : JSON.stringify(val);
+        }
+        return String(val);
+    };
+
     const { planPermissions } = useModule();
     const [groups, setGroups] = useState<AccessGroup[]>([]);
     const [loading, setLoading] = useState(true);
@@ -37,7 +50,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
     const [roles, setRoles] = useState<Role[]>([]);
     const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
     const [showRoleModal, setShowRoleModal] = useState(false);
-    const [editingRole, setEditingRole] = useState<{ id?: string, name: string, name_loc?: any }>({ name: '', name_loc: { pt: '', en: '', es: '' } });
+    const [editingRole, setEditingRole] = useState<{ id?: string, name: any }>({ name: { pt: '', en: '', es: '' } });
     const [isRoleSelectOpen, setIsRoleSelectOpen] = useState(false);
 
     const [activeLang, setActiveLang] = useState<'pt' | 'en' | 'es'>('pt');
@@ -65,6 +78,12 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
         fetchFeatures();
         fetchTemplates();
     }, []);
+
+    useEffect(() => {
+        if (locale === 'en' || locale === 'es' || locale === 'pt') {
+            setActiveLang(locale as any);
+        }
+    }, [locale]);
 
     const fetchClients = async () => {
         const { data } = await supabase
@@ -116,7 +135,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
     };
 
     const fetchGroups = async () => {
-        setLoading(true);
+        if (groups.length === 0) setLoading(true);
         let query = supabase.from('access_groups').select('*');
 
         const isAdmin = ['Administrador', 'Sócio-Administrador', 'Sócio Administrador'].includes(currentUser.role);
@@ -195,27 +214,25 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
 
     const handleOpenModal = async (group?: AccessGroup) => {
         if (group) {
-            setEditingGroup({
-                ...group,
-                name_loc: group.name_loc || { pt: group.name, en: group.name, es: group.name }
-            });
+            setEditingGroup({ ...group });
             await fetchGroupPermissions(group.id);
             setSelectedRoleIds(roles.filter(r => r.access_group_id === group.id).map(r => r.id));
         } else {
-            setEditingGroup({ name: '', name_loc: { pt: '', en: '', es: '' } });
+            setEditingGroup({ name: { pt: '', en: '', es: '' } } as any);
             setSelectedFeatureIds([]);
             setSelectedRoleIds([]);
             setExpandedSuites([]);
         }
 
-        // Auto-select the active locale's tab
+        // Role State for editing is now just the name object
         const activeLocale = (locale === 'en' || locale === 'es') ? locale : 'pt';
         setActiveLang(activeLocale);
         setIsModalOpen(true);
     };
 
     const handleTranslateGroup = async () => {
-        if (!editingGroup?.name_loc?.[activeLang] || !editingGroup.name_loc[activeLang].trim()) {
+        const currentNameLoc = (editingGroup?.name as any) || {};
+        if (!currentNameLoc[activeLang] || !currentNameLoc[activeLang].trim()) {
             toast.error(t('management.access.toast.fillName') || 'Preencha o nome do grupo antes de traduzir.');
             return;
         }
@@ -223,14 +240,14 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
         setIsTranslating(true);
         try {
             const payload: any = {
-                groupName: editingGroup.name_loc[activeLang].trim(),
+                groupName: currentNameLoc[activeLang].trim(),
                 roles: {}
             };
 
             selectedRoleIds.forEach(id => {
                 const r = roles.find(r => r.id === id);
-                if (r && r.name_loc?.[activeLang]) {
-                    payload.roles[r.id] = r.name_loc[activeLang];
+                if (r && (r.name as any)?.[activeLang]) {
+                    payload.roles[r.id] = (r.name as any)[activeLang];
                 }
             });
 
@@ -246,11 +263,13 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
             const translations = await response.json();
 
             // apply translations to group
-            const newNameLoc = { ...editingGroup.name_loc } as any;
-            Object.keys(translations).forEach(lang => {
-                if (translations[lang].groupName) newNameLoc[lang] = translations[lang].groupName;
-            });
-            setEditingGroup({ ...editingGroup, name_loc: newNameLoc });
+            if (editingGroup) {
+                const newNameLoc = { ...(editingGroup.name as any) };
+                Object.keys(translations).forEach(lang => {
+                    if (translations[lang].groupName) (newNameLoc as any)[lang] = translations[lang].groupName;
+                });
+                setEditingGroup({ ...editingGroup, name: newNameLoc as any });
+            }
 
             // apply translations to local roles state (persisted when group is saved)
             const updatedRoles = [...roles];
@@ -263,8 +282,8 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                             if (idx !== -1) {
                                 updatedRoles[idx] = {
                                     ...updatedRoles[idx],
-                                    name_loc: {
-                                        ...(updatedRoles[idx].name_loc || { pt: updatedRoles[idx].name, en: updatedRoles[idx].name, es: updatedRoles[idx].name }),
+                                    name: {
+                                        ...(updatedRoles[idx].name as any || { pt: '', en: '', es: '' }),
                                         [lang]: transRoles[id]
                                     }
                                 };
@@ -286,13 +305,14 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
 
     const handleSaveGroup = async (e: React.FormEvent) => {
         e.preventDefault();
-        const baseName = editingGroup?.name_loc?.['pt'] || editingGroup?.name;
+        const baseName = typeof editingGroup?.name === 'object' ? editingGroup.name?.['pt'] : editingGroup?.name;
         if (!baseName) return;
 
         // Validar duplicidade local antes de tentar salvar
-        const isDuplicate = groups.some(g =>
-            g.name.toLowerCase() === baseName.toLowerCase() && g.id !== editingGroup?.id
-        );
+        const isDuplicate = groups.some(g => {
+            const gName = typeof g.name === 'object' ? g.name.pt : g.name;
+            return gName.toLowerCase() === baseName.toLowerCase() && g.id !== editingGroup?.id;
+        });
 
         if (isDuplicate) {
             toast.error(t('management.access.toast.duplicate', { name: baseName }));
@@ -305,8 +325,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
             if (groupId) {
                 // Update Group Name
                 const { error: groupError } = await supabase.from('access_groups').update({
-                    name: baseName,
-                    name_loc: editingGroup?.name_loc
+                    name: editingGroup?.name
                 }).eq('id', groupId);
                 if (groupError) throw groupError;
                 toast.success(t('management.access.toast.successName'));
@@ -315,8 +334,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                 const newGroupAdminId = currentUser.role === 'Master' ? selectedClientId : currentUser.id;
                 const { data: newGroup, error: groupError } = await supabase.from('access_groups').insert({
                     admin_id: newGroupAdminId,
-                    name: baseName,
-                    name_loc: editingGroup?.name_loc
+                    name: editingGroup?.name
                 }).select().single();
 
                 if (groupError) throw groupError;
@@ -343,11 +361,9 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                 for (const roleId of selectedRoleIds) {
                     const localRole = roles.find(r => r.id === roleId);
                     if (localRole) {
-                        const roleBaseName = localRole.name_loc?.['pt'] || localRole.name;
                         const { error: roleUpdErr } = await supabase.from('roles').update({
                             access_group_id: groupId,
-                            name: roleBaseName,
-                            name_loc: localRole.name_loc || { pt: localRole.name, en: localRole.name, es: localRole.name }
+                            name: localRole.name
                         }).eq('id', roleId);
                         if (roleUpdErr) throw roleUpdErr;
                     }
@@ -367,7 +383,8 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
         } catch (error: any) {
             console.error('Save error:', error);
             if (error.code === '23505') {
-                toast.error(t('management.access.toast.duplicate', { name: editingGroup?.name || '' }));
+                const dupName = typeof editingGroup?.name === 'object' ? (editingGroup.name.pt || '') : (editingGroup?.name || '');
+                toast.error(t('management.access.toast.duplicate', { name: dupName }));
             } else {
                 toast.error(t('management.access.toast.errorSave'));
             }
@@ -376,13 +393,17 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
 
     const handleSaveRole = async (e: React.FormEvent) => {
         e.preventDefault();
-        const baseRoleName = editingRole.name_loc?.['pt'] || editingRole.name;
+        const baseRoleName = (editingRole.name as any)?.pt || '';
         if (!baseRoleName.trim()) return;
 
         const roleName = baseRoleName.trim();
+        const roleNameObj = editingRole.name as any;
 
         // Check duplicate within the same admin context
-        if (roles.some(r => r.name.toLowerCase() === roleName.toLowerCase() && r.id !== editingRole.id)) {
+        if (roles.some(r => {
+            const rName = typeof r.name === 'object' ? r.name.pt : r.name;
+            return rName.toLowerCase() === roleName.toLowerCase() && r.id !== editingRole.id;
+        })) {
             toast.error(t('management.access.toast.duplicateRole', { name: roleName }));
             return;
         }
@@ -391,8 +412,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
             if (editingRole.id) {
                 // Update
                 const { error } = await supabase.from('roles').update({
-                    name: roleName,
-                    name_loc: editingRole.name_loc
+                    name: editingRole.name
                 }).eq('id', editingRole.id);
                 if (error) throw error;
                 toast.success(t('management.access.toast.successRoleEdit'));
@@ -400,8 +420,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                 // Insert
                 const newRoleAdminId = currentUser.role === 'Master' ? selectedClientId : (currentUser.parent_user_id || currentUser.id);
                 const { data, error } = await supabase.from('roles').insert({
-                    name: roleName,
-                    name_loc: editingRole.name_loc,
+                    name: editingRole.name,
                     admin_id: newRoleAdminId,
                     access_group_id: editingGroup?.id || null
                 }).select().single();
@@ -416,7 +435,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
             }
 
             setShowRoleModal(false);
-            setEditingRole({ name: '', name_loc: { pt: '', en: '', es: '' } });
+            setEditingRole({ name: { pt: '', en: '', es: '' } });
             fetchRoles();
         } catch (error: any) {
             console.error('Error saving role:', error);
@@ -503,13 +522,13 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
             "Cliente (Acesso Externo B2B2C)": { en: "Client (External Access B2B2C)", es: "Cliente (Acceso Externo B2B2C)" }
         };
 
-        const loc = localTranslations[template.name];
+        const templateNamePt = typeof template.name === 'object' ? (template.name.pt || '') : (template.name || '');
+        const loc = localTranslations[templateNamePt];
 
         setEditingGroup(prev => ({
             ...prev,
-            name: template.name,
-            name_loc: loc ? { pt: template.name, en: loc.en, es: loc.es } : { pt: template.name, en: template.name, es: template.name }
-        }));
+            name: loc ? { pt: templateNamePt, en: loc.en, es: loc.es } : { pt: templateNamePt, en: templateNamePt, es: templateNamePt }
+        }) as any);
 
         const hasBlockedFeatures = allowedFeatures.length < template.default_features.length;
 
@@ -557,7 +576,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                     <option value={currentUser.id}>{t('management.access.masterGroups') || 'Master (Meus Grupos)'}</option>
                                     <optgroup label={t('management.access.privateAdmins') || 'Sócio-Administradores Privados'}>
                                         {clients.map(c => (
-                                            <option key={c.id} value={c.id}>🏢 {c.name} ({c.email})</option>
+                                            <option key={c.id} value={c.id}>🏢 {(typeof c.name === 'object' ? ((c.name as any).pt || (c.name as any).en || '') : (c.name || '')).toUpperCase()} ({c.email})</option>
                                         ))}
                                     </optgroup>
                                 </select>
@@ -597,7 +616,9 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                 </button>
                             </div>
                         </div>
-                        <h3 className="text-xl font-black text-slate-800 dark:text-white mb-2 uppercase tracking-tight">{group.name_loc?.[locale as keyof typeof group.name_loc] || group.name_loc?.['pt'] || group.name}</h3>
+                        <h3 className="text-xl font-black text-slate-800 dark:text-white mb-2 uppercase tracking-tight">
+                            {getLoc(group.name, locale)}
+                        </h3>
 
                         <p className="text-[10px] text-slate-400 font-bold mb-6 uppercase tracking-widest opacity-60">{t('management.access.created', { date: new Date(group.created_at!).toLocaleDateString(t('common.locale_date') === 'en-US' ? 'en-US' : 'pt-BR') })}</p>
 
@@ -626,7 +647,9 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                                     <Icon size={12} />
                                                 </div>
                                                 <span className="text-[10px] font-black uppercase tracking-tighter text-white dark:text-slate-900">
-                                                    {t(`modules.${s.suite_key.toLowerCase().replace('_key', '')}.title`) !== `modules.${s.suite_key.toLowerCase().replace('_key', '')}.title` ? t(`modules.${s.suite_key.toLowerCase().replace('_key', '')}.title`) : s.name}
+                                                    {t(`modules.${s.suite_key.toLowerCase().replace('_key', '')}.title`) !== `modules.${s.suite_key.toLowerCase().replace('_key', '')}.title`
+                                                        ? t(`modules.${s.suite_key.toLowerCase().replace('_key', '')}.title`)
+                                                        : (getLoc(s.name, locale))}
                                                 </span>
                                             </div>
                                             <div className="space-y-1">
@@ -635,7 +658,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                                         <div key={f.id} className="flex items-center gap-1.5">
                                                             <div className="w-1 h-1 rounded-full bg-emerald-500 shrink-0" />
                                                             <span className="text-[10px] font-bold text-slate-300 dark:text-slate-700 leading-tight">
-                                                                {f.display_name?.[locale as keyof typeof f.display_name] || f.display_name?.['pt'] || f.feature_key}
+                                                                {getLoc(f.display_name, locale, f.feature_key)}
                                                             </span>
                                                         </div>
                                                     ))
@@ -703,17 +726,12 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                         required
                                         placeholder={t('management.access.modal.groupNamePlaceholder')}
                                         className="w-full px-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white font-bold shadow-sm"
-                                        value={editingGroup?.name_loc?.[activeLang] || ''}
-                                        onChange={e => setEditingGroup(prev => {
-                                            if (!prev) return prev;
-                                            return {
-                                                ...prev,
-                                                name_loc: {
-                                                    ...(prev.name_loc || { pt: prev.name as string, en: prev.name as string, es: prev.name as string }),
-                                                    [activeLang]: e.target.value
-                                                }
-                                            }
-                                        })}
+                                        value={(editingGroup?.name as any)?.[activeLang] || ''}
+                                        onChange={e => {
+                                            const currentName = (editingGroup?.name as any) || {};
+                                            const updatedName = { ...currentName, [activeLang]: e.target.value };
+                                            setEditingGroup(prev => prev ? { ...prev, name: updatedName } : null);
+                                        }}
                                     />
                                 </div>
 
@@ -734,10 +752,10 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                             className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl text-xs font-bold text-slate-600 dark:text-slate-400 outline-none focus:ring-2 focus:ring-indigo-600 appearance-none cursor-pointer transition-all hover:border-slate-300 dark:hover:border-slate-700"
                                             defaultValue=""
                                         >
-                                            <option value="" disabled>{t('management.access.modal.templatePlaceholder')}</option>
-                                            {templates.map(t => (
-                                                <option key={t.id} value={t.id}>✨ {t.name}</option>
-                                            ))}
+                                            {templates.map(t => {
+                                                const tName = getLoc(t.name, locale);
+                                                return <option key={t.id} value={t.id}>✨ {tName}</option>
+                                            })}
                                             <option value="clear" className="text-rose-500 font-bold border-t border-slate-200 mt-2">🛑 {t('management.access.modal.clearSelection')}</option>
                                         </select>
                                         <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
@@ -784,7 +802,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                                     className="flex items-center gap-1.5 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-900 dark:text-indigo-100 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm"
                                                     onClick={(e) => e.stopPropagation()}
                                                 >
-                                                    {role.name_loc?.[activeLang] || role.name}
+                                                    {getLoc(role.name, activeLang)}
                                                     <button
                                                         type="button"
                                                         onClick={() => setSelectedRoleIds(prev => prev.filter(rId => rId !== id))}
@@ -826,7 +844,9 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                                         return Object.keys(groupedRoles).map(groupId => {
                                                             const groupRoles = groupedRoles[groupId];
                                                             const group = groups.find(g => g.id === groupId);
-                                                            const groupName = group ? (group.name_loc?.[activeLang] || group.name) : t('management.access.modal.others');
+                                                            const groupName = group
+                                                                ? (getLoc(group.name, locale))
+                                                                : t('management.access.modal.others');
 
                                                             return (
                                                                 <div key={groupId} className="mb-2 last:mb-0">
@@ -855,14 +875,19 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                                                                         <div className={`flex items-center justify-center w-4 h-4 rounded border ${isSelected ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 dark:border-slate-700'}`}>
                                                                                             {isSelected && <Check size={10} strokeWidth={3} />}
                                                                                         </div>
-                                                                                        <span className={`text-xs font-semibold ${isSelected ? 'text-indigo-900 dark:text-indigo-100' : 'text-slate-600 dark:text-slate-300'}`}>{role.name_loc?.[activeLang] || role.name}</span>
+                                                                                        <span className={`text-xs font-semibold ${isSelected ? 'text-indigo-900 dark:text-indigo-100' : 'text-slate-600 dark:text-slate-300'}`}>
+                                                                                            {getLoc(role.name, activeLang)}
+                                                                                        </span>
                                                                                     </div>
 
                                                                                     <button
                                                                                         type="button"
                                                                                         onClick={(e) => {
                                                                                             e.stopPropagation();
-                                                                                            setEditingRole(role);
+                                                                                            setEditingRole({
+                                                                                                id: role.id,
+                                                                                                name: role.name
+                                                                                            });
                                                                                             const activeLocale = (locale === 'en' || locale === 'es') ? locale : 'pt';
                                                                                             setActiveLang(activeLocale);
                                                                                             setShowRoleModal(true);
@@ -906,7 +931,9 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                                             <Icon size={20} />
                                                         </div>
                                                         <div className="flex-1">
-                                                            <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight leading-none mb-1">{suite.name}</h4>
+                                                            <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight leading-none mb-1">
+                                                                {getLoc(suite.name, locale)}
+                                                            </h4>
                                                             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{t('management.access.modal.featuresActive', { count: enabledInSuite.length, total: suiteFeatures.length })}</p>
                                                         </div>
                                                         <ChevronDown size={18} className={`text-slate-300 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
@@ -949,11 +976,11 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                                                     </div>
                                                                     <div className="flex-1">
                                                                         <span className={`block text-xs font-black uppercase tracking-tight transition-colors ${isActive ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-300'}`}>
-                                                                            {f.display_name?.[locale as keyof typeof f.display_name] || f.display_name?.['pt'] || f.feature_key}
+                                                                            {getLoc(f.display_name, locale, f.feature_key)}
                                                                         </span>
                                                                         {f.description?.pt && (
                                                                             <span className={`text-[9px] font-bold normal-case block leading-relaxed mt-1 transition-opacity ${isActive ? 'opacity-100 text-emerald-600/80 dark:text-emerald-500/80' : 'opacity-60 text-slate-500 dark:text-slate-500'}`}>
-                                                                                {f.description?.[locale as keyof typeof f.description] || f.description?.['pt']}
+                                                                                {getLoc(f.description, locale)}
                                                                             </span>
                                                                         )}
                                                                     </div>
@@ -987,7 +1014,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                         </div>
                         <h2 className="text-3xl font-black mb-2 uppercase tracking-tighter">{t('management.access.delete.title')}</h2>
                         <p className="text-sm text-slate-500 font-medium mb-10 leading-relaxed uppercase tracking-tight">
-                            {t('management.access.delete.message', { name: groupToDelete.name })}
+                            {t('management.access.delete.message', { name: getLoc(groupToDelete.name, locale) })}
                         </p>
                         <div className="flex flex-col gap-3">
                             <button
@@ -1051,14 +1078,12 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                 autoFocus
                                 placeholder={t('management.access.roleModal.namePlaceholder')}
                                 className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white font-bold text-center"
-                                value={editingRole.name_loc?.[activeLang] || ''}
-                                onChange={(e) => setEditingRole({
-                                    ...editingRole,
-                                    name_loc: {
-                                        ...(editingRole.name_loc || { pt: editingRole.name as string, en: editingRole.name as string, es: editingRole.name as string }),
-                                        [activeLang]: e.target.value
-                                    }
-                                })}
+                                value={(editingRole.name as any)?.[activeLang] || ''}
+                                onChange={(e) => {
+                                    const currentName = (editingRole.name as any) || {};
+                                    const updatedName = { ...currentName, [activeLang]: e.target.value };
+                                    setEditingRole({ ...editingRole, name: updatedName });
+                                }}
                             />
 
                             <button type="submit" className="w-full bg-indigo-600 text-white py-4 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 transition-all text-xs">

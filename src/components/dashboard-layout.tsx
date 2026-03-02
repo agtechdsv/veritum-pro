@@ -15,6 +15,7 @@ import UserManagement from './modules/user-management';
 import PlanManagement from './modules/plan-management';
 import PersonManagement from './modules/person-management';
 import IntelligenceHub from './modules/intelligence-hub';
+import InfraManagement from './modules/infra-management';
 import { createMasterClient } from '@/lib/supabase/master';
 import { createDynamicClient } from '@/utils/supabase/client';
 import { Tooltip } from './ui/tooltip';
@@ -30,7 +31,7 @@ import {
     PanelLeftClose, PanelLeftOpen, Sun, Moon, Bell, Search,
     ChevronRight, Crown, Camera, Check, User as UserIcon,
     Calendar as CalendarIcon, Mail, Shield, GitBranch, Key, Zap, Lock,
-    CreditCard
+    CreditCard, Server
 } from 'lucide-react';
 import SuiteManagement from './modules/suite-management';
 import { useTheme } from 'next-themes';
@@ -122,18 +123,25 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
     const normalize = (k: string) => k?.toLowerCase().replace('_key', '') || '';
 
     // Sync order with activeSuites from DB
-    const syncedSuites = activeSuites.length > 0
-        ? activeSuites
-            .map(as => {
-                const normalizedDbKey = normalize(as.suite_key);
-                const baseItem = BASE_SUITE_ITEMS.find(bs => normalize(bs.id) === normalizedDbKey);
-                if (baseItem) {
-                    return { ...baseItem, label: as.name || baseItem.label, short_desc: as.short_desc, detailed_desc: as.detailed_desc };
-                }
-                return null;
-            })
-            .filter(Boolean) as any[]
-        : []; // Added semicolon and empty array for when activeSuites is empty
+    const syncedSuites = (activeSuites || [])
+        .map(as => {
+            if (!as) return null;
+            const normalizedDbKey = normalize(as.suite_key);
+            const baseItem = BASE_SUITE_ITEMS.find(bs => normalize(bs.id) === normalizedDbKey);
+            if (baseItem) {
+                const nameObj = typeof as.name === 'string' ? JSON.parse(as.name || '{}') : (as.name || {});
+                const localizedLabel = nameObj[locale] || nameObj.pt || baseItem.label;
+
+                return {
+                    ...baseItem,
+                    label: typeof localizedLabel === 'string' ? localizedLabel : baseItem.label,
+                    short_desc: as.short_desc,
+                    detailed_desc: as.detailed_desc
+                };
+            }
+            return null;
+        })
+        .filter(Boolean) as any[];
 
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -149,17 +157,21 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
     // fallback to baseSuiteItems so the menu never disappears.
     const fallbackSuites = syncedSuites.length > 0 ? syncedSuites : BASE_SUITE_ITEMS;
 
-    const superAdminGroupsNames = ['Sócio-Administrativo', 'Sócio-Administrador', 'Sócio Administrador'];
-    const superAdminRoles = ['Sócio-Administrador', 'Sócio Administrador', 'Administrador', 'Sócio-Administrativo'];
-    const isSocioAdminRole = superAdminRoles.some(r => user.role?.includes(r));
-    const isSocioAdminGroup = user.access_group_name && superAdminGroupsNames.some(g => user.access_group_name?.includes(g));
-    const isSuperAdmin = user.role === 'Master' || isSocioAdminRole || isSocioAdminGroup;
+    // Permissões de Admin
+    const isMaster = user.role === 'Master';
+    const isSuperAdmin = isMaster ||
+        user.role === 'Sócio-Administrador' ||
+        user.role === 'Sócio Administrador';
+
+    // isAdmin: Qualquer pessoa que tenha papel administrativo (Master, Sócio-Adm ou Adm comum)
+    const isAdmin = isSuperAdmin || user.role === 'Administrador';
 
     const adminItems = [
         { id: ModuleId.USERS, label: t('management.users.menu'), icon: Users, color: 'text-slate-500' },
         { id: ModuleId.PERSONS, label: t('management.master.persons.menu'), icon: UserIcon, color: 'text-emerald-600' },
         { id: ModuleId.ACCESS_GROUPS, label: t('management.access.menu'), icon: Shield, color: 'text-indigo-600' },
         { id: ModuleId.SETTINGS, label: t('management.settings.menu'), icon: Settings, color: 'text-slate-500' },
+        { id: ModuleId.INFRA, label: 'Infraestrutura', icon: Server, color: 'text-slate-500' },
     ];
 
     const masterItems = [
@@ -171,8 +183,6 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
 
 
     ];
-
-    const isAdmin = user.role === 'Master' || ['Administrador', 'Sócio-Administrador', 'Sócio Administrador'].includes(user.role);
 
     // PLAN PERMISSIONS FILTER: Only for non-Master users + Intern Safety (RBAC)
     const suiteItems = isSuperAdmin
@@ -239,7 +249,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
             // USERS & PERSONS (CRM): Visible for Master, Admins, and Sócio-Administradores
             return isAdmin;
         }
-        // ACCESS_GROUPS and SETTINGS: Restricted to SuperAdmin (Sócio-Administrativo group)
+        // ACCESS_GROUPS, SETTINGS, INFRA: Restricted to SuperAdmin (Sócio-Administrativo group)
         return isSuperAdmin;
     });
 
@@ -263,7 +273,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
         // 2. Checa se é módulo Admin
         const isAdminModule = adminItems.some(ai => normalize(ai.id) === currentNormalized);
         if (isAdminModule) {
-            if (currentNormalized === 'access_groups' || currentNormalized === 'settings') {
+            if (currentNormalized === 'access_groups' || currentNormalized === 'settings' || currentNormalized === 'infra') {
                 if (!isSuperAdmin) {
                     toast.error('Acesso restrito ao Grupo Sócio-Administrativo.');
                     onModuleChange(ModuleId.DASHBOARD_ROOT);
@@ -315,9 +325,11 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                 return <EmailSettingsManager />;
             case ModuleId.ACCESS_GROUPS:
                 return <AccessManagement currentUser={user} />;
-
+            case ModuleId.INFRA:
+            case 'infra':
+                return <InfraManagement currentUser={user} />;
             case ModuleId.PERSONS:
-                return <PersonManagement credentials={creds} preferences={preferences} />;
+                return <PersonManagement credentials={creds} preferences={preferences} currentUser={user} />;
             case 'dashboard_suites': return <SuiteDashboard items={suiteItems} onModuleChange={onModuleChange} />;
             case 'dashboard_admin': return <AdminDashboard items={filteredAdminItems} onModuleChange={onModuleChange} />;
             case 'dashboard_master': return <MasterDashboard items={masterItems} onModuleChange={onModuleChange} />;
@@ -623,13 +635,13 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                         <div className="flex items-center gap-4 pl-6 border-l border-slate-100 dark:border-slate-800">
                             <div className="text-right hidden sm:block">
                                 <div className="text-sm font-bold text-slate-800 dark:text-white flex items-center justify-end gap-2">
-                                    {user.name}
+                                    {typeof user.name === 'object' ? ((user.name as any)[locale as keyof typeof user.name] || (user.name as any).pt || (user.name as any).en || '') : user.name}
                                     {user.plan_name && (
                                         <Tooltip content="Clique para fazer upgrade ou gerenciar seu plano" enabled={true} side="left">
                                             <button
                                                 onClick={() => {
                                                     if (isSuperAdmin) {
-                                                        setCheckoutData({ type: 'plan', planName: user.plan_name || 'Pro' });
+                                                        setCheckoutData({ type: 'plan', planName: (typeof user.plan_name === 'object' ? ((user.plan_name as any).pt || (user.plan_name as any).en || 'Pro') : (user.plan_name || 'Pro')) });
                                                         setIsCheckoutOpen(true);
                                                     } else {
                                                         toast.error('Acesso restrito. Apenas administradores podem gerenciar o plano.');
@@ -637,12 +649,14 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                                 }}
                                                 className="px-2 py-0.5 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-[9px] uppercase tracking-widest rounded-md border border-amber-200 dark:border-amber-800 shadow-sm hover:scale-105 transition-all outline-none"
                                             >
-                                                {user.plan_name}
+                                                {typeof user.plan_name === 'object' ? ((user.plan_name as any)[locale] || (user.plan_name as any).pt || '') : user.plan_name}
                                             </button>
                                         </Tooltip>
                                     )}
                                 </div>
-                                <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mt-0.5">{user.role}</p>
+                                <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mt-0.5">
+                                    {typeof user.role === 'object' ? ((user.role as any)[locale] || (user.role as any).pt || '') : user.role}
+                                </p>
                             </div>
 
                             <div

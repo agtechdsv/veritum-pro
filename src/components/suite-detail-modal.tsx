@@ -25,7 +25,9 @@ export function SuiteDetailModal({ isOpen, onClose, suite }: Props) {
         <Dialog open={isOpen} onOpenChange={(open: boolean) => !open && onClose()}>
             <DialogContent className="sm:max-w-2xl max-h-[90vh] p-0 bg-transparent border-none shadow-none">
                 <div className={`relative w-full flex flex-col rounded-[2.5rem] shadow-2xl border overflow-hidden transition-all ${theme === 'dark' ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-                    <DialogTitle className="sr-only">{suite.name}</DialogTitle>
+                    <DialogTitle className="sr-only">
+                        {typeof suite.name === 'object' ? (suite.name[lang] || suite.name.pt || '') : suite.name}
+                    </DialogTitle>
 
                     {/* Header */}
                     <div className="p-8 pb-6 flex items-start justify-between border-b border-slate-100 dark:border-slate-800">
@@ -36,11 +38,14 @@ export function SuiteDetailModal({ isOpen, onClose, suite }: Props) {
                             />
                             <div>
                                 <h2 className="text-3xl font-black tracking-tight dark:text-white text-slate-900 leading-none mb-2">
-                                    {suite.name.split(/\b(PRO)\b/i).map((part, i) =>
-                                        part.toUpperCase() === 'PRO' ? (
-                                            <span key={i} className="text-branding-gradient">{part}</span>
-                                        ) : part
-                                    )}
+                                    {(() => {
+                                        const suiteName = typeof suite.name === 'object' ? (suite.name[lang] || suite.name.pt || '') : (suite.name || '');
+                                        return suiteName.split(/\b(PRO)\b/i).map((part: string, i: number) =>
+                                            part.toUpperCase() === 'PRO' ? (
+                                                <span key={i} className="text-branding-gradient">{part}</span>
+                                            ) : part
+                                        );
+                                    })()}
                                 </h2>
                                 <p className="text-sm text-branding-gradient font-bold uppercase tracking-wider">
                                     {suite.short_desc[lang] || ''}

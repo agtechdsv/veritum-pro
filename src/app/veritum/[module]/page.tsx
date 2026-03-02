@@ -21,17 +21,18 @@ import AccessManagement from '@/components/modules/access-management';
 import IntelligenceHub from '@/components/modules/intelligence-hub';
 import PersonManagement from '@/components/modules/person-management';
 import { EmailSettingsManager } from '@/components/modules/email-config';
+import InfraManagement from '@/components/modules/infra-management';
 import { ModuleId } from '@/types';
 import { BASE_SUITE_ITEMS } from '@/utils/module-meta';
-import { GitBranch, FileEdit, DollarSign, BarChart3, MessageSquare, ShieldAlert, Users, Settings, Crown, Calendar as CalendarIcon, Mail, Shield, Zap, User as UserIcon, CreditCard } from 'lucide-react';
+import { GitBranch, FileEdit, DollarSign, BarChart3, MessageSquare, ShieldAlert, Users, Settings, Crown, Calendar as CalendarIcon, Mail, Shield, Zap, User as UserIcon, CreditCard, Server } from 'lucide-react';
 import { useTranslation } from '@/contexts/language-context';
 
 export default function DynamicModulePage() {
     const { module } = useParams();
     const searchParams = useSearchParams();
-    const tabParam = searchParams.get('tab') as 'infra' | 'org' | 'plan' | null;
+    const tabParam = searchParams.get('tab') as 'org' | 'plan' | 'cancel' | null;
     const { user, preferences, planPermissions, credentials, onUpdateUser, onUpdatePrefs, onModuleChange, activeSuites, groupPermissions, allFeatures } = useModule();
-    const { t } = useTranslation();
+    const { t, locale } = useTranslation();
 
     if (!user || !preferences) return null;
 
@@ -47,9 +48,12 @@ export default function DynamicModulePage() {
                 const normalizedDbKey = normalize(as.suite_key);
                 const baseItem = BASE_SUITE_ITEMS.find(bs => normalize(bs.id) === normalizedDbKey);
                 if (baseItem) {
+                    const nameObj = typeof as.name === 'object' ? as.name : {};
+                    const localizedLabel = nameObj[locale as keyof typeof nameObj] || nameObj.pt || baseItem.label;
+
                     return {
                         ...baseItem,
-                        label: as.name || baseItem.label,
+                        label: typeof localizedLabel === 'string' ? localizedLabel : baseItem.label,
                         short_desc: as.short_desc,
                         detailed_desc: as.detailed_desc
                     };
@@ -64,7 +68,7 @@ export default function DynamicModulePage() {
     const superAdminGroups = ['Sócio-Administrativo', 'Sócio-Administrador', 'Sócio Administrador'];
     const isSocioAdminGroup = user.access_group_name && superAdminGroups.some(g => user.access_group_name?.includes(g));
     const isSuperAdmin = user.role === 'Master' || isSocioAdminRole || isSocioAdminGroup;
-    const isAdmin = isSuperAdmin;
+    const isAdmin = isSuperAdmin || user.role === 'Administrador';
 
     const suiteItems = isSuperAdmin
         ? syncedSuites.map(bs => {
@@ -128,6 +132,7 @@ export default function DynamicModulePage() {
         { id: ModuleId.PERSONS, label: t('management.master.crm.title'), icon: UserIcon, color: 'text-emerald-600' },
         { id: ModuleId.ACCESS_GROUPS, label: t('management.accessGroups.title'), icon: Shield, color: 'text-indigo-600' },
         { id: ModuleId.SETTINGS, label: t('management.settings.title'), icon: Settings, color: 'text-slate-500' },
+        { id: ModuleId.INFRA, label: 'Infraestrutura', icon: Server, color: 'text-slate-500' },
     ];
 
     const filteredAdminItems = adminItems.filter(item => {
@@ -160,8 +165,8 @@ export default function DynamicModulePage() {
         case 'scheduling': return <SchedulingManagement />;
         case 'email_config': return <EmailSettingsManager />;
         case 'access_groups': return <AccessManagement currentUser={user} />;
-
-        case 'persons': return <PersonManagement credentials={credentials} preferences={preferences} />;
+        case 'infra': return <InfraManagement currentUser={user} />;
+        case 'persons': return <PersonManagement credentials={credentials} preferences={preferences} currentUser={user} />;
         case 'dashboard_suites': return <SuiteDashboard items={suiteItems} onModuleChange={onModuleChange} />;
         case 'dashboard_admin': return <AdminDashboard items={filteredAdminItems} onModuleChange={onModuleChange} />;
         case 'dashboard_master': return <MasterDashboard items={masterItems} onModuleChange={onModuleChange} />;

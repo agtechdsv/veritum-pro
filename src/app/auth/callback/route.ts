@@ -18,7 +18,7 @@ export async function GET(request: Request) {
                 // The profile sync is now handled by a Database Trigger on the Master SB.
                 // We only need to check for BYODB preferences if needed.
 
-                // 2. Check Preferences (BYODB)
+                // 2. Check Configurations (BYODB)
                 // Determine target user ID for BYODB keys (Self or Parent)
                 const { data: profile } = await supabase
                     .from('users')
@@ -28,17 +28,26 @@ export async function GET(request: Request) {
 
                 const targetUserId = profile?.parent_user_id || user.id;
 
-                const { data: prefs } = await supabase
-                    .from('user_preferences')
-                    .select('custom_supabase_url, custom_supabase_key')
-                    .eq('user_id', targetUserId)
-                    .single()
+                const { data: config } = await supabase
+                    .from('tenant_configs')
+                    .select('custom_supabase_url, custom_supabase_key_encrypted')
+                    .eq('owner_id', targetUserId)
+                    .maybeSingle()
 
-                if (prefs && prefs.custom_supabase_url && prefs.custom_supabase_key) {
+                if (config && config.custom_supabase_url && config.custom_supabase_key_encrypted) {
+                    const { decrypt } = await import('@/lib/security')
+                    const safeDecrypt = (val: string) => {
+                        if (!val || val.startsWith('http') || !val.includes(':')) return val;
+                        try { return decrypt(val); } catch (e) { return val; }
+                    };
+
+                    const decryptedUrl = safeDecrypt(config.custom_supabase_url);
+                    const decryptedKey = safeDecrypt(config.custom_supabase_key_encrypted);
+
                     const { cookies } = await import('next/headers')
                     const cookieStore = await cookies()
-                    cookieStore.set('sb-project-url', prefs.custom_supabase_url)
-                    cookieStore.set('sb-anon-key', prefs.custom_supabase_key)
+                    cookieStore.set('sb-project-url', decryptedUrl)
+                    cookieStore.set('sb-anon-key', decryptedKey)
                 }
             }
 

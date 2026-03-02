@@ -17,28 +17,42 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
 
     const [roles, setRoles] = useState<Role[]>([]);
 
-    const getRoleTranslation = (roleName: string) => {
+    const getRoleTranslation = (roleName: any) => {
         if (!roleName) return '';
-        const lowerRole = roleName.toLowerCase();
-        if (lowerRole.includes('master')) return t('management.users.roles.master');
-        if (lowerRole.includes('administrador') || lowerRole.includes('admin')) {
-            if (lowerRole.includes('sócio')) return t('management.users.roles.partnerAdmin');
+
+        let normalizedSearchName = '';
+        if (typeof roleName === 'object') {
+            normalizedSearchName = (roleName[locale as keyof typeof roleName] || roleName.pt || '').toLowerCase();
+        } else {
+            normalizedSearchName = String(roleName).toLowerCase();
+        }
+
+        if (normalizedSearchName.includes('master')) return t('management.users.roles.master');
+        if (normalizedSearchName.includes('administrador') || normalizedSearchName.includes('admin')) {
+            if (normalizedSearchName.includes('sócio')) return t('management.users.roles.partnerAdmin');
             return t('management.users.roles.admin');
         }
-        if (lowerRole.includes('operador')) return t('management.users.roles.operator');
-        if (lowerRole.includes('estagiário')) return t('management.users.roles.intern');
-        if (lowerRole.includes('paralegal')) return t('management.users.roles.paralegal');
-        if (lowerRole.includes('sênior')) return t('management.users.roles.senior');
-        if (lowerRole.includes('coordenador')) return t('management.users.roles.coordinator');
-        if (lowerRole.includes('financeiro')) return t('management.users.roles.financial');
+        if (normalizedSearchName.includes('operador')) return t('management.users.roles.operator');
+        if (normalizedSearchName.includes('estagiário')) return t('management.users.roles.intern');
+        if (normalizedSearchName.includes('paralegal')) return t('management.users.roles.paralegal');
+        if (normalizedSearchName.includes('sênior')) return t('management.users.roles.senior');
+        if (normalizedSearchName.includes('coordenador')) return t('management.users.roles.coordinator');
+        if (normalizedSearchName.includes('financeiro')) return t('management.users.roles.financial');
 
         // Dynamic search in roles state
-        const dynamicRole = roles.find(r => r.name === roleName);
-        if (dynamicRole && dynamicRole.name_loc) {
-            return (dynamicRole.name_loc as any)[locale] || (dynamicRole.name_loc as any)['pt'] || roleName;
+        const dynamicRole = roles.find(r => {
+            const rName = typeof r.name === 'object' ? (r.name.pt || '') : (r.name || '');
+            const targetName = typeof roleName === 'object' ? (roleName.pt || '') : String(roleName);
+            return rName.toLowerCase() === targetName.toLowerCase();
+        });
+
+        if (dynamicRole) {
+            return (dynamicRole.name && typeof dynamicRole.name === 'object')
+                ? ((dynamicRole.name as any)[locale] || (dynamicRole.name as any).pt || '')
+                : (dynamicRole.name || String(roleName));
         }
 
-        return roleName;
+        return typeof roleName === 'object' ? (roleName[locale] || roleName.pt || '') : String(roleName);
     };
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
@@ -217,8 +231,9 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
     });
 
     const filteredUsers = sortedUsers.filter(u => {
-        const matchesSearch = u.name.toLowerCase().includes(filters.search.toLowerCase()) ||
-            u.email.toLowerCase().includes(filters.search.toLowerCase());
+        const uName = typeof u.name === 'object' ? ((u.name as any).pt || (u.name as any).en || (u.name as any).es || '') : (u.name || '');
+        const matchesSearch = uName.toLowerCase().includes(filters.search.toLowerCase()) ||
+            (u.email || '').toLowerCase().includes(filters.search.toLowerCase());
         const matchesRole = filters.role === 'all' || u.role === filters.role;
         const matchesStatus = filters.status === 'all' ||
             (filters.status === 'active' ? u.active : !u.active);
@@ -372,7 +387,7 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
     const openEditModal = (user: User) => {
         setEditingUser(user);
         setFormData({
-            name: user.name,
+            name: typeof user.name === 'object' ? ((user.name as any).pt || (user.name as any).en || '') : (user.name || ''),
             email: user.email || '',
             password: '',
             role: user.role as any,
@@ -402,7 +417,7 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                     <option value={currentUser.id}>{t('management.users.masterFilter.self')}</option>
                                     <optgroup label={t('management.users.masterFilter.clients')}>
                                         {clients.map(c => (
-                                            <option key={c.id} value={c.id}>🏢 {c.name} ({c.email})</option>
+                                            <option key={c.id} value={c.id}>🏢 {(typeof c.name === 'object' ? ((c.name as any).pt || (c.name as any).en || '') : (c.name || '')).toUpperCase()} ({c.email})</option>
                                         ))}
                                     </optgroup>
                                 </select>
@@ -533,7 +548,9 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                             {u.active && <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full" />}
                                         </div>
                                         <div>
-                                            <p className="font-black text-slate-800 dark:text-white leading-tight uppercase tracking-tight">{u.name}</p>
+                                            <p className="font-black text-slate-800 dark:text-white leading-tight uppercase tracking-tight">
+                                                {typeof u.name === 'object' ? ((u.name as any)[locale] || (u.name as any).pt || '') : (u.name || '')}
+                                            </p>
                                             <p className="text-xs text-slate-400 font-medium">{u.email}</p>
                                         </div>
                                     </div>
@@ -546,8 +563,9 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                                 {(() => {
                                                     const group = accessGroups.find(g => g.id === u.access_group_id);
                                                     if (!group) return loading ? t('common.loading') : 'Não Encontrado';
-                                                    // @ts-ignore - name_loc might be typed based on other updates, we safely fallback
-                                                    return group.name_loc?.[locale as any] || group.name_loc?.['pt'] || group.name;
+                                                    return (group.name && typeof group.name === 'object')
+                                                        ? ((group.name as any)[locale] || (group.name as any).pt || '')
+                                                        : (group.name || '');
                                                 })()}
                                             </span>
                                         </div>
@@ -642,11 +660,14 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                             className="w-full pl-14 pr-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl font-bold focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white appearance-none cursor-pointer shadow-sm disabled:opacity-50"
                                             value={formData.role}
                                             onChange={e => {
-                                                const selectedRoleName = e.target.value;
-                                                const roleObj = roles.find(r => r.name === selectedRoleName);
+                                                const selectedValue = e.target.value;
+                                                const roleObj = roles.find(r => {
+                                                    const rName = typeof r.name === 'object' ? r.name.pt : r.name;
+                                                    return rName === selectedValue;
+                                                });
                                                 setFormData({
                                                     ...formData,
-                                                    role: selectedRoleName as any,
+                                                    role: selectedValue,
                                                     access_group_id: roleObj ? roleObj.access_group_id : ''
                                                 });
                                             }}
@@ -656,11 +677,23 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                             {accessGroups.map(group => {
                                                 const groupRoles = roles.filter(r => r.access_group_id === group.id);
                                                 if (groupRoles.length === 0) return null;
+                                                const gName = group.name && typeof group.name === 'object'
+                                                    ? (group.name[locale as keyof typeof group.name] || group.name.pt || '')
+                                                    : (group.name || '');
                                                 return (
-                                                    <optgroup key={group.id} label={group.name}>
-                                                        {groupRoles.map(role => (
-                                                            <option key={role.id} value={role.name}>{role.name}</option>
-                                                        ))}
+                                                    <optgroup key={group.id} label={gName}>
+                                                        {groupRoles.map(role => {
+                                                            const rName = role.name && typeof role.name === 'object'
+                                                                ? (role.name[locale as keyof typeof role.name] || role.name.pt || '')
+                                                                : (role.name || '');
+                                                            // We use the Portuguese name as the internal value for the select
+                                                            const rValue = role.name && typeof role.name === 'object' ? role.name.pt : role.name;
+                                                            return (
+                                                                <option key={role.id} value={rValue}>
+                                                                    {rName}
+                                                                </option>
+                                                            );
+                                                        })}
                                                     </optgroup>
                                                 );
                                             })}
@@ -681,7 +714,13 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                         <div className="flex items-center gap-2 mt-3 ml-2 px-3 py-2 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800 rounded-xl w-fit animate-in fade-in slide-in-from-top-2">
                                             <Shield size={14} className="text-indigo-600 dark:text-indigo-400" />
                                             <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
-                                                {t('management.users.modal.inherited', { name: accessGroups.find(g => g.id === formData.access_group_id)?.name })}
+                                                {(() => {
+                                                    const g = accessGroups.find(g => g.id === formData.access_group_id);
+                                                    const gName = g?.name && typeof g.name === 'object'
+                                                        ? ((g.name as any)[locale] || (g.name as any).pt || '')
+                                                        : (g?.name || '');
+                                                    return t('management.users.modal.inherited', { name: gName });
+                                                })()}
                                             </span>
                                         </div>
                                     )}
@@ -706,7 +745,11 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                 <ShieldAlert size={40} />
                             </div>
                             <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-2 uppercase tracking-tighter">{t('management.users.delete.title')}</h2>
-                            <p className="text-sm text-slate-500 font-medium mb-10 leading-relaxed uppercase tracking-tight">{t('management.users.delete.message', { name: userToDelete.name })}</p>
+                            <p className="text-sm text-slate-500 font-medium mb-10 leading-relaxed uppercase tracking-tight">
+                                {t('management.users.delete.message', {
+                                    name: typeof userToDelete.name === 'object' ? ((userToDelete.name as any)[locale] || (userToDelete.name as any).pt || '') : (userToDelete.name || '')
+                                })}
+                            </p>
                             <div className="flex flex-col gap-3">
                                 <button onClick={handleDeleteUser} className="w-full bg-rose-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-rose-600/20 hover:bg-rose-700 transition-all text-xs">{t('management.users.delete.confirm')}</button>
                                 <button onClick={() => setUserToDelete(null)} className="w-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-200 transition-all text-xs">{t('management.users.delete.cancel')}</button>

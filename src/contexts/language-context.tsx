@@ -15,7 +15,7 @@ interface LanguageContextType {
     t: (key: string, variables?: Record<string, any>) => any;
 }
 
-const translations: Record<Locale, Translations> = { pt, en, es };
+const translations: Record<Locale, any> = { pt, en, es };
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 

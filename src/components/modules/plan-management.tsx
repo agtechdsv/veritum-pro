@@ -66,7 +66,7 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
     const [expandedSuites, setExpandedSuites] = useState<string[]>([]);
 
     const initialFormData: Partial<Plan> = {
-        name: '',
+        name: { pt: '', en: '', es: '' },
         short_desc: { pt: '', en: '', es: '' },
         monthly_price: 0,
         monthly_discount: 0,
@@ -286,7 +286,7 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
 
         try {
             const payload = {
-                name: formData.name,
+                name: formData.name?.[activeLang] || '',
                 short_desc: formData.short_desc![activeLang],
                 features: formData.features![activeLang]
             };
@@ -294,16 +294,19 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
             const targetLangs = (['pt', 'en', 'es'] as const).filter(l => l !== activeLang);
             const translations = await gemini.translateSuite(payload, targetLangs as unknown as string[]);
 
+            const newName = { ...formData.name };
             const newShortDesc = { ...formData.short_desc };
             const newFeatures = { ...formData.features };
 
             Object.keys(translations).forEach((lang: any) => {
+                newName[lang as 'pt' | 'en' | 'es'] = translations[lang].name;
                 newShortDesc[lang as 'pt' | 'en' | 'es'] = translations[lang].short_desc;
                 newFeatures[lang as 'pt' | 'en' | 'es'] = translations[lang].features || [];
             });
 
             setFormData({
                 ...formData,
+                name: newName as any,
                 short_desc: newShortDesc as any,
                 features: newFeatures as any
             });
@@ -335,16 +338,18 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
                     <h1 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tight">{t('management.master.plans.title')}</h1>
                     <p className="text-slate-500 dark:text-slate-400 font-medium italic">{t('management.master.plans.subtitle')}</p>
                 </div>
-                <div className="flex bg-white dark:bg-slate-900 p-1 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    {(['all', 'individual', 'combo'] as const).map(f => (
-                        <button
-                            key={f}
-                            onClick={() => setFilter(f)}
-                            className={`px-4 py-2 rounded-xl text-xs font-bold uppercase transition-all ${filter === f ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}
-                        >
-                            {f === 'all' ? t('management.master.plans.filters.all') : f === 'individual' ? t('management.master.plans.filters.individual') : t('management.master.plans.filters.combo')}
-                        </button>
-                    ))}
+                <div className="flex gap-4">
+                    <div className="flex bg-white dark:bg-slate-900 p-1 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                        {(['all', 'individual', 'combo'] as const).map(f => (
+                            <button
+                                key={f}
+                                onClick={() => setFilter(f)}
+                                className={`px-4 py-2 rounded-xl text-xs font-bold uppercase transition-all ${filter === f ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}
+                            >
+                                {f === 'all' ? t('management.master.plans.filters.all') : f === 'individual' ? t('management.master.plans.filters.individual') : t('management.master.plans.filters.combo')}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
 
@@ -378,7 +383,9 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
                                     <td className="px-4 py-4">
                                         <div className="flex items-center gap-2">
                                             <div className={`w-1.5 h-6 rounded-full shrink-0 ${p.is_combo ? 'bg-amber-500' : 'bg-slate-200 dark:bg-slate-700'}`} />
-                                            <span className="font-bold text-slate-800 dark:text-white block leading-tight text-[11px] truncate max-w-[120px]">{p.name}</span>
+                                            <span className="font-bold text-slate-800 dark:text-white block leading-tight text-[11px] truncate max-w-[120px]">
+                                                {typeof p.name === 'object' ? (p.name[locale as keyof typeof p.name] || p.name.pt) : p.name}
+                                            </span>
                                         </div>
                                     </td>
                                     <td className="px-4 py-4 text-right">
@@ -424,7 +431,9 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
                                     {editingPlan ? (
                                         <span className="flex items-center gap-2">
                                             <span className="opacity-40 font-black">{t('management.master.plans.form.edit')}</span>
-                                            <span className="text-indigo-600 dark:text-indigo-400">{formData.name || t('management.master.plans.form.noName')}</span>
+                                            <span className="text-indigo-600 dark:text-indigo-400">
+                                                {typeof formData.name === 'object' ? (formData.name[locale as keyof typeof formData.name] || formData.name.pt) : (formData.name || t('management.master.plans.form.noName'))}
+                                            </span>
                                         </span>
                                     ) : t('management.master.plans.form.add')}
                                 </h2>
@@ -473,7 +482,38 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
                         </div>
                     </div>
 
-                    <form onSubmit={handleSave} className="p-8 space-y-8">
+                    <form onSubmit={handleSave} className="p-8 space-y-6">
+                        <div className="flex flex-col gap-4 border-b border-slate-200 dark:border-slate-800 pb-4 mb-4">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    {(['pt', 'en', 'es'] as const).map(lang => (
+                                        <button
+                                            key={lang}
+                                            type="button"
+                                            onClick={() => setActiveLang(lang)}
+                                            className={`w-8 h-8 rounded-full overflow-hidden border-2 transition-all p-0.5 hover:scale-110 active:scale-95 ${activeLang === lang ? 'border-indigo-600 shadow-lg shadow-indigo-600/20' : 'border-transparent opacity-40 hover:opacity-100'}`}
+                                            title={lang.toUpperCase()}
+                                        >
+                                            <img
+                                                src={lang === 'pt' ? BR_FLAG : lang === 'en' ? US_FLAG : ES_FLAG}
+                                                alt={lang}
+                                                className="w-full h-full object-cover rounded-full"
+                                            />
+                                        </button>
+                                    ))}
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleTranslate}
+                                    disabled={isTranslating}
+                                    className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-all disabled:opacity-50"
+                                >
+                                    <RefreshCw size={12} className={isTranslating ? 'animate-spin' : ''} />
+                                    {isTranslating ? t('management.master.plans.form.translating', { defaultValue: 'TRADUZINDO...' }) : t('management.master.plans.form.translateIA', { defaultValue: 'TRADUZIR COM IA' })}
+                                </button>
+                            </div>
+                        </div>
+
                         {activeTab === 'details' ? (
                             <>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -485,8 +525,8 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
                                                 <input
                                                     className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-indigo-600 outline-none dark:text-white transition-all shadow-sm"
                                                     placeholder="EX: ESSENTIAL PRO"
-                                                    value={formData.name}
-                                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                                    value={formData.name?.[activeLang] || ''}
+                                                    onChange={e => setFormData({ ...formData, name: { ...formData.name!, [activeLang]: e.target.value } })}
                                                     required
                                                 />
                                             </div>
@@ -495,18 +535,6 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
                                         <div className="space-y-1.5">
                                             <div className="flex items-center justify-between ml-1">
                                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('management.master.plans.form.shortDesc')}</label>
-                                                <div className="flex gap-1">
-                                                    {(['pt', 'en', 'es'] as const).map(l => (
-                                                        <button
-                                                            key={l}
-                                                            type="button"
-                                                            onClick={() => setActiveLang(l)}
-                                                            className={`w-8 h-8 rounded-full overflow-hidden border-2 transition-all p-0.5 hover:scale-110 active:scale-95 ${activeLang === l ? 'border-indigo-600 shadow-lg shadow-indigo-600/20' : 'border-transparent opacity-40 hover:opacity-100'}`}
-                                                        >
-                                                            <img src={l === 'pt' ? BR_FLAG : l === 'en' ? US_FLAG : ES_FLAG} alt={l} className="w-full h-full object-cover rounded-full" />
-                                                        </button>
-                                                    ))}
-                                                </div>
                                             </div>
                                             <div className="relative group">
                                                 <Sparkles className="absolute left-4 top-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors shadow-sm" size={18} />
@@ -665,7 +693,9 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
                                                             <Package size={16} />
                                                         </div>
                                                         <div>
-                                                            <h5 className="text-[11px] font-black uppercase tracking-tight dark:text-white leading-none">{suite.name}</h5>
+                                                            <h5 className="text-[11px] font-black uppercase tracking-tight dark:text-white leading-none">
+                                                                {typeof suite.name === 'object' ? (suite.name[locale as keyof typeof suite.name] || suite.name.pt) : suite.name}
+                                                            </h5>
                                                             <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">{suite.suite_key}</span>
                                                         </div>
                                                     </div>
@@ -709,9 +739,9 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
                                                                     </div>
                                                                     <div className="flex flex-col items-start text-left">
                                                                         <span className={`block text-xs font-black uppercase tracking-tight transition-colors ${isFeatEnabled ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-300'}`}>
-                                                                            {feature.display_name?.[locale as keyof typeof feature.display_name] || feature.display_name?.pt || feature.feature_key}
+                                                                            {typeof feature.display_name === 'object' ? (feature.display_name[locale as keyof typeof feature.display_name] || feature.display_name.pt) : feature.display_name}
                                                                         </span>
-                                                                        {feature.description?.pt && <span className="text-[7px] lowercase opacity-60 normal-case leading-tight">{feature.description?.[locale as keyof typeof feature.description] || feature.description?.pt}</span>}
+                                                                        {feature.description && <span className="text-[7px] lowercase opacity-60 normal-case leading-tight">{typeof feature.description === 'object' ? (feature.description[locale as keyof typeof feature.description] || feature.description.pt) : feature.description}</span>}
                                                                     </div>
                                                                 </button>
                                                             );
@@ -731,26 +761,28 @@ const PlanManagement: React.FC<Props> = ({ credentials }) => {
             </div>
 
             {/* Delete Modal */}
-            {planToDelete && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-300">
-                    <div className="bg-white dark:bg-slate-950 w-full max-w-md rounded-[2.5rem] border-2 border-slate-200 dark:border-slate-800 shadow-2xl p-8 text-center space-y-6">
-                        <div className="w-20 h-20 bg-rose-100 dark:bg-rose-900/30 text-rose-600 rounded-full flex items-center justify-center mx-auto shadow-xl">
-                            <AlertTriangle size={40} />
-                        </div>
-                        <div className="space-y-2">
-                            <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">{t('management.master.plans.delete.title')}</h3>
-                            <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
-                                {t('management.master.plans.delete.message', { name: planToDelete.name })}
-                            </p>
-                        </div>
-                        <div className="flex gap-4 pt-4">
-                            <button onClick={() => setPlanToDelete(null)} className="flex-1 px-6 py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl font-black uppercase text-xs">{t('management.master.plans.delete.no')}</button>
-                            <button onClick={handleDelete} className="flex-1 px-6 py-4 bg-rose-600 text-white rounded-2xl font-black uppercase text-xs shadow-xl shadow-rose-600/20">{t('management.master.plans.delete.confirm')}</button>
+            {
+                planToDelete && (
+                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-300">
+                        <div className="bg-white dark:bg-slate-950 w-full max-w-md rounded-[2.5rem] border-2 border-slate-200 dark:border-slate-800 shadow-2xl p-8 text-center space-y-6">
+                            <div className="w-20 h-20 bg-rose-100 dark:bg-rose-900/30 text-rose-600 rounded-full flex items-center justify-center mx-auto shadow-xl">
+                                <AlertTriangle size={40} />
+                            </div>
+                            <div className="space-y-2">
+                                <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">{t('management.master.plans.delete.title')}</h3>
+                                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
+                                    {t('management.master.plans.delete.message', { name: typeof planToDelete.name === 'object' ? (planToDelete.name[locale as keyof typeof planToDelete.name] || planToDelete.name.pt) : planToDelete.name })}
+                                </p>
+                            </div>
+                            <div className="flex gap-4 pt-4">
+                                <button onClick={() => setPlanToDelete(null)} className="flex-1 px-6 py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl font-black uppercase text-xs">{t('management.master.plans.delete.no')}</button>
+                                <button onClick={handleDelete} className="flex-1 px-6 py-4 bg-rose-600 text-white rounded-2xl font-black uppercase text-xs shadow-xl shadow-rose-600/20">{t('management.master.plans.delete.confirm')}</button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 };
 

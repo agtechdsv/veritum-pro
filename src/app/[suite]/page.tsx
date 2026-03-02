@@ -36,13 +36,6 @@ export default function SuitePage({ params }: { params: Promise<{ suite: string 
                 .eq('id', authUser.id)
                 .single();
 
-            // Fetch preferences
-            const { data: prefs } = await supabase
-                .from('user_preferences')
-                .select('*')
-                .eq('user_id', authUser.id)
-                .single();
-
             setUser({
                 id: authUser.id,
                 name: profile?.name || authUser.user_metadata.full_name || 'Usuário',
@@ -54,11 +47,8 @@ export default function SuitePage({ params }: { params: Promise<{ suite: string 
 
             setPreferences({
                 user_id: authUser.id,
-                language: prefs?.language || 'pt',
-                theme: prefs?.theme || 'dark',
-                custom_supabase_url: prefs?.custom_supabase_url,
-                custom_supabase_key: prefs?.custom_supabase_key,
-                custom_gemini_key: prefs?.custom_gemini_key,
+                language: 'pt',
+                theme: 'dark'
             });
 
             setLoading(false);

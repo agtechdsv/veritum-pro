@@ -1,31 +1,85 @@
-
 import React, { useState, useEffect } from 'react';
-import { Person, Credentials, UserPreferences } from '@/types';
-import { Plus, Search, User, Mail, Phone, MapPin, Briefcase, FileText, ChevronDown, ChevronUp, Save, Trash2, Key, Info, Pencil, XCircle, Database as DbIcon, ShieldCheck, MessageCircle, ExternalLink, Scale, FileDown, ArrowUpRight } from 'lucide-react';
+import { Person, Credentials, UserPreferences, User as AppUser } from '@/types';
+import { Plus, Search, User, Mail, Phone, MapPin, Briefcase, FileText, ChevronDown, ChevronUp, Save, Trash2, Key, Info, Pencil, XCircle, Database as DbIcon, ShieldCheck, MessageCircle, ExternalLink, Scale, FileDown, ArrowUpRight, Filter } from 'lucide-react';
 import { useTranslation } from '@/contexts/language-context';
 import { toast } from '@/components/ui/toast';
-import { DatabaseService } from '@/services/database';
+import { listPersons, savePerson, deletePerson } from '@/app/actions/crm-actions';
+import { createMasterClient } from '@/lib/supabase/master';
 
 interface Props {
     credentials: Credentials;
     preferences: UserPreferences;
+    currentUser: AppUser;
 }
 
-const PersonManagement: React.FC<Props> = ({ credentials, preferences }) => {
+const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUser }) => {
     const { t } = useTranslation();
     const [persons, setPersons] = useState<Person[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingPerson, setEditingPerson] = useState<Partial<Person> | null>(null);
     const [expandedFields, setExpandedFields] = useState(false);
 
-    const supabase = DatabaseService.getClient(credentials, preferences);
-    const isBYODB = !!(preferences.custom_supabase_url && preferences.custom_supabase_key);
+    // Deletion states
+    const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+    const [deleteConfirmName, setDeleteConfirmName] = useState<string | null>(null);
+
+    // Master Selection States
+    const isMaster = currentUser.role === 'Master';
+    const [selectedUserId, setSelectedUserId] = useState<string>(isMaster ? '' : currentUser.id);
+    const [allUsers, setAllUsers] = useState<any[]>([]);
+
+    const masterUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const isBYODB = !!(credentials.supabaseUrl && credentials.supabaseUrl !== masterUrl);
 
     useEffect(() => {
-        fetchPersons();
-    }, []);
+        if (isMaster) {
+            fetchClients();
+        }
+    }, [isMaster]);
+
+    useEffect(() => {
+        if (selectedUserId) {
+            fetchPersons();
+        } else if (isMaster) {
+            setPersons([]);
+        }
+    }, [selectedUserId, searchTerm]);
+
+    const fetchClients = async () => {
+        const supabase = createMasterClient();
+        const { data } = await supabase
+            .from('users')
+            .select('id, name, email, role')
+            .in('role', ['Sócio-Administrador', 'Sócio Administrador'])
+            .order('name');
+        if (data) setAllUsers(data);
+    };
+
+    const fetchPersons = async () => {
+        if (!selectedUserId) return;
+        setLoading(true);
+        try {
+            const result: any = await listPersons(searchTerm, selectedUserId);
+            if (result && result.error === 'TABLE_NOT_FOUND') {
+                setPersons([]);
+                toast.error('O banco de dados selecionado ainda não foi inicializado (tabelas faltando).');
+            } else if (result && result.data) {
+                setPersons(result.data);
+                if (result.solvedId) {
+                    console.log(`[CRM] Context: ${result.solvedId} DB: ${result.credentialsUsed?.substring(0, 20)}...`);
+                }
+            } else if (Array.isArray(result)) {
+                setPersons(result);
+            }
+        } catch (error: any) {
+            console.warn('CRM Module not fully initialized for this database (tables might be missing).', error.message || error.code || '');
+            setPersons([]);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const formatDocument = (value: string) => {
         const numbers = value.replace(/\D/g, '');
@@ -100,25 +154,6 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences }) => {
         }
     };
 
-    const fetchPersons = async () => {
-        setLoading(true);
-        try {
-            const { data, error } = await supabase
-                .from('persons')
-                .select('*')
-                .is('deleted_at', null)
-                .order('full_name', { ascending: true })
-                .limit(50);
-
-            if (error) throw error;
-            setPersons(data || []);
-        } catch (error: any) {
-            console.warn('CRM Module not fully initialized for this database (tables might be missing).', error.message || error.code || '');
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const openWhatsApp = (phone?: string) => {
         if (!phone) return;
         const numbers = phone.replace(/\D/g, '');
@@ -146,7 +181,11 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences }) => {
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Strict CPF/CNPJ Validation (Golden Rule: Data Integrity)
+        if (!selectedUserId) {
+            toast.error('Selecione um cliente primeiro.');
+            return;
+        }
+
         const doc = editingPerson?.document || '';
         const cpfRegex = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/;
         const cnpjRegex = /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/;
@@ -157,18 +196,8 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences }) => {
         }
 
         try {
-            if (editingPerson?.id) {
-                const { error } = await supabase
-                    .from('persons')
-                    .update(editingPerson)
-                    .eq('id', editingPerson.id);
-                if (error) throw error;
-            } else {
-                const { error } = await supabase
-                    .from('persons')
-                    .insert([editingPerson]);
-                if (error) throw error;
-            }
+            if (!editingPerson) return;
+            await savePerson(editingPerson, selectedUserId);
             toast.success(t('management.master.persons.toasts.saveSuccess'));
             setIsModalOpen(false);
             setEditingPerson(null);
@@ -181,10 +210,21 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences }) => {
     };
 
     const handleSoftDelete = async (id: string) => {
-        if (!window.confirm(t('management.master.persons.confirmations.softDelete'))) return;
+        if (!selectedUserId) return;
+        const personToDelete = persons.find(p => p.id === id);
+        if (personToDelete) {
+            setDeleteConfirmId(id);
+            setDeleteConfirmName(personToDelete.full_name);
+        }
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteConfirmId || !selectedUserId) return;
         try {
-            await supabase.from('persons').update({ deleted_at: new Date().toISOString() }).eq('id', id);
+            await deletePerson(deleteConfirmId, selectedUserId);
             toast.success(t('management.master.persons.toasts.deleteSuccess'));
+            setDeleteConfirmId(null);
+            setDeleteConfirmName(null);
             fetchPersons();
         } catch (err) {
             console.error('Error deleting person:', err);
@@ -192,13 +232,35 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences }) => {
         }
     };
 
-    const filteredPersons = persons.filter(p =>
-        p.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.document.includes(searchTerm)
-    );
+    const filteredPersons = persons;
 
     return (
         <div className="space-y-6">
+            {/* Master Context Selector */}
+            {isMaster && (
+                <div className="flex justify-center mb-8">
+                    <div className="relative group/filter z-50">
+                        <div className="flex items-center gap-2 px-6 py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm text-sm font-bold text-slate-700 dark:text-slate-300">
+                            <Filter size={18} className="text-amber-500" />
+                            <select
+                                className="bg-transparent outline-none appearance-none pr-8 cursor-pointer font-black uppercase tracking-tight"
+                                value={selectedUserId}
+                                onChange={e => setSelectedUserId(e.target.value)}
+                            >
+                                <option value="">{t('management.users.masterFilter.selectClient') || '--- SELECIONE UM CLIENTE ---'}</option>
+                                <option value={currentUser.id}>{t('management.users.masterFilter.self') || 'MEU PRÓPRIO CONTEXTO'}</option>
+                                <optgroup label={t('management.users.masterFilter.clients') || 'CLIENTES'}>
+                                    {allUsers.filter(u => u.id !== currentUser.id).map(c => (
+                                        <option key={c.id} value={c.id}>🏢 {(typeof c.name === 'object' ? ((c.name as any).pt || (c.name as any).en || '') : (c.name || '')).toUpperCase()} ({c.email})</option>
+                                    ))}
+                                </optgroup>
+                            </select>
+                            <ChevronDown size={16} className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                     <div className="bg-emerald-600 text-white p-3 rounded-2xl shadow-lg shadow-emerald-200 dark:shadow-emerald-900/40 animate-in zoom-in duration-500">
@@ -233,27 +295,27 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences }) => {
                         <div className="p-2.5 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-600/20 group relative cursor-help">
                             <DbIcon size={18} />
                             <div className="absolute top-full right-0 mt-3 w-48 p-4 bg-slate-900 text-white rounded-2xl text-[10px] font-bold leading-relaxed opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-50 shadow-2xl">
-                                Os dados deste módulo estão sendo gravados no seu próprio banco de dados Supabase de forma isolada e segura.
+                                Os dados deste módulo estão sendo gravados no seu próprio banco de dados de forma isolada e segura.
                             </div>
                         </div>
                     )}
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="md:col-span-2 relative">
-                    <Search className="absolute left-3 top-3 text-slate-400" size={18} />
+            <div className="flex flex-col md:flex-row gap-4 items-center">
+                <div className="flex-1 relative w-full">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                     <input
                         type="text"
                         placeholder={t('management.master.persons.searchPlaceholder')}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
+                        className="w-full pl-10 pr-4 py-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white font-medium"
                     />
                 </div>
-                <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-sm">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('management.master.persons.stats.label')}</span>
-                    <span className="text-2xl font-black text-indigo-600">{persons.length}</span>
+                <div className="bg-white dark:bg-slate-950 px-5 py-2.5 rounded-[1.25rem] border border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-sm min-w-[160px] self-end md:self-auto">
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em] mr-6">{t('management.master.persons.stats.label')}</span>
+                    <span className="text-xl font-black text-indigo-600">{persons.length}</span>
                 </div>
             </div>
 
@@ -278,6 +340,12 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences }) => {
                                         className="p-4 -m-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all cursor-pointer"
                                     >
                                         <Pencil size={16} />
+                                    </button>
+                                    <button
+                                        onClick={() => handleSoftDelete(person.id)}
+                                        className="p-4 -m-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all cursor-pointer"
+                                    >
+                                        <Trash2 size={16} />
                                     </button>
                                 </div>
                             </div>
@@ -568,7 +636,38 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences }) => {
                     </div>
                 </div >
             )}
-        </div >
+
+            {/* Custom Delete Confirmation Modal */}
+            {deleteConfirmId && (
+                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 p-8 text-center animate-in zoom-in duration-300">
+                        <div className="mx-auto w-16 h-16 bg-rose-50 dark:bg-rose-900/20 text-rose-600 rounded-full flex items-center justify-center mb-6">
+                            <Trash2 size={32} />
+                        </div>
+                        <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">
+                            {t('management.master.persons.confirmations.softDeleteTitle') || 'Excluir Integrante?'}
+                        </h3>
+                        <p className="text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">
+                            {t('management.master.persons.confirmations.softDeleteMessage', { name: deleteConfirmName }) || `Você tem certeza que deseja excluir "${deleteConfirmName}"? Esta ação é irreversível.`}
+                        </p>
+                        <div className="grid grid-cols-2 gap-3">
+                            <button
+                                onClick={() => { setDeleteConfirmId(null); setDeleteConfirmName(null); }}
+                                className="px-6 py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl font-bold hover:bg-slate-200 transition-all"
+                            >
+                                {t('common.cancel') || 'Cancelar'}
+                            </button>
+                            <button
+                                onClick={confirmDelete}
+                                className="px-6 py-3 bg-rose-600 text-white rounded-2xl font-bold hover:bg-rose-700 shadow-xl shadow-rose-600/30 transition-all flex items-center justify-center gap-2"
+                            >
+                                <Trash2 size={18} /> {t('common.delete') || 'Sim, Excluir'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
     );
 };
 

@@ -63,23 +63,18 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
         }
 
         // 1. Parallelize initial critical data fetching
-        const [profileRes, prefsRes] = await Promise.all([
+        const [profileRes] = await Promise.all([
             supabaseClient
                 .from('users')
                 .select('*, access_groups(name, name_loc), plans:plan_id(name)')
                 .eq('id', authUser.id)
-                .single(),
-            supabaseClient
-                .from('user_preferences')
-                .select('*')
-                .eq('user_id', authUser.id)
-                .maybeSingle()
+                .single()
         ]);
 
 
         const profile = profileRes.data;
         const profileError = profileRes.error;
-        const prefs = prefsRes.data;
+        const prefs = null;
 
         // 2. IMMEDIATE Preference Hydration (Priority: LocalStorage is MASTER)
         const localLanguage = localStorage.getItem('veritum-locale') as Locale;
@@ -92,46 +87,49 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
             user_id: authUser.id,
             language: currentLang,
             theme: currentTheme,
-            custom_supabase_url: prefs?.custom_supabase_url,
-            custom_supabase_key: prefs?.custom_supabase_key,
-            custom_gemini_key: prefs?.custom_gemini_key,
         });
 
         // 3. Process Profile Data
-        if (profile) {
-            const profileData = profile as any;
-            const accessGroupNameRaw = Array.isArray(profileData?.access_groups)
-                ? profileData.access_groups[0]?.name
-                : profileData?.access_groups?.name;
+        const profileData = (profile || {}) as any;
+        const firstGroup = Array.isArray(profileData?.access_groups) ? profileData.access_groups[0] : profileData?.access_groups;
+        const accessGroupNameRaw = typeof firstGroup?.name === 'object' ? (firstGroup.name.pt || firstGroup.name.en || '') : (firstGroup?.name || '');
+        const accessGroupNameTranslated = typeof firstGroup?.name === 'object' ? (firstGroup.name[locale] || accessGroupNameRaw) : accessGroupNameRaw;
 
-            const accessGroupNameTranslated = Array.isArray(profileData?.access_groups)
-                ? (profileData.access_groups[0]?.name_loc?.[locale] || profileData.access_groups[0]?.name)
-                : (profileData?.access_groups?.name_loc?.[locale] || profileData?.access_groups?.name);
+        const userName = typeof profileData?.name === 'object'
+            ? (profileData.name[locale] || profileData.name.pt || profileData.name.en || 'Usuário')
+            : (profileData?.name || authUser.user_metadata?.full_name || authUser.user_metadata?.name || 'Usuário');
 
-            setUser({
-                id: authUser.id,
-                name: profile?.name || authUser.user_metadata.full_name || 'Usuário',
-                email: profile?.email || authUser.email || '',
-                role: (profile?.role || authUser.user_metadata.role || 'Operador') as any,
-                active: profile?.active ?? true,
-                avatar_url: profile?.avatar_url || authUser.user_metadata.avatar_url || authUser.user_metadata.picture,
-                parent_user_id: profile?.parent_user_id || authUser.user_metadata.parent_user_id,
-                plan_id: profile?.plan_id || authUser.user_metadata.plan_id,
-                access_group_id: profile?.access_group_id || authUser.user_metadata.access_group_id,
-                access_group_name: accessGroupNameRaw,
-                translated_group_name: accessGroupNameTranslated,
-                plan_name: profileData?.plans?.name || (Array.isArray(profileData?.plans) ? profileData?.plans[0]?.name : undefined)
-            });
-        }
+        const planName = profileData?.plans
+            ? (typeof (profileData.plans as any).name === 'object'
+                ? ((profileData.plans as any).name[locale] || (profileData.plans as any).name.pt || (profileData.plans as any).name.en || 'Pro')
+                : ((profileData.plans as any).name || 'Pro'))
+            : (Array.isArray(profileData?.plans) && profileData.plans[0]
+                ? (typeof (profileData.plans[0] as any).name === 'object'
+                    ? ((profileData.plans[0] as any).name[locale] || (profileData.plans[0] as any).name.pt || (profileData.plans[0] as any).name.en || 'Pro')
+                    : ((profileData.plans[0] as any).name || 'Pro'))
+                : 'Pro');
 
-        if (profileError && profileError.code !== 'PGRST116') {
-            console.error("Erro ao buscar perfil:", profileError);
+        setUser({
+            id: authUser.id,
+            name: userName,
+            email: profileData?.email || authUser.email || '',
+            role: (profileData?.role || authUser.user_metadata?.role || 'Administrador') as any,
+            active: profileData?.active ?? true,
+            avatar_url: profileData?.avatar_url || authUser.user_metadata?.avatar_url || authUser.user_metadata?.picture,
+            parent_user_id: profileData?.parent_user_id || authUser.user_metadata?.parent_user_id,
+            plan_id: profileData?.plan_id || authUser.user_metadata?.plan_id,
+            access_group_id: profileData?.access_group_id || authUser.user_metadata?.access_group_id,
+            access_group_name: accessGroupNameRaw,
+            translated_group_name: accessGroupNameTranslated,
+            plan_name: planName
+        });
+
+        if (profileError && !['PGRST116', 'PGRST111'].includes(profileError.code)) {
+            console.warn("Aviso: Perfil não sincronizado na public.users. Usando metadados do Auth.", profileError.message || profileError);
         }
 
         // 4. Fetch Permissions and Suites (Dependent on profile)
         const planId = profile?.plan_id || authUser.user_metadata.plan_id;
-        const parentId = profile?.parent_user_id || authUser.user_metadata.parent_user_id;
-
         const queries: any[] = [
             supabaseClient
                 .from('suites')
@@ -150,21 +148,10 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
             );
         }
 
-        if (parentId) {
-            queries.push(
-                supabaseClient
-                    .from('user_preferences')
-                    .select('custom_supabase_url, custom_supabase_key, custom_gemini_key')
-                    .eq('user_id', parentId)
-                    .maybeSingle()
-            );
-        }
-
         const results = await Promise.all(queries);
         const suitesRes = results[0];
         const featuresRes = results[1];
         const planPermsRes = planId ? results[2] : null;
-        const parentPrefsRes = parentId ? (planId ? results[3] : results[2]) : null;
 
         if (suitesRes.data) setActiveSuites(suitesRes.data);
         if (featuresRes.data) setAllFeatures(featuresRes.data);
@@ -184,15 +171,6 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
             setPlanPermissions(Array.from(suiteMap.values()));
         }
 
-        if (parentPrefsRes?.data) {
-            setPreferences(prev => prev ? ({
-                ...prev,
-                custom_supabase_url: parentPrefsRes.data.custom_supabase_url || prev.custom_supabase_url,
-                custom_supabase_key: parentPrefsRes.data.custom_supabase_key || prev.custom_supabase_key,
-                custom_gemini_key: parentPrefsRes.data.custom_gemini_key || prev.custom_gemini_key,
-            }) : prev);
-        }
-
         if (profile?.access_group_id && profile?.role !== 'Master') {
             const { data: permData } = await supabaseClient
                 .from('group_permissions')
@@ -203,11 +181,29 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
 
         setLoading(false);
         setIsInitialLoad(false);
-    }, [supabaseClient, locale, router, isInitialLoad]);
+    }, [supabaseClient, router]); // Removed locale to prevent refetching on language change
 
+    // EFFECT 1: Initial Data Fetch
     useEffect(() => {
         fetchData();
+    }, [fetchData]);
 
+    // EFFECT 2: Reactive Translation Update (No refetching)
+    useEffect(() => {
+        if (!user || isInitialLoad) return;
+
+        // When locale changes, we only need to update the translated strings in the user object
+        // without triggering a full "Sincronizando Ecossistema" (loading state)
+        setUser(prev => {
+            if (!prev) return prev;
+            // Note: We need the raw data here, or we trust that the profile was already fetched.
+            // Since we don't want to refetch, we can only update if we have the necessary info.
+            // Fortunately, most components handle translation themselves using the locale context.
+            return { ...prev }; // Trigger re-render so components using user.plan_name (if it were an object) or t() can update.
+        });
+    }, [locale]);
+
+    useEffect(() => {
         const setupRealtime = async () => {
             const { data: auth } = await supabaseClient.auth.getUser();
             const authUser = auth.user;
@@ -279,16 +275,6 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
         // UI state updates (LocalStorage via providers)
         if (newPrefs.language !== locale) setLocale(newPrefs.language as Locale);
         if (newPrefs.theme !== theme) setTheme(newPrefs.theme);
-
-        // Persistent DB update for cloud-only preferences (Keys, Google tokens, etc)
-        await supabaseClient
-            .from('user_preferences')
-            .update({
-                custom_supabase_url: newPrefs.custom_supabase_url,
-                custom_supabase_key: newPrefs.custom_supabase_key,
-                custom_gemini_key: newPrefs.custom_gemini_key
-            })
-            .eq('user_id', user?.id);
     };
 
     const handleLogout = async () => {
@@ -314,9 +300,9 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
     }
 
     const creds: Credentials = {
-        supabaseUrl: preferences?.custom_supabase_url || process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-        supabaseAnonKey: preferences?.custom_supabase_key || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
-        geminiKey: preferences?.custom_gemini_key || process.env.NEXT_PUBLIC_GEMINI_API_KEY || '',
+        supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+        supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
+        geminiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY || '',
     };
 
     return (
