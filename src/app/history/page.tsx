@@ -167,7 +167,7 @@ export default function HistoryPage() {
                             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-emerald-500 to-transparent opacity-50" />
 
                             <Sparkles className="w-12 h-12 text-emerald-500 mx-auto mb-8 animate-pulse" />
-                            <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-8 mb-12 uppercase tracking-tighter italic">
+                            <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-12 tracking-tighter italic">
                                 {t('storyPage.birth.title')}
                             </h2>
                             <p className="text-2xl text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
@@ -188,7 +188,7 @@ export default function HistoryPage() {
 
                     <div className="max-w-6xl mx-auto relative z-10">
                         <div className="text-center mb-24">
-                            <h2 className="text-5xl md:text-7xl font-black mb-8 italic tracking-tighter">
+                            <h2 className="text-4xl md:text-5xl font-black mb-8 tracking-tighter italic">
                                 {t('storyPage.meaning.title')}
                             </h2>
                             <p className="text-xl text-slate-400 max-w-2xl mx-auto font-medium">
@@ -308,7 +308,7 @@ export default function HistoryPage() {
                         viewport={{ once: true }}
                         className="max-w-4xl mx-auto relative z-10"
                     >
-                        <h2 className="text-4xl md:text-6xl font-black mb-12 italic leading-tight scale-[1.05]">
+                        <h2 className="text-4xl md:text-5xl font-black mb-12 leading-tight scale-[1.05] italic">
                             {t('storyPage.cta.title')}
                         </h2>
 

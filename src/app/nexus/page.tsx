@@ -235,7 +235,7 @@ export default function NexusLanding() {
                             ))}
                         </div>
                         <div className="flex-1 space-y-8">
-                            <h2 className="text-4xl md:text-5xl font-black leading-tight tracking-tighter text-slate-900 dark:text-white uppercase">
+                            <h2 className="text-4xl md:text-5xl font-black leading-tight tracking-tighter text-slate-900 dark:text-white">
                                 {t('landingPages.nexus.vision.title').split(' ').map((word: string, i: number) => (
                                     <React.Fragment key={i}>
                                         {word.toLowerCase() === 'ritmo.' || word.toLowerCase() === 'pace.' ? <span className="text-branding-gradient">{word}</span> : word}{' '}
@@ -258,7 +258,7 @@ export default function NexusLanding() {
                 <div className="max-w-7xl mx-auto">
                     <div className="text-center mb-20 max-w-3xl mx-auto">
                         <span className="text-indigo-600 dark:text-indigo-400 font-black tracking-[0.2em] uppercase text-sm">{t('landingPages.nexus.features.category')}</span>
-                        <h2 className="text-5xl font-black mt-4 text-slate-900 dark:text-white uppercase tracking-tighter">{t('landingPages.nexus.features.title')}</h2>
+                        <h2 className="text-4xl md:text-5xl font-black mt-4 text-slate-900 dark:text-white tracking-tighter">{t('landingPages.nexus.features.title')}</h2>
                         <p className="text-xl text-slate-500 dark:text-slate-400 mt-4 leading-relaxed font-medium">{t('landingPages.nexus.features.subtitle')}</p>
                     </div>
 
@@ -310,7 +310,7 @@ export default function NexusLanding() {
             <section id="ux" className="py-32 px-6 bg-slate-50 dark:bg-slate-900/80 rounded-[4rem] mx-6 relative overflow-hidden text-slate-900 dark:text-white border border-slate-100 dark:border-none">
                 <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-20 relative z-10">
                     <div className="flex-1 space-y-10">
-                        <h2 className="text-5xl md:text-6xl font-black leading-tight tracking-tighter uppercase mb-6">
+                        <h2 className="text-4xl md:text-5xl font-black leading-tight tracking-tighter text-slate-900 dark:text-white mb-6">
                             {t('landingPages.nexus.ux.title').split(' ').map((word: string, i: number) => (
                                 <React.Fragment key={i}>
                                     {word.toLowerCase() === 'flow' || word.toLowerCase() === 'trabalho.' || word.toLowerCase() === 'work' || word.toLowerCase() === 'flow.' ? <span className="text-branding-gradient">{word}</span> : word}{' '}
@@ -362,7 +362,7 @@ export default function NexusLanding() {
             {/* Footer / CTA Final */}
             <section className="py-32 px-6 text-center">
                 <div className="max-w-4xl mx-auto">
-                    <h2 className="text-5xl md:text-6xl font-black mb-8 text-slate-900 dark:text-white leading-tight">
+                    <h2 className="text-4xl md:text-5xl font-black mb-8 text-slate-900 dark:text-white leading-tight tracking-tighter">
                         {t('landingPages.nexus.finalCta.title').split(' ').map((word: string, i: number) => (
                             <React.Fragment key={i}>
                                 {word.toLowerCase() === 'jurídica?' || word.toLowerCase() === 'management?' ? <span className="text-branding-gradient">{word}</span> : word}{' '}

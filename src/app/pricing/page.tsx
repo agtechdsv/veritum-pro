@@ -7,7 +7,8 @@ import {
     Shield, BarChart3, MessageSquare, Wallet,
     PenTool, Radar, HelpCircle, Briefcase,
     Building2, Users2, Sparkles, Send, Calendar as CalendarIcon,
-    ChevronLeft, LogOut, LayoutDashboard, X
+    ChevronLeft, LogOut, LayoutDashboard, X, Database, Cloud,
+    Lock, ShieldAlert
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
@@ -92,12 +93,46 @@ export default function PricingPage() {
         const fetchUser = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
-                const { data: profile } = await supabase
+                const { data: profile, error } = await supabase
                     .from('users')
-                    .select('name, avatar_url, role, plan_id, access_groups(name)')
+                    .select('name, avatar_url, role, plan_id, access_group_id, access_groups(name, name_loc), plans:plan_id(name)')
                     .eq('id', user.id)
                     .single();
-                setCurrentUser({ ...user, profile });
+
+                if (error && error.code !== 'PGRST116') {
+                    console.error("Error fetching user profile:", error.message || error);
+                }
+
+                if (profile) {
+                    const profileData = profile as any;
+                    const groupRes = Array.isArray(profileData?.access_groups) ? profileData.access_groups[0] : profileData?.access_groups;
+
+                    const groupNameRaw = typeof groupRes?.name === 'object' ? (groupRes.name.pt || groupRes.name.en || '') : (groupRes?.name || '');
+                    const groupNameTranslated = typeof groupRes?.name === 'object' ? (groupRes.name[locale] || groupNameRaw) : groupNameRaw;
+
+                    const userName = typeof profileData?.name === 'object'
+                        ? (profileData.name[locale] || profileData.name.pt || profileData.name.en || 'Usuário')
+                        : (profileData?.name || user.user_metadata?.full_name || user.user_metadata?.name || 'Usuário');
+
+                    const rawPlanName = profileData?.plans
+                        ? (typeof (profileData.plans as any).name === 'object'
+                            ? ((profileData.plans as any).name[locale] || (profileData.plans as any).name.pt || (profileData.plans as any).name.en || 'Pro')
+                            : ((profileData.plans as any).name || 'Pro'))
+                        : (Array.isArray(profileData?.plans) && profileData.plans[0]
+                            ? (typeof (profileData.plans[0] as any).name === 'object'
+                                ? ((profileData.plans[0] as any).name[locale] || (profileData.plans[0] as any).name.pt || (profileData.plans[0] as any).name.en || 'Pro')
+                                : ((profileData.plans[0] as any).name || 'Pro'))
+                            : 'Pro');
+
+                    profileData.name = userName;
+                    profileData.plan_name = rawPlanName;
+                    profileData.access_group_name = groupNameRaw;
+                    profileData.translated_group_name = groupNameTranslated;
+
+                    setCurrentUser({ ...user, profile: profileData });
+                } else {
+                    setCurrentUser({ ...user, profile: null });
+                }
             } else {
                 setCurrentUser(null);
             }
@@ -110,6 +145,42 @@ export default function PricingPage() {
         };
         fetchPlans();
     }, []);
+
+    // Handle hash scrolling for internal links like #infrastructure
+    useEffect(() => {
+        let scrollTimeout: NodeJS.Timeout;
+
+        const executeScroll = (id: string, smooth: boolean = true) => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto' });
+            }
+        };
+
+        const handleHashScroll = (isInitial: boolean = false) => {
+            if (typeof window !== 'undefined' && window.location.hash) {
+                const id = window.location.hash.replace('#', '');
+
+                if (isInitial) {
+                    // Start scroll only when plans are loaded to prevent falling in steps
+                    if (dbPlans.length > 0) {
+                        scrollTimeout = setTimeout(() => executeScroll(id, true), 300);
+                    }
+                } else {
+                    executeScroll(id, true);
+                }
+            }
+        };
+
+        if (mounted) {
+            handleHashScroll(true);
+            window.addEventListener('hashchange', () => handleHashScroll(false));
+            return () => {
+                window.removeEventListener('hashchange', () => handleHashScroll(false));
+                if (scrollTimeout) clearTimeout(scrollTimeout);
+            };
+        }
+    }, [mounted, dbPlans.length]); // Re-run once dbPlans are available
 
     const handleDemoSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -151,6 +222,19 @@ export default function PricingPage() {
 
     const toggleTheme = () => {
         setTheme(resolvedTheme === 'light' ? 'dark' : 'light');
+    };
+
+    const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+        const href = e.currentTarget.getAttribute('href');
+        if (href && href.startsWith('#')) {
+            e.preventDefault();
+            const id = href.replace('#', '');
+            const element = document.getElementById(id);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth' });
+                window.history.pushState(null, '', href);
+            }
+        }
     };
 
     const openLegal = (type: 'privacy' | 'terms') => {
@@ -246,10 +330,12 @@ export default function PricingPage() {
 
                     <div className="hidden lg:flex items-center gap-5">
                         <Link href="/" className="font-medium text-branding-gradient hover:opacity-80 transition-all">{t('pricingPage.nav.portal')}</Link>
-                        <a href="#top" className="font-medium text-slate-800 dark:text-white">{t('pricingPage.nav.home')}</a>
-                        <a href="#modulos-avulsos" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">{t('pricingPage.nav.modules')}</a>
-                        <a href="#comparison" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">{t('pricingPage.nav.comparison')}</a>
-                        <a href="#faq" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">{t('pricingPage.nav.faq')}</a>
+                        <a href="#top" onClick={handleNavClick} className="font-medium text-slate-800 dark:text-white">{t('pricingPage.nav.home')}</a>
+                        <a href="#modulos-avulsos" onClick={handleNavClick} className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">{t('pricingPage.nav.modules')}</a>
+                        <a href="#comparison" onClick={handleNavClick} className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">{t('pricingPage.nav.comparison')}</a>
+                        <a href="#infrastructure" onClick={handleNavClick} className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">{t('pricingPage.nav.byodb')}</a>
+                        <a href="#subscription" onClick={handleNavClick} className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">{t('pricingPage.nav.subscription')}</a>
+                        <a href="#faq" onClick={handleNavClick} className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">{t('pricingPage.nav.faq')}</a>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -316,7 +402,7 @@ export default function PricingPage() {
             </section>
 
             {/* Pricing Cards */}
-            <section id="plans" className="pb-32 px-6">
+            <section id="plans" className="pb-32 px-6 scroll-mt-32">
                 <div className="max-w-7xl mx-auto">
                     <div className="flex justify-center mb-12">
                         <div className="flex flex-wrap justify-center items-center bg-slate-100 dark:bg-slate-800/50 p-1.5 rounded-2xl gap-1">
@@ -380,7 +466,8 @@ export default function PricingPage() {
                             const monthlyEquivalentPrice = finalPrice / months;
 
                             const lang = locale as 'pt' | 'en' | 'es';
-                            const features = (plan.features?.[lang] || plan.features?.pt || []);
+                            const planName = typeof plan.name === 'string' ? plan.name : (plan.name?.[lang] || plan.name?.pt || '');
+                            const features = (plan.features?.[lang] || plan.features?.pt || (Array.isArray(plan.features) ? plan.features : []));
 
                             return (
                                 <div key={i} className={`relative flex flex-col p-10 rounded-[3rem] border transition-all duration-500 flex-1 ${plan.recommended ? 'bg-white dark:bg-slate-950 border-indigo-500 dark:border-indigo-400 shadow-2xl shadow-indigo-500/20 lg:-mt-4 lg:mb-4 lg:p-12 z-10' : 'bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800'}`}>
@@ -390,8 +477,8 @@ export default function PricingPage() {
                                         </div>
                                     )}
                                     <div className="mb-10">
-                                        <h3 className={`text-xl font-black uppercase tracking-widest mb-4 ${isCurrentPlan ? 'text-amber-500' : 'text-slate-400'}`}>
-                                            {plan.name} {isCurrentPlan && `(${t('management.settings.plan.current') || 'Atual'})`}
+                                        <h3 className={`text-xl font-black mb-4 ${isCurrentPlan ? 'text-amber-500' : 'text-slate-400'}`}>
+                                            {planName} {isCurrentPlan && `(${t('management.settings.plan.current') || 'Atual'})`}
                                         </h3>
 
                                         <div className="mb-8 flex flex-col items-baseline gap-1 relative">
@@ -422,7 +509,7 @@ export default function PricingPage() {
                                                 )}
                                             </div>
                                             <p className="text-[12px] text-slate-500 mt-6 font-medium leading-relaxed">
-                                                {plan.short_desc?.[lang] || plan.short_desc?.pt}
+                                                {typeof plan.short_desc === 'object' ? (plan.short_desc?.[lang] || plan.short_desc?.pt) : plan.short_desc}
                                             </p>
                                         </div>
                                     </div>
@@ -453,14 +540,14 @@ export default function PricingPage() {
                                                         userToUse = user;
                                                     }
 
-                                                    const isStrategy = plan.name.toLowerCase().includes('strategy') || plan.name.toLowerCase().includes('estrategia');
+                                                    const isStrategy = planName.toLowerCase().includes('strategy') || planName.toLowerCase().includes('estrategia');
                                                     if (isStrategy && !userToUse) {
                                                         setIsAuthModalOpen(true);
                                                     } else if (isStrategy && userToUse) {
-                                                        setCheckoutData({ type: 'plan', planName: plan.name });
+                                                        setCheckoutData({ type: 'plan', planName: planName });
                                                         setIsCheckoutOpen(true);
                                                     } else if (userToUse) {
-                                                        setCheckoutData({ type: 'plan', planName: plan.name });
+                                                        setCheckoutData({ type: 'plan', planName: planName });
                                                         setIsCheckoutOpen(true);
                                                     } else {
                                                         setIsAuthModalOpen(true);
@@ -488,7 +575,7 @@ export default function PricingPage() {
                         <div id="modulos-avulsos" className="mt-40 scroll-mt-32">
                             <div className="text-center mb-16">
                                 <span className="text-indigo-600 dark:text-indigo-400 font-black tracking-[0.2em] uppercase text-sm">{t('pricingPage.modules.badge')}</span>
-                                <h2 className="text-4xl md:text-5xl font-black mt-4 text-slate-900 dark:text-white uppercase tracking-tighter">{t('pricingPage.modules.title')}</h2>
+                                <h2 className="text-4xl md:text-5xl font-black mt-4 text-slate-900 dark:text-white tracking-tighter">{t('pricingPage.modules.title')}</h2>
                                 <p className="text-xl text-slate-500 dark:text-slate-400 mt-4 leading-relaxed font-medium max-w-3xl mx-auto">{t('pricingPage.modules.subtitle')}</p>
 
                                 <div className="flex justify-center mt-12 mb-4">
@@ -554,12 +641,14 @@ export default function PricingPage() {
                                     const monthlyEquivalentPrice = finalPrice / months;
 
                                     const lang = locale as 'pt' | 'en' | 'es';
+                                    const planName = typeof plan.name === 'string' ? plan.name : (plan.name?.[lang] || plan.name?.pt || '');
+                                    const features = (plan.features?.[lang] || plan.features?.pt || (Array.isArray(plan.features) ? plan.features : []));
 
                                     return (
                                         <div key={i} className={`relative flex flex-col p-8 rounded-[2rem] border transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl flex-1 bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800`}>
                                             <div className="mb-6">
-                                                <h3 className={`text-lg font-black uppercase tracking-widest mb-2 ${isCurrentPlan ? 'text-amber-500' : 'text-slate-900 dark:text-white'}`}>
-                                                    {plan.name} {isCurrentPlan && `(${t('management.settings.plan.current') || 'Atual'})`}
+                                                <h3 className={`text-lg font-black mb-2 ${isCurrentPlan ? 'text-amber-500' : 'text-slate-900 dark:text-white'}`}>
+                                                    {planName} {isCurrentPlan && `(${t('management.settings.plan.current') || 'Atual'})`}
                                                 </h3>
 
                                                 <div className="mb-4 flex flex-col items-baseline gap-1 relative">
@@ -591,7 +680,7 @@ export default function PricingPage() {
                                                     </div>
                                                 </div>
                                                 <p className="text-[11px] text-slate-500 font-medium leading-relaxed min-h-[48px]">
-                                                    {plan.short_desc?.[lang] || plan.short_desc?.pt}
+                                                    {typeof plan.short_desc === 'object' ? (plan.short_desc?.[lang] || plan.short_desc?.pt) : plan.short_desc}
                                                 </p>
                                             </div>
 
@@ -612,7 +701,7 @@ export default function PricingPage() {
                                                                 }
 
                                                                 if (userToUse) {
-                                                                    setCheckoutData({ type: 'module', moduleName: plan.name });
+                                                                    setCheckoutData({ type: 'module', moduleName: planName });
                                                                     setIsCheckoutOpen(true);
                                                                 } else {
                                                                     setIsAuthModalOpen(true);
@@ -635,7 +724,7 @@ export default function PricingPage() {
             </section>
 
             {/* Comparison Table Toggle */}
-            <section id="comparison" className="pb-32 px-6">
+            <section id="comparison" className="pb-32 px-6 scroll-mt-32">
                 <div className="max-w-4xl mx-auto text-center">
                     <p className="text-slate-400 font-bold uppercase tracking-widest text-sm mb-8">{t('pricingPage.comparison.label')}</p>
                     <button
@@ -686,7 +775,7 @@ export default function PricingPage() {
             <section className="py-32 px-6 bg-slate-50 dark:bg-slate-900/80 rounded-[4rem] mx-6 relative overflow-hidden text-slate-900 dark:text-white border border-slate-100 dark:border-none transition-colors duration-300">
                 <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-20 relative z-10">
                     <div className="flex-1 space-y-10">
-                        <h2 className="text-5xl md:text-6xl font-black leading-tight tracking-tighter uppercase">
+                        <h2 className="text-4xl md:text-5xl font-black leading-tight tracking-tighter text-slate-900 dark:text-white">
                             {t('pricingPage.whyChoose.title')} <br />
                             <span className="text-branding-gradient">{t('pricingPage.whyChoose.titleAccent')}</span>
                         </h2>
@@ -704,15 +793,149 @@ export default function PricingPage() {
                             { title: t('pricingPage.whyChoose.items.3.title'), desc: t('pricingPage.whyChoose.items.3.desc') }
                         ].map((item, i) => (
                             <div key={i} className="p-6 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-3xl shadow-sm">
-                                <h4 className="font-black mb-1 uppercase tracking-tight text-indigo-600 dark:text-indigo-400">{item.title}</h4>
+                                <h4 className="font-black mb-1 tracking-tight text-indigo-600 dark:text-indigo-400">{item.title}</h4>
                                 <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">{item.desc}</p>
                             </div>
                         ))}
                     </div>
                 </div>
             </section>
+
+            {/* Infrastructure Section */}
+            <section id="infrastructure" className="pb-32 px-6 bg-white dark:bg-slate-950 transition-colors duration-300 scroll-mt-32">
+                <div className="max-w-6xl mx-auto">
+                    <div className="text-center mb-16">
+                        <span className="text-indigo-600 dark:text-indigo-400 font-bold tracking-[0.3em] uppercase text-xs mb-4 block">
+                            Infraestrutura de Elite
+                        </span>
+                        <h3 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">
+                            {t('pricingPage.infrastructure.dbPlans.title')}
+                        </h3>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-5xl mx-auto">
+                        {/* Pro Plan - Cloud Professional */}
+                        <div className="relative p-12 rounded-[3.5rem] bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 flex flex-col hover:border-indigo-500/50 transition-all duration-500 hover:shadow-2xl group">
+                            <div className="absolute -top-4 right-12 bg-branding-gradient text-white px-5 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl group-hover:scale-110 transition-transform">
+                                {t('pricingPage.infrastructure.dbPlans.pro.badge')}
+                            </div>
+
+                            <div className="mb-10">
+                                <h4 className="text-3xl font-black text-slate-900 dark:text-white mb-3 tracking-tight">
+                                    {t('pricingPage.infrastructure.dbPlans.pro.name')}
+                                </h4>
+                                <p className="text-slate-500 dark:text-slate-400 font-medium text-base leading-relaxed">
+                                    {t('pricingPage.infrastructure.dbPlans.pro.subtitle')}
+                                </p>
+                            </div>
+
+                            <div className="flex-grow space-y-10">
+                                {['compute', 'storage', 'security'].map((cat) => (
+                                    <div key={cat} className="space-y-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg text-indigo-600 dark:text-indigo-400">
+                                                {cat === 'compute' ? <Zap size={16} /> : cat === 'storage' ? <Database size={16} /> : <Lock size={16} />}
+                                            </div>
+                                            <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">
+                                                {t(`pricingPage.infrastructure.dbPlans.pro.categories.${cat}`)}
+                                            </p>
+                                        </div>
+                                        <div className="space-y-3 pl-2">
+                                            {(t('pricingPage.infrastructure.dbPlans.pro.features') as any[]).filter(f => f.category === cat).map((feature, idx) => (
+                                                <div key={idx} className={`flex gap-3 items-start ${feature.isSub ? 'ml-8 -mt-2 opacity-70' : ''}`}>
+                                                    {!feature.isSub && <Check size={14} className="mt-1 text-emerald-500 flex-shrink-0" strokeWidth={3} />}
+                                                    <span className={`text-sm ${feature.isSub ? 'text-slate-400 italic' : 'text-slate-600 dark:text-slate-300 font-semibold'}`}>
+                                                        {feature.text}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="mt-12 pt-10 border-t border-slate-100 dark:border-slate-800">
+                                <div className="mb-6 flex flex-col">
+                                    <div className="flex items-baseline gap-1">
+                                        <span className="text-4xl font-black text-slate-900 dark:text-white">{t('pricingPage.infrastructure.dbPlans.pro.price')}</span>
+                                        <span className="text-slate-400 font-bold text-sm tracking-tight">{t('pricingPage.infrastructure.dbPlans.pro.interval')}</span>
+                                    </div>
+                                    <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-black mt-2 uppercase tracking-widest">
+                                        {t('pricingPage.infrastructure.dbPlans.pro.credits')}
+                                    </p>
+                                </div>
+                                <button className="w-full py-5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-[1.5rem] font-black text-sm uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-slate-900/10">
+                                    {t('pricingPage.infrastructure.dbPlans.pro.cta')}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Team Plan - Cloud Enterprise */}
+                        <div className="relative p-12 rounded-[3.5rem] bg-slate-950 text-white border border-slate-800 flex flex-col hover:border-indigo-400/50 transition-all duration-500 hover:shadow-2xl hover:shadow-indigo-500/10 group">
+                            <div className="absolute -top-4 right-12 bg-white text-slate-900 px-5 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl group-hover:rotate-3 transition-transform">
+                                {t('pricingPage.infrastructure.dbPlans.team.badge')}
+                            </div>
+
+                            <div className="mb-10">
+                                <h4 className="text-3xl font-black text-white mb-3 tracking-tight">
+                                    {t('pricingPage.infrastructure.dbPlans.team.name')}
+                                </h4>
+                                <p className="text-slate-400 font-medium text-base leading-relaxed">
+                                    {t('pricingPage.infrastructure.dbPlans.team.subtitle')}
+                                </p>
+                            </div>
+
+                            <div className="flex-grow space-y-6">
+                                <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] mb-6">
+                                    {t('pricingPage.infrastructure.dbPlans.team.featuresTitle')}
+                                </p>
+                                <div className="space-y-5">
+                                    {(t('pricingPage.infrastructure.dbPlans.team.features') as any[]).map((feature, idx) => (
+                                        <div key={idx} className={`flex gap-3 items-start ${feature.isSub ? 'ml-8 -mt-2 opacity-60' : ''}`}>
+                                            {!feature.isSub && (
+                                                <div className="mt-1 w-5 h-5 rounded-lg bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 flex items-center justify-center flex-shrink-0">
+                                                    <ShieldAlert size={12} />
+                                                </div>
+                                            )}
+                                            <span className={`text-sm ${feature.isSub ? 'text-slate-500 italic' : 'text-slate-200 font-semibold'}`}>
+                                                {feature.text}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="mt-12 pt-10 border-t border-slate-800">
+                                <div className="mb-6 flex flex-col">
+                                    <div className="flex items-baseline gap-1">
+                                        <span className="text-4xl font-black text-white">{t('pricingPage.infrastructure.dbPlans.team.price')}</span>
+                                        <span className="text-slate-500 font-bold text-sm tracking-tight">{t('pricingPage.infrastructure.dbPlans.team.interval')}</span>
+                                    </div>
+                                    <p className="text-[10px] text-indigo-400 font-black mt-2 uppercase tracking-widest">
+                                        {t('pricingPage.infrastructure.dbPlans.team.credits')}
+                                    </p>
+                                </div>
+                                <button className="w-full py-5 bg-white text-slate-900 rounded-[1.5rem] font-black text-sm uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-white/5">
+                                    {t('pricingPage.infrastructure.dbPlans.team.cta')}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="mt-20 text-center">
+                        <Link
+                            href="/infrastructure"
+                            className="text-sm text-slate-400 hover:text-indigo-600 font-bold transition-all flex items-center justify-center gap-2 group cursor-pointer"
+                        >
+                            {t('pricingPage.infrastructure.specificationsLink')}
+                            <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                        </Link>
+                    </div>
+                </div>
+            </section>
+
             {/* Subscription vs Installment Breakdown */}
-            <section className="py-20 px-6">
+            <section id="subscription" className="py-20 px-6">
                 <div className="max-w-6xl mx-auto">
                     <div className="bg-white dark:bg-slate-900 rounded-[3.5rem] p-10 md:p-16 border border-slate-100 dark:border-slate-800 shadow-2xl relative overflow-hidden">
                         <div className="relative z-10 flex flex-col lg:flex-row items-center gap-16">
@@ -720,7 +943,7 @@ export default function PricingPage() {
                                 <span className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest">
                                     Diferencial Veritum
                                 </span>
-                                <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white leading-tight uppercase tracking-tighter">
+                                <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white leading-tight tracking-tighter">
                                     {t('pricingPage.subscriptionModel.title')}
                                 </h2>
                                 <p className="text-lg text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
@@ -770,13 +993,15 @@ export default function PricingPage() {
             {/* FAQ */}
             <section id="faq" className="py-32 px-6 bg-slate-50 dark:bg-slate-950 border-t border-slate-100 dark:border-slate-900">
                 <div className="max-w-4xl mx-auto">
-                    <h2 className="text-5xl font-black mb-20 text-center text-slate-900 dark:text-white uppercase tracking-tighter">{t('pricingPage.faq.title')}</h2>
+                    <h2 className="text-4xl md:text-5xl font-black mb-20 text-center text-slate-900 dark:text-white tracking-tighter">{t('pricingPage.faq.title')}</h2>
                     <div className="space-y-6">
                         {[
                             { q: t('pricingPage.faq.questions.0.q'), a: t('pricingPage.faq.questions.0.a') },
                             { q: t('pricingPage.faq.questions.1.q'), a: t('pricingPage.faq.questions.1.a') },
                             { q: t('pricingPage.faq.questions.2.q'), a: t('pricingPage.faq.questions.2.a') },
-                            { q: t('pricingPage.faq.questions.3.q'), a: t('pricingPage.faq.questions.3.a') }
+                            { q: t('pricingPage.faq.questions.3.q'), a: t('pricingPage.faq.questions.3.a') },
+                            { q: t('pricingPage.faq.questions.4.q'), a: t('pricingPage.faq.questions.4.a') },
+                            { q: t('pricingPage.faq.questions.5.q'), a: t('pricingPage.faq.questions.5.a') }
                         ].map((faq, i) => (
                             <div key={i} className="p-8 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm">
                                 <h4 className="font-black text-lg text-slate-900 dark:text-white mb-4 flex gap-3 text-left">
@@ -795,7 +1020,7 @@ export default function PricingPage() {
             {/* Final CTA */}
             <section className="py-32 px-6 text-center">
                 <div className="max-w-4xl mx-auto">
-                    <h2 className="text-5xl md:text-6xl font-black mb-8 text-slate-900 dark:text-white leading-tight">
+                    <h2 className="text-4xl md:text-5xl font-black mb-8 text-slate-900 dark:text-white leading-tight tracking-tighter">
                         {t('pricingPage.finalCta.title')} <br />
                         <span className="text-branding-gradient">{t('pricingPage.finalCta.titleAccent')}</span>
                     </h2>
@@ -855,6 +1080,12 @@ export default function PricingPage() {
                         >
                             {t('common.terms')}
                         </button>
+                        <Link
+                            href="/infrastructure"
+                            className="text-sm text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer font-bold"
+                        >
+                            {t('common.security')}
+                        </Link>
                     </div>
                 </div>
             </footer>

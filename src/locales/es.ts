@@ -12,6 +12,7 @@ export const es = {
         "backToHome": "Volver al Inicio",
         "privacy": "Privacidad",
         "terms": "Términos",
+        "security": "Seguridad e Infraestrutura",
         "byodb": "Arquitectura BYODB e Inteligencia Jurídica.",
         "search": "Busca global...",
         "switchToLight": "Cambiar a tema claro",
@@ -247,19 +248,34 @@ export const es = {
             }
         },
         "scriptor": {
-            "label": "Scriptor"
+            "label": "Scriptor",
+            "title": "SCRIPTOR PRO",
+            "subtitle": "Automatización Documental & Redacción Jurídica IA",
+            "description": "Transforme el proceso de redacción con plantillas dinámicas y auxilio de IA Generativa para peticiones, contratos y dictámenes técnicos de alta complejidad."
         },
         "valorem": {
-            "label": "Valorem"
+            "label": "Valorem",
+            "title": "VALOREM PRO",
+            "subtitle": "Gestión Financiera & Control de Honorarios",
+            "description": "Domine el flujo de caja de su despacho. Gestión de honorarios, control de costas, facturación automatizada y reportes de rentabilidad por caso."
         },
         "cognitio": {
-            "label": "Cognitio"
+            "label": "Cognitio",
+            "title": "COGNITIO PRO",
+            "subtitle": "Jurimetría Avanzada & Inteligencia de Datos",
+            "description": "Decisiones basadas en hechos, no en intuición. Analice tendencias de fallos, perfiles de magistrados y probabilidades de éxito con datos estructurados."
         },
         "vox": {
-            "label": "Vox Clientis"
+            "label": "Vox Clientis",
+            "title": "VOX CLIENTIS PRO",
+            "subtitle": "Experiencia del Cliente & CRM Jurídica",
+            "description": "Eleve el estándar de atención. Portal del cliente, flujos de comunicación automatizados y gestión de relaciones para fidelización y transparencia."
         },
         "intelligence": {
-            "label": "Intelligence Hub"
+            "label": "Intelligence Hub",
+            "title": "INTELLIGENCE HUB",
+            "subtitle": "Orquestación de IA & Integraciones Globales",
+            "description": "El cerebro del ecosistema. Centralice el procesamiento de IA, conecte APIs externas y automatice flujos de trabajo complejos entre todos los módulos."
         }
     },
     "pricing": {
@@ -323,7 +339,7 @@ export const es = {
     },
     "hero": {
         "title": "Veritum PRO",
-        "titleAccent": "\nLa verdad sobre su despacho, el control sobre su futuro.",
+        "titleAccent": "\nLa verdad sobre su despacho,\nel control sobre su futuro.",
         "subtitle": "Una arquitectura BYODB (Bring Your Own Database) completa para despachos de alto rendimiento. Sus datos, su infraestructura, nuestros módulos inteligentes.",
         "ctaPrimary": "Comenzar Ahora",
         "ctaSecondary": "Ver planes y precios"
@@ -1064,6 +1080,8 @@ export const es = {
             "portal": "Portal",
             "home": "Inicio",
             "comparison": "Comparativo",
+            "byodb": "Veritum Cloud",
+            "subscription": "Suscripción",
             "modules": "Módulos Sueltos",
             "faq": "Dudas"
         },
@@ -1123,18 +1141,71 @@ export const es = {
                 "cta": "Agendar Demostración"
             }
         },
-        "subscriptionModel": {
-            "title": "Suscripción Inteligente vs. Pago en Cuotas Común",
-            "subtitle": "Entienda por qué nuestro modelo es el aliado definitivo de su flujo de caja y límite bancario.",
-            "subscription": {
-                "title": "Modelo Veritum (Suscripción)",
-                "desc": "Solo el valor del ciclo (mensual, trimestral, etc.) se debita en su tarjeta. Su límite de crédito queda libre para las necesidades diarias del despacho."
-            },
-            "installment": {
-                "title": "Modelo Común (Cuotas)",
-                "desc": "El valor total del año se bloquea de una sola vez en su tarjeta, consumiendo su límite y dificultando nuevas operaciones financieras."
-            },
-            "modelDescription": "A diferencia de una compra en cuotas tradicional, que bloqueia el límite total de su tarjeta desde el primer día, Veritum PRO utiliza un modelo de Suscripción Recurrente Inteligente. Esto significa que cobramos solo el valor exacto del ciclo actual (mensual, trimestral, semestral o anual) en cada renovación. Su límite de crédito permanece libre y el flujo de caja de su oficina queda protegido. Acceso premium a nuestra tecnología, sin el peso de una deuda larga."
+        "infrastructure": {
+            "title": "Su infraestructura. Sus reglas.",
+            "subtitle": "En Veritum PRO, la libertad va más allá del contrato: llega hasta la raíz de sus datos. Elija el modelo de arquitectura que mejor se adapte a la realidad de su despacho.",
+            "byodbTitle": "Control Absoluto (BYODB - Incluido)",
+            "byodbDesc": "Conecte Veritum PRO directamente a la base de datos de su despacho. Ideal para firmas con infraestructura propia de TI o bases locales (Oracle, Postgres, SQL Server) que exigen soberanía total.",
+            "cloudTitle": "Paz Mental Tecnológica (Veritum Cloud Gestionada)",
+            "cloudDesc": "¿Quiere enfocarse solo en abogar? Nosotros cuidamos los servidores por usted. Base de datos dedicada, copias de seguridad diarias automáticas, cifrado de punta e cifrado de punta y cero configuración técnica. Su oficina en la nube en 5 minutos.",
+            "learnMore": "Más Información...",
+            "specificationsLink": "Ver especificaciones técnicas de infraestructura",
+            "dbPlans": {
+                "title": "Escalabilidad Veritum Cloud",
+                "pro": {
+                    "name": "Cloud Professional",
+                    "badge": "ELECCIÓN DEL GESTOR",
+                    "subtitle": "Alto rendimiento y funciones avanzadas para despachos en fase de expansión.",
+                    "cta": "Activar Professional",
+                    "price": "R$ 249,90",
+                    "interval": "/ mes",
+                    "credits": "Créditos Veritum (R$ 55,00) incluidos",
+                    "needMore": "Escalabilidad bajo demanda",
+                    "featuresTitle": "Funciones Incluidas en el Plan:",
+                    "categories": {
+                        "compute": "Poder de Procesamiento",
+                        "storage": "Almacenamiento y Tráfico",
+                        "security": "Seguridad y Continuidad"
+                    },
+                    "features": [
+                        { "text": "100.000 Usuarios Activos (MAU)", "category": "compute" },
+                        { "text": "luego R$ 0,05 por MAU", "category": "compute", "isSub": true },
+                        { "text": "8 GB de Disco Dedicado", "category": "storage" },
+                        { "text": "luego R$ 1,25 por GB", "category": "storage", "isSub": true },
+                        { "text": "250 GB de Tráfico de Salida", "category": "storage" },
+                        { "text": "luego R$ 0,95 por GB", "category": "storage", "isSub": true },
+                        { "text": "250 GB de Red en Caché", "category": "storage" },
+                        { "text": "luego R$ 0,40 por GB", "category": "storage", "isSub": true },
+                        { "text": "100 GB de Almacenamiento de Archivos", "category": "storage" },
+                        { "text": "luego R$ 0,25 por GB", "category": "storage", "isSub": true },
+                        { "text": "Soporte Técnico Prioritario", "category": "security" },
+                        { "text": "Copias de Seguridad Diárias (7 días)", "category": "security" },
+                        { "text": "Logs del Sistema (7 días)", "category": "security" }
+                    ]
+                },
+                "team": {
+                    "name": "Cloud Enterprise",
+                    "badge": "COMPLIANCE TOTAL",
+                    "subtitle": "Seguridad de nivel bancario y cumplimiento riguroso para grandes corporaciones.",
+                    "cta": "Consultar Enterprise",
+                    "price": "R$ 4.399,90",
+                    "interval": "/ mes",
+                    "credits": "Créditos Veritum (R$ 55,00) incluidos",
+                    "needMore": "Soluciones Enterprise",
+                    "featuresTitle": "Todo lo del Professional, más:",
+                    "features": [
+                        { "text": "Certificación SOC2", "category": "security" },
+                        { "text": "Acceso Restringido (Read-only / Project-scope)", "category": "security" },
+                        { "text": "Compatibilidad HIPAA (Add-on)", "category": "security" },
+                        { "text": "Single Sign-On (SSO) para Gestores", "category": "security" },
+                        { "text": "SLAs de Soporte Prioritario", "category": "security" },
+                        { "text": "Backups Extendidos (14 días)", "category": "security" },
+                        { "text": "Retención de Logs Masiva (28 días)", "category": "security" },
+                        { "text": "Monitoreo de Drenajes de Log", "category": "security" },
+                        { "text": "luego R$ 479,90 por drenaje extra", "category": "security", "isSub": true }
+                    ]
+                }
+            }
         },
         "comparison": {
             "label": "¿Quiere analizar cada detalle técnico?",
@@ -1174,7 +1245,7 @@ export const es = {
         },
         "whyChoose": {
             "title": "¿Por qué elegir el",
-            "titleAccent": "Ecosistema?",
+            "titleAccent": "ecosistema?",
             "subtitle": "Las herramientas aisladas generan retrabajo. Diseñamos nuestros planes para garantizar el Flow perfecto. Un módulo alimenta al otro, eliminando el 100% de la digitación manual de datos.",
             "items": [
                 {
@@ -1197,7 +1268,7 @@ export const es = {
         },
         "aLaCarte": {
             "badge": "Flexibilidad Total",
-            "title": "Módulos Sueltos",
+            "title": "Módulos sueltos",
             "subtitle": "¿Necesita una solución puntual? Usted no necesita llevar el ecosistema entero si quiere resolver solo un desafío inmediato.",
             "sentinel": {
                 "title": "Sentinel Radar",
@@ -1210,8 +1281,21 @@ export const es = {
                 "cta": "Agendar Demo"
             }
         },
+        "subscriptionModel": {
+            "title": "Suscripción inteligente vs. cuotas comunes",
+            "subtitle": "Entienda por qué nuestro modelo es el aliado definitivo de su flujo de caja y límite bancario.",
+            "subscription": {
+                "title": "Modelo Veritum (Suscripción)",
+                "desc": "Solo se debita de su tarjeta el valor del ciclo (mensual, trimestral, etc.). Su límite de crédito queda libre para las necesidades diarias del despacho."
+            },
+            "installment": {
+                "title": "Modelo Común (En Cuotas)",
+                "desc": "El valor total del año se bloquea de una sola vez en su tarjeta, consumiendo su límite y dificultando nuevas operaciones financieras."
+            },
+            "modelDescription": "A diferencia de una compra en cuotas tradicional, que bloquea el límite total de su tarjeta desde el primer día, Veritum PRO utiliza un modelo de Suscripción Recurrente Inteligente. Esto significa que cobramos solo el valor exacto del ciclo actual (mensual, trimestral, semestral o anual) en cada renovación. Su límite de crédito permanece libre y el flujo de caja de su oficina queda protegido. Acceso premium a nuestra tecnologia, sin el peso de una deuda larga."
+        },
         "faq": {
-            "title": "Dudas Frecuentes",
+            "title": "Dudas frecuentes",
             "questions": [
                 {
                     "q": "¿Qué pasa si quiero cancelar mi plan?",
@@ -1232,6 +1316,10 @@ export const es = {
                 {
                     "q": "¿Puedo cambiar de plan después?",
                     "a": "En cualquier momento. Veritum PRO tiene una arquitectura modular. Haga upgrade o downgrade con solo un clic desde sus configuraciones."
+                },
+                {
+                    "q": "¿Dónde se almacenarán mis procesos y documentos?",
+                    "a": "La elección es 100% suya. Fuimos pioneros en el mercado jurídico al adoptar la arquitectura BYODB (Bring Your Own Database), permitiéndole conectar el sistema a sus propios servidores para tener un control absoluto sobre su patrimonio digital. Sin embargo, si su oficina no cuenta con un equipo de TI, puede contratar Veritum Cloud Gestionada como un adicional en su suscripción. En este formato, le proporcionamos una base de datos de alto rendimiento exclusiva para su oficina, con rotinas automáticas de copia de seguridad y seguridad en la nube."
                 }
             ]
         },
@@ -1789,6 +1877,46 @@ export const es = {
             "footer": {
                 "slogan": "La tecnología de quien aboga con empatía y profesionalismo."
             }
+        }
+    },
+    "infrastructurePage": {
+        "hero": {
+            "title": "Soberanía, Seguridad y Alto Rendimiento.",
+            "subtitle": "Conozca la ingeniería de datos detrás de Veritum PRO. Diseñado para cumplir con las exigencias más estrictas de cumplimiento y LGPD del mercado jurídico."
+        },
+        "architecture": {
+            "title": "La Elección de Arquitectura",
+            "subtitle": "Entendemos que cada despacho tiene una madurez tecnológica diferente. Por eso, ofrecemos dos caminos para su gestión de datos:",
+            "cloud": {
+                "title": "Veritum Cloud Gestionada",
+                "desc": "Enfoque en la \"Paz Mental Tecnológica\". Cada cliente tiene una base de datos exclusiva y aislada. Copias de seguridad diarias automáticas retenidas por 7 días, cifrado de punta y disponibilidad continua sin necesidad de equipo de TI interno."
+            },
+            "byodb": {
+                "title": "Control Absoluto (BYODB)",
+                "desc": "Enfoque en el \"Control Absoluto\". Conecte Veritum PRO a sus propios servidores (AWS, Google Cloud, Azure) o bases locales (Oracle, Postgres, SQL Server). Mantenga la custodia local y soberanía total sobre el patrimonio digital de su despacho."
+            }
+        },
+        "enterprise": {
+            "title": "Listo para Grandes Operaciones Corporativas.",
+            "subtitle": "Para clientes del plano STRATEGY, nuestra infraestructura puede elevarse a la certificación SOC2, políticas de SSO (Single Sign-On) y retención extendida de copias de seguridad por 14 días.",
+            "label": "Seguridad Nivel Enterprise"
+        },
+        "faq": {
+            "title": "Dudas Frecuentes",
+            "questions": [
+                {
+                    "q": "¿Mis datos se mezclan con los de otros despachos?",
+                    "a": "No. En la Cloud Gestionada, utilizamos proyectos físicamente aislados para cada cliente, garantizando que no haya intercambio de recursos críticos o datos."
+                },
+                {
+                    "q": "¿Cumplen con la LGPD?",
+                    "a": "Sí. Todo el tráfico está cifrado vía TLS, y los datos en reposo utilizan cifrado AES-256. Además, implementamos controles de acceso granulares (RBAC)."
+                },
+                {
+                    "q": "¿Cómo funciona la copia de seguridad?",
+                    "a": "Las rutinas son automáticas y diarias. En el modelo Cloud Gestionada, mantenemos un historial de 7 o 14 días (dependiendo del plan) para una recuperación rápida en caso de siniestros."
+                }
+            ]
         }
     }
 };

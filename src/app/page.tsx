@@ -6,7 +6,7 @@ import {
     ShieldAlert, GitBranch, FileEdit, DollarSign, BarChart3,
     MessageSquare, Globe, Moon, Sun, ArrowRight, Check,
     LogIn, UserPlus, ChevronRight, Scale, LogOut, User,
-    Briefcase, Zap, Lock, LayoutDashboard
+    Briefcase, Zap, Lock, LayoutDashboard, Database, Cloud
 } from 'lucide-react';
 import { AuthModal } from '@/components/auth-modal';
 import { LegalModal } from '@/components/legal-modal';
@@ -130,7 +130,9 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                     .eq('id', user.id)
                     .single();
 
-                if (error) console.error("Error fetching user profile:", error);
+                if (error && error.code !== 'PGRST116') {
+                    console.error("Error fetching user profile:", error.message || error);
+                }
 
                 if (profile) {
                     const profileData = profile as any;
@@ -317,7 +319,7 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
             {/* Hero Section */}
             <section className="relative pt-44 pb-32 px-6 overflow-hidden bg-white dark:bg-slate-950 transition-colors duration-300">
                 <div className="max-w-7xl mx-auto text-center relative z-10">
-                    <h1 className="text-6xl md:text-8xl font-black tracking-tight mb-8 leading-[1.1] text-slate-900 dark:text-white whitespace-pre-line">
+                    <h1 className="text-5xl md:text-[4.25rem] font-black tracking-tight mb-8 leading-[1.1] text-slate-900 dark:text-white whitespace-pre-line max-w-5xl mx-auto">
                         {t('hero.title')} <span className="text-branding-gradient">{t('hero.titleAccent')}</span>
                     </h1>
                     <p className="text-xl text-slate-500 dark:text-slate-400 max-w-3xl mx-auto mb-12 leading-relaxed">
@@ -353,112 +355,113 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                 <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-purple-400/10 blur-[150px] rounded-full pointer-events-none"></div>
             </section>
 
-            {/* Modules Grid */}
-            <section id="modules" className="py-32 px-6 bg-slate-50 dark:bg-slate-950 transition-colors duration-300 border-y border-slate-100 dark:border-slate-900">
-                <div className="max-w-7xl mx-auto">
+            {/* Specialized Modules Showcase */}
+            <section id="modules" className="py-32 px-6 bg-[#020617] transition-colors duration-300 border-y border-slate-900 relative">
+                <div className="max-w-7xl mx-auto relative z-10">
                     <div className="text-center mb-20">
-                        <h2 className="text-4xl font-bold mb-4 text-slate-900 dark:text-white">{t('modules.title')}</h2>
-                        <p className="text-slate-500 dark:text-slate-400">{t('modules.subtitle')}</p>
+                        <h2 className="text-4xl md:text-5xl font-black mb-4 text-white tracking-tighter">
+                            {t('modules.title').split('Especializados').map((part: string, i: number) =>
+                                i === 0 ? <React.Fragment key={i}>{part}</React.Fragment> : <span key={i} className="text-branding-gradient">Especializados</span>
+                            )}
+                        </h2>
+                        <p className="text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed font-medium">
+                            {t('modules.subtitle')}
+                        </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {isLoading ? (
-                            Array.from({ length: 6 }).map((_, i) => (
-                                <div key={i} className="bg-slate-50 dark:bg-slate-900/50 h-64 rounded-[2rem] animate-pulse"></div>
+                            Array.from({ length: 7 }).map((_, i) => (
+                                <div key={i} className="bg-slate-900/50 h-80 rounded-[2rem] border border-slate-800 animate-pulse"></div>
                             ))
                         ) : (
                             (() => {
+                                // Define the 7 core modules to showcase
+                                const coreModules = [
+                                    { id: 'sentinel', key: 'SENTINEL_KEY' },
+                                    { id: 'nexus', key: 'NEXUS_KEY' },
+                                    { id: 'scriptor', key: 'SCRIPTOR_KEY' },
+                                    { id: 'valorem', key: 'VALOREM_KEY' },
+                                    { id: 'cognitio', key: 'COGNITIO_KEY' },
+                                    { id: 'vox', key: 'VOX_KEY' },
+                                    { id: 'intelligence', key: 'INTELLIGENCE_KEY' }
+                                ];
+
+                                // Use suites from DB or fallback to core modules for display
+                                const displayData = suites.length > 0 ? suites : coreModules.map(m => ({
+                                    id: m.id,
+                                    suite_key: m.key,
+                                    name: t(`modules.${m.id}.title`),
+                                    short_desc: { pt: t(`modules.${m.id}.subtitle`), en: t(`modules.${m.id}.subtitle`), es: t(`modules.${m.id}.subtitle`) },
+                                    detailed_desc: { pt: t(`modules.${m.id}.description`), en: t(`modules.${m.id}.description`), es: t(`modules.${m.id}.description`) }
+                                }));
+
                                 const groupKeywords = ['Sócio-Administrativo', 'Sócio-Administrador', 'Sócio Administrador'];
                                 const isSocioAdmin = currentUser?.profile?.role === 'Master' || (userGroupName && groupKeywords.some(g => userGroupName.includes(g)));
 
-                                const displaySuites = suites.filter(suite => {
-                                    if (!currentUser) return true; // Visitors see everything (Saiba mais)
-                                    if (isSocioAdmin) return true; // SocioAdmins see everything (Locked/Unlocked)
-
-                                    const suiteKey = suite.suite_key.toLowerCase().replace('_key', '');
-
-                                    // 1. Plan Check (HIGH PRIORITY)
+                                return displayData.map((suite: any) => {
+                                    const suiteKey = suite.suite_key?.toLowerCase().replace('_key', '') || suite.id;
                                     const hasPlanAccess = planPermissions.includes(suiteKey);
-                                    if (!hasPlanAccess) return false;
+                                    const isLocked = currentUser && isSocioAdmin && !hasPlanAccess && suites.length > 0;
 
-                                    // 2. Access Group Check (RBAC)
-                                    if (currentUser.profile?.access_group_id) {
-                                        const suiteFeatureIds = allFeatures.filter(f => f.suite_id === suite.id).map(f => f.id);
-                                        const hasGroupAccess = groupPermissions.some(p => suiteFeatureIds.includes(p.feature_id) && p.can_access);
-                                        return hasGroupAccess;
-                                    }
-
-                                    return true;
-                                });
-
-                                return displaySuites.map((suite) => {
-                                    const suiteKey = suite.suite_key.toLowerCase().replace('_key', '');
-                                    const hasPlanAccess = planPermissions.includes(suiteKey);
-
-                                    // isLocked: Only for SocioAdmin if module not in plan
-                                    const isLocked = currentUser && isSocioAdmin && !hasPlanAccess;
-
-                                    // For cards that are visible, we decide if they can 'Access' or 'Learn More'
-                                    // If we are here, and not an admin, we MUST have access (because of the filter)
-                                    const showLearnMore = !currentUser;
-
-                                    const meta = getModuleMeta(suite.suite_key);
+                                    const meta = getModuleMeta(suite.suite_key || suite.id);
                                     const Icon = meta?.icon || LayoutDashboard;
                                     const iconColor = meta?.color || 'text-indigo-600';
 
-                                    return (
-                                        <div key={suite.id} className={`relative bg-white dark:bg-slate-900 p-8 rounded-[2rem] border border-slate-200 dark:border-slate-800 hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 group flex flex-col ${isLocked ? 'opacity-75 grayscale-[0.5]' : ''}`}>
-                                            {isLocked && (
-                                                <div className="absolute top-6 right-6 p-2 bg-amber-100 dark:bg-amber-900/30 text-amber-600 rounded-xl" title={t('modules.notInPlan')}>
-                                                    <Lock size={20} />
-                                                </div>
-                                            )}
+                                    const suiteName = typeof suite.name === 'object' ? (suite.name[locale] || suite.name.pt || '') : (suite.name || '');
+                                    const suiteSubtitle = typeof suite.short_desc === 'object' ? (suite.short_desc[locale] || suite.short_desc.pt || '') : (suite.short_desc || '');
+                                    const suiteDesc = typeof suite.detailed_desc === 'object' ? (suite.detailed_desc[locale] || suite.detailed_desc.pt || '') : (suite.detailed_desc || '');
 
-                                            <div
-                                                className={`w-16 h-16 rounded-2xl mb-6 flex items-center justify-center transition-transform group-hover:scale-110 ${isLocked ? 'bg-slate-50 dark:bg-slate-800 text-slate-400' : `${iconColor.replace('text-', 'bg-')}/10 ${iconColor}`}`}
-                                            >
-                                                <Icon size={32} />
+                                    return (
+                                        <div
+                                            key={suite.id}
+                                            className={`group relative bg-[#0f172a]/40 backdrop-blur-sm p-10 rounded-[2.5rem] border border-slate-800 transition-all duration-300 flex flex-col hover:bg-[#0f172a]/60 ${isLocked ? 'opacity-75 grayscale-[0.5]' : ''}`}
+                                        >
+                                            <div className={`w-14 h-14 rounded-2xl mb-8 flex items-center justify-center transition-all duration-300 ${isLocked ? 'bg-slate-800 text-slate-400' : `${iconColor.replace('text-', 'bg-')}/10 ${iconColor}`}`}>
+                                                <Icon size={28} />
                                             </div>
-                                            <h3 className="text-2xl font-bold mb-1 text-slate-800 dark:text-white">
-                                                {(() => {
-                                                    const suiteName = typeof suite.name === 'object' ? (suite.name[locale] || suite.name.pt || '') : (suite.name || '');
-                                                    return suiteName.split(/\b(PRO)\b/i).map((part: string, i: number) =>
+
+                                            <div className="space-y-2 mb-8 flex-grow text-left">
+                                                <h3 className="text-2xl font-black text-white leading-none">
+                                                    {suiteName.split(/\b(PRO)\b/i).map((part: string, i: number) =>
                                                         part.toUpperCase() === 'PRO' ? (
                                                             <span key={i} className="text-branding-gradient">{part}</span>
                                                         ) : part
-                                                    );
-                                                })()}
-                                            </h3>
-                                            <h4 className="text-indigo-600 dark:text-indigo-400 text-sm font-bold versalete mb-4">
-                                                {suite.short_desc?.[locale] || suite.short_desc?.pt || ''}
-                                            </h4>
-                                            <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-6 flex-grow">
-                                                {suite.detailed_desc?.[locale] || suite.detailed_desc?.pt || ''}
-                                            </p>
+                                                    )}
+                                                </h3>
+                                                <div className="text-indigo-400 text-sm font-bold">
+                                                    {suiteSubtitle}
+                                                </div>
+                                                <p className="text-slate-400 text-sm leading-relaxed font-medium mt-4">
+                                                    {suiteDesc}
+                                                </p>
+                                            </div>
+
+                                            <div className="relative z-10 text-left mt-auto pt-6">
+                                                <button
+                                                    onClick={() => {
+                                                        if (isLocked) {
+                                                            setCheckoutData({ type: 'module', moduleName: suiteName });
+                                                            setIsCheckoutOpen(true);
+                                                        } else if (currentUser) {
+                                                            router.push(`/veritum/${suiteKey}`);
+                                                        } else {
+                                                            router.push(`/${suiteKey}`);
+                                                        }
+                                                    }}
+                                                    className="flex items-center gap-2 text-indigo-400 hover:text-indigo-200 font-bold text-sm transition-all group-hover:gap-3 cursor-pointer"
+                                                >
+                                                    {isLocked ? t('modules.acquire') : (currentUser ? t('modules.access') : t('modules.learnMore'))}
+                                                    <ChevronRight size={16} />
+                                                </button>
+                                            </div>
 
                                             {isLocked && (
-                                                <p className="text-[10px] font-black uppercase text-amber-600 dark:text-amber-500 mb-4 tracking-widest italic text-center">
+                                                <div className="mt-4 flex items-center gap-2 text-[10px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-widest italic">
+                                                    <Lock size={12} />
                                                     {t('modules.notInPlan')}
-                                                </p>
+                                                </div>
                                             )}
-
-                                            <button
-                                                onClick={() => {
-                                                    const actualSuiteName = typeof suite.name === 'object' ? (suite.name[locale as keyof typeof suite.name] || (suite.name as any).pt || '') : (suite.name || '');
-                                                    if (isLocked) {
-                                                        setCheckoutData({ type: 'module', moduleName: actualSuiteName });
-                                                        setIsCheckoutOpen(true);
-                                                    } else if (showLearnMore) {
-                                                        const suiteSlug = suite.suite_key.toLowerCase().replace('_key', '');
-                                                        router.push(`/${suiteSlug}`);
-                                                    } else {
-                                                        router.push(`/veritum?module=${suite.suite_key}`);
-                                                    }
-                                                }}
-                                                className={`font-bold text-sm flex items-center gap-1 group-hover:gap-2 transition-all mt-auto cursor-pointer ${isLocked ? 'text-amber-600 dark:text-amber-500' : 'text-indigo-600 dark:text-indigo-400'}`}
-                                            >
-                                                {isLocked ? t('modules.acquire') : (showLearnMore ? t('modules.learnMore') : t('modules.access'))} <ChevronRight size={16} />
-                                            </button>
                                         </div>
                                     );
                                 });
@@ -474,19 +477,19 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                 suite={detailModal.suite}
             />
 
-            {/* Pricing */}
-            <section id="pricing" className="py-32 px-6 bg-white dark:bg-slate-950 transition-colors duration-300">
+            {/* Pricing Section */}
+            <section id="pricing" className="py-32 px-6 bg-[#020617] transition-colors duration-300 relative border-b border-slate-900">
                 <div className="max-w-7xl mx-auto">
                     <div className="text-center mb-20 max-w-3xl mx-auto">
-                        <h2 className="text-4xl md:text-5xl font-black mb-6 text-slate-900 dark:text-white uppercase tracking-tighter">
-                            {t('pricing.title').split('crescimento').map((part: string, i: number) =>
-                                i === 0 ? <React.Fragment key={i}>{part}</React.Fragment> : <span key={i} className="text-branding-gradient">crescimento.</span>
+                        <h2 className="text-4xl md:text-5xl font-black mb-6 text-white tracking-tighter">
+                            {t('pricing.title').split('Crescimento').map((part: string, i: number) =>
+                                i === 0 ? <React.Fragment key={i}>{part}</React.Fragment> : <span key={i} className="text-branding-gradient">Crescimento.</span>
                             )}
                         </h2>
-                        <p className="text-xl text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
+                        <p className="text-xl text-slate-400 font-medium leading-relaxed">
                             {t('pricing.subtitle')}
                         </p>
-                        <p className="text-lg text-slate-600 dark:text-slate-400 font-medium mt-6 leading-relaxed max-w-2xl mx-auto">
+                        <p className="text-lg text-slate-500 font-medium mt-6 leading-relaxed max-w-2xl mx-auto italic">
                             {t('pricing.cancelGuarantee')}
                         </p>
                     </div>
@@ -515,17 +518,17 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                                 badge: t('pricing.plans.strategy.badge')
                             }
                         ].map((card, i) => (
-                            <div key={i} className="relative p-10 bg-slate-50/50 dark:bg-slate-900/30 rounded-[3rem] border border-slate-100 dark:border-slate-800 hover:bg-white dark:hover:bg-slate-900 transition-all duration-300 group flex flex-col items-center text-center">
+                            <div key={i} className="relative p-10 bg-[#0f172a]/40 backdrop-blur-sm rounded-[3rem] border border-slate-800 hover:bg-[#0f172a]/60 hover:border-indigo-500/30 transition-all duration-500 group flex flex-col items-center text-center">
                                 {card.badge && (
                                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-indigo-600 text-white px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">
                                         {card.badge}
                                     </div>
                                 )}
-                                <div className={`w-16 h-16 rounded-2xl bg-white dark:bg-slate-800 shadow-xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform ${card.color}`}>
+                                <div className={`w-16 h-16 rounded-2xl bg-slate-800 shadow-xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform ${card.color}`}>
                                     <card.icon size={32} />
                                 </div>
-                                <h3 className="text-2xl font-black mb-4 text-slate-900 dark:text-white uppercase tracking-tight">{card.title}</h3>
-                                <p className="text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
+                                <h3 className="text-2xl font-black mb-4 text-white tracking-tight">{card.title}</h3>
+                                <p className="text-slate-400 font-medium leading-relaxed">
                                     {card.desc}
                                 </p>
                             </div>
@@ -535,9 +538,81 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                     <div className="text-center">
                         <Link
                             href="/pricing"
-                            className="inline-flex items-center gap-3 bg-indigo-600 text-white px-12 py-5 rounded-[2.5rem] font-black text-xl shadow-2xl shadow-indigo-600/40 hover:scale-105 hover:bg-indigo-700 transition-all uppercase tracking-tight"
+                            className="inline-flex items-center gap-3 bg-indigo-600 text-white px-12 py-5 rounded-[2.5rem] font-black text-xl shadow-2xl shadow-indigo-600/40 hover:scale-105 hover:bg-indigo-700 transition-all uppercase tracking-tight cursor-pointer"
                         >
                             {t('pricing.compare')} <ArrowRight size={24} />
+                        </Link>
+                    </div>
+                </div>
+            </section>
+
+            {/* Infrastructure Section - Cloud Plans focus */}
+            <section id="infrastructure" className="pb-32 px-6 bg-[#020617] transition-colors duration-300">
+                <div className="max-w-6xl mx-auto">
+                    <div className="text-center mb-16 max-w-4xl mx-auto">
+                        <span className="text-indigo-400 font-bold tracking-[0.3em] uppercase text-xs mb-4 block">
+                            Infraestrutura de Elite
+                        </span>
+                        <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter">
+                            {t('pricingPage.infrastructure.subtitle')}
+                        </h2>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-5xl mx-auto">
+                        {/* BYODB Card */}
+                        <div className="group p-12 rounded-[3.5rem] bg-[#0f172a]/40 backdrop-blur-sm border border-slate-800 hover:border-indigo-500/50 transition-all duration-500 hover:shadow-2xl flex flex-col items-center text-center">
+                            <div className="mb-8 w-20 h-20 bg-white/10 text-white rounded-[2rem] flex items-center justify-center border border-white/20 group-hover:scale-110 transition-transform duration-500">
+                                <Database size={40} />
+                            </div>
+                            <h4 className="text-2xl font-black text-white mb-4 tracking-tight">
+                                {t('pricingPage.infrastructure.byodbTitle')}
+                            </h4>
+                            <p className="text-slate-400 font-medium leading-relaxed mb-10 text-sm">
+                                {t('pricingPage.infrastructure.byodbDesc')}
+                            </p>
+                            <div className="mt-auto px-8 py-3 bg-emerald-500/10 text-emerald-500 rounded-full font-black text-xs uppercase tracking-widest border border-emerald-500/20">
+                                {t('management.settings.plan.liberated') || 'Liberado'}
+                            </div>
+                        </div>
+
+                        {/* Managed Cloud Card */}
+                        <div className="group p-12 rounded-[3.5rem] bg-slate-950 text-white border border-slate-800 hover:border-indigo-400/50 transition-all duration-500 hover:shadow-2xl hover:shadow-indigo-500/10 relative flex flex-col items-center text-center">
+                            <div className="absolute -top-4 right-10 bg-branding-gradient text-white px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg z-10">
+                                POPULAR 🔥
+                            </div>
+                            <div className="mb-8 w-20 h-20 bg-indigo-600 text-white rounded-[2rem] flex items-center justify-center shadow-2xl shadow-indigo-600/40 group-hover:scale-110 transition-transform duration-500">
+                                <Cloud size={40} />
+                            </div>
+                            <h4 className="text-2xl font-black text-white mb-4 tracking-tight">
+                                {t('pricingPage.infrastructure.cloudTitle')}
+                            </h4>
+                            <p className="text-slate-400 font-medium leading-relaxed mb-10 text-sm">
+                                {t('pricingPage.infrastructure.cloudDesc')}
+                            </p>
+                            <Link
+                                href="/infrastructure"
+                                className="mt-auto text-indigo-400 hover:text-indigo-200 font-bold text-sm transition-all flex items-center gap-2 group-hover:gap-3"
+                            >
+                                {t('pricingPage.infrastructure.learnMore')}
+                                <ArrowRight size={16} />
+                            </Link>
+                        </div>
+                    </div>
+
+                    <div className="mt-20 text-center flex flex-col items-center gap-8">
+                        <Link
+                            href="/infrastructure"
+                            className="text-sm text-slate-400 hover:text-indigo-400 font-bold transition-all flex items-center justify-center gap-2 group cursor-pointer"
+                        >
+                            {t('pricingPage.infrastructure.specificationsLink')}
+                            <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                        </Link>
+
+                        <Link
+                            href="/pricing#infrastructure"
+                            className="inline-flex items-center gap-3 bg-indigo-600 text-white px-10 py-4 rounded-[2rem] font-black text-lg shadow-2xl shadow-indigo-600/40 hover:scale-105 hover:bg-indigo-700 transition-all uppercase tracking-tight cursor-pointer"
+                        >
+                            {t('pricing.compare')} <ArrowRight size={20} />
                         </Link>
                     </div>
                 </div>
@@ -582,6 +657,12 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                         >
                             {t('common.terms')}
                         </button>
+                        <Link
+                            href="/infrastructure"
+                            className="text-sm text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer font-bold"
+                        >
+                            {t('common.security')}
+                        </Link>
                     </div>
                 </div>
             </footer>
@@ -602,6 +683,6 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                 isOpen={isCompanyModalOpen}
                 onClose={() => setIsCompanyModalOpen(false)}
             />
-        </div>
+        </div >
     );
 }

@@ -12,6 +12,7 @@ export const en = {
         backToHome: 'Back to Home',
         privacy: 'Privacy',
         terms: 'Terms',
+        security: 'Security & Infrastructure',
         byodb: 'BYODB Architecture & Legal Intelligence.',
         search: 'Global search...',
         switchToLight: 'Switch to light theme',
@@ -238,11 +239,36 @@ export const en = {
                 }
             }
         },
-        scriptor: { label: 'Scriptor' },
-        valorem: { label: 'Valorem' },
-        cognitio: { label: 'Cognitio' },
-        vox: { label: 'Vox Clientis' },
-        intelligence: { label: 'Intelligence Hub' }
+        scriptor: {
+            label: 'Scriptor',
+            title: 'SCRIPTOR PRO',
+            subtitle: 'Document Automation & AI Legal Writing',
+            description: 'Transform the writing process with dynamic templates and AI-powered assistance for complex petitions, contracts, and technical legal opinions.'
+        },
+        valorem: {
+            label: 'Valorem',
+            title: 'VALOREM PRO',
+            subtitle: 'Financial Management & Fee Control',
+            description: 'Master your firm\'s cash flow. Fee management, cost control, automated billing, and profitability reports per case.'
+        },
+        cognitio: {
+            label: 'Cognitio',
+            title: 'COGNITIO PRO',
+            subtitle: 'Advanced Jurimetrics & Data Intelligence',
+            description: 'Fact-based decisions, not intuition. Analyze judicial trends, judge profiles, and success probabilities with structured data.'
+        },
+        vox: {
+            label: 'Vox Clientis',
+            title: 'VOX CLIENTIS PRO',
+            subtitle: 'Customer Experience & Legal CRM',
+            description: 'Raise the bar for service. Client portal, automated communication workflows, and relationship management for loyalty and transparency.'
+        },
+        intelligence: {
+            label: 'Intelligence Hub',
+            title: 'INTELLIGENCE HUB',
+            subtitle: 'AI Orchestration & Global Integrations',
+            description: 'The brain of the ecosystem. Centralize AI processing, connect external APIs, and automate complex workflows across all modules.'
+        }
     },
     pricing: {
         title: 'Plans that keep up with your growth.',
@@ -305,7 +331,7 @@ export const en = {
     },
     hero: {
         title: 'Veritum PRO',
-        titleAccent: '\nThe truth about your office, the control over your future.',
+        titleAccent: '\nThe truth about your office,\nthe control over your future.',
         subtitle: 'A complete BYODB (Bring Your Own Database) architecture for high-performance law firms. Your data, your infrastructure, our intelligent modules.',
         ctaPrimary: 'Get Started',
         ctaSecondary: 'View plans and pricing',
@@ -1053,6 +1079,8 @@ export const en = {
             portal: 'Portal',
             home: 'Home',
             comparison: 'Comparison',
+            byodb: 'Veritum Cloud',
+            subscription: 'Subscription',
             modules: 'Individual Modules',
             faq: 'FAQ'
         },
@@ -1112,6 +1140,72 @@ export const en = {
                 cta: 'Schedule Demo'
             }
         },
+        infrastructure: {
+            title: 'Your infrastructure. Your rules.',
+            subtitle: 'At Veritum PRO, freedom goes beyond the contract: it reaches the root of your data. Choose the architecture model that best suits your firm\'s reality.',
+            byodbTitle: 'Absolute Control (BYODB - Included)',
+            byodbDesc: 'Connect Veritum PRO directly to your firm\'s own database. Ideal for firms with their own IT infrastructure or local databases (Oracle, Postgres, SQL Server) that demand total sovereignty.',
+            cloudTitle: 'Technological Peace of Mind (Veritum Managed Cloud)',
+            cloudDesc: 'Want to focus only on practicing law? We take care of the servers for you. Dedicated database, automatic daily backups, cutting-edge encryption, and zero technical configuration. Your office in the cloud in 5 minutes.',
+            learnMore: 'Learn More...',
+            specificationsLink: 'See technical infrastructure specifications',
+            dbPlans: {
+                title: 'Veritum Cloud Scalability',
+                pro: {
+                    name: 'Cloud Professional',
+                    badge: 'MANAGER`S CHOICE',
+                    subtitle: 'High performance and advanced features for firms in the expansion phase.',
+                    cta: 'Activate Professional',
+                    price: 'R$ 249.90',
+                    interval: '/ month',
+                    credits: 'Veritum Credits (R$ 55.00) included',
+                    needMore: 'On-demand scalability',
+                    featuresTitle: 'Features Included in the Plan:',
+                    categories: {
+                        compute: 'Processing Power',
+                        storage: 'Storage & Traffic',
+                        security: 'Security & Continuity'
+                    },
+                    features: [
+                        { text: '100,000 Active Users (MAU)', category: 'compute' },
+                        { text: 'then R$ 0.05 per MAU', category: 'compute', isSub: true },
+                        { text: '8 GB Dedicated Disk', category: 'storage' },
+                        { text: 'then R$ 1.25 per GB', category: 'storage', isSub: true },
+                        { text: '250 GB Egress Traffic', category: 'storage' },
+                        { text: 'then R$ 0.95 per GB', category: 'storage', isSub: true },
+                        { text: '250 GB Cached Network', category: 'storage' },
+                        { text: 'then R$ 0.40 per GB', category: 'storage', isSub: true },
+                        { text: '100 GB File Storage', category: 'storage' },
+                        { text: 'then R$ 0.25 per GB', category: 'storage', isSub: true },
+                        { text: 'Priority Technical Support', category: 'security' },
+                        { text: 'Daily Backups (7-day retention)', category: 'security' },
+                        { text: 'System Logs (7 days)', category: 'security' }
+                    ]
+                },
+                team: {
+                    name: 'Cloud Enterprise',
+                    badge: 'TOTAL COMPLIANCE',
+                    subtitle: 'Bank-level security and strict compliance for large corporations.',
+                    cta: 'Consult Enterprise',
+                    price: 'R$ 4,399.90',
+                    interval: '/ month',
+                    credits: 'Veritum Credits (R$ 55.00) included',
+                    needMore: 'Enterprise Solutions',
+                    featuresTitle: 'Everything in Professional, plus:',
+                    features: [
+                        { text: 'SOC2 Certification', category: 'security' },
+                        { text: 'Restricted Access (Read-only / Project-scope)', category: 'security' },
+                        { text: 'HIPAA Compliance (Add-on)', category: 'security' },
+                        { text: 'Single Sign-On (SSO) for Managers', category: 'security' },
+                        { text: 'Priority Support SLAs', category: 'security' },
+                        { text: 'Extended Backups (14 days)', category: 'security' },
+                        { text: 'Bulk Log Retention (28 days)', category: 'security' },
+                        { text: 'Log Drain Monitoring', category: 'security' },
+                        { text: 'then R$ 479.90 per extra drain', category: 'security', isSub: true }
+                    ]
+                }
+            }
+        },
         comparison: {
             label: 'Want to analyze every technical detail?',
             hide: 'Hide',
@@ -1150,7 +1244,7 @@ export const en = {
         },
         whyChoose: {
             title: 'Why choose the',
-            titleAccent: 'Ecosystem?',
+            titleAccent: 'ecosystem?',
             subtitle: 'Isolated tools create rework. We designed our plans to ensure the perfect Flow. One module feeds another, eliminating 100% of manual data entry.',
             items: [
                 { title: 'Sentinel Capture', desc: 'Identifies the case upon distribution.' },
@@ -1161,7 +1255,7 @@ export const en = {
         },
         aLaCarte: {
             badge: 'Total Flexibility',
-            title: 'Individual Modules',
+            title: 'Individual modules',
             subtitle: 'Need a targeted solution? You don\'t have to take the whole ecosystem if you only want to solve one immediate challenge.',
             sentinel: {
                 title: 'Sentinel Radar',
@@ -1175,7 +1269,7 @@ export const en = {
             }
         },
         subscriptionModel: {
-            title: 'Intelligent Subscription vs. Common Installment',
+            title: 'Intelligent subscription vs. common installment',
             subtitle: 'Understand why our model is the ultimate ally for your cash flow and bank limit.',
             subscription: {
                 title: 'Veritum Model (Subscription)',
@@ -1188,13 +1282,14 @@ export const en = {
             modelDescription: "Unlike a traditional installment purchase, which blocks your card's total limit on the first day, Veritum PRO uses an Intelligent Recurring Subscription model. This means we charge only the exact amount of the current cycle (monthly, quarterly, semiannual, or annual) at each renewal. Your credit limit remains free and your office's cash flow is protected. Premium access to our technology, without the weight of long-term debt."
         },
         faq: {
-            title: 'Frequently Asked Questions',
+            title: 'Frequently asked questions',
             questions: [
                 { q: 'What happens if I want to cancel my plan?', a: 'No long phone calls or hidden fees. You cancel with one click directly in your dashboard. No grace periods and no lock-in. At Veritum PRO, we don\'t trap you with contracts, we win you over with service excellence. If you decide to leave, you can freely export all your data before closing.' },
                 { q: 'Do I need a credit card for the free trial?', a: 'No. We believe in our technology. You test the Start or Growth plans for 14 days with full access, no strings attached.' },
                 { q: 'What is the difference between a Veritum PRO Subscription and an installment purchase?', a: 'Unlike an installment purchase, where the total amount (e.g., annual) blocks your credit card limit, the Veritum PRO subscription model performs periodic charges (monthly, quarterly, etc.). This means only the current cycle amount is processed, keeping your limit free for other office needs. Additionally, subscriptions are automatically renewed, but with the freedom to cancel without the bureaucracy of bank installment reversals.' },
                 { q: 'How does the case limit work?', a: 'The system doesn\'t charge per "archived case". We price based on your active cases, ensuring you pay only for what generates real effort.' },
-                { q: 'Can I change plans later?', a: 'At any time. Veritum PRO has a modular architecture. Upgrade or downgrade with just one click in your settings.' }
+                { q: 'Can I change plans later?', a: 'At any time. Veritum PRO has a modular architecture. Upgrade or downgrade with just one click in your settings.' },
+                { q: 'Where will my cases and documents be stored?', a: 'The choice is 100% yours. We were pioneers in the legal market by adopting the BYODB (Bring Your Own Database) architecture, allowing you to connect the system to your own servers for absolute control over your digital assets. However, if your firm does not have an IT team, you can hire Veritum Managed Cloud as an add-on to your subscription. In this format, we provide a high-performance database exclusive to your firm, with automatic backup routines and cloud security.' }
             ]
         },
         finalCta: {
@@ -1751,6 +1846,46 @@ export const en = {
             footer: {
                 slogan: 'The technology for those who practice law with empathy and professionalism.'
             }
+        }
+    },
+    infrastructurePage: {
+        hero: {
+            title: 'Sovereignty, Security, and High Performance.',
+            subtitle: 'Discover the data engineering behind Veritum PRO. Designed to meet the most rigorous compliance and GDPR requirements in the legal market.'
+        },
+        architecture: {
+            title: 'Choice of Architecture',
+            subtitle: 'We understand that each office has a different technological maturity. Therefore, we offer two paths for your data management:',
+            cloud: {
+                title: 'Managed Veritum Cloud',
+                desc: 'Focus on "Technological Peace of Mind". Each client has an exclusive and isolated database. Automatic daily backups retained for 7 days, state-of-the-art encryption, and continuous availability without the need for an internal IT team.'
+            },
+            byodb: {
+                title: 'Absolute Control (BYODB)',
+                desc: 'Focus on "Absolute Control". Connect Veritum PRO to your own servers (AWS, Google Cloud, Azure) or local databases (Oracle, Postgres, SQL Server). Maintain local custody and total sovereignty over your firm\'s digital assets.'
+            }
+        },
+        enterprise: {
+            title: 'Ready for Large Corporate Operations.',
+            subtitle: 'For STRATEGY plan clients, our infrastructure can be upgraded to SOC2 certification, SSO (Single Sign-On) policies, and extended backup retention for 14 days.',
+            label: 'Enterprise Level Security'
+        },
+        faq: {
+            title: 'Frequently Asked Questions',
+            questions: [
+                {
+                    q: 'Will my data mix with that of other law firms?',
+                    a: 'No. In our Managed Cloud, we use physically isolated projects for each client, ensuring there is no sharing of critical resources or data.'
+                },
+                {
+                    q: 'Do you comply with data protection regulations (GDPR)?',
+                    a: 'Yes. All traffic is encrypted via TLS, and data at rest uses AES-256 encryption. Additionally, we implement granular access controls (RBAC).'
+                },
+                {
+                    q: 'How does backup work?',
+                    a: 'Routines are automatic and daily. In the Managed Cloud model, we maintain a 7 or 14-day history (depending on the plan) for rapid recovery in case of incidents.'
+                }
+            ]
         }
     }
 };

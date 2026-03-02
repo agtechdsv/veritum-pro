@@ -34,6 +34,7 @@ import { Plan } from "@/types";
 import { useTranslation } from "@/contexts/language-context";
 import { createBrowserClient } from "@supabase/ssr";
 import { toast } from "../ui/toast";
+import Link from 'next/link';
 
 interface CheckoutModalProps {
     isOpen: boolean;
@@ -124,6 +125,9 @@ export function CheckoutModal({
             popupBlocked: "⚠️ Janela bloqueada pelo navegador. Clique no botão 'Permitir' na barra de endereços para autorizar o checkout do ASAAS, ou clique no botão abaixo para concluir o pagamento agora.",
             subscriptionNoteTitle: "Economize seu limite",
             subscriptionNoteDesc: "Diferente de uma compra comum, apenas o valor do ciclo atual será lançado no seu cartão. Seu limite de crédito permanece livre!",
+            byodbAlertTitle: "⚠️ Atenção: Arquitetura BYODB",
+            byodbAlertMsg: "Você selecionou a arquitetura BYODB. Lembra-se: você será o responsável pela conexão, segurança e backup do banco de dados nos seus próprios servidores.",
+            byodbAlertUpsell: "Prefere que a gente cuide de tudo? Conheça o Veritum Cloud Gerenciada (+ R$ 49,90/mês)",
         },
         en: {
             selectedSub: "Selected Subscription",
@@ -166,6 +170,9 @@ export function CheckoutModal({
             planDiscountLabel: "Plan Discount",
             cashDiscountLabel: "Cash Bonus",
             popupBlocked: "⚠️ Popup blocked by browser! Click the 'Allow' button in the address bar to authorize the ASAAS checkout, or click the button below to complete the payment now.",
+            byodbAlertTitle: "⚠️ Attention: BYODB Architecture",
+            byodbAlertMsg: "You have selected the BYODB architecture. Remember: you will be responsible for the connection, security, and backup of the database on your own servers.",
+            byodbAlertUpsell: "Prefer us to handle everything? Discover Veritum Managed Cloud (+ R$ 49.90/month)",
         },
         es: {
             selectedSub: "Suscripción Seleccionada",
@@ -208,6 +215,9 @@ export function CheckoutModal({
             planDiscountLabel: "Descuento Plan",
             cashDiscountLabel: "Bono al Contado",
             popupBlocked: "⚠️ ¡Ventana bloqueada! Sugerimos hacer clic en 'Siempre permitir ventanas emergentes' en la barra de direcciones de su navegador, o use el botón de abajo para completar ahora.",
+            byodbAlertTitle: "⚠️ Atención: Arquitectura BYODB",
+            byodbAlertMsg: "Has seleccionado la arquitectura BYODB. Recuerda: tú serás el responsable de la conexión, seguridad y copia de seguridad de la base de datos en tus propios servidores.",
+            byodbAlertUpsell: "¿Prefieres que nos encarguemos de todo? Conoce Veritum Cloud Gestionada (+ R$ 49,90/mes)",
         },
     };
 
@@ -582,7 +592,7 @@ export function CheckoutModal({
                                         {typeof currentPlan?.name === 'object' ? (currentPlan.name[lang as keyof typeof currentPlan.name] || currentPlan.name.pt) : currentPlan?.name}
                                     </DialogTitle>
                                     <p className="text-slate-600 dark:text-slate-400 text-sm font-bold leading-relaxed">
-                                        {currentPlan?.short_desc?.[lang]}
+                                        {typeof currentPlan?.short_desc === 'object' ? (currentPlan.short_desc[lang] || currentPlan.short_desc.pt) : currentPlan?.short_desc}
                                     </p>
                                 </div>
 
@@ -659,7 +669,7 @@ export function CheckoutModal({
                                 <div className="space-y-4">
                                     <h3 className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 mb-2">{t.benefits}</h3>
                                     <ul className="space-y-3">
-                                        {(currentPlan?.features?.[lang] || currentPlan?.features?.pt || []).map((feature: any, i: number) => (
+                                        {(typeof currentPlan?.features === 'object' && !Array.isArray(currentPlan?.features) ? (currentPlan.features[lang] || currentPlan.features.pt || []) : (Array.isArray(currentPlan?.features) ? currentPlan.features : [])).map((feature: any, i: number) => (
                                             <li key={i} className="flex items-start gap-4 text-xs text-slate-700 dark:text-slate-300">
                                                 <div className="rounded-full p-1 bg-emerald-500 text-white shrink-0 shadow-lg shadow-emerald-500/20">
                                                     <Check size={10} strokeWidth={4} />
@@ -734,6 +744,28 @@ export function CheckoutModal({
                                         <p className="text-lg font-black text-slate-900 dark:text-white leading-tight mb-4">
                                             {getSummaryText()}
                                         </p>
+
+                                        {/* BYODB ALERT */}
+                                        {type === 'plan' && (
+                                            <div className="mb-6 p-5 rounded-3xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 flex flex-col gap-3">
+                                                <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                                                    <Shield size={16} strokeWidth={3} />
+                                                    <h5 className="text-[11px] font-black uppercase tracking-wider">
+                                                        {(t as any).byodbAlertTitle}
+                                                    </h5>
+                                                </div>
+                                                <p className="text-[11px] font-bold text-slate-600 dark:text-slate-400 leading-relaxed">
+                                                    {(t as any).byodbAlertMsg}
+                                                </p>
+                                                <div className="mt-2 pt-3 border-t border-amber-200/50 dark:border-amber-800/50 text-amber-700 dark:text-amber-300">
+                                                    <Link href="/pricing#infrastructure" className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:translate-x-1 transition-transform">
+                                                        {(t as any).byodbAlertUpsell}
+                                                        <ArrowRight size={12} />
+                                                    </Link>
+                                                </div>
+                                            </div>
+                                        )}
+
                                         <p className="text-sm font-bold text-slate-500 dark:text-slate-400 leading-relaxed italic">
                                             "{t.incentiveMsg}"
                                         </p>

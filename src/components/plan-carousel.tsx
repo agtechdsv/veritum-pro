@@ -41,7 +41,9 @@ const PlanCard = ({ plan, billingCycle, openAuth, isActive, index }: any) => {
             )}
 
             <div className="mb-8">
-                <h3 className="text-2xl font-black mb-2 text-white uppercase tracking-tight">{plan.name}</h3>
+                <h3 className="text-2xl font-black mb-2 text-white uppercase tracking-tight">
+                    {typeof plan.name === 'object' ? (plan.name[lang] || plan.name.pt || plan.name.en || '') : plan.name}
+                </h3>
                 <p className="text-xs font-medium text-slate-500 italic min-h-[32px]">{plan.short_desc?.[lang] || plan.short_desc?.pt || ''}</p>
             </div>
 

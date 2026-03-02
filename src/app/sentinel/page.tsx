@@ -211,7 +211,7 @@ export default function SentinelLanding() {
             {/* Dobra 2: A Visão Geral */}
             <section id="vision" className="py-32 px-6 bg-slate-50 dark:bg-slate-950/40 transition-colors relative overflow-hidden">
                 <div className="max-w-4xl mx-auto text-center relative z-10">
-                    <h2 className="text-4xl md:text-5xl font-black mb-8 text-slate-900 dark:text-white uppercase tracking-tighter">
+                    <h2 className="text-4xl md:text-5xl font-black mb-8 text-slate-900 dark:text-white tracking-tighter">
                         {t('landingPages.sentinel.vision.title').split(' ').map((word: string, i: number) => (
                             <React.Fragment key={i}>
                                 {word.toLowerCase() === '"cockpit"' || word.toLowerCase() === 'vigilância' || word.toLowerCase() === 'jurídica.' || word.toLowerCase() === 'legal' || word.toLowerCase() === 'surveillance' ? <span className="text-branding-gradient">{word}</span> : word}{' '}
@@ -232,7 +232,7 @@ export default function SentinelLanding() {
                 <div className="max-w-7xl mx-auto">
                     <div className="text-center mb-20">
                         <span className="text-indigo-600 dark:text-indigo-400 font-black tracking-[0.2em] uppercase text-sm">{t('landingPages.sentinel.features.category')}</span>
-                        <h2 className="text-5xl font-black mt-4 text-slate-900 dark:text-white uppercase tracking-tighter">{t('landingPages.sentinel.features.title')}</h2>
+                        <h2 className="text-4xl md:text-5xl font-black mt-4 text-slate-900 dark:text-white tracking-tighter">{t('landingPages.sentinel.features.title')}</h2>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
@@ -295,7 +295,7 @@ export default function SentinelLanding() {
             <section id="ux" className="py-32 px-6 bg-slate-50 dark:bg-slate-900/80 text-slate-900 dark:text-white rounded-[4rem] mx-6 relative overflow-hidden border border-slate-100 dark:border-none transition-colors duration-300">
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-16 relative z-10 transition-colors duration-300">
                     <div className="flex-1 space-y-8">
-                        <h2 className="text-5xl font-black tracking-tighter uppercase leading-tight">
+                        <h2 className="text-4xl md:text-5xl font-black tracking-tighter leading-tight text-slate-900 dark:text-white mb-6">
                             {t('landingPages.sentinel.ux.title').split(' ').map((word: string, i: number) => (
                                 <React.Fragment key={i}>
                                     {word.toLowerCase() === 'pensa' || word.toLowerCase() === 'advogado.' || word.toLowerCase() === 'thinks' || word.toLowerCase() === 'lawyer.' ? <span className="text-branding-gradient">{word}</span> : word}{' '}
@@ -342,7 +342,7 @@ export default function SentinelLanding() {
             {/* Final CTA */}
             <section className="py-32 px-6 text-center">
                 <div className="max-w-3xl mx-auto">
-                    <h2 className="text-5xl md:text-6xl font-black mb-8 text-slate-900 dark:text-white leading-tight">
+                    <h2 className="text-4xl md:text-5xl font-black mb-8 text-slate-900 dark:text-white leading-tight tracking-tighter">
                         {t('landingPages.sentinel.finalCta.title').split(' ').map((word: string, i: number) => (
                             <React.Fragment key={i}>
                                 {word.toLowerCase() === 'publicações?' || word.toLowerCase() === 'publications?' ? <span className="text-branding-gradient">{word}</span> : word}{' '}

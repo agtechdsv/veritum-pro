@@ -71,14 +71,26 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, supabase, onPlanClick 
     };
 
     const displayRole = getDisplayRole();
-    const planName = profile.plan_name;
+    const rawPlanName = profile.plan_name;
+    const planName = typeof rawPlanName === 'object'
+        ? (rawPlanName[locale] || rawPlanName.pt || rawPlanName.en || '')
+        : rawPlanName;
     const avatarUrl = profile.avatar_url || user.user_metadata?.avatar_url || user.user_metadata?.picture;
 
     const superAdminGroupsNames = ['Sócio-Administrativo', 'Sócio-Administrador', 'Sócio Administrador'];
     const superAdminRoles = ['Sócio-Administrador', 'Sócio Administrador', 'Administrador', 'Sócio-Administrativo'];
-    const isSocioAdminRole = superAdminRoles.some(r => profile.role?.includes(r));
-    const isSocioAdminGroup = profile.access_group_name && superAdminGroupsNames.some(g => profile.access_group_name?.includes(g));
-    const isRootAdmin = profile.role === 'Master' || isSocioAdminRole || isSocioAdminGroup;
+
+    const profileRoleStr = typeof profile.role === 'object'
+        ? (profile.role.pt || profile.role.en || '')
+        : (profile.role || '');
+
+    const profileGroupNameStr = typeof profile.access_group_name === 'object'
+        ? (profile.access_group_name.pt || profile.access_group_name.en || '')
+        : (profile.access_group_name || '');
+
+    const isSocioAdminRole = superAdminRoles.some(r => profileRoleStr.includes(r));
+    const isSocioAdminGroup = profileGroupNameStr && superAdminGroupsNames.some(g => profileGroupNameStr.includes(g));
+    const isRootAdmin = profile.role === 'Master' || profileRoleStr === 'Master' || isSocioAdminRole || isSocioAdminGroup;
 
     const handlePlanClick = (e?: React.MouseEvent) => {
         if (e) {

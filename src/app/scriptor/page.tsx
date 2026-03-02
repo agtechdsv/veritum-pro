@@ -213,7 +213,7 @@ export default function ScriptorLanding() {
                             ))}
                         </div>
                         <div className="flex-1 space-y-8 text-left">
-                            <h2 className="text-4xl md:text-5xl font-black leading-tight tracking-tighter text-slate-900 dark:text-white uppercase">
+                            <h2 className="text-4xl md:text-5xl font-black leading-tight tracking-tighter text-slate-900 dark:text-white">
                                 {t('landingPages.scriptor.vision.title').split(' ').map((word: string, i: number) => (
                                     <React.Fragment key={i}>
                                         {word.toLowerCase() === 'mente' || word.toLowerCase() === 'jurídica' || word.toLowerCase() === 'legal' || word.toLowerCase() === 'mind' ? <span className="text-branding-gradient">{word}</span> : word}{' '}
@@ -236,7 +236,7 @@ export default function ScriptorLanding() {
                 <div className="max-w-7xl mx-auto">
                     <div className="text-center mb-20 max-w-3xl mx-auto">
                         <span className="text-indigo-600 dark:text-indigo-400 font-black tracking-[0.2em] uppercase text-sm">{t('landingPages.scriptor.features.category')}</span>
-                        <h2 className="text-5xl font-black mt-4 text-slate-900 dark:text-white uppercase tracking-tighter">{t('landingPages.scriptor.features.title')}</h2>
+                        <h2 className="text-4xl md:text-5xl font-black mt-4 text-slate-900 dark:text-white tracking-tighter">{t('landingPages.scriptor.features.title')}</h2>
                         <p className="text-xl text-slate-500 dark:text-slate-400 mt-4 leading-relaxed font-medium">{t('landingPages.scriptor.features.subtitle')}</p>
                     </div>
 
@@ -288,7 +288,7 @@ export default function ScriptorLanding() {
             <section id="ux" className="py-32 px-6 bg-slate-50 dark:bg-slate-900/80 rounded-[4rem] mx-6 relative overflow-hidden text-slate-900 dark:text-white border border-slate-100 dark:border-none transition-colors duration-300">
                 <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-20 relative z-10 transition-colors duration-300">
                     <div className="flex-1 space-y-10">
-                        <h2 className="text-5xl md:text-6xl font-black leading-tight tracking-tighter uppercase mb-6">
+                        <h2 className="text-4xl md:text-5xl font-black leading-tight tracking-tighter mb-6 text-slate-900 dark:text-white">
                             {t('landingPages.scriptor.ux.title').split(' ').map((word: string, i: number) => (
                                 <React.Fragment key={i}>
                                     {word.toLowerCase() === 'foco' || word.toLowerCase() === 'absoluto.' || word.toLowerCase() === 'absolute' || word.toLowerCase() === 'focus.' ? <span className="text-branding-gradient">{word}</span> : word}{' '}
@@ -307,7 +307,7 @@ export default function ScriptorLanding() {
                                 <div key={i} className="flex gap-4 items-start p-6 bg-white dark:bg-slate-900/50 rounded-3xl border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-all duration-300 shadow-sm group">
                                     <item.icon className="text-indigo-600 dark:text-indigo-400 shrink-0 mt-1 group-hover:scale-110 transition-transform" size={24} />
                                     <div>
-                                        <h4 className="font-black text-lg mb-1 uppercase tracking-tight text-slate-900 dark:text-white">{item.title}</h4>
+                                        <h4 className="font-black text-lg mb-1 tracking-tight text-slate-900 dark:text-white">{item.title}</h4>
                                         <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">{item.desc}</p>
                                     </div>
                                 </div>
@@ -349,7 +349,7 @@ export default function ScriptorLanding() {
             {/* Footer / CTA Final */}
             <section className="py-32 px-6 text-center">
                 <div className="max-w-4xl mx-auto">
-                    <h2 className="text-5xl md:text-6xl font-black mb-8 text-slate-900 dark:text-white leading-tight">
+                    <h2 className="text-4xl md:text-5xl font-black mb-8 text-slate-900 dark:text-white leading-tight tracking-tighter">
                         {t('landingPages.scriptor.finalCta.title').split(' ').map((word: string, i: number) => (
                             <React.Fragment key={i}>
                                 {word.toLowerCase() === 'capacidade' || word.toLowerCase() === 'produção?' || word.toLowerCase() === 'production' || word.toLowerCase() === 'capacity?' ? <span className="text-branding-gradient">{word}</span> : word}{' '}
