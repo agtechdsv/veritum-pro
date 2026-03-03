@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { loadEnvConfig } from '@next/env';
 loadEnvConfig(process.cwd());
-const s = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+const s = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 s.from('plans').select('id, name, is_active').eq('name', 'Trial 14 Dias').single().then(async res => {
     if (res.data) {
         console.log('Trial plan id:', res.data.id);
