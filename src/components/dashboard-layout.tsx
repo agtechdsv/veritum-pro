@@ -31,7 +31,7 @@ import {
     PanelLeftClose, PanelLeftOpen, Sun, Moon, Bell, Search,
     ChevronRight, Crown, Camera, Check, User as UserIcon,
     Calendar as CalendarIcon, Mail, Shield, GitBranch, Key, Zap, Lock,
-    CreditCard, Server
+    CreditCard, Server, Cloud
 } from 'lucide-react';
 import SuiteManagement from './modules/suite-management';
 import { useTheme } from 'next-themes';
@@ -180,8 +180,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
         { id: ModuleId.SCHEDULING, label: t('management.master.scheduling.menu'), icon: CalendarIcon, color: 'text-rose-500' },
         { id: ModuleId.EMAIL_CONFIG, label: t('management.master.email.menu'), icon: Mail, color: 'text-cyan-500' },
         { id: ModuleId.FINTECH, label: 'Gestão Fintech', icon: CreditCard, color: 'text-emerald-500' },
-
-
+        { id: ModuleId.CLOUD_CONFIG, label: 'Gestão de Cloud / Add-Ons', icon: Cloud, color: 'text-cyan-400' },
     ];
 
     // PLAN PERMISSIONS FILTER: Only for non-Master users + Intern Safety (RBAC)

@@ -21,7 +21,8 @@ export enum ModuleId {
     INFRA = 'infra',
     ACCESS_GROUPS = 'access_groups',
     PERSONS = 'persons',
-    FINTECH = 'fintech'
+    FINTECH = 'fintech',
+    CLOUD_CONFIG = 'cloud_config'
 }
 
 export interface AsaasSubAccount {

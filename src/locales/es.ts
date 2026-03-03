@@ -1918,5 +1918,28 @@ export const es = {
                 }
             ]
         }
+    },
+    "managementCloud": {
+        "title": "Gestión de Cloud / Add-Ons",
+        "subtitle": "Gestione los paquetes de Veritum Cloud (base de datos, almacenamiento) mostrados en el checkout.",
+        "editing": "Editando en:",
+        "unnamed": "Sin Nombre",
+        "translateAI": "Traducir IA",
+        "baseInfo": "Información Base",
+        "monthlyPrice": "Precio Mensual ($)",
+        "codeName": "Code Name",
+        "translationsDisplay": "Traducciones (Display)",
+        "planName": "Nombre del Plan",
+        "badge": "Badge (Opcional)",
+        "subtitleLabel": "Subtítulo",
+        "credits": "Créditos Incluidos",
+        "needMore": "Call a la Acción (Need More)",
+        "featuresTitle": "Título de las Features",
+        "featuresList": "Features",
+        "addFeature": "Añadir Feature",
+        "markSub": "Sub-feature",
+        "catPlaceholder": "Categoría (ej: compute)",
+        "descPlaceholder": "Texto de la feature...",
+        "noFeatures": "Ninguna feature registrada."
     }
 };

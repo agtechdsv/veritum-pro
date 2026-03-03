@@ -21,10 +21,11 @@ import AccessManagement from '@/components/modules/access-management';
 import IntelligenceHub from '@/components/modules/intelligence-hub';
 import PersonManagement from '@/components/modules/person-management';
 import { EmailSettingsManager } from '@/components/modules/email-config';
+import { CloudSettingsManager } from '@/components/modules/cloud-manager';
 import InfraManagement from '@/components/modules/infra-management';
 import { ModuleId } from '@/types';
 import { BASE_SUITE_ITEMS } from '@/utils/module-meta';
-import { GitBranch, FileEdit, DollarSign, BarChart3, MessageSquare, ShieldAlert, Users, Settings, Crown, Calendar as CalendarIcon, Mail, Shield, Zap, User as UserIcon, CreditCard, Server } from 'lucide-react';
+import { GitBranch, FileEdit, DollarSign, BarChart3, MessageSquare, ShieldAlert, Users, Settings, Crown, Calendar as CalendarIcon, Mail, Shield, Zap, User as UserIcon, CreditCard, Server, Cloud } from 'lucide-react';
 import { useTranslation } from '@/contexts/language-context';
 
 export default function DynamicModulePage() {
@@ -154,6 +155,7 @@ export default function DynamicModulePage() {
         { id: ModuleId.SCHEDULING, label: t('management.master.scheduling.title'), icon: CalendarIcon, color: 'text-rose-500' },
         { id: ModuleId.EMAIL_CONFIG, label: t('management.master.email.title'), icon: Mail, color: 'text-cyan-500' },
         { id: ModuleId.FINTECH, label: 'Gestão Fintech', icon: CreditCard, color: 'text-emerald-500' },
+        { id: ModuleId.CLOUD_CONFIG, label: 'Gestão de Cloud / Add-Ons', icon: Cloud, color: 'text-cyan-400' },
     ];
 
     switch (moduleToRender) {
@@ -170,6 +172,7 @@ export default function DynamicModulePage() {
         case 'plans': return <PlanManagement credentials={credentials} />;
         case 'scheduling': return <SchedulingManagement />;
         case 'email_config': return <EmailSettingsManager />;
+        case 'cloud_config': return <CloudSettingsManager credentials={credentials} />;
         case 'access_groups': return <AccessManagement currentUser={user} />;
         case 'infra': return <InfraManagement currentUser={user} />;
         case 'persons': return <PersonManagement credentials={credentials} preferences={preferences} currentUser={user} />;

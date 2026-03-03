@@ -688,6 +688,10 @@ export const en = {
             }
         },
         master: {
+            translate: {
+                success: 'Success!',
+                error: 'Error setting translation'
+            },
             suites: {
                 menu: 'Module Management',
                 title: 'Module Management',
@@ -1887,5 +1891,28 @@ export const en = {
                 }
             ]
         }
+    },
+    managementCloud: {
+        title: 'Cloud Management / Add-Ons',
+        subtitle: 'Manage the Veritum Cloud packages (database, storage) displayed at checkout.',
+        editing: 'Editing in:',
+        unnamed: 'Unnamed',
+        translateAI: 'Translate AI',
+        baseInfo: 'Base Information',
+        monthlyPrice: 'Monthly Price ($)',
+        codeName: 'Code Name',
+        translationsDisplay: 'Translations (Display)',
+        planName: 'Plan Name',
+        badge: 'Badge (Optional)',
+        subtitleLabel: 'Subtitle',
+        credits: 'Included Credits',
+        needMore: 'Call to Action (Need More)',
+        featuresTitle: 'Features Title',
+        featuresList: 'Features',
+        addFeature: 'Add Feature',
+        markSub: 'Sub-feature',
+        catPlaceholder: 'Category (ex: compute)',
+        descPlaceholder: 'Feature text...',
+        noFeatures: 'No features registered.'
     }
 };
