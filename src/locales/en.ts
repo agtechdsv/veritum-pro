@@ -1186,7 +1186,7 @@ export const en = {
                     name: 'Cloud Enterprise',
                     badge: 'TOTAL COMPLIANCE',
                     subtitle: 'Bank-level security and strict compliance for large corporations.',
-                    cta: 'Consult Enterprise',
+                    cta: 'Activate Enterprise',
                     price: 'R$ 4,399.90',
                     interval: '/ month',
                     credits: 'Veritum Credits (R$ 55.00) included',

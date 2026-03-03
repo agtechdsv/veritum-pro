@@ -74,15 +74,17 @@ export default function DynamicModulePage() {
         ? syncedSuites.map(bs => {
             const normalizedKey = normalize(bs.id);
 
+            const isTrialPlan = (typeof user.plan_name === 'string' ? user.plan_name : String(user.plan_name || '')).toLowerCase().includes('trial');
+
             // 1. Plan Check (Robust comparison)
-            const hasPlanAccess = planPermissions.length > 0 && planPermissions.some(pp => {
+            const hasPlanAccess = isTrialPlan || (planPermissions.length > 0 && planPermissions.some(pp => {
                 const pKey = typeof pp === 'string' ? pp : pp.suite_key;
                 return normalize(pKey) === normalizedKey;
-            });
+            }));
 
             // 2. Permission Check (RBAC)
             let hasGroupAccess = false; // Default to locked
-            if (user.role === 'Master') {
+            if (user.role === 'Master' || user.role === 'Sócio-Administrador' || user.role === 'Sócio Administrador') {
                 hasGroupAccess = true;
             } else if (user.access_group_id) {
                 const suiteData = activeSuites.find(as => normalize(as.suite_key) === normalizedKey);
@@ -106,15 +108,19 @@ export default function DynamicModulePage() {
             // Block Valorem for Estagiários (Legacy Core Rule)
             if (normalizedKey === 'valorem' && user.role === 'Estagiário / Paralegal') return false;
 
+            const isTrialPlan = (typeof user.plan_name === 'string' ? user.plan_name : String(user.plan_name || '')).toLowerCase().includes('trial');
+
             // 1. Plan Check (Robust comparison)
-            const hasPlanAccess = planPermissions.length > 0 && planPermissions.some(pp => {
+            const hasPlanAccess = isTrialPlan || (planPermissions.length > 0 && planPermissions.some(pp => {
                 const pKey = typeof pp === 'string' ? pp : pp.suite_key;
                 return normalize(pKey) === normalizedKey;
-            });
+            }));
             if (!hasPlanAccess) return false;
 
             // 2. DYNAMIC RBAC: Check if user has an access group
-            if (user.access_group_id) {
+            if (user.role === 'Master' || user.role === 'Sócio-Administrador' || user.role === 'Sócio Administrador') {
+                return true;
+            } else if (user.access_group_id) {
                 // Find Suite UUID to match with features
                 const suiteData = activeSuites.find(as => normalize(as.suite_key) === normalizedKey);
                 if (!suiteData) return false;
@@ -129,7 +135,7 @@ export default function DynamicModulePage() {
 
     const adminItems = [
         { id: ModuleId.USERS, label: t('management.users.title'), icon: Users, color: 'text-slate-500' },
-        { id: ModuleId.PERSONS, label: t('management.master.crm.title'), icon: UserIcon, color: 'text-emerald-600' },
+        { id: ModuleId.PERSONS, label: t('management.master.persons.title'), icon: UserIcon, color: 'text-emerald-600' },
         { id: ModuleId.ACCESS_GROUPS, label: t('management.accessGroups.title'), icon: Shield, color: 'text-indigo-600' },
         { id: ModuleId.SETTINGS, label: t('management.settings.title'), icon: Settings, color: 'text-slate-500' },
         { id: ModuleId.INFRA, label: 'Infraestrutura', icon: Server, color: 'text-slate-500' },
@@ -143,7 +149,7 @@ export default function DynamicModulePage() {
     });
 
     const masterItems = [
-        { id: ModuleId.SUITES, label: t('management.master.modules.title'), icon: Crown, color: 'text-amber-500' },
+        { id: ModuleId.SUITES, label: t('management.master.suites.title'), icon: Crown, color: 'text-amber-500' },
         { id: ModuleId.PLANS, label: t('management.master.plans.title'), icon: DollarSign, color: 'text-indigo-500' },
         { id: ModuleId.SCHEDULING, label: t('management.master.scheduling.title'), icon: CalendarIcon, color: 'text-rose-500' },
         { id: ModuleId.EMAIL_CONFIG, label: t('management.master.email.title'), icon: Mail, color: 'text-cyan-500' },

@@ -467,7 +467,8 @@ export default function PricingPage() {
 
                             const lang = locale as 'pt' | 'en' | 'es';
                             const planName = typeof plan.name === 'string' ? plan.name : (plan.name?.[lang] || plan.name?.pt || '');
-                            const features = (plan.features?.[lang] || plan.features?.pt || (Array.isArray(plan.features) ? plan.features : []));
+                            const rawFeatures = plan.features?.[lang] || plan.features?.pt || plan.features;
+                            const features = Array.isArray(rawFeatures) ? rawFeatures : (typeof rawFeatures === 'object' && rawFeatures !== null ? Object.values(rawFeatures) : []);
 
                             return (
                                 <div key={i} className={`relative flex flex-col p-10 rounded-[3rem] border transition-all duration-500 flex-1 ${plan.recommended ? 'bg-white dark:bg-slate-950 border-indigo-500 dark:border-indigo-400 shadow-2xl shadow-indigo-500/20 lg:-mt-4 lg:mb-4 lg:p-12 z-10' : 'bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800'}`}>
@@ -492,7 +493,7 @@ export default function PricingPage() {
 
                                             <div className="flex flex-col gap-0.5 relative group">
                                                 <div className="flex items-baseline gap-1">
-                                                    <span className="text-5xl font-black text-slate-900 dark:text-white">R$ {(finalPrice || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                    <span className="text-4xl lg:text-5xl font-black text-slate-900 dark:text-white whitespace-nowrap">R$ {(finalPrice || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                                     <span className="text-sm font-bold text-slate-400 uppercase tracking-widest ml-1">
                                                         {cycleLabel}
                                                     </span>
@@ -642,7 +643,8 @@ export default function PricingPage() {
 
                                     const lang = locale as 'pt' | 'en' | 'es';
                                     const planName = typeof plan.name === 'string' ? plan.name : (plan.name?.[lang] || plan.name?.pt || '');
-                                    const features = (plan.features?.[lang] || plan.features?.pt || (Array.isArray(plan.features) ? plan.features : []));
+                                    const rawFeatures = plan.features?.[lang] || plan.features?.pt || plan.features;
+                                    const features = Array.isArray(rawFeatures) ? rawFeatures : (typeof rawFeatures === 'object' && rawFeatures !== null ? Object.values(rawFeatures) : []);
 
                                     return (
                                         <div key={i} className={`relative flex flex-col p-8 rounded-[2rem] border transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl flex-1 bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800`}>
@@ -662,7 +664,7 @@ export default function PricingPage() {
 
                                                     <div className="flex flex-col gap-0.5 relative group">
                                                         <div className="flex items-baseline gap-1">
-                                                            <span className="text-3xl font-black text-slate-900 dark:text-white">R$ {(finalPrice || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                            <span className="text-3xl font-black text-slate-900 dark:text-white whitespace-nowrap">R$ {(finalPrice || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                                             <span className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">
                                                                 {cycleLabel}
                                                             </span>
@@ -864,7 +866,17 @@ export default function PricingPage() {
                                         {t('pricingPage.infrastructure.dbPlans.pro.credits')}
                                     </p>
                                 </div>
-                                <button className="w-full py-5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-[1.5rem] font-black text-sm uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-slate-900/10">
+                                <button
+                                    onClick={() => {
+                                        if (currentUser) {
+                                            setCheckoutData({ type: 'plan', planName: t('pricingPage.infrastructure.dbPlans.pro.name') as string });
+                                            setIsCheckoutOpen(true);
+                                        } else {
+                                            openAuth('register');
+                                        }
+                                    }}
+                                    className="w-full py-5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-[1.5rem] font-black text-sm uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-slate-900/10 cursor-pointer"
+                                >
                                     {t('pricingPage.infrastructure.dbPlans.pro.cta')}
                                 </button>
                             </div>
@@ -915,7 +927,17 @@ export default function PricingPage() {
                                         {t('pricingPage.infrastructure.dbPlans.team.credits')}
                                     </p>
                                 </div>
-                                <button className="w-full py-5 bg-white text-slate-900 rounded-[1.5rem] font-black text-sm uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-white/5">
+                                <button
+                                    onClick={() => {
+                                        if (currentUser) {
+                                            setCheckoutData({ type: 'plan', planName: t('pricingPage.infrastructure.dbPlans.team.name') as string });
+                                            setIsCheckoutOpen(true);
+                                        } else {
+                                            openAuth('register');
+                                        }
+                                    }}
+                                    className="w-full py-5 bg-white text-slate-900 rounded-[1.5rem] font-black text-sm uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-white/5 cursor-pointer"
+                                >
                                     {t('pricingPage.infrastructure.dbPlans.team.cta')}
                                 </button>
                             </div>

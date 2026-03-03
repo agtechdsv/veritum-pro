@@ -107,8 +107,8 @@ export function EmailSettingsManager() {
                     <Mail className="w-6 h-6 text-indigo-500" />
                 </div>
                 <div>
-                    <h1 className="text-2xl font-black text-white tracking-tight">{t('management.master.email.title')}</h1>
-                    <p className="text-slate-400 text-sm">{t('management.master.email.subtitle')}</p>
+                    <h1 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight">{t('management.master.email.title')}</h1>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm">{t('management.master.email.subtitle')}</p>
                 </div>
             </div>
 
@@ -118,17 +118,17 @@ export function EmailSettingsManager() {
                     if (!setting) return null
 
                     return (
-                        <Card key={setting.id} className="bg-slate-900/50 border-slate-800 border-none overflow-hidden group">
-                            <CardHeader className="border-b border-slate-800 bg-slate-800/30 flex-row items-center justify-between space-y-0">
+                        <Card key={setting.id} className="bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 overflow-hidden group">
+                            <CardHeader className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30 flex-row items-center justify-between space-y-0">
                                 <div>
-                                    <CardTitle className="text-lg text-white">{t(scenario.label)}</CardTitle>
-                                    <CardDescription>{t('management.master.email.card.description')}</CardDescription>
+                                    <CardTitle className="text-lg text-slate-800 dark:text-white">{t(scenario.label)}</CardTitle>
+                                    <CardDescription className="text-slate-500 dark:text-slate-400">{t('management.master.email.card.description')}</CardDescription>
                                 </div>
                                 <Button
                                     size="sm"
                                     onClick={() => handleUpdate(setting)}
                                     disabled={saving === setting.id}
-                                    className="bg-indigo-600 hover:bg-indigo-500 text-white gap-2 px-4"
+                                    className="bg-indigo-600 hover:bg-indigo-500 text-white gap-2 px-4 shadow-md shadow-indigo-600/20"
                                 >
                                     {saving === setting.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                                     {t('management.master.email.card.save')}
@@ -137,7 +137,7 @@ export function EmailSettingsManager() {
                             <CardContent className="p-6 space-y-6">
                                 {['pt', 'en'].map((lang) => (
                                     <div key={lang} className="space-y-3">
-                                        <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-widest">
+                                        <div className="flex items-center gap-2 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                                             <span>{t(`management.master.email.langs.${lang}`)}</span>
                                         </div>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -146,7 +146,7 @@ export function EmailSettingsManager() {
                                                 <Input
                                                     value={setting.config[lang]?.email || ''}
                                                     onChange={(e) => updateConfig(setting.id, lang, 'email', e.target.value)}
-                                                    className="bg-slate-950 border-slate-800 h-9 text-sm focus:ring-indigo-500"
+                                                    className="bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-white h-9 text-sm focus:ring-indigo-500"
                                                 />
                                             </div>
                                             <div className="space-y-1.5">
@@ -154,7 +154,7 @@ export function EmailSettingsManager() {
                                                 <Input
                                                     value={setting.config[lang]?.name || ''}
                                                     onChange={(e) => updateConfig(setting.id, lang, 'name', e.target.value)}
-                                                    className="bg-slate-950 border-slate-800 h-9 text-sm focus:ring-indigo-500"
+                                                    className="bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-white h-9 text-sm focus:ring-indigo-500"
                                                 />
                                             </div>
                                         </div>

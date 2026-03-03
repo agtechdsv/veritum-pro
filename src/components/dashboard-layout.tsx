@@ -189,15 +189,17 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
         ? fallbackSuites.map(bs => {
             const normalizedKey = normalize(bs.id);
 
+            const isTrialPlan = (typeof user.plan_name === 'string' ? user.plan_name : String(user.plan_name || '')).toLowerCase().includes('trial');
+
             // 1. Plan Check (Robust comparison)
-            const hasPlanAccess = planPermissions.length > 0 && planPermissions.some(pp => {
+            const hasPlanAccess = isTrialPlan || (planPermissions.length > 0 && planPermissions.some(pp => {
                 const pKey = typeof pp === 'string' ? pp : pp.suite_key;
                 return normalize(pKey) === normalizedKey;
-            });
+            }));
 
             // 2. Permission Check (RBAC)
             let hasGroupAccess = false; // Default to locked for safety
-            if (user.role === 'Master') {
+            if (user.role === 'Master' || user.role === 'Sócio-Administrador' || user.role === 'Sócio Administrador') {
                 hasGroupAccess = true;
             } else if (user.access_group_id) {
                 const suiteData = activeSuites.find(as => normalize(as.suite_key) === normalizedKey);
@@ -222,15 +224,19 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
             // Block Valorem for Estagiários (Legacy Core Rule)
             if (normalizedKey === 'valorem' && user.role === 'Estagiário / Paralegal') return false;
 
+            const isTrialPlan = (typeof user.plan_name === 'string' ? user.plan_name : String(user.plan_name || '')).toLowerCase().includes('trial');
+
             // 1. Plan Check (Robust comparison)
-            const hasPlanAccess = planPermissions.length > 0 && planPermissions.some(pp => {
+            const hasPlanAccess = isTrialPlan || (planPermissions.length > 0 && planPermissions.some(pp => {
                 const pKey = typeof pp === 'string' ? pp : pp.suite_key;
                 return normalize(pKey) === normalizedKey;
-            });
+            }));
             if (!hasPlanAccess) return false;
 
             // 2. DYNAMIC RBAC: Check if user has an access group
-            if (user.access_group_id) {
+            if (user.role === 'Master' || user.role === 'Sócio-Administrador' || user.role === 'Sócio Administrador') {
+                return true;
+            } else if (user.access_group_id) {
                 // Find Suite UUID to match with features
                 const suiteData = activeSuites.find(as => normalize(as.suite_key) === normalizedKey);
                 if (!suiteData) return false;

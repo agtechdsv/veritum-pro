@@ -10,6 +10,7 @@ import { UserMenu } from '@/components/ui/user-menu';
 import { createMasterClient } from '@/lib/supabase/master';
 import { LegalModal } from '@/components/legal-modal';
 import { CompanyModal } from '@/components/company-modal';
+import { AuthModal } from '@/components/auth-modal';
 
 const Logo = () => (
     <div className="bg-indigo-600/10 p-2 rounded-lg flex items-center justify-center text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400">
@@ -24,6 +25,7 @@ export default function HistoryPage() {
     const [currentUser, setCurrentUser] = useState<any>(undefined);
     const [legalModal, setLegalModal] = useState<{ isOpen: boolean; type: 'privacy' | 'terms' }>({ isOpen: false, type: 'privacy' });
     const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
+    const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
     useEffect(() => {
         setMounted(true);
@@ -313,12 +315,21 @@ export default function HistoryPage() {
                         </h2>
 
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-6 m-12">
-                            <Link
-                                href="/?login=true"
-                                className="px-12 py-5 bg-indigo-600 text-white rounded-full font-black text-xl shadow-2xl shadow-indigo-600/30 hover:scale-110 hover:bg-indigo-700 transition-all uppercase tracking-tight flex items-center gap-3"
-                            >
-                                {t('hero.ctaPrimary')} <ArrowLeft className="rotate-180" size={24} />
-                            </Link>
+                            {currentUser ? (
+                                <Link
+                                    href="/veritum"
+                                    className="px-12 py-5 bg-indigo-600 text-white rounded-full font-black text-xl shadow-2xl shadow-indigo-600/30 hover:scale-110 hover:bg-indigo-700 transition-all uppercase tracking-tight flex items-center gap-3"
+                                >
+                                    {t('hero.ctaPrimary')} <ArrowLeft className="rotate-180" size={24} />
+                                </Link>
+                            ) : (
+                                <button
+                                    onClick={() => setIsAuthModalOpen(true)}
+                                    className="px-12 py-5 bg-indigo-600 text-white rounded-full font-black text-xl shadow-2xl shadow-indigo-600/30 hover:scale-[1.05] active:scale-[0.98] hover:bg-indigo-700 transition-all uppercase tracking-tight flex items-center gap-3 cursor-pointer border-none"
+                                >
+                                    {t('hero.ctaPrimary')} <ArrowLeft className="rotate-180" size={24} />
+                                </button>
+                            )}
                         </div>
                     </motion.div>
 
@@ -382,6 +393,12 @@ export default function HistoryPage() {
             <CompanyModal
                 isOpen={isCompanyModalOpen}
                 onClose={() => setIsCompanyModalOpen(false)}
+            />
+
+            <AuthModal
+                isOpen={isAuthModalOpen}
+                onClose={() => setIsAuthModalOpen(false)}
+                mode="register"
             />
         </div>
     );

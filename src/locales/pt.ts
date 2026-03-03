@@ -1201,7 +1201,7 @@ export const pt = {
                     name: 'Cloud Enterprise',
                     badge: 'COMPLIANCE TOTAL',
                     subtitle: 'Segurança de nível bancário e conformidade rigorosa para grandes corporações.',
-                    cta: 'Consultar Enterprise',
+                    cta: 'Ativar Enterprise',
                     price: 'R$ 4.399,90',
                     interval: '/ mês',
                     credits: 'Créditos Veritum (R$ 55,00) inclusos',
