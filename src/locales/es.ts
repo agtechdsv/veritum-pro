@@ -1975,7 +1975,7 @@ export const es = {
         },
         "benefits": {
             "title": "Su Identidad Digital Exclusiva",
-            "subtitle": "Como miembro VIP, obtiene acceso inmediato a un buzón protegido @veritumpro.com.",
+            "subtitle": "Como miembro VIP, obtiene acceso inmediato a un buzón protegido @veritumpro.com (exclusivo para suscriptores de los planes Growth y Strategy en modalidad semestral o anual).",
             "description": "Separe estratégicamente las notificaciones de los tribunales y del sistema de su bandeja de entrada personal. Más allá de la organización absoluta, este es su canal de acceso anticipado: reciba actualizaciones del mercado y funciones beta antes que nadie.",
             "items": [
                 "Separación Profesional / Personal",

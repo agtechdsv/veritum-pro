@@ -1963,7 +1963,7 @@ export const pt = {
         },
         benefits: {
             title: 'A sua Identidade Digital Exclusiva',
-            subtitle: 'Como membro VIP, você ganha acesso imediato a uma caixa postal blindada @veritumpro.com.',
+            subtitle: 'Como membro VIP, você ganha acesso imediato a uma caixa postal blindada @veritumpro.com (exclusiva para assinantes dos planos Growth e Strategy nas modalidades semestral ou anual).',
             description: 'Separe estrategicamente as notificações dos tribunais e do sistema da sua caixa de entrada pessoal. Além de organização absoluta, este é o seu canal de acesso antecipado: receba atualizações do mercado e recursos beta antes de todo mundo.',
             items: [
                 'Separação Profissional / Pessoal',

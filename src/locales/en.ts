@@ -1948,7 +1948,7 @@ export const en = {
         },
         benefits: {
             title: 'Your Exclusive Digital Identity',
-            subtitle: 'As a VIP member, you get immediate access to a shielded @veritumpro.com mailbox.',
+            subtitle: 'As a VIP member, you get immediate access to a shielded @veritumpro.com mailbox (exclusive for Growth and Strategy subscribers on semi-annual or annual plans).',
             description: 'Strategically separate court and system notifications from your personal inbox. Beyond absolute organization, this is your early access channel: receive market updates and beta features before everyone else.',
             items: [
                 'Professional / Personal Separation',

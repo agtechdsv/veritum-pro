@@ -229,7 +229,8 @@ export default function ClubeVipPage() {
                         </h2>
                         <p className="text-lg text-slate-400 leading-relaxed font-medium">
                             {t('clubeVip.benefits.subtitle').split('@veritumpro.com')[0]}
-                            <strong className="text-indigo-400 font-bold">@veritumpro.com</strong>.
+                            <strong className="text-indigo-400 font-bold">@veritumpro.com</strong>
+                            {t('clubeVip.benefits.subtitle').split('@veritumpro.com')[1] || '.'}
                         </p>
                         <p className="text-sm text-slate-500 leading-relaxed">
                             {t('clubeVip.benefits.description')}
