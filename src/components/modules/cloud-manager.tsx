@@ -29,7 +29,7 @@ export interface CloudPlan {
     badge: { pt: string; en: string; es: string } | any;
     subtitle: { pt: string; en: string; es: string } | any;
     price_monthly: number;
-    discounts: { quarterly: number; semiannual: number; yearly: number } | any;
+    discounts: { monthly?: number; quarterly: number; semiannual: number; yearly: number } | any;
     credits: { pt: string; en: string; es: string } | any;
     need_more: { pt: string; en: string; es: string } | any;
     features_title: { pt: string; en: string; es: string } | any;
@@ -82,6 +82,7 @@ export function CloudSettingsManager({ credentials }: { credentials?: Credential
                     badge: plan.badge,
                     subtitle: plan.subtitle,
                     price_monthly: plan.price_monthly,
+                    discounts: plan.discounts,
                     credits: plan.credits,
                     need_more: plan.need_more,
                     features_title: plan.features_title,
@@ -345,6 +346,42 @@ export function CloudSettingsManager({ credentials }: { credentials?: Credential
                                             value={plan.code_name}
                                             onChange={(e) => updatePlan(plan.id, ['code_name'], e.target.value)}
                                             className="bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-white text-xs rounded-xl"
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Desconto Mensal (%)</Label>
+                                        <Input
+                                            type="number"
+                                            value={plan.discounts?.monthly || 0}
+                                            onChange={(e) => updatePlan(plan.id, ['discounts', 'monthly'], parseFloat(e.target.value) || 0)}
+                                            className="bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-white font-mono text-xs rounded-xl"
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Desconto Trimestral (%)</Label>
+                                        <Input
+                                            type="number"
+                                            value={plan.discounts?.quarterly || 0}
+                                            onChange={(e) => updatePlan(plan.id, ['discounts', 'quarterly'], parseFloat(e.target.value) || 0)}
+                                            className="bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-white font-mono text-xs rounded-xl"
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Desconto Semestral (%)</Label>
+                                        <Input
+                                            type="number"
+                                            value={plan.discounts?.semiannual || 0}
+                                            onChange={(e) => updatePlan(plan.id, ['discounts', 'semiannual'], parseFloat(e.target.value) || 0)}
+                                            className="bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-white font-mono text-xs rounded-xl"
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Desconto Anual (%)</Label>
+                                        <Input
+                                            type="number"
+                                            value={plan.discounts?.yearly || 0}
+                                            onChange={(e) => updatePlan(plan.id, ['discounts', 'yearly'], parseFloat(e.target.value) || 0)}
+                                            className="bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-white font-mono text-xs rounded-xl"
                                         />
                                     </div>
                                 </div>

@@ -95,17 +95,36 @@ Deno.serve(async (req: Request) => {
     }
     const idToken = authHeader.split(" ")[1];
 
-    const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+    let userId: string;
+    let jwtEmail: string = "";
+    let jwtName: string = "";
+    try {
+      const payloadBase64Url = idToken.split('.')[1];
+      // Fix Base64Url padding for atob
+      const base64 = payloadBase64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const pad = base64.length % 4;
+      const paddedBase64 = pad ? base64 + '='.repeat(4 - pad) : base64;
+      const jsonPayload = decodeURIComponent(atob(paddedBase64).split('').map(function (c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+
+      const parsed = JSON.parse(jsonPayload);
+      userId = parsed.sub;
+      jwtEmail = parsed.email || "";
+      jwtName = parsed.user_metadata?.full_name || parsed.user_metadata?.name || "";
+
+      if (!userId) throw new Error("Missing sub claim");
+    } catch (e: any) {
+      console.error("JWT Decode error:", e);
+      return jsonResponse({ error: "Failed to read auth token", details: e.message }, 401, origin);
+    }
+
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || anonKey;
+    const supabaseAdmin = createClient(SUPABASE_URL, serviceRoleKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    // authenticate user
-    const { data: { user: jwtUser }, error: authError } = await supabaseAdmin.auth.getUser(idToken);
-    if (authError || !jwtUser) {
-      console.error("Supabase Auth verify failed:", authError?.message || "No user found");
-      return jsonResponse({ error: "Invalid authentication token", details: authError?.message }, 401, origin);
-    }
-    const userId = jwtUser.id;
 
     const body = await req.json().catch(() => null);
     console.log("Incoming Payload:", JSON.stringify(body, null, 2));
@@ -122,7 +141,8 @@ Deno.serve(async (req: Request) => {
       cardToken,
       creditCardHolderInfo,
       phone: bodyPhone,
-      description
+      description,
+      cloudPlanId
     } = body;
 
     const bodyCpfCnpj = body.cpfCnpj;
@@ -169,14 +189,21 @@ Deno.serve(async (req: Request) => {
     if (userError || !user) return jsonResponse({ error: "Usuário não encontrado." }, 404, origin);
 
     // Fetch plan from DB
-    const { data: plan, error: planError } = await supabaseAdmin
+    const { data: plansList, error: planError } = await supabaseAdmin
       .from("plans")
       .select("*")
-      .eq("name", planName)
-      .eq("active", true)
-      .maybeSingle();
+      .eq("active", true);
 
-    if (planError || !plan) return jsonResponse({ error: "Plano não encontrado ou inativo." }, 404, origin);
+    if (planError || !plansList) return jsonResponse({ error: "Erro ao buscar planos.", details: planError }, 500, origin);
+
+    const plan = plansList.find((p: any) => {
+      if (typeof p.name === 'object' && p.name !== null) {
+        return Object.values(p.name).includes(planName);
+      }
+      return p.name === planName;
+    });
+
+    if (!plan) return jsonResponse({ error: "Plano não encontrado ou inativo." }, 404, origin);
 
     // Calculate Price
     const basePrice = plan.monthly_price || 0;
@@ -205,8 +232,35 @@ Deno.serve(async (req: Request) => {
         discountPerc = plan.monthly_discount || 0;
     }
 
+    let cloudPrice = 0;
+    let cloudName = 'BYODB';
+
+    if (cloudPlanId && cloudPlanId !== 'byodb') {
+      const { data: cloudPlan, error: cpError } = await supabaseAdmin
+        .from('cloud_plans')
+        .select('*')
+        .eq('id', cloudPlanId)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (!cpError && cloudPlan) {
+        const cBase = cloudPlan.price_monthly || 0;
+        let cDiscountPerc = 0;
+
+        if (billingCycle === 'monthly') cDiscountPerc = cloudPlan.discounts?.monthly || 0;
+        if (billingCycle === 'quarterly') cDiscountPerc = cloudPlan.discounts?.quarterly || 0;
+        if (billingCycle === 'semiannual') cDiscountPerc = cloudPlan.discounts?.semiannual || 0;
+        if (billingCycle === 'yearly') cDiscountPerc = cloudPlan.discounts?.yearly || 0;
+
+        const cFull = cBase * months;
+        cloudPrice = cFull * (1 - (cDiscountPerc / 100));
+        cloudName = cloudPlan.code_name || cloudPlan.name?.pt || 'Cloud';
+      }
+    }
+
     const fullPrice = basePrice * months;
-    const totalValue = fullPrice * (1 - (discountPerc / 100));
+    const basePlanTotalValue = fullPrice * (1 - (discountPerc / 100));
+    const totalValue = basePlanTotalValue + cloudPrice;
 
     // Update profile only if provided in body
     const updates: any = {};
@@ -243,15 +297,19 @@ Deno.serve(async (req: Request) => {
     }
 
     // Create local payment pre-gateway
-    const safePlan = String(planName).trim().replace(/\|/g, "-").slice(0, 100);
-    const externalReference = `${user.id}|${safePlan}|${billingCycle}`;
+    const safePlan = String(planName).trim().replace(/\|/g, "-").slice(0, 50);
+    const safeCloud = cloudPlanId && cloudPlanId !== 'byodb' ? cloudPlanId : "byodb";
+    const externalReference = `${user.id}|${safePlan}|${billingCycle}|${safeCloud}`;
+
+    // Combined Name for Payment record and Asaas Invoice
+    const combinedPlanName = cloudPlanId && cloudPlanId !== 'byodb' ? `${safePlan} + ${cloudName}` : safePlan;
 
     const { data: insertedPayment, error: insertError } = await supabaseAdmin
       .from("payments")
       .insert({
         user_id: user.id,
         asaas_customer_id: null,
-        plan_name: safePlan,
+        plan_name: combinedPlanName,
         amount: totalValue,
         status: "pending",
         external_reference: externalReference,
@@ -268,7 +326,7 @@ Deno.serve(async (req: Request) => {
 
 
     // Search or create Asaas customer
-    const emailToSearch = user.email ?? jwtUser.email;
+    const emailToSearch = user.email || jwtEmail || "cliente@veritumpro.com";
     const q = new URLSearchParams({ email: String(emailToSearch) });
     const targetUrl = `${ASAAS_URL}/customers?${q.toString()}`;
 
@@ -311,7 +369,7 @@ Deno.serve(async (req: Request) => {
     } else {
       // create customer with retry (C)
       const customerPayload: any = {
-        name: user.name ?? jwtUser.user_metadata?.full_name ?? String(emailToSearch).split("@")[0],
+        name: user.name || jwtName || String(emailToSearch).split("@")[0],
         email: emailToSearch,
         externalReference: user.id,
         notificationDisabled: true,
@@ -368,9 +426,9 @@ Deno.serve(async (req: Request) => {
 
     const commonPayload: any = {
       customer: asaasCustomerId,
-      value: Number(totalValue),
+      value: Number(totalValue).toFixed(2),
       externalReference,
-      description: description ?? `${safePlan.toLowerCase().startsWith("plano") ? safePlan : `Plano ${safePlan}`} - ${cycleLabel}`,
+      description: description ?? `${combinedPlanName.toLowerCase().startsWith("plano") ? combinedPlanName : `Plano ${combinedPlanName}`} - ${cycleLabel}`,
       billingType: normalizedBillingType,
     };
 
@@ -383,7 +441,7 @@ Deno.serve(async (req: Request) => {
       commonPayload.creditCardStatementDescriptor = "VERITUM PRO";
 
       const holderInfo = creditCardHolderInfo && typeof creditCardHolderInfo === "object" ? { ...creditCardHolderInfo } : {
-        name: user.name ?? jwtUser.user_metadata?.full_name ?? "Cliente",
+        name: user.name || jwtName || "Cliente",
         email: emailToSearch,
         cpfCnpj: normalizedDoc ?? undefined,
         // phone: bodyPhone ?? user.phone ?? undefined, // Removido para não exibir no checkout Asaas

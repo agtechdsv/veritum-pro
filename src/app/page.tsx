@@ -126,7 +126,7 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
             if (user) {
                 const { data: profile, error } = await supabase
                     .from('users')
-                    .select('name, avatar_url, role, plan_id, access_group_id, access_groups(name, name_loc), plans:plan_id(name)')
+                    .select('name, avatar_url, role, plan_id, access_group_id, access_groups(name), plans:plan_id(name)')
                     .eq('id', user.id)
                     .single();
 

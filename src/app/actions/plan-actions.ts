@@ -198,3 +198,18 @@ export async function getPlans() {
 
     return { success: true, plans: data }
 }
+
+export async function getCloudPlans() {
+    const supabase = createAdminClient()
+    const { data, error } = await supabase
+        .from('cloud_plans')
+        .select('*')
+        .eq('is_active', true)
+        .order('price_monthly', { ascending: true })
+
+    if (error) {
+        return { success: false, error: error.message }
+    }
+
+    return { success: true, plans: data }
+}

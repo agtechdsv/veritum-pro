@@ -66,7 +66,7 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
         const [profileRes] = await Promise.all([
             supabaseClient
                 .from('users')
-                .select('*, access_groups(name, name_loc), plans:plan_id(name)')
+                .select('*, access_groups(name), plans:plan_id(name)')
                 .eq('id', authUser.id)
                 .single()
         ]);

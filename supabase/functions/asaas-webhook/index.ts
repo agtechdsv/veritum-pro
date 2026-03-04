@@ -79,10 +79,9 @@ Deno.serve(async (req: Request) => {
           : `external_reference.eq.${externalReference}`
       )
       .limit(1)
-      .single();
+      .maybeSingle();
 
-    if (paymentLookupError && paymentLookupError.code !== "PGRST116" && paymentLookupError.code !== "PGRST102") {
-      // PGRST116/PGRST102 may indicate no rows; handle gracefully
+    if (paymentLookupError) {
       console.info("payments lookup returned error (non-fatal):", paymentLookupError.message);
     }
 
@@ -93,7 +92,7 @@ Deno.serve(async (req: Request) => {
         .select("*")
         .eq("external_reference", externalReference)
         .limit(1)
-        .single();
+        .maybeSingle();
       if (!error) localPayment = data;
     }
 
@@ -155,18 +154,26 @@ Deno.serve(async (req: Request) => {
       }
 
       if (localPayment?.id) {
-        await supabaseAdmin.from("payments").update(update).eq("id", localPayment.id);
+        // Prevent 409 Unique Violation by NOT updating asaas_payment_id if it's already correct.
+        if (localPayment.asaas_payment_id === asaasPaymentId || update.asaas_payment_id === asaasPaymentId) {
+          delete update.asaas_payment_id;
+        }
+
+        const { error: patchError } = await supabaseAdmin.from("payments").update(update).eq("id", localPayment.id);
+        if (patchError) console.error("Error updating payment in logEvent:", patchError);
       } else if (asaasPaymentId) {
         await supabaseAdmin.from("payments").update(update).eq("asaas_payment_id", asaasPaymentId);
       }
     }
 
     if (confirmedEvents.includes(event)) {
-      // parse externalReference -> userId|planName|billingCycle
+      // parse externalReference -> userId|planName|billingCycle|cloudPlanId
       const parts = String(externalReference ?? "").split("|");
       const userId = parts[0]?.trim();
       const planName = parts[1]?.trim();
       const billingCycle = parts[2]?.trim() || "monthly";
+      const cloudPlanIdRaw = parts[3]?.trim();
+      const cloudPlanId = cloudPlanIdRaw && cloudPlanIdRaw !== "byodb" ? cloudPlanIdRaw : null;
 
       if (!userId || !planName) {
         console.error("Confirmed payment but missing data in externalReference:", externalReference);
@@ -177,19 +184,30 @@ Deno.serve(async (req: Request) => {
       // Update payment row: set as paid and link user
       await logEvent({ status: "paid", user_id: userId, asaas_payment_id: asaasPaymentId }, true);
 
-      // Fetch Plan ID
-      const { data: planData, error: planErr } = await supabaseAdmin
+      // Fetch Plan ID reliably since name is JSONB
+      const { data: plansList, error: planErr } = await supabaseAdmin
         .from("plans")
-        .select("id")
-        .eq("name", planName)
-        .maybeSingle();
+        .select("id, name")
+        .eq("active", true);
 
-      if (planErr || !planData) {
-        console.error("Plan not found during webhook processing:", planName);
+      if (planErr || !plansList) {
+        console.error("Plan fetch failed during webhook processing:", planErr);
         return new Response(JSON.stringify({ received: true }), { headers: corsHeaders });
       }
 
-      const planId = planData.id;
+      const planRecord = plansList.find((p: any) => {
+        if (typeof p.name === 'object' && p.name !== null) {
+          return Object.values(p.name).some((val: any) => String(val).toLowerCase() === String(planName).toLowerCase());
+        }
+        return String(p.name).toLowerCase() === String(planName).toLowerCase();
+      });
+
+      if (!planRecord) {
+        console.error("Plan matched to external reference could not be found via JSONB:", planName);
+        return new Response(JSON.stringify({ received: true }), { headers: corsHeaders });
+      }
+
+      const planId = planRecord.id;
 
       // Calculate validity
       const validUntil = new Date();
@@ -202,17 +220,26 @@ Deno.serve(async (req: Request) => {
       const validUntilISO = validUntil.toISOString();
 
       // 1. Upsert Subscription
+      const defaultPayload: any = {
+        user_id: userId,
+        plan_id: planId,
+        status: "active",
+        is_trial: false, // Mark as paid
+        start_date: new Date().toISOString(),
+        end_date: validUntilISO,
+        updated_at: new Date().toISOString(),
+      };
+
+      if (cloudPlanId) {
+        defaultPayload.cloud_plan_id = cloudPlanId;
+        defaultPayload.cloud_start_date = new Date().toISOString();
+        defaultPayload.cloud_end_date = validUntilISO;
+        defaultPayload.cloud_status = 'active';
+      }
+
       const { error: upsertErr } = await supabaseAdmin
         .from("user_subscriptions")
-        .upsert({
-          user_id: userId,
-          plan_id: planId,
-          status: "active",
-          is_trial: false, // Mark as paid
-          start_date: new Date().toISOString(),
-          end_date: validUntilISO,
-          updated_at: new Date().toISOString(),
-        }, { onConflict: "user_id" });
+        .upsert(defaultPayload, { onConflict: "user_id" });
 
       if (upsertErr) {
         console.error(`Failed to upsert user_subscription for user ${userId}:`, upsertErr.message);
@@ -221,7 +248,11 @@ Deno.serve(async (req: Request) => {
       // 2. Update user profile for immediate permission sync
       const { error: userUpdateErr } = await supabaseAdmin
         .from("users")
-        .update({ plan_id: planId, updated_at: new Date().toISOString() })
+        .update({
+          plan_id: planId,
+          cloud_plan_id: cloudPlanId,
+          updated_at: new Date().toISOString()
+        })
         .eq("id", userId);
 
       if (userUpdateErr) {

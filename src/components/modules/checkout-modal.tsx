@@ -29,8 +29,9 @@ import {
     Loader2
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { getPlans } from "@/app/actions/plan-actions";
-import { Plan } from "@/types";
+import { Database } from "lucide-react";
+import { getPlans, getCloudPlans } from "@/app/actions/plan-actions";
+import { Plan, CloudPlan } from "@/types";
 import { useTranslation } from "@/contexts/language-context";
 import { createBrowserClient } from "@supabase/ssr";
 import { toast } from "../ui/toast";
@@ -55,9 +56,10 @@ export function CheckoutModal({
 }: CheckoutModalProps) {
     const { locale } = useTranslation();
     const [plans, setPlans] = useState<Plan[]>([]);
+    const [cloudPlans, setCloudPlans] = useState<CloudPlan[]>([]);
+    const [selectedCloudPlanId, setSelectedCloudPlanId] = useState<string>('byodb');
     const [currentPlanIndex, setCurrentPlanIndex] = useState(0);
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'quarterly' | 'semiannual' | 'yearly'>('monthly');
-    const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('pix');
     const [step, setStep] = useState<1 | 2>(1);
 
     // Form fields
@@ -282,7 +284,11 @@ export function CheckoutModal({
     useEffect(() => {
         const loadPlansAndUser = async () => {
             // Load Plans
-            const result = await getPlans();
+            const [result, cloudResult] = await Promise.all([
+                getPlans(),
+                getCloudPlans()
+            ]);
+
             if (result.success && result.plans) {
                 setPlans(result.plans);
                 const index = result.plans.findIndex((p: Plan) => {
@@ -292,6 +298,10 @@ export function CheckoutModal({
                     return p.name === initialPlanName;
                 });
                 if (index !== -1) setCurrentPlanIndex(index);
+            }
+
+            if (cloudResult.success && cloudResult.plans) {
+                setCloudPlans(cloudResult.plans);
             }
 
             // Load User Data for pre-population
@@ -357,8 +367,12 @@ export function CheckoutModal({
 
     const currentPlan = plans[currentPlanIndex];
 
+    const pFeatures = currentPlan?.features ? (typeof currentPlan.features === 'string' ? JSON.parse(currentPlan.features) : currentPlan.features) : {};
+    const rawFeatures = pFeatures?.[lang] || pFeatures?.pt || pFeatures;
+    const displayFeatures = Array.isArray(rawFeatures) ? rawFeatures : (typeof rawFeatures === 'object' && rawFeatures !== null ? Object.values(rawFeatures) : []);
+
     const calculatePricing = () => {
-        if (!currentPlan) return { full: 0, currentDiscountValue: 0, currentTotal: 0, currentDiscountPerc: 0, monthlyEquivalent: 0 };
+        if (!currentPlan) return { full: 0, currentDiscountValue: 0, currentTotal: 0, currentDiscountPerc: 0, cloudDiscountPerc: 0, monthlyEquivalent: 0, baseTotal: 0, cloudTotal: 0 };
 
         const basePrice = currentPlan.monthly_price || 0;
         let months = 1;
@@ -383,8 +397,31 @@ export function CheckoutModal({
                 break;
         }
 
-        const fullPrice = basePrice * months;
-        const currentTotal = fullPrice * (1 - (discountPerc / 100));
+        const baseFull = basePrice * months;
+        const baseTotal = baseFull * (1 - (discountPerc / 100));
+
+        let cloudFull = 0;
+        let cloudTotal = 0;
+        let cloudDiscountPerc = 0;
+
+        if (selectedCloudPlanId !== 'byodb') {
+            const cp = cloudPlans.find(c => c.id === selectedCloudPlanId);
+            if (cp) {
+                const cloudBase = cp.price_monthly || 0;
+                let cDiscount = 0;
+                if (billingCycle === 'monthly') cDiscount = cp.discounts?.monthly || 0;
+                if (billingCycle === 'quarterly') cDiscount = cp.discounts?.quarterly || 0;
+                if (billingCycle === 'semiannual') cDiscount = cp.discounts?.semiannual || 0;
+                if (billingCycle === 'yearly') cDiscount = cp.discounts?.yearly || 0;
+
+                cloudDiscountPerc = cDiscount;
+                cloudFull = cloudBase * months;
+                cloudTotal = cloudFull * (1 - (cDiscount / 100));
+            }
+        }
+
+        const fullPrice = baseFull + cloudFull;
+        const currentTotal = baseTotal + cloudTotal;
         const currentDiscountValue = fullPrice - currentTotal;
         const monthlyEquivalent = currentTotal / months;
 
@@ -393,11 +430,14 @@ export function CheckoutModal({
             currentDiscountValue,
             currentTotal,
             currentDiscountPerc: discountPerc,
-            monthlyEquivalent
+            cloudDiscountPerc,
+            monthlyEquivalent,
+            baseTotal,
+            cloudTotal
         };
     };
 
-    const { full, currentDiscountValue, currentTotal, currentDiscountPerc, monthlyEquivalent } = calculatePricing();
+    const { full, currentDiscountValue, currentTotal, currentDiscountPerc, cloudDiscountPerc, monthlyEquivalent, baseTotal, cloudTotal } = calculatePricing();
 
     const totalDisplay = currentTotal;
 
@@ -440,8 +480,11 @@ export function CheckoutModal({
                 return;
             }
 
+            const planNameStr = typeof currentPlan.name === 'object' ? (currentPlan.name[lang as keyof typeof currentPlan.name] || currentPlan.name.pt) : currentPlan.name;
+
             const payload = {
-                planName: currentPlan.name,
+                planName: planNameStr,
+                cloudPlanId: selectedCloudPlanId,
                 billingCycle,
                 billingType: "UNDEFINED", // Let Asaas handle choice
                 cpfCnpj: cpfCnpj.replace(/\D/g, ''),
@@ -556,13 +599,13 @@ export function CheckoutModal({
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-            <DialogContent className="max-w-[1150px] w-[1150px] p-0 gap-0 overflow-hidden border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 sm:rounded-[3rem] shadow-2xl">
-                <div className="flex flex-col md:flex-row h-full max-h-[90vh]">
+            <DialogContent className="max-w-[1300px] w-[95vw] p-0 gap-0 overflow-hidden border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 sm:rounded-[3rem] shadow-2xl">
+                <div className="flex flex-col xl:flex-row h-full max-h-[90vh]">
 
-                    {/* LEFT COLUMN (Fixed): Plan Info & Pricing */}
-                    <div className="md:w-[450px] md:flex-none bg-slate-50 dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 p-8 md:p-12 flex flex-col relative overflow-hidden group">
+                    {/* COL 1: SW Plan & Pricing */}
+                    <div className="xl:w-[360px] xl:flex-none bg-slate-50 dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 p-8 flex flex-col relative overflow-y-auto custom-scrollbar">
                         {/* Plan Navigation Overlay Arrows */}
-                        <div className="absolute top-10 right-10 flex gap-2 z-30">
+                        <div className="flex justify-end gap-2 z-30 mb-4">
                             <button onClick={prevPlan} className="p-2.5 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-indigo-600 transition-all hover:scale-110 shadow-sm">
                                 <ArrowLeft size={16} strokeWidth={3} />
                             </button>
@@ -572,8 +615,8 @@ export function CheckoutModal({
                         </div>
 
                         {/* Lock Icon Gradient */}
-                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center shadow-2xl shadow-indigo-600/40 mb-10 border-2 border-slate-900 dark:border-white/20 ring-4 ring-slate-900/10 dark:ring-white/5">
-                            <LockIcon size={24} className="drop-shadow-sm" />
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center shadow-2xl shadow-indigo-600/40 mb-8 border-2 border-slate-900 dark:border-white/20 ring-4 ring-slate-900/10 dark:ring-white/5">
+                            <LockIcon size={20} className="drop-shadow-sm" />
                         </div>
 
                         <AnimatePresence mode="wait">
@@ -596,32 +639,7 @@ export function CheckoutModal({
                                     </p>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-1.5 bg-slate-200/50 dark:bg-slate-800/50 p-1 rounded-2xl w-full mb-10 border border-slate-200/50 dark:border-slate-700/50">
-                                    <button
-                                        onClick={() => setBillingCycle('monthly')}
-                                        className={`px-3 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all ${billingCycle === 'monthly' ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-md' : 'text-slate-400 hover:text-slate-500'}`}
-                                    >
-                                        {t.monthly}
-                                    </button>
-                                    <button
-                                        onClick={() => setBillingCycle('quarterly')}
-                                        className={`px-3 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all ${billingCycle === 'quarterly' ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-md' : 'text-slate-400 hover:text-slate-500'}`}
-                                    >
-                                        {t.quarterly}
-                                    </button>
-                                    <button
-                                        onClick={() => setBillingCycle('semiannual')}
-                                        className={`px-3 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all ${billingCycle === 'semiannual' ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-md' : 'text-slate-400 hover:text-slate-500'}`}
-                                    >
-                                        {t.semiannual}
-                                    </button>
-                                    <button
-                                        onClick={() => setBillingCycle('yearly')}
-                                        className={`px-3 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all ${billingCycle === 'yearly' ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-md' : 'text-slate-400 hover:text-slate-500'}`}
-                                    >
-                                        {t.yearly}
-                                    </button>
-                                </div>
+
                                 <div className="mb-10 p-5 rounded-3xl bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800/50 flex gap-4 items-start shadow-sm">
                                     <div className="bg-indigo-100 dark:bg-indigo-800 p-2 rounded-xl text-indigo-600 dark:text-indigo-400">
                                         <Shield size={18} strokeWidth={3} />
@@ -636,40 +654,11 @@ export function CheckoutModal({
                                     </div>
                                 </div>
 
-                                {/* Values Breakdown */}
-                                <div className="bg-white/40 dark:bg-white/5 backdrop-blur-md rounded-3xl p-6 border border-white/50 dark:border-white/10 mb-10 shadow-sm">
-                                    <div className="space-y-2">
-                                        {hasAnyDiscount && (
-                                            <>
-                                                <div className="flex justify-between text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-                                                    <span>{t.original}</span>
-                                                    <span className="line-through">{formatPrice(full)}</span>
-                                                </div>
-                                                <div className="flex justify-between text-[11px] font-bold text-emerald-500 uppercase tracking-widest">
-                                                    <span>{t.planDiscountLabel} ({currentDiscountPerc}%)</span>
-                                                    <span>- {formatPrice(currentDiscountValue)}</span>
-                                                </div>
-                                            </>
-                                        )}
-                                        <div className={`${hasAnyDiscount ? 'pt-4 border-t border-slate-200/30 dark:border-white/10' : ''} flex flex-col items-end gap-1`}>
-                                            <div className="flex justify-between items-end w-full">
-                                                <span className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-tighter">{t.totalValue}</span>
-                                                <span className="text-4xl font-black text-slate-950 dark:text-white tracking-tighter">{formatPrice(totalDisplay)}</span>
-                                            </div>
-                                            {billingCycle !== 'monthly' && (
-                                                <div className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mt-1">
-                                                    Equivalente a {formatPrice(monthlyEquivalent)} / mês
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-
                                 {/* Features List */}
                                 <div className="space-y-4">
                                     <h3 className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 mb-2">{t.benefits}</h3>
-                                    <ul className="space-y-3">
-                                        {(typeof currentPlan?.features === 'object' && !Array.isArray(currentPlan?.features) ? (currentPlan.features[lang] || currentPlan.features.pt || []) : (Array.isArray(currentPlan?.features) ? currentPlan.features : [])).map((feature: any, i: number) => (
+                                    <ul className="space-y-3 pb-8">
+                                        {displayFeatures.map((feature: any, i: number) => (
                                             <li key={i} className="flex items-start gap-4 text-xs text-slate-700 dark:text-slate-300">
                                                 <div className="rounded-full p-1 bg-emerald-500 text-white shrink-0 shadow-lg shadow-emerald-500/20">
                                                     <Check size={10} strokeWidth={4} />
@@ -683,42 +672,205 @@ export function CheckoutModal({
                         </AnimatePresence>
                     </div>
 
-                    {/* RIGHT COLUMN (Fixed): Identity & Payment */}
-                    <div className="md:w-[700px] md:flex-none flex flex-col bg-white dark:bg-slate-950 overflow-y-auto custom-scrollbar relative">
-                        <button onClick={handleClose} className="absolute top-10 right-10 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all z-50 p-3 bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full shadow-lg border border-slate-200/50 dark:border-slate-700/50">
-                            <X size={20} strokeWidth={3} />
+                    {/* COL 2: Infra & Cloud Plans */}
+                    <div className="xl:w-[420px] xl:flex-none bg-slate-100/50 dark:bg-slate-900/50 border-r border-slate-100 dark:border-slate-800 p-8 flex flex-col overflow-y-auto custom-scrollbar">
+                        <div className="flex items-center gap-3 mb-8">
+                            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 border border-indigo-500/20">
+                                <Database size={24} strokeWidth={2.5} />
+                            </div>
+                            <div>
+                                <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter">Infraestrutura</h3>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">Aonde seus dados vão morar?</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+
+
+                            {/* BYODB Card */}
+                            <div
+                                onClick={() => setSelectedCloudPlanId('byodb')}
+                                className={`p-5 rounded-[1.5rem] border-2 cursor-pointer transition-all relative overflow-hidden ${selectedCloudPlanId === 'byodb' ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 shadow-[0_8px_30px_rgb(79,70,229,0.12)]' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 hover:border-indigo-300/50'}`}
+                            >
+                                <div className="flex items-start justify-between mb-2">
+                                    <div>
+                                        <h4 className={`text-lg font-black ${selectedCloudPlanId === 'byodb' ? 'text-indigo-900 dark:text-indigo-100' : 'text-slate-800 dark:text-slate-200'}`}>BYODB (Local)</h4>
+                                        <div className="text-sm font-black text-slate-500 mt-1">Soberania Total</div>
+                                    </div>
+                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${selectedCloudPlanId === 'byodb' ? 'border-indigo-600 bg-indigo-600' : 'border-slate-300 dark:border-slate-700'}`}>
+                                        {selectedCloudPlanId === 'byodb' && <Check size={14} strokeWidth={4} className="text-white" />}
+                                    </div>
+                                </div>
+                                <p className={`text-[11px] font-medium leading-relaxed mt-3 ${selectedCloudPlanId === 'byodb' ? 'text-indigo-700/80 dark:text-indigo-300/80' : 'text-slate-500'}`}>
+                                    Conecte aos seus servidores (AWS, Google, On-Premise). Zero custo extra de nuvem para nós. Você cuida da T.I, banco e backups.
+                                </p>
+                            </div>
+
+                            {/* Cloud Plans from API */}
+                            {cloudPlans.map(cp => {
+                                const isSelected = selectedCloudPlanId === cp.id;
+                                const planName = cp.name[lang as keyof typeof cp.name] || cp.name.pt;
+                                const planSubtitle = cp.subtitle[lang as keyof typeof cp.subtitle] || cp.subtitle.pt;
+                                const badgeText = cp.badge ? (cp.badge[lang as keyof typeof cp.badge] || cp.badge.pt) : null;
+                                const price = cp.price_monthly;
+
+                                return (
+                                    <div
+                                        key={cp.id}
+                                        onClick={() => setSelectedCloudPlanId(cp.id)}
+                                        className={`p-5 rounded-[1.5rem] border-2 cursor-pointer transition-all relative overflow-hidden ${isSelected ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 shadow-[0_8px_30px_rgb(79,70,229,0.12)]' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 hover:border-indigo-300/50'}`}
+                                    >
+                                        <div className="relative z-10">
+                                            {badgeText && (
+                                                <div className={`inline-block mb-3 px-2.5 py-1 text-[8px] font-black uppercase tracking-widest rounded-full border ${isSelected ? 'bg-indigo-600/10 text-indigo-700 dark:text-indigo-300 border-indigo-600/20' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700'}`}>
+                                                    {badgeText}
+                                                </div>
+                                            )}
+
+                                            <div className="flex items-start justify-between mb-1">
+                                                <h4 className={`text-lg font-black ${isSelected ? 'text-indigo-900 dark:text-indigo-100' : 'text-slate-800 dark:text-slate-200'}`}>
+                                                    {planName}
+                                                </h4>
+                                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${isSelected ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-slate-300 dark:border-slate-700'}`}>
+                                                    {isSelected && <Check size={14} strokeWidth={4} />}
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-baseline gap-1 mt-1 mb-3">
+                                                <span className={`text-xl font-black ${isSelected ? 'text-indigo-900 dark:text-indigo-100' : 'text-indigo-600 dark:text-indigo-400'}`}>+ {formatPrice(price)}</span>
+                                                <span className={`text-[10px] font-bold uppercase tracking-widest ${isSelected ? 'text-indigo-900/50 dark:text-indigo-100/50' : 'text-slate-400'}`}>/ mês</span>
+
+                                                {/* Calculate Equivalent if billing cycle > monthly */}
+                                                {billingCycle !== 'monthly' && cp.discounts && (
+                                                    <span className={`ml-2 text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-md ${isSelected ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'}`}>
+                                                        {billingCycle === 'yearly' && cp.discounts.yearly ? `-${cp.discounts.yearly}% OFF` : ''}
+                                                        {billingCycle === 'semiannual' && cp.discounts.semiannual ? `-${cp.discounts.semiannual}% OFF` : ''}
+                                                        {billingCycle === 'quarterly' && cp.discounts.quarterly ? `-${cp.discounts.quarterly}% OFF` : ''}
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            <p className={`text-[11px] font-medium leading-relaxed ${isSelected ? 'text-indigo-700/80 dark:text-indigo-300/80' : 'text-slate-500'}`}>
+                                                {planSubtitle}
+                                            </p>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* COL 3: Identity & Payment */}
+                    <div className="xl:flex-1 flex flex-col bg-white dark:bg-slate-950 overflow-y-auto custom-scrollbar relative p-8 md:p-10">
+                        <button onClick={handleClose} className="absolute top-8 right-8 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all z-50 p-2.5 bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full shadow-lg border border-slate-200/50 dark:border-slate-700/50">
+                            <X size={18} strokeWidth={3} />
                         </button>
 
-                        <div className="p-10 md:p-14 space-y-12">
+                        <div className="space-y-5">
+                            {/* Unified Billing Cycle Selector */}
+                            <div className="grid grid-cols-4 gap-1 bg-slate-200/50 dark:bg-slate-800/50 p-1 rounded-xl w-full border border-slate-200/50 dark:border-slate-700/50 mt-2">
+                                <button
+                                    onClick={() => setBillingCycle('monthly')}
+                                    className={`px-1 py-2 rounded-lg text-[8px] font-black uppercase tracking-tighter transition-all ${billingCycle === 'monthly' ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-500'}`}
+                                >
+                                    {t.monthly}
+                                </button>
+                                <button
+                                    onClick={() => setBillingCycle('quarterly')}
+                                    className={`px-1 py-2 rounded-lg text-[8px] font-black uppercase tracking-tighter transition-all ${billingCycle === 'quarterly' ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-500'}`}
+                                >
+                                    {t.quarterly}
+                                </button>
+                                <button
+                                    onClick={() => setBillingCycle('semiannual')}
+                                    className={`px-1 py-2 rounded-lg text-[8px] font-black uppercase tracking-tighter transition-all ${billingCycle === 'semiannual' ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-500'}`}
+                                >
+                                    {t.semiannual}
+                                </button>
+                                <button
+                                    onClick={() => setBillingCycle('yearly')}
+                                    className={`px-1 py-2 rounded-lg text-[8px] font-black uppercase tracking-tighter transition-all ${billingCycle === 'yearly' ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-500'}`}
+                                >
+                                    {t.yearly}
+                                </button>
+                            </div>
+
+                            {/* Values Breakdown */}
+                            <div className="bg-slate-50 dark:bg-slate-900 rounded-3xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm mt-2">
+                                <div className="space-y-2">
+                                    <div className="flex justify-between items-center text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">
+                                        <div className="flex flex-col">
+                                            <span>Sistema {currentDiscountPerc > 0 ? <span className="text-[10px] text-emerald-500 font-black tracking-tighter ml-1">(-{currentDiscountPerc}%)</span> : ''}</span>
+                                        </div>
+                                        <span>{formatPrice(baseTotal)}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-xs font-bold text-slate-500 uppercase tracking-widest pb-2 border-b border-slate-200 dark:border-slate-800">
+                                        <div className="flex flex-col">
+                                            <span>Infra (Cloud) {selectedCloudPlanId !== 'byodb' && cloudDiscountPerc > 0 ? <span className="text-[10px] text-emerald-500 font-black tracking-tighter ml-1">(-{cloudDiscountPerc}%)</span> : ''}</span>
+                                        </div>
+                                        <span>{selectedCloudPlanId === 'byodb' ? 'R$ 0,00' : formatPrice(cloudTotal)}</span>
+                                    </div>
+
+                                    {hasAnyDiscount && (
+                                        <>
+                                            <div className="flex justify-between text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-2">
+                                                <span>{t.original}</span>
+                                                <span className="line-through">{formatPrice(full)}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-[11px] font-bold text-emerald-500 uppercase tracking-widest gap-2 mt-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="truncate">{t.planDiscountLabel} Economia Total</span>
+                                                    <span className="px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 text-[9px] font-black shadow-sm">
+                                                        {Math.round(((full - currentTotal) / full) * 100)}% OFF
+                                                    </span>
+                                                </div>
+                                                <span className="whitespace-nowrap">- {formatPrice(currentDiscountValue)}</span>
+                                            </div>
+                                        </>
+                                    )}
+                                    <div className={`${hasAnyDiscount ? 'pt-3 border-t border-slate-200/50 dark:border-slate-800' : 'pt-2'} flex flex-col items-end gap-1 mt-1`}>
+                                        <div className="flex justify-between items-end w-full">
+                                            <span className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-tighter">{t.totalValue}</span>
+                                            <span className="text-3xl font-black text-indigo-600 dark:text-indigo-400 tracking-tighter">{formatPrice(totalDisplay)}</span>
+                                        </div>
+                                        {billingCycle !== 'monthly' && (
+                                            <div className="text-[9px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mt-1 animate-in fade-in slide-in-from-right-2">
+                                                Equivalente a {formatPrice(monthlyEquivalent)} / mês
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
                             {/* SECTION 1: IDENTITY */}
-                            <div className="space-y-6">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-indigo-600 border border-slate-100 dark:border-slate-800">
-                                        <User size={24} strokeWidth={2.5} />
+                            <div className="space-y-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-indigo-600 border border-slate-100 dark:border-slate-800">
+                                        <User size={20} strokeWidth={2.5} />
                                     </div>
                                     <div>
-                                        <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">{t.identification}</h3>
-                                        <p className="text-slate-400 text-[11px] font-bold uppercase tracking-widest italic">{t.step1}</p>
+                                        <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter">{t.identification}</h3>
+                                        <p className="text-slate-400 text-[9px] font-bold uppercase tracking-widest italic">{t.step1}</p>
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <Label className="text-[10px] uppercase font-black text-slate-400 tracking-wider ml-1">{t.document}</Label>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-1.5">
+                                        <Label className="text-[9px] uppercase font-black text-slate-400 tracking-wider ml-1">{t.document}</Label>
                                         <Input
                                             placeholder="000.000.000-00"
                                             value={cpfCnpj}
                                             onChange={handleCpfCnpjChange}
-                                            className="h-12 rounded-xl bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800 font-bold px-6 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm"
+                                            className="h-10 rounded-lg bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800 font-bold px-4 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm"
                                         />
                                     </div>
-                                    <div className="space-y-2">
-                                        <Label className="text-[10px] uppercase font-black text-slate-400 tracking-wider ml-1">{t.whatsapp}</Label>
+                                    <div className="space-y-1.5">
+                                        <Label className="text-[9px] uppercase font-black text-slate-400 tracking-wider ml-1">{t.whatsapp}</Label>
                                         <Input
                                             placeholder="(00) 00000-0000"
                                             value={whatsapp}
                                             onChange={handleWhatsAppChange}
-                                            className="h-12 rounded-xl bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800 font-bold px-6 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm"
+                                            className="h-10 rounded-lg bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800 font-bold px-4 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm"
                                         />
                                     </div>
                                     <div className="hidden"></div>
@@ -726,79 +878,58 @@ export function CheckoutModal({
                             </div>
 
                             {/* SECTION 2: PAYMENT */}
-                            <div className="space-y-8 pt-4">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-indigo-600 border border-slate-100 dark:border-slate-800">
-                                        <Zap size={24} strokeWidth={2.5} />
+                            <div className="space-y-4 pt-2">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-indigo-600 border border-slate-100 dark:border-slate-800">
+                                        <Zap size={20} strokeWidth={2.5} />
                                     </div>
                                     <div>
-                                        <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">{t.payment}</h3>
-                                        <p className="text-slate-400 text-[11px] font-bold uppercase tracking-widest italic">{t.step2}</p>
+                                        <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter">{t.payment}</h3>
+                                        <p className="text-slate-400 text-[9px] font-bold uppercase tracking-widest italic">{t.step2}</p>
                                     </div>
                                 </div>
 
                                 {/* Step 2: Summary View */}
-                                <div className="space-y-6">
-                                    <div className="p-8 rounded-[2rem] bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm">
-                                        <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-600 mb-4">{t.step2}</h4>
-                                        <p className="text-lg font-black text-slate-900 dark:text-white leading-tight mb-4">
+                                <div className="space-y-3">
+                                    <div className="p-5 rounded-3xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm">
+                                        <h4 className="text-[9px] font-black uppercase tracking-widest text-indigo-600 mb-2">{t.step2}</h4>
+                                        <p className="text-sm font-black text-slate-900 dark:text-white leading-tight mb-2">
                                             {getSummaryText()}
                                         </p>
 
-                                        {/* BYODB ALERT */}
-                                        {type === 'plan' && (
-                                            <div className="mb-6 p-5 rounded-3xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 flex flex-col gap-3">
-                                                <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
-                                                    <Shield size={16} strokeWidth={3} />
-                                                    <h5 className="text-[11px] font-black uppercase tracking-wider">
-                                                        {(t as any).byodbAlertTitle}
-                                                    </h5>
-                                                </div>
-                                                <p className="text-[11px] font-bold text-slate-600 dark:text-slate-400 leading-relaxed">
-                                                    {(t as any).byodbAlertMsg}
-                                                </p>
-                                                <div className="mt-2 pt-3 border-t border-amber-200/50 dark:border-amber-800/50 text-amber-700 dark:text-amber-300">
-                                                    <Link href="/pricing#infrastructure" className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:translate-x-1 transition-transform">
-                                                        {(t as any).byodbAlertUpsell}
-                                                        <ArrowRight size={12} />
-                                                    </Link>
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        <p className="text-sm font-bold text-slate-500 dark:text-slate-400 leading-relaxed italic">
+                                        <p className="text-xs font-bold text-slate-500 dark:text-slate-400 leading-relaxed italic">
                                             "{t.incentiveMsg}"
                                         </p>
-                                        <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800">
-                                            <p className="text-xs font-bold text-slate-600 dark:text-slate-400">
+                                        <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+                                            <p className="text-[10px] font-bold text-slate-600 dark:text-slate-400">
                                                 {t.redirectMsg}
                                             </p>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="p-5 rounded-[1.5rem] bg-emerald-50/50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 flex items-center gap-4">
-                                    <ShieldCheck className="text-emerald-500 shrink-0" size={24} strokeWidth={2.5} />
-                                    <p className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 tracking-tighter leading-tight">
+                                <div className="p-4 rounded-2xl bg-emerald-50/50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 flex items-center gap-3">
+                                    <ShieldCheck className="text-emerald-500 shrink-0" size={20} strokeWidth={2.5} />
+                                    <p className="text-[9px] font-bold text-emerald-700 dark:text-emerald-400 tracking-tighter leading-tight">
                                         {t.secureEnv}
                                     </p>
                                 </div>
 
-                                <div className="space-y-4">
+                                <div className="space-y-2.5">
                                     <button
                                         type="button"
                                         onClick={handlePayment}
                                         disabled={isLoading}
-                                        className="w-full h-16 rounded-xl shadow-2xl hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-4 border-none cursor-pointer outline-none bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-70 disabled:cursor-not-allowed"
+                                        className="w-full h-12 rounded-xl shadow-2xl hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-3 border-none cursor-pointer outline-none bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-70 disabled:cursor-not-allowed"
                                     >
-                                        <span className="text-lg font-black uppercase tracking-[0.1em] text-white">
+                                        <span className="text-sm font-black uppercase tracking-[0.1em] text-white">
                                             {isLoading ? (lang === 'pt' ? 'Processando...' : 'Processing...') : t.confirmPay}
                                         </span>
-                                        {isLoading ? <Loader2 size={24} className="animate-spin" /> : <Zap size={24} className="fill-current text-yellow-400" />}
+                                        {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Zap size={18} className="fill-current text-yellow-400" />}
                                     </button>
 
-                                    <div className="flex items-center justify-center gap-2 text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-                                        <Lock size={10} className="shrink-0" />
+                                    <div className="flex items-center justify-center gap-1.5 text-[7px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                                        <Lock size={8} className="shrink-0" />
                                         <span>{t.securePayment}</span>
                                     </div>
                                 </div>

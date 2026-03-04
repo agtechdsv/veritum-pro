@@ -12,6 +12,7 @@ export enum ModuleId {
     USERS = 'users',
     SUITES = 'suites',
     PLANS = 'plans',
+    CLOUD_PLANS = 'cloud_plans',
     DASHBOARD_SUITES = 'dashboard_suites',
     DASHBOARD_ADMIN = 'dashboard_admin',
     DASHBOARD_MASTER = 'dashboard_master',
@@ -106,6 +107,21 @@ export interface Plan {
     permissions?: PlanPermission[];
 }
 
+export interface CloudPlan {
+    id: string;
+    code_name: string;
+    name: { pt: string; en: string; es: string };
+    badge: { pt: string; en: string; es: string };
+    subtitle: { pt: string; en: string; es: string };
+    price_monthly: number;
+    discounts: { monthly?: number; quarterly: number; semiannual: number; yearly: number };
+    credits: { pt: string; en: string; es: string };
+    need_more: { pt: string; en: string; es: string };
+    features_title: { pt: string; en: string; es: string };
+    features: { category: string; text: string; isSub: boolean }[];
+    is_active: boolean;
+}
+
 export interface Feature {
     id: string;
     feature_key: string;
@@ -152,6 +168,10 @@ export interface User {
     phone?: string;
     parent_user_id?: string;
     plan_id?: string;
+    cloud_plan_id?: string;
+    cloud_start_date?: string;
+    cloud_end_date?: string;
+    cloud_status?: 'active' | 'expired' | 'canceled';
     access_group_id?: string;
     access_group_name?: string;
     translated_group_name?: string;

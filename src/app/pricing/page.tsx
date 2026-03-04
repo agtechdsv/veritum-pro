@@ -95,7 +95,7 @@ export default function PricingPage() {
             if (user) {
                 const { data: profile, error } = await supabase
                     .from('users')
-                    .select('name, avatar_url, role, plan_id, access_group_id, access_groups(name, name_loc), plans:plan_id(name)')
+                    .select('name, avatar_url, role, plan_id, access_group_id, access_groups(name), plans:plan_id(name)')
                     .eq('id', user.id)
                     .single();
 
@@ -331,7 +331,9 @@ export default function PricingPage() {
                     <div className="hidden lg:flex items-center gap-5">
                         <Link href="/" className="font-medium text-branding-gradient hover:opacity-80 transition-all">{t('pricingPage.nav.portal')}</Link>
                         <a href="#top" onClick={handleNavClick} className="font-medium text-slate-800 dark:text-white">{t('pricingPage.nav.home')}</a>
-                        <a href="#modulos-avulsos" onClick={handleNavClick} className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">{t('pricingPage.nav.modules')}</a>
+                        {dbPlans.filter(p => !p.is_combo).length > 0 && (
+                            <a href="#modulos-avulsos" onClick={handleNavClick} className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">{t('pricingPage.nav.modules')}</a>
+                        )}
                         <a href="#comparison" onClick={handleNavClick} className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">{t('pricingPage.nav.comparison')}</a>
                         <a href="#infrastructure" onClick={handleNavClick} className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">{t('pricingPage.nav.byodb')}</a>
                         <a href="#subscription" onClick={handleNavClick} className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">{t('pricingPage.nav.subscription')}</a>
@@ -531,37 +533,35 @@ export default function PricingPage() {
                                             <Check size={18} /> {t('management.settings.plan.liberated') || 'Liberado'}
                                         </div>
                                     ) : (
-                                        (!currentUser || isSocioAdmin) && (
-                                            <button
-                                                onClick={async () => {
-                                                    let userToUse = currentUser;
-                                                    if (userToUse === undefined) {
-                                                        const supabase = createMasterClient();
-                                                        const { data: { user } } = await supabase.auth.getUser();
-                                                        userToUse = user;
-                                                    }
+                                        <button
+                                            onClick={async () => {
+                                                let userToUse = currentUser;
+                                                if (userToUse === undefined) {
+                                                    const supabase = createMasterClient();
+                                                    const { data: { user } } = await supabase.auth.getUser();
+                                                    userToUse = user;
+                                                }
 
-                                                    const isStrategy = planName.toLowerCase().includes('strategy') || planName.toLowerCase().includes('estrategia');
-                                                    if (isStrategy && !userToUse) {
-                                                        setIsAuthModalOpen(true);
-                                                    } else if (isStrategy && userToUse) {
-                                                        setCheckoutData({ type: 'plan', planName: planName });
-                                                        setIsCheckoutOpen(true);
-                                                    } else if (userToUse) {
-                                                        setCheckoutData({ type: 'plan', planName: planName });
-                                                        setIsCheckoutOpen(true);
-                                                    } else {
-                                                        setIsAuthModalOpen(true);
-                                                    }
-                                                }}
-                                                className={`w-full py-5 rounded-2xl font-black text-lg transition-all ${!plan.recommended
-                                                    ? 'border-2 border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400 bg-transparent hover:bg-indigo-50 dark:hover:bg-indigo-900/10 shadow-none'
-                                                    : 'bg-branding-gradient animate-gradient text-white shadow-2xl shadow-blue-600/30 hover:scale-[1.02]'
-                                                    }`}
-                                            >
-                                                {currentUser ? (t('management.settings.plan.acquirePlan') || 'Adquirir Plano') : (t('pricingPage.plans.start.cta') || 'Começar Teste Grátis')}
-                                            </button>
-                                        )
+                                                const isStrategy = planName.toLowerCase().includes('strategy') || planName.toLowerCase().includes('estrategia');
+                                                if (isStrategy && !userToUse) {
+                                                    setIsAuthModalOpen(true);
+                                                } else if (isStrategy && userToUse) {
+                                                    setCheckoutData({ type: 'plan', planName: planName });
+                                                    setIsCheckoutOpen(true);
+                                                } else if (userToUse) {
+                                                    setCheckoutData({ type: 'plan', planName: planName });
+                                                    setIsCheckoutOpen(true);
+                                                } else {
+                                                    setIsAuthModalOpen(true);
+                                                }
+                                            }}
+                                            className={`w-full py-5 rounded-2xl font-black text-lg transition-all ${!plan.recommended
+                                                ? 'border-2 border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400 bg-transparent hover:bg-indigo-50 dark:hover:bg-indigo-900/10 shadow-none'
+                                                : 'bg-branding-gradient animate-gradient text-white shadow-2xl shadow-blue-600/30 hover:scale-[1.02]'
+                                                }`}
+                                        >
+                                            {currentUser ? (t('management.settings.plan.acquirePlan') || 'Adquirir Plano') : (t('pricingPage.plans.start.cta') || 'Começar Teste Grátis')}
+                                        </button>
                                     )}
                                 </div>
                             );
@@ -692,28 +692,26 @@ export default function PricingPage() {
                                                         <Check size={16} /> {t('management.settings.plan.liberated') || 'Liberado'}
                                                     </div>
                                                 ) : (
-                                                    (!currentUser || isSocioAdmin) && (
-                                                        <button
-                                                            onClick={async () => {
-                                                                let userToUse = currentUser;
-                                                                if (userToUse === undefined) {
-                                                                    const supabase = createMasterClient();
-                                                                    const { data: { user } } = await supabase.auth.getUser();
-                                                                    userToUse = user;
-                                                                }
+                                                    <button
+                                                        onClick={async () => {
+                                                            let userToUse = currentUser;
+                                                            if (userToUse === undefined) {
+                                                                const supabase = createMasterClient();
+                                                                const { data: { user } } = await supabase.auth.getUser();
+                                                                userToUse = user;
+                                                            }
 
-                                                                if (userToUse) {
-                                                                    setCheckoutData({ type: 'module', moduleName: planName });
-                                                                    setIsCheckoutOpen(true);
-                                                                } else {
-                                                                    setIsAuthModalOpen(true);
-                                                                }
-                                                            }}
-                                                            className={`w-full py-4 rounded-xl font-black text-[10px] tracking-widest uppercase transition-all shadow-sm border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700`}
-                                                        >
-                                                            {currentUser ? (t('management.settings.plan.acquirePlan') || 'Adquirir Plano') : (t('pricingPage.plans.start.cta') || 'Começar Teste Grátis')}
-                                                        </button>
-                                                    )
+                                                            if (userToUse) {
+                                                                setCheckoutData({ type: 'module', moduleName: planName });
+                                                                setIsCheckoutOpen(true);
+                                                            } else {
+                                                                setIsAuthModalOpen(true);
+                                                            }
+                                                        }}
+                                                        className={`w-full py-4 rounded-xl font-black text-[10px] tracking-widest uppercase transition-all shadow-sm border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700`}
+                                                    >
+                                                        {currentUser ? (t('management.settings.plan.acquireModule') || 'Adquirir Módulo') : (t('pricingPage.plans.start.cta') || 'Começar Teste Grátis')}
+                                                    </button>
                                                 )}
                                             </div>
                                         </div>
@@ -1049,7 +1047,16 @@ export default function PricingPage() {
                     <p className="text-xl text-slate-500 dark:text-slate-400 mb-12 leading-relaxed max-w-2xl mx-auto font-medium">
                         {t('pricingPage.finalCta.subtitle')}
                     </p>
-                    {(hasAccess || currentUser) && (
+                    {currentUser === undefined ? (
+                        <div className="w-48 h-16 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-[2.5rem] mx-auto mt-4" />
+                    ) : currentUser ? (
+                        <Link
+                            href="/veritum"
+                            className="inline-flex items-center justify-center bg-indigo-600 text-white px-12 py-5 rounded-[2.5rem] font-black text-xl shadow-2xl shadow-indigo-600/40 hover:scale-105 hover:bg-indigo-700 transition-all cursor-pointer uppercase tracking-tight"
+                        >
+                            {locale === 'pt' ? 'Acessar meu painel' : locale === 'es' ? 'Acceder a mi panel' : 'Access my dashboard'}
+                        </Link>
+                    ) : (
                         <button
                             onClick={() => setIsAuthModalOpen(true)}
                             className="bg-indigo-600 text-white px-12 py-5 rounded-[2.5rem] font-black text-xl shadow-2xl shadow-indigo-600/40 hover:scale-105 hover:bg-indigo-700 transition-all cursor-pointer uppercase tracking-tight"

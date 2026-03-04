@@ -1,0 +1,9 @@
+ALTER TABLE public.payments 
+ADD COLUMN IF NOT EXISTS asaas_customer_id TEXT,
+ADD COLUMN IF NOT EXISTS plan_name TEXT,
+ADD COLUMN IF NOT EXISTS external_reference TEXT,
+ADD COLUMN IF NOT EXISTS idempotency_key TEXT,
+ADD COLUMN IF NOT EXISTS billing_type TEXT,
+ADD COLUMN IF NOT EXISTS invoice_url TEXT,
+ADD COLUMN IF NOT EXISTS asaas_response JSONB,
+ADD COLUMN IF NOT EXISTS webhook_processed BOOLEAN DEFAULT false;

@@ -21,7 +21,6 @@ import { createDynamicClient } from '@/utils/supabase/client';
 import { Tooltip } from './ui/tooltip';
 import { EmailSettingsManager } from './modules/email-config';
 import AccessManagement from './modules/access-management';
-import TrialCountdown from './shared/trial-countdown';
 import ProfileModal from './ui/profile-modal';
 import { CheckoutModal } from './modules/checkout-modal';
 
@@ -375,9 +374,9 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                     </Link>
                 </Tooltip>
 
-                <nav className="flex-1 p-4 space-y-8 overflow-y-auto">
+                <nav className="flex-1 p-4 space-y-6 overflow-y-auto custom-scrollbar">
                     {/* Suítes Group */}
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                         <AnimatePresence>
                             {isSidebarOpen && (
                                 <motion.button
@@ -385,7 +384,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                     animate={{ opacity: 1 }}
                                     exit={{ opacity: 0 }}
                                     onClick={() => onModuleChange(ModuleId.DASHBOARD_SUITES)}
-                                    className="group flex items-center gap-2 px-3 mb-4 w-full text-left cursor-pointer overflow-hidden"
+                                    className="group flex items-center gap-2 px-3 mb-2 w-full text-left cursor-pointer overflow-hidden"
                                 >
                                     <div className={`w-1 h-3 rounded-full transition-all ${normalize(activeModule).includes('dashboard_suites') || suiteItems.some(i => normalize(i.id) === normalize(activeModule)) ? 'bg-indigo-600 h-5' : 'bg-slate-300 group-hover:bg-indigo-400'}`} />
                                     <h3 className={`text-[10px] font-black uppercase tracking-widest transition-colors whitespace-nowrap ${normalize(activeModule).includes('dashboard_suites') || suiteItems.some(i => normalize(i.id) === normalize(activeModule)) ? 'text-indigo-600' : 'text-slate-400 group-hover:text-slate-600'}`}>{t('dashboard.groups.modules.title')}</h3>
@@ -403,7 +402,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                             setIsCheckoutOpen(true);
                                         }
                                     }}
-                                    className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 cursor-pointer ${item.isLocked ? 'opacity-50 grayscale' : ''} ${normalize(activeModule) === normalize(item.id)
+                                    className={`w-full flex items-center gap-3 py-2 px-3 rounded-xl transition-all duration-200 cursor-pointer ${item.isLocked ? 'opacity-50 grayscale' : ''} ${normalize(activeModule) === normalize(item.id)
                                         ? 'bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-400 font-bold shadow-sm'
                                         : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white'
                                         }`}
@@ -440,7 +439,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                     </div>
 
                     {/* Administração Group */}
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                         <AnimatePresence>
                             {isSidebarOpen && (
                                 <motion.button
@@ -448,7 +447,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                     animate={{ opacity: 1 }}
                                     exit={{ opacity: 0 }}
                                     onClick={() => onModuleChange(ModuleId.DASHBOARD_ADMIN)}
-                                    className="group flex items-center gap-2 px-3 mb-4 w-full text-left cursor-pointer overflow-hidden"
+                                    className="group flex items-center gap-2 px-3 mb-2 w-full text-left cursor-pointer overflow-hidden"
                                 >
                                     <div className={`w-1 h-3 rounded-full transition-all ${normalize(activeModule).includes('dashboard_admin') || filteredAdminItems.some(i => i.id === activeModule) ? 'bg-indigo-600 h-5' : 'bg-slate-300 group-hover:bg-indigo-400'}`} />
                                     <h3 className={`text-[10px] font-black uppercase tracking-widest transition-colors whitespace-nowrap ${normalize(activeModule).includes('dashboard_admin') || filteredAdminItems.some(i => i.id === activeModule) ? 'text-indigo-600' : 'text-slate-400 group-hover:text-slate-600'}`}>{t('dashboard.groups.admin.title')}</h3>
@@ -460,7 +459,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                 <Link
                                     key={item.id}
                                     href={`/veritum/${normalize(item.id)}`}
-                                    className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 cursor-pointer ${normalize(activeModule) === normalize(item.id)
+                                    className={`w-full flex items-center gap-3 py-2 px-3 rounded-xl transition-all duration-200 cursor-pointer ${normalize(activeModule) === normalize(item.id)
                                         ? 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white font-bold'
                                         : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
                                         }`}
@@ -490,7 +489,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                             <div className="mx-2 my-2 transition-all">
                                 <div className="h-px bg-slate-200 dark:bg-slate-800 shadow-[0_1px_0_0_rgba(255,255,255,1)] dark:shadow-[0_1px_0_0_rgba(255,255,255,0.02)]" />
                             </div>
-                            <div className="space-y-2">
+                            <div className="space-y-1">
                                 <AnimatePresence>
                                     {isSidebarOpen && (
                                         <motion.button
@@ -498,7 +497,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                             animate={{ opacity: 1 }}
                                             exit={{ opacity: 0 }}
                                             onClick={() => onModuleChange(ModuleId.DASHBOARD_MASTER)}
-                                            className="group flex items-center gap-2 px-3 mb-4 w-full text-left cursor-pointer overflow-hidden"
+                                            className="group flex items-center gap-2 px-3 mb-2 w-full text-left cursor-pointer overflow-hidden"
                                         >
                                             <div className={`w-1 h-3 rounded-full transition-all ${normalize(activeModule).includes('dashboard_master') || masterItems.some(i => i.id === activeModule) ? 'bg-amber-500 h-5' : 'bg-slate-300 group-hover:bg-amber-400'}`} />
                                             <h3 className={`text-[10px] font-black uppercase tracking-widest transition-colors whitespace-nowrap ${normalize(activeModule).includes('dashboard_master') || masterItems.some(i => i.id === activeModule) ? 'text-amber-600' : 'text-slate-400 group-hover:text-slate-600'}`}>{t('dashboard.groups.master.title')}</h3>
@@ -509,7 +508,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                     <Tooltip key={item.id} content={item.label} enabled={!isSidebarOpen}>
                                         <Link
                                             href={`/veritum/${normalize(item.id)}`}
-                                            className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 cursor-pointer ${normalize(activeModule) === normalize(item.id)
+                                            className={`w-full flex items-center gap-3 py-2 px-3 rounded-xl transition-all duration-200 cursor-pointer ${normalize(activeModule) === normalize(item.id)
                                                 ? 'bg-amber-50 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 font-bold shadow-sm'
                                                 : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white'
                                                 }`}
@@ -536,17 +535,58 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                     )}
                 </nav>
 
-                {/* 💎 TRIAL COUNTDOWN */}
-                <TrialCountdown
-                    userId={user.id}
-                    planId={user.plan_id}
-                    isSidebarOpen={isSidebarOpen}
-                    onUpgrade={() => {
-                        setCheckoutData({ type: 'plan', planName: user.plan_name || 'Pro' });
-                        setIsCheckoutOpen(true);
-                    }}
-                />
+                {/* 💎 CURRENT PLAN DISPLAY */}
+                <div className="px-4 pb-6">
+                    <Tooltip content="Fazer Upgrade Assinatura" enabled={!isSidebarOpen} side="right">
+                        <div
+                            className={`p-3 rounded-2xl border transition-all flex flex-col gap-3 ${isSidebarOpen ? 'bg-gradient-to-br from-indigo-50 to-indigo-100/50 dark:from-indigo-900/20 dark:to-indigo-900/10 border-indigo-200/50 dark:border-indigo-800/50 hover:border-indigo-300 dark:hover:border-indigo-700' : 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-100 dark:border-indigo-800/50 justify-center items-center'}`}
+                        >
+                            <div className="flex items-center gap-3 w-full"
+                                onClick={() => {
+                                    if (!isSidebarOpen) {
+                                        if (isSuperAdmin) {
+                                            setCheckoutData({ type: 'plan', planName: (typeof user.plan_name === 'object' ? ((user.plan_name as any).pt || (user.plan_name as any).en || 'Pro') : (user.plan_name || 'Pro')) });
+                                            setIsCheckoutOpen(true);
+                                        } else {
+                                            toast.error('Acesso restrito. Apenas administradores podem gerenciar o plano.');
+                                        }
+                                    }
+                                }}
+                                style={{ cursor: !isSidebarOpen ? 'pointer' : 'default' }}
+                            >
+                                <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-indigo-600/20 hover:scale-105 transition-transform">
+                                    <Crown size={16} className="text-amber-300" />
+                                </div>
+                                {isSidebarOpen && (
+                                    <div className="flex flex-col overflow-hidden flex-1">
+                                        <span className="text-[9px] font-black uppercase tracking-widest text-indigo-400 dark:text-indigo-500 mb-0.5">Meu Plano</span>
+                                        <span className="text-xs font-black text-indigo-900 dark:text-indigo-100 truncate w-full">
+                                            {typeof user.plan_name === 'object' ? ((user.plan_name as any)[locale] || (user.plan_name as any).pt || 'Carregando...') : (user.plan_name || 'Carregando...')}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
 
+                            {isSidebarOpen && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (isSuperAdmin) {
+                                            const normalizedName = typeof user.plan_name === 'object' ? ((user.plan_name as any).pt || (user.plan_name as any).en || 'START') : (user.plan_name || 'START');
+                                            setCheckoutData({ type: 'plan', planName: normalizedName });
+                                            setIsCheckoutOpen(true);
+                                        } else {
+                                            toast.error('Acesso restrito. Apenas administradores podem gerenciar o plano.');
+                                        }
+                                    }}
+                                    className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white text-[10px] font-black uppercase tracking-wider rounded-xl transition-all shadow-md shadow-indigo-600/20 active:scale-95 flex items-center justify-center gap-2 mt-1"
+                                >
+                                    Fazer Upgrade <ChevronRight size={12} strokeWidth={3} />
+                                </button>
+                            )}
+                        </div>
+                    </Tooltip>
+                </div>
             </aside>
 
             {/* Main Content Area */}
