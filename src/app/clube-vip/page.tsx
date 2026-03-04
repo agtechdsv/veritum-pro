@@ -61,10 +61,10 @@ export default function ClubeVipPage() {
                     </div>
                     <div className="hidden md:flex items-center gap-8">
                         {[
-                            { name: 'Início', href: '#herovip' },
-                            { name: 'Benefícios', href: '#beneficios' },
-                            { name: 'Recompensas', href: '#recompensas' },
-                            { name: 'Meta 100%', href: '#meta' }
+                            { name: t('clubeVip.nav.home'), href: '#herovip' },
+                            { name: t('clubeVip.nav.benefits'), href: '#beneficios' },
+                            { name: t('clubeVip.nav.rewards'), href: '#recompensas' },
+                            { name: t('clubeVip.nav.goal'), href: '#meta' }
                         ].map((item) => (
                             <a
                                 key={item.name}
@@ -140,18 +140,20 @@ export default function ClubeVipPage() {
                 <div className="max-w-4xl mx-auto text-center relative z-10">
                     <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-amber-500/30 bg-amber-500/10 mb-8 animate-in slide-in-from-bottom-4 duration-700">
                         <Crown size={14} className="text-amber-500" />
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-500">Acesso Restrito</span>
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-500">{t('clubeVip.hero.access')}</span>
                     </div>
 
                     <h1 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter mb-8 leading-[0.9] animate-in slide-in-from-bottom-6 duration-700 delay-100">
-                        Bem-vindo à elite da <br className="hidden md:block" />
+                        {t('clubeVip.hero.title').split(' ').slice(0, -2).join(' ')} <br className="hidden md:block" />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-amber-500 to-orange-500">
-                            tecnologia jurídica.
+                            {t('clubeVip.hero.title').split(' ').slice(-2).join(' ')}
                         </span>
                     </h1>
 
                     <p className="text-lg md:text-xl font-medium text-slate-400 leading-relaxed max-w-2xl mx-auto mb-12 animate-in slide-in-from-bottom-8 duration-700 delay-200">
-                        Mais do que uma plataforma de gestão, o <strong className="text-white font-black">Clube VIP Veritum PRO</strong> é uma rede exclusiva para assinantes dos planos GROWTH e STRATEGY. Desbloqueie ferramentas premium, blinde a sua comunicação e seja recompensado por trazer novos escritórios para o nosso ecossistema.
+                        {t('clubeVip.hero.subtitle').split('Clube VIP Veritum PRO')[0]}
+                        <strong className="text-white font-black">Clube VIP Veritum PRO</strong>
+                        {t('clubeVip.hero.subtitle').split('Clube VIP Veritum PRO')[1]}
                     </p>
 
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-in slide-in-from-bottom-10 duration-700 delay-300">
@@ -160,10 +162,10 @@ export default function ClubeVipPage() {
                             onClick={handleActivateClick}
                             className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-full font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 shadow-[0_0_40px_rgba(245,158,11,0.3)] hover:shadow-[0_0_60px_rgba(245,158,11,0.5)] hover:scale-105 active:scale-95 transition-all"
                         >
-                            <Sparkles size={16} className="fill-current" /> Ativar Meu Perfil VIP
+                            <Sparkles size={16} className="fill-current" /> {t('clubeVip.hero.ctaActivate')}
                         </Link>
                         <a href="#beneficios" className="w-full sm:w-auto px-8 py-4 bg-transparent border border-slate-700 text-white rounded-full font-black uppercase tracking-widest text-xs hover:bg-slate-800 transition-all">
-                            Conhecer Benefícios
+                            {t('clubeVip.hero.ctaLearn')}
                         </a>
                     </div>
                 </div>
@@ -181,8 +183,8 @@ export default function ClubeVipPage() {
                                     <ShieldCheck size={32} className="text-indigo-400" />
                                 </div>
                                 <div>
-                                    <h4 className="text-xl font-black text-white uppercase tracking-tighter">Webmail Blindado</h4>
-                                    <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest">Proteção Nível Militar</p>
+                                    <h4 className="text-xl font-black text-white uppercase tracking-tighter">{t('clubeVip.benefits.webmail')}</h4>
+                                    <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest">{t('clubeVip.benefits.military')}</p>
                                 </div>
                             </div>
 
@@ -193,7 +195,7 @@ export default function ClubeVipPage() {
                                             <Mail size={20} className="text-slate-400 group-hover:text-indigo-400 transition-colors" />
                                         </div>
                                         <div>
-                                            <p className="text-xs font-black text-white uppercase tracking-widest">Seu Endereço Oficial</p>
+                                            <p className="text-xs font-black text-white uppercase tracking-widest">{t('clubeVip.benefits.address')}</p>
                                             <p className="text-sm font-bold text-indigo-400 mt-1">seu.nome@veritumpro.com</p>
                                         </div>
                                     </div>
@@ -202,13 +204,13 @@ export default function ClubeVipPage() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="p-5 bg-slate-900/50 border border-white/5 rounded-2xl">
                                         <Target size={20} className="text-emerald-400 mb-3" />
-                                        <h5 className="text-[10px] font-black text-white uppercase tracking-widest mb-1">Filtro Inteligente</h5>
-                                        <p className="text-[10px] text-slate-500 font-semibold">Desvie notificações de tribunais automaticamente.</p>
+                                        <h5 className="text-[10px] font-black text-white uppercase tracking-widest mb-1">{t('clubeVip.benefits.smartFilter')}</h5>
+                                        <p className="text-[10px] text-slate-500 font-semibold">{t('clubeVip.benefits.smartFilterDesc')}</p>
                                     </div>
                                     <div className="p-5 bg-slate-900/50 border border-white/5 rounded-2xl">
                                         <Zap size={20} className="text-amber-400 mb-3" />
-                                        <h5 className="text-[10px] font-black text-white uppercase tracking-widest mb-1">Acesso Antecipado</h5>
-                                        <p className="text-[10px] text-slate-500 font-semibold">Seja o primeiro a testar nossas novas IAs.</p>
+                                        <h5 className="text-[10px] font-black text-white uppercase tracking-widest mb-1">{t('clubeVip.benefits.earlyAccess')}</h5>
+                                        <p className="text-[10px] text-slate-500 font-semibold">{t('clubeVip.benefits.earlyAccessDesc')}</p>
                                     </div>
                                 </div>
                             </div>
@@ -217,16 +219,18 @@ export default function ClubeVipPage() {
 
                     <div className="order-1 lg:order-2 space-y-6">
                         <h2 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter leading-[0.9]">
-                            A sua Identidade <br className="hidden md:block" />Digital Exclusiva
+                            {t('clubeVip.benefits.title').split(' ').slice(0, -2).join(' ')} <br className="hidden md:block" />
+                            {t('clubeVip.benefits.title').split(' ').slice(-2).join(' ')}
                         </h2>
                         <p className="text-lg text-slate-400 leading-relaxed font-medium">
-                            Como membro VIP, você ganha acesso imediato a uma caixa postal blindada <strong className="text-indigo-400 font-bold">@veritumpro.com</strong>.
+                            {t('clubeVip.benefits.subtitle').split('@veritumpro.com')[0]}
+                            <strong className="text-indigo-400 font-bold">@veritumpro.com</strong>.
                         </p>
                         <p className="text-sm text-slate-500 leading-relaxed">
-                            Separe estrategicamente as notificações dos tribunais e do sistema da sua caixa de entrada pessoal. Além de organização absoluta, este é o seu canal de acesso antecipado: receba atualizações do mercado e recursos beta antes de todo mundo.
+                            {t('clubeVip.benefits.description')}
                         </p>
                         <ul className="space-y-4 pt-6">
-                            {['Separação Profissional / Pessoal', 'Filtro Automático de Intimações', 'Comunicação Oficial Veritum Beta'].map((item, i) => (
+                            {(t('clubeVip.benefits.items') as string[]).map((item, i) => (
                                 <li key={i} className="flex items-center gap-3 text-xs font-black text-slate-300 uppercase tracking-widest">
                                     <CheckCircle2 size={16} className="text-indigo-500" /> {item}
                                 </li>
@@ -244,64 +248,100 @@ export default function ClubeVipPage() {
                             <Users size={32} className="text-emerald-400" />
                         </div>
                         <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter leading-[0.9] mb-6">
-                            Expanda a rede. Acumule pontos. <span className="text-emerald-400">Zere a sua assinatura.</span>
+                            {t('clubeVip.rewards.title').split('Zere a sua assinatura.')[0]}
+                            <span className="text-emerald-400">{t('clubeVip.rewards.title').split('.').slice(-1)[0].trim()}</span>
                         </h2>
                         <p className="text-lg text-slate-400 leading-relaxed font-medium">
-                            Bons advogados andam com bons advogados. No Clube VIP Veritum, a sua influência financia a tecnologia do seu escritório.
+                            {t('clubeVip.rewards.subtitle')}
                         </p>
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
                         <div className="space-y-8">
                             <p className="text-sm text-slate-400 leading-relaxed border-l-4 border-emerald-500 pl-6 py-2">
-                                A cada colega que você trouxer para o nosso ecossistema, você acumula Pontos VIP que se transformam em descontos reais na sua próxima fatura <strong className="text-white font-black">(1 Ponto = 1% OFF)</strong>.
+                                {t('clubeVip.rewards.detail').split('(1 Ponto = 1% OFF)')[0]}
+                                <strong className="text-white font-black">(1 Ponto = 1% OFF)</strong>.
                             </p>
 
                             <div className="space-y-4 pt-4">
-                                <h4 className="text-xs font-black uppercase tracking-widest text-slate-500 mb-6">Como acelerar seus ganhos:</h4>
+                                <h4 className="text-xs font-black uppercase tracking-widest text-slate-500 mb-6">{t('clubeVip.rewards.accelerators')}</h4>
 
-                                <div className="p-6 bg-slate-900 border border-slate-800 rounded-3xl flex items-center justify-between group hover:border-slate-700 transition-colors">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 bg-slate-800 rounded-full flex justify-center items-center font-black text-slate-400">01</div>
-                                        <div>
-                                            <h5 className="text-sm font-black text-white uppercase tracking-widest">Plano START</h5>
-                                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Ideal para novos escritórios</p>
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-2xl font-black text-cyan-400">2 a 5</p>
-                                        <p className="text-[9px] font-black text-cyan-400/50 uppercase tracking-widest">Pontos VIP</p>
-                                    </div>
-                                </div>
+                                {(() => {
+                                    const pointsTable = {
+                                        start: [1, 2, 3, 5],
+                                        growth: [2, 4, 7, 10],
+                                        strategy: [3, 6, 11, 15]
+                                    };
 
-                                <div className="p-6 bg-slate-900 border border-slate-800 rounded-3xl flex items-center justify-between group hover:border-amber-500/30 transition-colors relative overflow-hidden">
-                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-500/5 to-transparent flex translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-                                    <div className="flex items-center gap-4 relative z-10">
-                                        <div className="w-12 h-12 bg-amber-500/10 text-amber-500 rounded-full flex justify-center items-center font-black">02</div>
-                                        <div>
-                                            <h5 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">Plano GROWTH <Sparkles size={14} className="text-amber-500" /></h5>
-                                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Crescimento acelerado</p>
+                                    const PlanTooltip = ({ points }: { points: number[] }) => (
+                                        <div className="absolute right-full top-1/2 -translate-y-1/2 mr-6 w-52 bg-slate-900/98 backdrop-blur-3xl border border-white/10 rounded-2xl p-4 shadow-[0_0_50px_rgba(0,0,0,0.8),0_0_20px_rgba(99,102,241,0.1)] opacity-0 invisible translate-x-2 scale-95 group-hover:opacity-100 group-hover:visible group-hover:translate-x-0 group-hover:scale-100 transition-all duration-300 z-50 pointer-events-none">
+                                            <div className="space-y-2">
+                                                {[
+                                                    { label: t('clubeVip.rewards.cycles.monthly'), val: points[0] },
+                                                    { label: t('clubeVip.rewards.cycles.quarterly'), val: points[1] },
+                                                    { label: t('clubeVip.rewards.cycles.semiannually'), val: points[2] },
+                                                    { label: t('clubeVip.rewards.cycles.annually'), val: points[3] }
+                                                ].map((cycle, idx) => (
+                                                    <div key={idx} className="flex justify-between items-center text-[10px] uppercase tracking-wider font-bold">
+                                                        <span className="text-slate-500">{cycle.label}</span>
+                                                        <span className="text-white">{cycle.val} {cycle.val === 1 ? t('clubeVip.rewards.cycles.point') : t('clubeVip.rewards.cycles.points')}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div className="absolute left-full top-1/2 -translate-y-1/2 border-8 border-transparent border-l-slate-900/95" />
                                         </div>
-                                    </div>
-                                    <div className="text-right relative z-10">
-                                        <p className="text-2xl font-black text-amber-400">5 a 12</p>
-                                        <p className="text-[9px] font-black text-amber-400/50 uppercase tracking-widest">Pontos VIP</p>
-                                    </div>
-                                </div>
+                                    );
 
-                                <div className="p-6 bg-gradient-to-br from-indigo-900 to-slate-900 border border-indigo-500/30 rounded-3xl flex items-center justify-between shadow-[0_0_30px_rgba(99,102,241,0.1)] group hover:border-indigo-400 transition-colors">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 bg-indigo-500 text-white rounded-full flex justify-center items-center font-black shadow-lg">03</div>
-                                        <div>
-                                            <h5 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">Plano STRATEGY <Crown size={14} className="text-indigo-400" /></h5>
-                                            <p className="text-[10px] text-indigo-300 font-bold uppercase tracking-widest mt-1">O seu atalho mais rápido</p>
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-2xl font-black text-indigo-400">8 a 20</p>
-                                        <p className="text-[9px] font-black text-indigo-400/50 uppercase tracking-widest">Pontos VIP!</p>
-                                    </div>
-                                </div>
+                                    return (
+                                        <>
+                                            <div className="p-6 bg-slate-900 border border-slate-800 rounded-3xl flex items-center justify-between group hover:border-slate-700 transition-colors relative overflow-visible">
+                                                <PlanTooltip points={pointsTable.start} />
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-12 h-12 bg-slate-800 rounded-full flex justify-center items-center font-black text-slate-400">01</div>
+                                                    <div>
+                                                        <h5 className="text-sm font-black text-white uppercase tracking-widest">{t('clubeVip.rewards.plans.start.name')}</h5>
+                                                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">{t('clubeVip.rewards.plans.start.desc')}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-2xl font-black text-cyan-400">{t('clubeVip.rewards.plans.start.points')}</p>
+                                                    <p className="text-[9px] font-black text-cyan-400/50 uppercase tracking-widest">{t('clubeVip.rewards.plans.start.label')}</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="p-6 bg-slate-900 border border-slate-800 rounded-3xl flex items-center justify-between group hover:border-amber-500/30 transition-colors relative overflow-visible">
+                                                <PlanTooltip points={pointsTable.growth} />
+                                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-500/5 to-transparent flex translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 pointer-events-none" />
+                                                <div className="flex items-center gap-4 relative z-10">
+                                                    <div className="w-12 h-12 bg-amber-500/10 text-amber-500 rounded-full flex justify-center items-center font-black">02</div>
+                                                    <div>
+                                                        <h5 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">{t('clubeVip.rewards.plans.growth.name')} <Sparkles size={14} className="text-amber-500" /></h5>
+                                                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">{t('clubeVip.rewards.plans.growth.desc')}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right relative z-10">
+                                                    <p className="text-2xl font-black text-amber-400">{t('clubeVip.rewards.plans.growth.points')}</p>
+                                                    <p className="text-[9px] font-black text-amber-400/50 uppercase tracking-widest">{t('clubeVip.rewards.plans.growth.label')}</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="p-6 bg-gradient-to-br from-indigo-900 to-slate-900 border border-indigo-500/30 rounded-3xl flex items-center justify-between shadow-[0_0_30px_rgba(99,102,241,0.1)] group hover:border-indigo-400 transition-colors relative overflow-visible">
+                                                <PlanTooltip points={pointsTable.strategy} />
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-12 h-12 bg-indigo-500 text-white rounded-full flex justify-center items-center font-black shadow-lg">03</div>
+                                                    <div>
+                                                        <h5 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">{t('clubeVip.rewards.plans.strategy.name')} <Crown size={14} className="text-indigo-400" /></h5>
+                                                        <p className="text-[10px] text-indigo-300 font-bold uppercase tracking-widest mt-1">{t('clubeVip.rewards.plans.strategy.desc')}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-2xl font-black text-indigo-400">{t('clubeVip.rewards.plans.strategy.points')}</p>
+                                                    <p className="text-[9px] font-black text-indigo-400/50 uppercase tracking-widest">{t('clubeVip.rewards.plans.strategy.label')}</p>
+                                                </div>
+                                            </div>
+                                        </>
+                                    );
+                                })()}
                             </div>
                         </div>
 
@@ -309,15 +349,15 @@ export default function ClubeVipPage() {
                             <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-[2.5rem] p-10 relative overflow-hidden">
                                 <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-500/20 blur-[60px] rounded-full pointer-events-none" />
                                 <Trophy size={40} className="text-emerald-400 mb-6" />
-                                <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-4">A Grande Meta (100% OFF)</h3>
+                                <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-4">{t('clubeVip.goal.title')}</h3>
                                 <p className="text-sm text-emerald-100/70 font-medium leading-relaxed mb-6">
-                                    Acumule 100 Pontos VIP e utilize as suítes de Inteligência Artificial do Veritum PRO totalmente por nossa conta no seu próximo ciclo.
+                                    {t('clubeVip.goal.description')}
                                 </p>
                                 <div className="h-4 bg-black/30 rounded-full p-1 overflow-hidden relative">
                                     <div className="w-full h-full bg-gradient-to-r from-emerald-600 to-emerald-400 rounded-full" />
                                     <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik0wIDQwTDAgMEwyMCAwbDIwIDQwaC0yMEwiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4xKSIgZmlsbC1ydWxlPSJldmVub2RkIi8+Cjwvc3ZnPg==')] opacity-50 animation-shift" />
                                 </div>
-                                <p className="text-right text-[10px] font-black text-emerald-400 uppercase tracking-widest mt-3">100% OFF Alcançado</p>
+                                <p className="text-right text-[10px] font-black text-emerald-400 uppercase tracking-widest mt-3">{t('clubeVip.goal.progress')}</p>
                             </div>
 
                             <div className="bg-slate-900 border border-slate-800 rounded-[2.5rem] p-10 flex gap-6">
@@ -325,10 +365,10 @@ export default function ClubeVipPage() {
                                     <Target size={24} className="text-slate-400" />
                                 </div>
                                 <div>
-                                    <h3 className="text-base font-black text-white uppercase tracking-widest mb-2">O seu esforço nunca se perde</h3>
+                                    <h3 className="text-base font-black text-white uppercase tracking-widest mb-2">{t('clubeVip.goal.persistenceTitle')}</h3>
                                     <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                                        Ultrapassou a meta de 100 pontos? Não se preocupe. Todos os pontos excedentes são contabilizados e transferidos automaticamente para o seu ciclo de faturamento posterior.
-                                        <br /><br /><strong className="text-slate-300 font-black">Mantenha sua rede ativa e garanta a paz mental do ano inteiro.</strong>
+                                        {t('clubeVip.goal.persistenceDesc').split('Mantenha sua rede ativa')[0]}
+                                        <br /><br /><strong className="text-slate-300 font-black">{t('clubeVip.goal.persistenceDesc').match(/Mantenha sua rede ativa.*/)?.[0]}</strong>
                                     </p>
                                 </div>
                             </div>
@@ -342,15 +382,15 @@ export default function ClubeVipPage() {
                 <div className="max-w-4xl mx-auto text-center">
                     <Crown size={48} className="text-amber-500 mx-auto mb-8 opacity-50" />
                     <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter mb-8 leading-[0.9]">
-                        Pronto para assumir O <br className="hidden md:block" />
-                        <span className="text-amber-500">Seu lugar no clube?</span>
+                        {t('clubeVip.ctaFinal.title1')} <br className="hidden md:block" />
+                        <span className="text-amber-500">{t('clubeVip.ctaFinal.title2')}</span>
                     </h2>
                     <Link
                         href="/veritum/settings?tab=vip"
                         onClick={handleActivateClick}
                         className="inline-flex items-center gap-4 bg-white text-amber-600 px-10 py-5 rounded-full font-black uppercase tracking-widest text-sm shadow-[0_10px_40px_rgba(245,158,11,0.2)] hover:scale-105 transition-all"
                     >
-                        Ativar Benefícios Agora <ArrowRight size={18} />
+                        {t('clubeVip.ctaFinal.button')} <ArrowRight size={18} />
                     </Link>
                 </div>
             </section>
@@ -363,7 +403,7 @@ export default function ClubeVipPage() {
 
             <footer className="py-8 text-center border-t border-white/5 bg-[#020617]">
                 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-600">
-                    &copy; {new Date().getFullYear()} Veritum PRO - Todos os direitos reservados
+                    {t('clubeVip.footer.copyright', { year: new Date().getFullYear() })}
                 </p>
             </footer>
 

@@ -1929,5 +1929,86 @@ export const pt = {
         catPlaceholder: 'Categoria (ex: compute)',
         descPlaceholder: 'Texto da feature...',
         noFeatures: 'Nenhuma feature cadastrada.'
+    },
+    clubeVip: {
+        nav: {
+            home: 'Início',
+            benefits: 'Benefícios',
+            rewards: 'Recompensas',
+            goal: 'Meta 100%'
+        },
+        hero: {
+            access: 'Acesso Restrito',
+            title: 'Bem-vindo à elite da tecnologia jurídica.',
+            subtitle: 'Mais do que uma plataforma de gestão, o Clube VIP Veritum PRO é uma rede exclusiva para assinantes dos planos GROWTH e STRATEGY. Desbloqueie ferramentas premium, blinde a sua comunicação e seja recompensado por trazer novos escritórios para o nosso ecossistema.',
+            ctaActivate: 'Ativar Meu Perfil VIP',
+            ctaLearn: 'Conhecer Benefícios'
+        },
+        benefits: {
+            title: 'A sua Identidade Digital Exclusiva',
+            subtitle: 'Como membro VIP, você ganha acesso imediato a uma caixa postal blindada @veritumpro.com.',
+            description: 'Separe estrategicamente as notificações dos tribunais e do sistema da sua caixa de entrada pessoal. Além de organização absoluta, este é o seu canal de acesso antecipado: receba atualizações do mercado e recursos beta antes de todo mundo.',
+            items: [
+                'Separação Profissional / Pessoal',
+                'Filtro Automático de Intimações',
+                'Comunicação Oficial Veritum Beta'
+            ],
+            webmail: 'Webmail Blindado',
+            military: 'Proteção Nível Militar',
+            address: 'Seu Endereço Oficial',
+            smartFilter: 'Filtro Inteligente',
+            smartFilterDesc: 'Desvie notificações de tribunais automaticamente.',
+            earlyAccess: 'Acesso Antecipado',
+            earlyAccessDesc: 'Seja o primeiro a testar nossas novas IAs.'
+        },
+        rewards: {
+            title: 'Expanda a rede. Acumule pontos. Zere a sua assinatura.',
+            subtitle: 'Bons advogados andam com bons advogados. No Clube VIP Veritum, a sua influência financia a tecnologia do seu escritório.',
+            detail: 'A cada colega que você trouxer para o nosso ecossistema, você acumula Pontos VIP que se transformam em descontos reais na sua próxima fatura (1 Ponto = 1% OFF).',
+            accelerators: 'Como acelerar seus ganhos:',
+            cycles: {
+                monthly: 'Mensal',
+                quarterly: 'Trimestral',
+                semiannually: 'Semestral',
+                annually: 'Anual',
+                point: 'Ponto',
+                points: 'Pontos'
+            },
+            plans: {
+                start: {
+                    name: 'Plano START',
+                    desc: 'Ideal para novos escritórios',
+                    points: '1 a 5',
+                    label: 'Pontos VIP'
+                },
+                growth: {
+                    name: 'Plano GROWTH',
+                    desc: 'Crescimento acelerado',
+                    points: '2 a 10',
+                    label: 'Pontos VIP'
+                },
+                strategy: {
+                    name: 'Plano STRATEGY',
+                    desc: 'O seu atalho mais rápido',
+                    points: '3 a 15',
+                    label: 'Pontos VIP!'
+                }
+            }
+        },
+        goal: {
+            title: 'A Grande Meta (100% OFF)',
+            description: 'Acumule 100 Pontos VIP e utilize as suítes de Inteligência Artificial do Veritum PRO totalmente por nossa conta no seu próximo ciclo.',
+            progress: '100% OFF Alcançado',
+            persistenceTitle: 'O seu esforço nunca se perde',
+            persistenceDesc: 'Ultrapassou a meta de 100 pontos? Não se preocupe. Todos os pontos excedentes são contabilizados e transferidos automaticamente para o seu ciclo de faturamento posterior. Mantenha sua rede ativa e garanta a paz mental do ano inteiro.'
+        },
+        ctaFinal: {
+            title1: 'Pronto para assumir O',
+            title2: 'Seu lugar no clube?',
+            button: 'Ativar Benefícios Agora'
+        },
+        footer: {
+            copyright: '© {year} Veritum PRO - Todos os direitos reservados'
+        }
     }
 };

@@ -1941,5 +1941,86 @@ export const es = {
         "catPlaceholder": "Categoría (ej: compute)",
         "descPlaceholder": "Texto de la feature...",
         "noFeatures": "Ninguna feature registrada."
+    },
+    "clubeVip": {
+        "nav": {
+            "home": "Inicio",
+            "benefits": "Beneficios",
+            "rewards": "Recompensas",
+            "goal": "Meta 100%"
+        },
+        "hero": {
+            "access": "Acceso Restringido",
+            "title": "Bienvenido a la élite de la tecnología jurídica.",
+            "subtitle": "Más que una plataforma de gestión, el Club VIP Veritum PRO es una red exclusiva para suscriptores de los planes GROWTH y STRATEGY. Desbloquee herramientas premium, proteja su comunicación y sea recompensado por traer nuevos despachos a nuestro ecosistema.",
+            "ctaActivate": "Activar Mi Perfil VIP",
+            "ctaLearn": "Conocer Beneficios"
+        },
+        "benefits": {
+            "title": "Su Identidad Digital Exclusiva",
+            "subtitle": "Como miembro VIP, obtiene acceso inmediato a un buzón protegido @veritumpro.com.",
+            "description": "Separe estratégicamente las notificaciones de los tribunales y del sistema de su bandeja de entrada personal. Más allá de la organización absoluta, este es su canal de acceso anticipado: reciba actualizaciones del mercado y funciones beta antes que nadie.",
+            "items": [
+                "Separación Profesional / Personal",
+                "Filtro Automático de Notificaciones",
+                "Comunicación Oficial Veritum Beta"
+            ],
+            "webmail": "Correo Web Protegido",
+            "military": "Protección Nivel Militar",
+            "address": "Su Dirección Oficial",
+            "smartFilter": "Filtro Inteligente",
+            "smartFilterDesc": "Desvíe notificaciones de tribunales automáticamente.",
+            "earlyAccess": "Acceso Anticipado",
+            "earlyAccessDesc": "Sea el primero en probar nuestras nuevas IAs."
+        },
+        "rewards": {
+            "title": "Expanda la red. Acumule puntos. Pague cero por su suscripción.",
+            "subtitle": "Buenos abogados van con buenos abogados. En el Club VIP Veritum, su influencia financia la tecnología de su despacho.",
+            "detail": "Por cada colega que traiga a nuestro ecosistema, acumula Puntos VIP que se transforman en descuentos reales en su próxima factura (1 Punto = 1% OFF).",
+            "accelerators": "Cómo acelerar sus ganancias:",
+            "cycles": {
+                "monthly": "Mensual",
+                "quarterly": "Trimestral",
+                "semiannually": "Semestral",
+                "annually": "Anual",
+                "point": "Punto",
+                "points": "Puntos"
+            },
+            "plans": {
+                "start": {
+                    "name": "Plan START",
+                    "desc": "Ideal para nuevos despachos",
+                    "points": "1 a 5",
+                    "label": "Puntos VIP"
+                },
+                "growth": {
+                    "name": "Plan GROWTH",
+                    "desc": "Crecimiento acelerado",
+                    "points": "2 a 10",
+                    "label": "Puntos VIP"
+                },
+                "strategy": {
+                    "name": "Plan STRATEGY",
+                    "desc": "Su atajo más rápido",
+                    "points": "3 a 15",
+                    "label": "¡Puntos VIP!"
+                }
+            }
+        },
+        "goal": {
+            "title": "La Gran Meta (100% OFF)",
+            "description": "Acumule 100 Puntos VIP y utilice las suites de Inteligencia Artificial de Veritum PRO totalmente por nuestra cuenta en su próximo ciclo.",
+            "progress": "100% OFF Alcanzado",
+            "persistenceTitle": "Su esfuerzo nunca se pierde",
+            "persistenceDesc": "¿Superó la meta de 100 puntos? No se preocupe. Todos los puntos excedentes se contabilizan y transfieren automáticamente a su ciclo de facturación posterior. Mantenga su red activa y garantice la paz mental durante todo el año."
+        },
+        "ctaFinal": {
+            "title1": "Listo para asumir",
+            "title2": "¿Su lugar en el club?",
+            "button": "Activar Beneficios Ahora"
+        },
+        "footer": {
+            "copyright": "© {year} Veritum PRO - Todos los derechos reservados"
+        }
     }
 };

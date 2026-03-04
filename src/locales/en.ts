@@ -1914,5 +1914,86 @@ export const en = {
         catPlaceholder: 'Category (ex: compute)',
         descPlaceholder: 'Feature text...',
         noFeatures: 'No features registered.'
+    },
+    clubeVip: {
+        nav: {
+            home: 'Home',
+            benefits: 'Benefits',
+            rewards: 'Rewards',
+            goal: '100% Goal'
+        },
+        hero: {
+            access: 'Restricted Access',
+            title: 'Welcome to the elite of legal technology.',
+            subtitle: 'More than a management platform, the Veritum PRO VIP Club is an exclusive network for GROWTH and STRATEGY plan subscribers. Unlock premium tools, shield your communication, and be rewarded for bringing new firms into our ecosystem.',
+            ctaActivate: 'Activate My VIP Profile',
+            ctaLearn: 'Learn Benefits'
+        },
+        benefits: {
+            title: 'Your Exclusive Digital Identity',
+            subtitle: 'As a VIP member, you get immediate access to a shielded @veritumpro.com mailbox.',
+            description: 'Strategically separate court and system notifications from your personal inbox. Beyond absolute organization, this is your early access channel: receive market updates and beta features before everyone else.',
+            items: [
+                'Professional / Personal Separation',
+                'Automatic Summoning Filter',
+                'Official Veritum Beta Communication'
+            ],
+            webmail: 'Shielded Webmail',
+            military: 'Military Grade Protection',
+            address: 'Your Official Address',
+            smartFilter: 'Smart Filter',
+            smartFilterDesc: 'Automatically redirect court notifications.',
+            earlyAccess: 'Early Access',
+            earlyAccessDesc: 'Be the first to test our new AIs.'
+        },
+        rewards: {
+            title: 'Expand the network. Earn points. Zero your subscription.',
+            subtitle: 'Good lawyers walk with good lawyers. At the Veritum VIP Club, your influence funds your firm\'s technology.',
+            detail: 'For every colleague you bring into our ecosystem, you accumulate VIP Points that turn into real discounts on your next invoice (1 Point = 1% OFF).',
+            accelerators: 'How to accelerate your earnings:',
+            cycles: {
+                monthly: 'Monthly',
+                quarterly: 'Quarterly',
+                semiannually: 'Semi-annually',
+                annually: 'Annually',
+                point: 'Point',
+                points: 'Points'
+            },
+            plans: {
+                start: {
+                    name: 'START Plan',
+                    desc: 'Ideal for new firms',
+                    points: '1 to 5',
+                    label: 'VIP Points'
+                },
+                growth: {
+                    name: 'GROWTH Plan',
+                    desc: 'Accelerated growth',
+                    points: '2 to 10',
+                    label: 'VIP Points'
+                },
+                strategy: {
+                    name: 'STRATEGY Plan',
+                    desc: 'Your fastest shortcut',
+                    points: '3 to 15',
+                    label: 'VIP Points!'
+                }
+            }
+        },
+        goal: {
+            title: 'The Grand Goal (100% OFF)',
+            description: 'Accumulate 100 VIP Points and use the Veritum PRO Artificial Intelligence suites entirely on us in your next cycle.',
+            progress: '100% OFF Achieved',
+            persistenceTitle: 'Your effort is never lost',
+            persistenceDesc: 'Exceeded the 100-point goal? Don\'t worry. All excess points are counted and automatically transferred to your subsequent billing cycle. Keep your network active and ensure year-round peace of mind.'
+        },
+        ctaFinal: {
+            title1: 'Ready allowed to take',
+            title2: 'Your place in the club?',
+            button: 'Activate Benefits Now'
+        },
+        footer: {
+            copyright: '© {year} Veritum PRO - All rights reserved'
+        }
     }
 };
