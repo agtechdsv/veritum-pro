@@ -65,6 +65,9 @@ export default function LoginPage() {
                             Crie sua conta
                         </Link>
                     </p>
+                    <p className="mt-4 text-xs font-medium text-slate-500">
+                        🌟 <Link href="/clube-vip" className="underline hover:text-amber-500 transition-colors">Membro do Clube VIP?</Link> Faça login e confira seus Pontos para a próxima renovação.
+                    </p>
                     <Link href="#" className="hover:text-primary">
                         Esqueceu sua senha?
                     </Link>

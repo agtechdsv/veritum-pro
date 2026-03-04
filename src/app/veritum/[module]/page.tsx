@@ -176,7 +176,7 @@ export default function DynamicModulePage() {
         case 'access_groups': return <AccessManagement currentUser={user} />;
         case 'infra': return <InfraManagement currentUser={user} />;
         case 'persons': return <PersonManagement credentials={credentials} preferences={preferences} currentUser={user} />;
-        case 'dashboard_suites': return <SuiteDashboard items={suiteItems} onModuleChange={onModuleChange} />;
+        case 'dashboard_suites': return <SuiteDashboard items={suiteItems} onModuleChange={onModuleChange} currentUser={user} />;
         case 'dashboard_admin': return <AdminDashboard items={filteredAdminItems} onModuleChange={onModuleChange} />;
         case 'dashboard_master': return <MasterDashboard items={masterItems} onModuleChange={onModuleChange} />;
         default:

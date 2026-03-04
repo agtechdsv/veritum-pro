@@ -8,7 +8,7 @@ import {
     PenTool, Radar, HelpCircle, Briefcase,
     Building2, Users2, Sparkles, Send, Calendar as CalendarIcon,
     ChevronLeft, LogOut, LayoutDashboard, X, Database, Cloud,
-    Lock, ShieldAlert
+    Lock, ShieldAlert, Crown
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
@@ -438,7 +438,9 @@ export default function PricingPage() {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
                         {dbPlans.filter(p => p.is_combo).length > 0 ? dbPlans.filter(p => p.is_combo).map((plan, i) => {
                             const isCurrentPlan = currentUser?.profile?.plan_id === plan.id;
-                            const isSocioAdmin = currentUser?.profile?.role === 'Master' || (currentUser?.profile?.access_groups && currentUser.profile.access_groups.name?.includes('Sócio-Administra'));
+                            const groupName = currentUser?.profile?.access_groups?.name;
+                            const isSocioAdmin = currentUser?.profile?.role === 'Master' ||
+                                (groupName && typeof groupName === 'object' && ((groupName as any).pt?.includes('Sócio-Administra') || (groupName as any).en?.includes('Partner')));
 
                             const basePrice = plan.monthly_price || 0;
                             let months = 1;
@@ -487,7 +489,7 @@ export default function PricingPage() {
                                         <div className="mb-8 flex flex-col items-baseline gap-1 relative">
                                             {discount > 0 ? (
                                                 <span className="text-[15px] font-bold text-slate-500 line-through decoration-rose-500 decoration-2">
-                                                    R$ {basePrice?.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0,00'}
+                                                    R$ {fullPrice?.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0,00'}
                                                 </span>
                                             ) : (
                                                 <div className="h-[22.5px]" />
@@ -562,6 +564,20 @@ export default function PricingPage() {
                                         >
                                             {currentUser ? (t('management.settings.plan.acquirePlan') || 'Adquirir Plano') : (t('pricingPage.plans.start.cta') || 'Começar Teste Grátis')}
                                         </button>
+                                    )}
+
+                                    {/* CLUBE VIP BANNER FOR PREMIUM PLANS */}
+                                    {(planName.toLowerCase().includes('growth') || planName.toLowerCase().includes('strategy') || planName.toLowerCase().includes('crescimento') || planName.toLowerCase().includes('estrategia')) && (
+                                        <Link href="/clube-vip" className="mt-4 p-3 bg-gradient-to-r from-amber-500/10 flex items-center gap-3 to-orange-500/10 border border-amber-500/30 rounded-xl relative overflow-hidden group hover:border-amber-500/50 transition-colors cursor-pointer block">
+                                            <div className="absolute top-0 right-0 w-20 h-20 bg-amber-500/10 blur-[20px] rounded-full pointer-events-none" />
+                                            <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-500 flex items-center justify-center shrink-0">
+                                                <Crown size={16} />
+                                            </div>
+                                            <div className="flex-1 text-left relative z-10">
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-500 group-hover:underline">Clube VIP Veritum</p>
+                                                <p className="text-[9px] font-bold text-slate-500 dark:text-slate-400 mt-0.5 leading-tight">Ganhe acesso ao clube de embaixadores e convites para 100% OFF.</p>
+                                            </div>
+                                        </Link>
                                     )}
                                 </div>
                             );

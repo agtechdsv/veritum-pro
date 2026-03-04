@@ -177,6 +177,9 @@ export interface User {
     translated_group_name?: string;
     plan_name?: string;
     oab_number?: string;
+    vip_active?: boolean;
+    vip_points?: number;
+    vip_code?: string;
 }
 
 export interface Role {

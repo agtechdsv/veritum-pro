@@ -6,7 +6,7 @@ import {
     ShieldAlert, GitBranch, FileEdit, DollarSign, BarChart3,
     MessageSquare, Globe, Moon, Sun, ArrowRight, Check,
     LogIn, UserPlus, ChevronRight, Scale, LogOut, User,
-    Briefcase, Zap, Lock, LayoutDashboard, Database, Cloud
+    Briefcase, Zap, Lock, LayoutDashboard, Database, Cloud, Crown
 } from 'lucide-react';
 import { AuthModal } from '@/components/auth-modal';
 import { LegalModal } from '@/components/legal-modal';
@@ -619,7 +619,7 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
             </section>
 
             {/* Standard Footer */}
-            <footer className="py-20 px-6 border-t border-slate-100 dark:border-slate-900 bg-slate-50 dark:bg-slate-950 transition-colors">
+            <footer className="py-20 px-6 border-t border-slate-100 dark:border-slate-900 bg-slate-50 dark:bg-slate-950 transition-colors relative z-20">
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
                     <div className="flex items-center gap-3">
                         <Logo />
@@ -644,24 +644,30 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                         </button>
                         {locale === 'pt' ? ' | LegalTech de Alta Performance © 2026 Todos os direitos reservados.' : ' | High Performance LegalTech © 2026 All rights reserved.'}
                     </p>
-                    <div className="flex gap-6">
+                    <div className="flex flex-wrap items-center gap-6 justify-center md:justify-end">
                         <button
                             onClick={() => openLegal('privacy')}
-                            className="text-sm text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer font-bold"
+                            className="text-sm text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer font-bold whitespace-nowrap"
                         >
                             {t('common.privacy')}
                         </button>
                         <button
                             onClick={() => openLegal('terms')}
-                            className="text-sm text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer font-bold"
+                            className="text-sm text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer font-bold whitespace-nowrap"
                         >
                             {t('common.terms')}
                         </button>
                         <Link
                             href="/infrastructure"
-                            className="text-sm text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer font-bold"
+                            className="text-sm text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer font-bold whitespace-nowrap flex items-center"
                         >
                             {t('common.security')}
+                        </Link>
+                        <Link
+                            href="/clube-vip"
+                            className="text-sm text-amber-500 hover:text-amber-600 transition-colors cursor-pointer font-black flex items-center gap-1 whitespace-nowrap"
+                        >
+                            <Crown size={14} /> Clube VIP
                         </Link>
                     </div>
                 </div>

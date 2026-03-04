@@ -13,22 +13,23 @@ import OrganizationForm from '../ui/organization-form';
 import { useTranslation } from '@/contexts/language-context';
 import { getFeatures, getPlanPermissions } from '@/app/actions/plan-actions';
 import { CheckoutModal } from './checkout-modal';
-import { Filter, ChevronDown } from 'lucide-react';
+import { Filter, ChevronDown, Sparkles } from 'lucide-react';
+import ClubeVIP from './clube-vip';
 
 interface Props {
     user: User;
     preferences: UserPreferences;
     onUpdateUser: (u: User) => void;
     onUpdatePrefs: (p: UserPreferences) => void;
-    initialTab?: 'org' | 'plan' | 'cancel';
+    initialTab?: 'org' | 'plan' | 'vip' | 'cancel';
 }
 
-const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initialTab }) => {
+const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initialTab, onUpdateUser }) => {
     const { t, locale } = useTranslation();
     const isSubscriptionAdmin = user.role === 'Master' ||
         ['Sócio-Administrador', 'Sócio Administrador', 'Administrador'].includes(user.role);
 
-    const [activeTab, setActiveTab] = useState<'org' | 'plan' | 'cancel'>(initialTab || 'org');
+    const [activeTab, setActiveTab] = useState<'org' | 'plan' | 'vip' | 'cancel'>(initialTab || 'org');
 
     // Plan Hub States
     const [loadingPlanData, setLoadingPlanData] = useState(false);
@@ -254,6 +255,15 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                         <Crown size={14} /> {t('management.settings.tabs.plan')}
                     </button>
                     <button
+                        onClick={() => setActiveTab('vip')}
+                        className={`px-6 py-2.5 rounded-xl font-black uppercase tracking-widest text-[9px] transition-all flex items-center gap-2 ${activeTab === 'vip'
+                            ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-xl shadow-amber-500/20 border-transparent'
+                            : 'text-amber-600 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/10'
+                            }`}
+                    >
+                        <Sparkles size={14} /> Clube VIP
+                    </button>
+                    <button
                         onClick={() => setActiveTab('cancel')}
                         className={`px-6 py-2.5 rounded-xl font-black uppercase tracking-widest text-[9px] transition-all flex items-center gap-2 ${activeTab === 'cancel'
                             ? 'bg-white dark:bg-slate-800 text-rose-600 shadow-xl border border-slate-200 dark:border-slate-700'
@@ -265,8 +275,10 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                 </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-900/50 p-8 md:p-12 rounded-[3.5rem] border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none">
+            <div className={`transition-all ${activeTab === 'vip' ? '' : 'bg-white dark:bg-slate-900/50 p-8 md:p-12 rounded-[3.5rem] border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none'}`}>
                 {activeTab === 'org' && <OrganizationForm adminId={targetUser.id} />}
+
+                {activeTab === 'vip' && <ClubeVIP user={targetUser} onUpdateUser={(u) => { setTargetUser(u); onUpdateUser(u); }} />}
 
                 {activeTab === 'plan' && (
                     <div className="space-y-12 animate-in slide-in-from-right-8 duration-500">

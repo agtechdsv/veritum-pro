@@ -30,7 +30,7 @@ import {
     PanelLeftClose, PanelLeftOpen, Sun, Moon, Bell, Search,
     ChevronRight, Crown, Camera, Check, User as UserIcon,
     Calendar as CalendarIcon, Mail, Shield, GitBranch, Key, Zap, Lock,
-    CreditCard, Server, Cloud
+    CreditCard, Server, Cloud, Sparkles
 } from 'lucide-react';
 import SuiteManagement from './modules/suite-management';
 import { useTheme } from 'next-themes';
@@ -587,6 +587,28 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                         </div>
                     </Tooltip>
                 </div>
+
+                {/* VIP MENU ITEM (BOTTOM SIDEBAR) */}
+                <div className="px-4 pb-6 mt-auto">
+                    <Tooltip content="Seu Programa de Recompensas" enabled={!isSidebarOpen} side="right">
+                        <Link
+                            href="/veritum/settings?tab=vip"
+                            className={`flex flex-col gap-1 p-3 rounded-2xl border transition-all ${isSidebarOpen ? 'bg-gradient-to-r from-amber-500/10 to-orange-500/10 border-amber-500/30 hover:border-amber-500/50' : 'bg-amber-500/10 border-amber-500/30 justify-center items-center hover:bg-amber-500/20'}`}
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-amber-500/20">
+                                    <Sparkles size={16} />
+                                </div>
+                                {isSidebarOpen && (
+                                    <div className="flex flex-col">
+                                        <span className="text-xs font-black text-amber-600 dark:text-amber-500 uppercase tracking-tighter">Clube VIP</span>
+                                        <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">{user.vip_active ? `${user.vip_points || 0} Pontos` : 'Ativar Agora'}</span>
+                                    </div>
+                                )}
+                            </div>
+                        </Link>
+                    </Tooltip>
+                </div>
             </aside>
 
             {/* Main Content Area */}
@@ -731,6 +753,13 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                                 <UserIcon size={18} className="text-indigo-600" />
                                                 {t('userMenu.profile')}
                                             </button>
+                                            <Link
+                                                href="/veritum/settings?tab=vip"
+                                                className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-amber-600 dark:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-all text-left"
+                                            >
+                                                <Sparkles size={18} />
+                                                Clube VIP
+                                            </Link>
                                             <div className="h-px bg-slate-100 dark:bg-slate-800 mx-2 my-1" />
                                             <button
                                                 onClick={onLogout}
