@@ -36,11 +36,26 @@ const Sentinel: React.FC<{ credentials: Credentials; user: User; permissions: an
     const fetchData = async () => {
         setLoading(true);
         try {
+            const safeQuery = async (query: any) => {
+                try {
+                    const res = await query;
+                    return res;
+                } catch (err) {
+                    return { data: [], error: err as any };
+                }
+            };
+
             const [alertsRes, clippingsRes, lawsuitsRes] = await Promise.all([
-                supabase.from('monitoring_alerts').select('*').order('created_at', { ascending: false }),
-                supabase.from('clippings').select('*').order('captured_at', { ascending: false }),
-                supabase.from('lawsuits').select('*')
+                safeQuery(supabase.from('monitoring_alerts').select('*').order('created_at', { ascending: false })),
+                safeQuery(supabase.from('clippings').select('*').order('captured_at', { ascending: false })),
+                safeQuery(supabase.from('lawsuits').select('*'))
             ]);
+
+            // Silently handle errors for missing tables (common before BYODB setup)
+            if (alertsRes.error && alertsRes.error.code !== 'PGRST116') console.warn('Alerts fetch error:', alertsRes.error);
+            if (clippingsRes.error && clippingsRes.error.code !== 'PGRST116') console.warn('Clippings fetch error:', clippingsRes.error);
+            if (lawsuitsRes.error && lawsuitsRes.error.code !== 'PGRST116') console.warn('Lawsuits fetch error:', lawsuitsRes.error);
+
             setAlerts(alertsRes.data || []);
             setClippings(clippingsRes.data || []);
             setLawsuits(lawsuitsRes.data || []);

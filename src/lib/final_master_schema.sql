@@ -429,7 +429,7 @@ BEGIN
      SET 
        plan_id = NEW.plan_id,
        status = 'active',
-       is_trial = EXISTS (SELECT 1 FROM public.plans WHERE id = NEW.plan_id AND name ILIKE '%Trial%'),
+       is_trial = EXISTS (SELECT 1 FROM public.plans WHERE id = NEW.plan_id AND name::text ILIKE '%Trial%'),
        updated_at = NOW()
      WHERE user_id = NEW.id;
   END IF;
