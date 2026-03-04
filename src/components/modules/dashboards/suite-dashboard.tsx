@@ -1,11 +1,12 @@
 'use client'
 
-import React from 'react';
+import React, { useState } from 'react';
 import { ModuleId, User } from '@/types';
 import { DashboardCard } from './shared-dashboard-ui';
 import { useTranslation } from '@/contexts/language-context';
 import { Crown, Sparkles, ArrowRight, X } from 'lucide-react';
 import Link from 'next/link';
+import { CheckoutModal } from '../checkout-modal';
 
 interface Props {
     items: any[];
@@ -16,6 +17,8 @@ interface Props {
 const SuiteDashboard: React.FC<Props> = ({ items, onModuleChange, currentUser }) => {
     const { locale, t } = useTranslation();
     const [hiddenBanner, setHiddenBanner] = React.useState(false);
+    const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+
     return (
         <div className="space-y-12 animate-in fade-in duration-700">
             <div>
@@ -40,7 +43,7 @@ const SuiteDashboard: React.FC<Props> = ({ items, onModuleChange, currentUser })
                                     <Sparkles size={24} />
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-black text-amber-600 dark:text-amber-500 uppercase tracking-tighter">Convite Exclusivo: Clube VIP</h3>
+                                    <h3 className="text-lg font-black text-amber-600 dark:text-amber-500 uppercase tracking-tighter">{t('clubeVip.exclusiveInvite')}</h3>
                                     <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Você tem um convite para o Clube VIP aguardando ativação.</p>
                                 </div>
                             </div>
@@ -68,12 +71,12 @@ const SuiteDashboard: React.FC<Props> = ({ items, onModuleChange, currentUser })
                                 </div>
                             </div>
                             <div className="flex items-center gap-3 relative z-10">
-                                <Link
-                                    href="/veritum/settings?tab=plan"
+                                <button
+                                    onClick={() => setIsCheckoutOpen(true)}
                                     className="px-6 py-3 bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 font-black text-sm uppercase tracking-widest rounded-xl hover:scale-105 transition-all shadow-md"
                                 >
                                     Fazer Upgrade
-                                </Link>
+                                </button>
                                 <button onClick={() => setHiddenBanner(true)} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
                                     <X size={20} />
                                 </button>
@@ -97,6 +100,13 @@ const SuiteDashboard: React.FC<Props> = ({ items, onModuleChange, currentUser })
                     />
                 ))}
             </div>
+
+            <CheckoutModal
+                isOpen={isCheckoutOpen}
+                onClose={() => setIsCheckoutOpen(false)}
+                planName="Veritum Pro (Upgrade)"
+                type="plan"
+            />
         </div>
     );
 };

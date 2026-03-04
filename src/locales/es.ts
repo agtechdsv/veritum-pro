@@ -345,6 +345,13 @@ export const es = {
         "ctaSecondary": "Ver planes y precios"
     },
     "storyPage": {
+        "nav": {
+            "home": "Inicio",
+            "purpose": "Propósito",
+            "birth": "Nacimiento",
+            "meaning": "Significado",
+            "peace": "Paz Mental"
+        },
         "title": "La Búsqueda de la Claridad.",
         "subtitle": "La Búsqueda de la Verdad.",
         "purpose": "El Propósito",
@@ -598,7 +605,9 @@ export const es = {
             "tabs": {
                 "infra": "Infraestructura",
                 "org": "Datos del Despacho",
-                "plan": "Mi Suscripción"
+                "plan": "Mi Suscripción",
+                "vip": "Clube VIP",
+                "cancel": "Cancelar Suscripción"
             },
             "infra": {
                 "title": "Traiga Su Propia Base de Datos (BYODB)",
@@ -621,6 +630,7 @@ export const es = {
                 "restrictedSub": "Acceso restringido a Socios-Administradores.",
                 "restrictedDesc": "Solo los administradores responsables de la organización (Socio-Administrador) pueden ver detalles o administrar la suscripción del ecosistema.",
                 "loading": "Cargando detalles de suscripción...",
+                "syncing": "Sincronizando Ecosistema...",
                 "currentPlan": "Plan Actual",
                 "planAccess": "Acceso total al ecosistema habilitado en tu plan.",
                 "upgrade": "Mejorar Plan",
@@ -1880,6 +1890,12 @@ export const es = {
         }
     },
     "infrastructurePage": {
+        "nav": {
+            "home": "Inicio",
+            "architecture": "Arquitectura",
+            "security": "Seguridad",
+            "faq": "FAQ"
+        },
         "hero": {
             "title": "Soberanía, Seguridad y Alto Rendimiento.",
             "subtitle": "Conozca la ingeniería de datos detrás de Veritum PRO. Diseñado para cumplir con las exigencias más estrictas de cumplimiento y LGPD del mercado jurídico."
@@ -1943,6 +1959,7 @@ export const es = {
         "noFeatures": "Ninguna feature registrada."
     },
     "clubeVip": {
+        "exclusiveInvite": "Invitación Exclusiva: Clube VIP",
         "nav": {
             "home": "Inicio",
             "benefits": "Beneficios",
@@ -2009,7 +2026,7 @@ export const es = {
         },
         "goal": {
             "title": "La Gran Meta (100% OFF)",
-            "description": "Acumule 100 Puntos VIP y utilice las suites de Inteligencia Artificial de Veritum PRO totalmente por nuestra cuenta en su próximo ciclo.",
+            "description": "Acumule 100 Puntos VIP y utilice el 100% de los módulos de Veritum PRO totalmente por nuestra cuenta en su próximo ciclo.",
             "progress": "100% OFF Alcanzado",
             "persistenceTitle": "Su esfuerzo nunca se pierde",
             "persistenceDesc": "¿Superó la meta de 100 puntos? No se preocupe. Todos los puntos excedentes se contabilizan y transfieren automáticamente a su ciclo de facturación posterior. Mantenga su red activa y garantice la paz mental durante todo el año."

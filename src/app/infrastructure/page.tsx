@@ -16,6 +16,7 @@ import { createMasterClient } from '@/lib/supabase/master';
 import { AuthModal } from '@/components/auth-modal';
 import { LegalModal } from '@/components/legal-modal';
 import { CompanyModal } from '@/components/company-modal';
+import { Footer } from '@/components/shared/footer';
 
 const Logo = () => (
     <div className="bg-indigo-600/10 p-2 rounded-lg flex items-center justify-center text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400">
@@ -29,9 +30,13 @@ export default function InfrastructurePage() {
     const [mounted, setMounted] = useState(false);
     const [currentUser, setCurrentUser] = useState<any>(undefined);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-    const [authMode, setAuthMode] = useState<'login' | 'register'>('register');
+    const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
     const [legalModal, setLegalModal] = useState({ isOpen: false, type: 'privacy' as 'privacy' | 'terms' });
     const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
+
+    const openLegal = (type: 'privacy' | 'terms') => {
+        setLegalModal({ isOpen: true, type });
+    };
 
     useEffect(() => {
         setMounted(true);
@@ -80,32 +85,60 @@ export default function InfrastructurePage() {
                     </div>
 
                     <div className="hidden lg:flex items-center gap-8">
-                        <Link href="/" className="font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors text-sm uppercase tracking-widest">{t('nav.home')}</Link>
-                        <Link href="/pricing" className="font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors text-sm uppercase tracking-widest">{t('nav.pricing')}</Link>
-                        <span className="text-indigo-600 dark:text-indigo-400 font-black text-sm uppercase tracking-widest border-b-2 border-indigo-600">{t('common.security')}</span>
+                        <Link href="/" className="font-medium text-branding-gradient hover:opacity-80 transition-all">{t('pricingPage.nav.portal')}</Link>
+                        <a href="#top" className="font-medium text-slate-800 dark:text-white">{t('infrastructurePage.nav.home')}</a>
+                        <a href="#architecture" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">{t('infrastructurePage.nav.architecture')}</a>
+                        <a href="#security" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">{t('infrastructurePage.nav.security')}</a>
+                        <a href="#faq" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">{t('infrastructurePage.nav.faq')}</a>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
                         <button onClick={toggleTheme} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all text-slate-600 dark:text-slate-400">
                             {resolvedTheme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
                         </button>
                         <LanguageSelector />
-                        {currentUser ? (
-                            <UserMenu user={currentUser} supabase={createMasterClient()} />
+
+                        {currentUser === undefined ? (
+                            <div className="w-32 h-10 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-full" />
+                        ) : currentUser ? (
+                            <div className="flex items-center gap-3">
+                                <Link
+                                    href="/veritum"
+                                    className="hidden xl:flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-bold text-sm shadow-xl shadow-indigo-600/20 transition-all hover:scale-105"
+                                >
+                                    <LayoutDashboard size={18} />
+                                    Painel Pro
+                                </Link>
+                                <UserMenu user={currentUser} supabase={createMasterClient()} />
+                            </div>
                         ) : (
-                            <button
-                                onClick={() => setIsAuthModalOpen(true)}
-                                className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold shadow-xl shadow-indigo-600/20 hover:scale-105 transition-all text-sm"
-                            >
-                                {t('nav.login')}
-                            </button>
+                            <div className="flex items-center gap-3">
+                                <button
+                                    onClick={() => {
+                                        setAuthMode('login');
+                                        setIsAuthModalOpen(true);
+                                    }}
+                                    className="hidden sm:flex items-center gap-2 font-bold px-4 py-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all cursor-pointer"
+                                >
+                                    <LogOut size={18} /> {t('nav.login')}
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setAuthMode('register');
+                                        setIsAuthModalOpen(true);
+                                    }}
+                                    className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold shadow-xl shadow-indigo-600/20 hover:scale-105 transition-all text-sm cursor-pointer"
+                                >
+                                    {t('landingPages.nexus.hero.cta1')}
+                                </button>
+                            </div>
                         )}
                     </div>
                 </div>
             </nav>
 
             {/* Hero Section */}
-            <section className="pt-44 pb-32 px-6 relative overflow-hidden">
+            <section id="top" className="pt-44 pb-32 px-6 relative overflow-hidden">
                 <div className="max-w-5xl mx-auto text-center relative z-10">
                     <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-full text-indigo-600 dark:text-indigo-400 mb-8 border border-indigo-100 dark:border-indigo-800/50">
                         <Shield size={16} className="animate-pulse" />
@@ -125,7 +158,7 @@ export default function InfrastructurePage() {
             </section>
 
             {/* Infrastructure Options */}
-            <section className="py-32 px-6 bg-slate-50 dark:bg-slate-900/30">
+            <section id="architecture" className="py-32 px-6 bg-slate-50 dark:bg-slate-900/30">
                 <div className="max-w-7xl mx-auto">
                     <div className="text-center mb-24">
                         <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-6 tracking-tighter">
@@ -197,7 +230,7 @@ export default function InfrastructurePage() {
             </section>
 
             {/* Enterprise Security Section */}
-            <section className="py-32 px-6">
+            <section id="security" className="py-32 px-6">
                 <div className="max-w-7xl mx-auto rounded-[4rem] bg-indigo-600 p-12 md:p-24 relative overflow-hidden shadow-3xl animate-fade-in text-white">
                     <div className="relative z-10 max-w-3xl">
                         <span className="inline-block px-4 py-1.5 bg-white/20 rounded-full text-[10px] font-black uppercase tracking-widest mb-8 border border-white/30 backdrop-blur-md">
@@ -230,7 +263,7 @@ export default function InfrastructurePage() {
             </section>
 
             {/* FAQ Technical Section */}
-            <section className="py-32 px-6 bg-slate-50 dark:bg-slate-950 border-t border-slate-100 dark:border-slate-900">
+            <section id="faq" className="py-32 px-6 bg-slate-50 dark:bg-slate-950 border-t border-slate-100 dark:border-slate-900">
                 <div className="max-w-4xl mx-auto">
                     <h2 className="text-4xl md:text-5xl font-black mb-20 text-center text-slate-900 dark:text-white tracking-tighter">
                         {sections.faq.title}
@@ -271,27 +304,11 @@ export default function InfrastructurePage() {
                 </div>
             </section>
 
-            {/* Same Footer as Pricing */}
-            <footer className="py-20 px-6 border-t border-slate-100 dark:border-slate-900 bg-slate-50 dark:bg-slate-950 mt-auto">
-                <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-                    <div className="flex items-center gap-3">
-                        <Logo />
-                        <span className="font-extrabold text-2xl tracking-tighter text-slate-900 dark:text-white uppercase">VERITUM <span className="text-branding-gradient">PRO</span></span>
-                    </div>
-                    <div className="flex flex-col items-center md:items-start gap-1">
-                        <p className="text-sm text-slate-400 dark:text-slate-500 font-medium">
-                            {locale === 'pt' ? 'Desenvolvido por ' : locale === 'es' ? 'Desarrollado por ' : 'Developed by '}
-                            <button onClick={() => setIsCompanyModalOpen(true)} className="text-indigo-600 dark:text-indigo-400 font-extrabold hover:underline">AGTech</button>
-                            {locale === 'pt' ? ' | LegalTech de Alta Performance © 2026' : ' | High Performance LegalTech © 2026'}
-                        </p>
-                    </div>
-                    <div className="flex gap-6">
-                        <button onClick={() => setLegalModal({ isOpen: true, type: 'privacy' })} className="text-sm text-slate-500 hover:text-indigo-600 font-bold transition-colors">{t('common.privacy')}</button>
-                        <button onClick={() => setLegalModal({ isOpen: true, type: 'terms' })} className="text-sm text-slate-500 hover:text-indigo-600 font-bold transition-colors">{t('common.terms')}</button>
-                        <span className="text-sm text-indigo-600 font-black uppercase tracking-widest">{t('common.security')}</span>
-                    </div>
-                </div>
-            </footer>
+            <Footer
+                setIsCompanyModalOpen={setIsCompanyModalOpen}
+                openLegal={openLegal}
+                showSecurityLink={false}
+            />
 
             <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} mode={authMode} />
             <LegalModal isOpen={legalModal.isOpen} onClose={() => setLegalModal({ ...legalModal, isOpen: false })} type={legalModal.type} />

@@ -337,6 +337,13 @@ export const en = {
         ctaSecondary: 'View plans and pricing',
     },
     storyPage: {
+        nav: {
+            home: 'Home',
+            purpose: 'Purpose',
+            birth: 'Birth',
+            meaning: 'Meaning',
+            peace: 'Peace of Mind'
+        },
         title: 'The Search for Clarity.',
         subtitle: 'The Quest for Truth.',
         purpose: 'The Purpose',
@@ -590,7 +597,9 @@ export const en = {
             tabs: {
                 infra: 'Infrastructure',
                 org: 'Office Data',
-                plan: 'My Subscription'
+                plan: 'My Subscription',
+                vip: 'VIP Club',
+                cancel: 'Cancel Subscription'
             },
             infra: {
                 title: 'Bring Your Own Database (BYODB)',
@@ -613,6 +622,7 @@ export const en = {
                 restrictedSub: 'Access restricted to Partner-Administrators.',
                 restrictedDesc: 'Only administrators responsible for the organization (Partner-Administrator) can view details or manage the ecosystem subscription.',
                 loading: 'Loading subscription details...',
+                syncing: 'Syncing Ecosystem...',
                 currentPlan: 'Current Plan',
                 planAccess: 'Full access to the ecosystem enabled in your plan.',
                 upgrade: 'Upgrade Plan',
@@ -1853,6 +1863,12 @@ export const en = {
         }
     },
     infrastructurePage: {
+        nav: {
+            home: 'Home',
+            architecture: 'Architecture',
+            security: 'Security',
+            faq: 'FAQ'
+        },
         hero: {
             title: 'Sovereignty, Security, and High Performance.',
             subtitle: 'Discover the data engineering behind Veritum PRO. Designed to meet the most rigorous compliance and GDPR requirements in the legal market.'
@@ -1916,6 +1932,7 @@ export const en = {
         noFeatures: 'No features registered.'
     },
     clubeVip: {
+        exclusiveInvite: 'Exclusive Invitation: VIP Club',
         nav: {
             home: 'Home',
             benefits: 'Benefits',
@@ -1982,7 +1999,7 @@ export const en = {
         },
         goal: {
             title: 'The Grand Goal (100% OFF)',
-            description: 'Accumulate 100 VIP Points and use the Veritum PRO Artificial Intelligence suites entirely on us in your next cycle.',
+            description: 'Accumulate 100 VIP Points and use 100% of Veritum PRO modules entirely on us in your next cycle.',
             progress: '100% OFF Achieved',
             persistenceTitle: 'Your effort is never lost',
             persistenceDesc: 'Exceeded the 100-point goal? Don\'t worry. All excess points are counted and automatically transferred to your subsequent billing cycle. Keep your network active and ensure year-round peace of mind.'

@@ -11,7 +11,9 @@ import { useTheme } from 'next-themes';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AuthModal } from '@/components/auth-modal';
+import { LegalModal } from '@/components/legal-modal';
 import { CompanyModal } from '@/components/company-modal';
+import { Footer } from '@/components/shared/footer';
 import { createMasterClient } from '@/lib/supabase/master';
 import { UserMenu } from '@/components/ui/user-menu';
 import { useTranslation } from '@/contexts/language-context';
@@ -35,9 +37,18 @@ export default function VoxLanding() {
     const router = useRouter();
     const [mounted, setMounted] = useState(false);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+    const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
     const [hasAccess, setHasAccess] = useState(false);
     const [currentUser, setCurrentUser] = useState<any>(undefined);
     const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
+    const [legalModal, setLegalModal] = useState<{ isOpen: boolean; type: 'privacy' | 'terms' }>({
+        isOpen: false,
+        type: 'privacy'
+    });
+
+    const openLegal = (type: 'privacy' | 'terms') => {
+        setLegalModal({ isOpen: true, type });
+    };
 
     useEffect(() => {
         setMounted(true);
@@ -91,27 +102,46 @@ export default function VoxLanding() {
                         <a href="#ux" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">{t('landingPages.vox.nav.ux')}</a>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
                         <button onClick={toggleTheme} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all text-slate-600 dark:text-slate-400">
                             {resolvedTheme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
                         </button>
                         <LanguageSelector />
+
                         {currentUser === undefined ? (
-                            <div className="w-24 h-10 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl" />
+                            <div className="w-32 h-10 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-full" />
                         ) : currentUser ? (
-                            <UserMenu user={currentUser} supabase={createMasterClient()} />
-                        ) : hasAccess ? (
-                            <Link href="/?login=true" className="hidden sm:flex items-center gap-2 font-bold px-4 py-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all">
-                                <LogOut size={18} /> {t('nav.login')}
-                            </Link>
-                        ) : null}
-                        {(hasAccess || currentUser) && (
-                            <button
-                                onClick={() => setIsAuthModalOpen(true)}
-                                className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold shadow-xl shadow-indigo-600/20 hover:scale-105 transition-all text-sm"
-                            >
-                                {t('landingPages.vox.hero.cta1')}
-                            </button>
+                            <div className="flex items-center gap-3">
+                                <Link
+                                    href="/veritum"
+                                    className="hidden xl:flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-bold text-sm shadow-xl shadow-indigo-600/20 transition-all hover:scale-105"
+                                >
+                                    <LayoutDashboard size={18} />
+                                    Painel Pro
+                                </Link>
+                                <UserMenu user={currentUser} supabase={createMasterClient()} />
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-3">
+                                <button
+                                    onClick={() => {
+                                        setAuthMode('login');
+                                        setIsAuthModalOpen(true);
+                                    }}
+                                    className="hidden sm:flex items-center gap-2 font-bold px-4 py-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all cursor-pointer"
+                                >
+                                    <LogOut size={18} /> {t('nav.login')}
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setAuthMode('register');
+                                        setIsAuthModalOpen(true);
+                                    }}
+                                    className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold shadow-xl shadow-indigo-600/20 hover:scale-105 transition-all text-sm cursor-pointer"
+                                >
+                                    {t('landingPages.nexus.hero.cta1')}
+                                </button>
+                            </div>
                         )}
                     </div>
                 </div>
@@ -388,55 +418,18 @@ export default function VoxLanding() {
                 </div>
             </section>
 
-            {/* Final Footer */}
-            <footer className="py-20 border-t border-slate-100 dark:border-slate-900 bg-slate-50/10 transition-colors">
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="flex flex-col md:flex-row justify-between items-center gap-12">
-                        <div className="flex flex-col items-center md:items-start gap-4">
-                            <div className="flex items-center gap-2">
-                                <Logo />
-                                <span className="text-2xl font-black tracking-tighter dark:text-white text-slate-900 uppercase">
-                                    VOX <span className="text-branding-gradient">CLIENTIS</span>
-                                </span>
-                            </div>
-                            <p className="text-slate-500 dark:text-slate-400 font-medium max-w-xs text-center md:text-left">
-                                {t('landingPages.vox.footer.slogan')}
-                            </p>
-                        </div>
-
-                        <div className="flex flex-col items-center md:items-end gap-2 text-center md:text-right">
-                            <div className="flex items-center gap-2 mb-2">
-                                <Scale size={24} className="text-indigo-600" />
-                                <span className="text-lg font-black dark:text-white text-slate-900 uppercase">VERITUM <span className="text-branding-gradient">PRO</span></span>
-                            </div>
-                            <p className="text-sm text-slate-400 dark:text-slate-500 font-medium italic max-w-sm">
-                                <button
-                                    onClick={() => setIsCompanyModalOpen(true)}
-                                    className="group relative transition-all duration-300 hover:scale-[1.02] cursor-pointer not-italic inline-flex items-center"
-                                >
-                                    <span className="text-slate-400 dark:text-slate-500 font-medium">
-                                        {locale === 'pt' ? 'Desenvolvido por ' : locale === 'es' ? 'Desarrollado por ' : 'Developed by '}
-                                    </span>
-                                    <span className="text-indigo-600 dark:text-indigo-400 font-extrabold ml-1 flex items-center">
-                                        AGTech
-                                        <sup className="ml-0.5 text-[10px] opacity-70 group-hover:opacity-100 transition-opacity">©</sup>
-                                    </span>
-                                    {/* Tooltip */}
-                                    <span className="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-slate-900 text-white text-[10px] font-black rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap pointer-events-none shadow-2xl border border-slate-800 scale-90 group-hover:scale-100 z-[60]">
-                                        {locale === 'pt' ? 'Clique para saber mais' : locale === 'es' ? 'Clic para saber más' : 'Click to learn more'}
-                                    </span>
-                                </button>
-                                {locale === 'pt' ? ' | LegalTech de Alta Performance © 2026 Todos os direitos reservados.' : ' | High Performance LegalTech © 2026 All rights reserved.'}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </footer>
+            <Footer setIsCompanyModalOpen={setIsCompanyModalOpen} openLegal={openLegal} />
 
             <AuthModal
                 isOpen={isAuthModalOpen}
                 onClose={() => setIsAuthModalOpen(false)}
-                mode="register"
+                mode={authMode}
+            />
+
+            <LegalModal
+                isOpen={legalModal.isOpen}
+                onClose={() => setLegalModal({ ...legalModal, isOpen: false })}
+                type={legalModal.type}
             />
 
             <CompanyModal

@@ -8,6 +8,9 @@ import {
     LogOut, LayoutDashboard
 } from 'lucide-react';
 import { AuthModal } from '@/components/auth-modal';
+import { LegalModal } from '@/components/legal-modal';
+import { CompanyModal } from '@/components/company-modal';
+import { Footer } from '@/components/shared/footer';
 import { createMasterClient } from '@/lib/supabase/master';
 import { useTranslation } from '@/contexts/language-context';
 import { useTheme } from 'next-themes';
@@ -19,7 +22,20 @@ export default function ClubeVipPage() {
     const [isAuthModalOpen, setIsAuthModalOpen] = React.useState(false);
     const [authMode, setAuthMode] = React.useState<'login' | 'register'>('login');
     const [currentUser, setCurrentUser] = React.useState<any>(null);
+    const [legalModal, setLegalModal] = React.useState<{ isOpen: boolean; type: 'privacy' | 'terms' }>({
+        isOpen: false,
+        type: 'privacy'
+    });
+    const [isCompanyModalOpen, setIsCompanyModalOpen] = React.useState(false);
     const { locale, t } = useTranslation();
+
+    const openLegal = (type: 'privacy' | 'terms') => {
+        setLegalModal({ isOpen: true, type });
+    };
+
+    const toggleTheme = () => {
+        setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
+    };
     const supabase = createMasterClient();
 
     React.useEffect(() => {
@@ -76,19 +92,14 @@ export default function ClubeVipPage() {
                         ))}
                     </div>
 
-                    <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={() => setTheme(resolvedTheme === 'light' ? 'dark' : 'light')}
-                                className="p-2 hover:bg-white/10 rounded-full transition-all text-slate-400"
-                            >
-                                {resolvedTheme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
-                            </button>
-                            <LanguageSelector />
-                        </div>
+                    <div className="flex items-center gap-2">
+                        <button onClick={toggleTheme} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all text-slate-600 dark:text-slate-400">
+                            {resolvedTheme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+                        </button>
+                        <LanguageSelector />
 
                         {currentUser === undefined ? (
-                            <div className="w-32 h-10 bg-white/5 animate-pulse rounded-full" />
+                            <div className="w-32 h-10 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-full" />
                         ) : currentUser ? (
                             <div className="flex items-center gap-3">
                                 <Link
@@ -98,13 +109,7 @@ export default function ClubeVipPage() {
                                     <LayoutDashboard size={18} />
                                     Painel Pro
                                 </Link>
-                                <UserMenu
-                                    user={currentUser}
-                                    supabase={supabase}
-                                    onPlanClick={() => {
-                                        window.location.href = '/pricing';
-                                    }}
-                                />
+                                <UserMenu user={currentUser} supabase={createMasterClient()} />
                             </div>
                         ) : (
                             <div className="flex items-center gap-3">
@@ -113,18 +118,18 @@ export default function ClubeVipPage() {
                                         setAuthMode('login');
                                         setIsAuthModalOpen(true);
                                     }}
-                                    className="hidden sm:flex items-center gap-2 font-bold px-4 py-2 text-indigo-400 hover:bg-white/5 rounded-xl transition-all cursor-pointer whitespace-nowrap"
+                                    className="hidden sm:flex items-center gap-2 font-bold px-4 py-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all cursor-pointer"
                                 >
-                                    <LogOut size={18} /> {t('nav.login') || 'Entrar'}
+                                    <LogOut size={18} /> {t('nav.login')}
                                 </button>
                                 <button
                                     onClick={() => {
                                         setAuthMode('register');
                                         setIsAuthModalOpen(true);
                                     }}
-                                    className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold shadow-xl shadow-indigo-600/20 hover:scale-105 transition-all text-sm cursor-pointer whitespace-nowrap"
+                                    className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold shadow-xl shadow-indigo-600/20 hover:scale-105 transition-all text-sm cursor-pointer"
                                 >
-                                    {t('landingPages.nexus.hero.cta1') || 'Começar Teste Grátis'}
+                                    {t('landingPages.nexus.hero.cta1')}
                                 </button>
                             </div>
                         )}
@@ -395,17 +400,24 @@ export default function ClubeVipPage() {
                 </div>
             </section>
 
+            <Footer setIsCompanyModalOpen={setIsCompanyModalOpen} openLegal={openLegal} showVipLink={false} />
+
             <AuthModal
                 isOpen={isAuthModalOpen}
                 onClose={() => setIsAuthModalOpen(false)}
                 mode={authMode}
             />
 
-            <footer className="py-8 text-center border-t border-white/5 bg-[#020617]">
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-600">
-                    {t('clubeVip.footer.copyright', { year: new Date().getFullYear() })}
-                </p>
-            </footer>
+            <LegalModal
+                isOpen={legalModal.isOpen}
+                onClose={() => setLegalModal({ ...legalModal, isOpen: false })}
+                type={legalModal.type}
+            />
+
+            <CompanyModal
+                isOpen={isCompanyModalOpen}
+                onClose={() => setIsCompanyModalOpen(false)}
+            />
 
         </main>
     );

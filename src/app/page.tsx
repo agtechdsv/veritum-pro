@@ -20,6 +20,7 @@ import { UserMenu } from '@/components/ui/user-menu'
 import { getModuleMeta } from '@/utils/module-meta';
 import { useTranslation } from '@/contexts/language-context';
 import { LanguageSelector } from '@/components/ui/language-selector';
+import { Footer } from '@/components/shared/footer';
 
 interface Suite {
     id: string;
@@ -619,59 +620,7 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
             </section>
 
             {/* Standard Footer */}
-            <footer className="py-20 px-6 border-t border-slate-100 dark:border-slate-900 bg-slate-50 dark:bg-slate-950 transition-colors relative z-20">
-                <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-                    <div className="flex items-center gap-3">
-                        <Logo />
-                        <span className="font-extrabold text-2xl tracking-tighter text-slate-900 dark:text-white uppercase">VERITUM <span className="text-branding-gradient">PRO</span></span>
-                    </div>
-                    <p className="text-sm text-slate-400 dark:text-slate-500 font-medium">
-                        <button
-                            onClick={() => setIsCompanyModalOpen(true)}
-                            className="group relative transition-all duration-300 hover:scale-[1.02] cursor-pointer not-italic inline-flex items-center"
-                        >
-                            <span className="text-slate-400 dark:text-slate-500 font-medium">
-                                {locale === 'pt' ? 'Desenvolvido por ' : locale === 'es' ? 'Desarrollado por ' : 'Developed by '}
-                            </span>
-                            <span className="text-indigo-600 dark:text-indigo-400 font-extrabold ml-1 flex items-center">
-                                AGTech
-                                <sup className="ml-0.5 text-[10px] opacity-70 group-hover:opacity-100 transition-opacity">©</sup>
-                            </span>
-                            {/* Tooltip */}
-                            <span className="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-slate-900 text-white text-[10px] font-black rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap pointer-events-none shadow-2xl border border-slate-800 scale-90 group-hover:scale-100 z-[60]">
-                                {locale === 'pt' ? 'Clique para saber mais' : locale === 'es' ? 'Clic para saber más' : 'Click to learn more'}
-                            </span>
-                        </button>
-                        {locale === 'pt' ? ' | LegalTech de Alta Performance © 2026 Todos os direitos reservados.' : ' | High Performance LegalTech © 2026 All rights reserved.'}
-                    </p>
-                    <div className="flex flex-wrap items-center gap-6 justify-center md:justify-end">
-                        <button
-                            onClick={() => openLegal('privacy')}
-                            className="text-sm text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer font-bold whitespace-nowrap"
-                        >
-                            {t('common.privacy')}
-                        </button>
-                        <button
-                            onClick={() => openLegal('terms')}
-                            className="text-sm text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer font-bold whitespace-nowrap"
-                        >
-                            {t('common.terms')}
-                        </button>
-                        <Link
-                            href="/infrastructure"
-                            className="text-sm text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer font-bold whitespace-nowrap flex items-center"
-                        >
-                            {t('common.security')}
-                        </Link>
-                        <Link
-                            href="/clube-vip"
-                            className="text-sm text-amber-500 hover:text-amber-600 transition-colors cursor-pointer font-black flex items-center gap-1 whitespace-nowrap"
-                        >
-                            <Crown size={14} /> Clube VIP
-                        </Link>
-                    </div>
-                </div>
-            </footer>
+            <Footer setIsCompanyModalOpen={setIsCompanyModalOpen} openLegal={openLegal} />
 
             <AuthModal
                 isOpen={isAuthModalOpen}

@@ -36,6 +36,7 @@ import { createMasterClient } from '@/lib/supabase/master';
 import { UserMenu } from '@/components/ui/user-menu';
 import { useTranslation } from '@/contexts/language-context';
 import { LanguageSelector } from '@/components/ui/language-selector';
+import { Footer } from '@/components/shared/footer';
 
 const Logo = () => (
     <div className="bg-indigo-600/10 p-2 rounded-lg flex items-center justify-center text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400">
@@ -374,7 +375,7 @@ export default function PricingPage() {
                                     <LogOut size={18} /> {t('nav.login')}
                                 </button>
                                 <button
-                                    onClick={() => setIsAuthModalOpen(true)}
+                                    onClick={() => openAuth('register')}
                                     className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold shadow-xl shadow-indigo-600/20 hover:scale-105 transition-all text-sm cursor-pointer"
                                 >
                                     {t('landingPages.nexus.hero.cta1')}
@@ -1086,54 +1087,6 @@ export default function PricingPage() {
                 </div>
             </section>
 
-            {/* Standard Footer */}
-            <footer className="py-20 px-6 border-t border-slate-100 dark:border-slate-900 bg-slate-50 dark:bg-slate-950 transition-colors">
-                <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-                    <div className="flex items-center gap-3">
-                        <Logo />
-                        <span className="font-extrabold text-2xl tracking-tighter text-slate-900 dark:text-white uppercase">VERITUM <span className="text-branding-gradient">PRO</span></span>
-                    </div>
-                    <p className="text-sm text-slate-400 dark:text-slate-500 font-medium">
-                        <button
-                            onClick={() => setIsCompanyModalOpen(true)}
-                            className="group relative transition-all duration-300 hover:scale-[1.02] cursor-pointer not-italic inline-flex items-center"
-                        >
-                            <span className="text-slate-400 dark:text-slate-500 font-medium">
-                                {locale === 'pt' ? 'Desenvolvido por ' : locale === 'es' ? 'Desarrollado por ' : 'Developed by '}
-                            </span>
-                            <span className="text-indigo-600 dark:text-indigo-400 font-extrabold ml-1 flex items-center">
-                                AGTech
-                                <sup className="ml-0.5 text-[10px] opacity-70 group-hover:opacity-100 transition-opacity">©</sup>
-                            </span>
-                            {/* Tooltip */}
-                            <span className="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-slate-900 text-white text-[10px] font-black rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap pointer-events-none shadow-2xl border border-slate-800 scale-90 group-hover:scale-100 z-[60]">
-                                {locale === 'pt' ? 'Clique para saber mais' : locale === 'es' ? 'Clic para saber más' : 'Click to learn more'}
-                            </span>
-                        </button>
-                        {locale === 'pt' ? ' | LegalTech de Alta Performance © 2026 Todos os direitos reservados.' : ' | High Performance LegalTech © 2026 All rights reserved.'}
-                    </p>
-                    <div className="flex gap-6">
-                        <button
-                            onClick={() => openLegal('privacy')}
-                            className="text-sm text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer font-bold"
-                        >
-                            {t('common.privacy')}
-                        </button>
-                        <button
-                            onClick={() => openLegal('terms')}
-                            className="text-sm text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer font-bold"
-                        >
-                            {t('common.terms')}
-                        </button>
-                        <Link
-                            href="/infrastructure"
-                            className="text-sm text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer font-bold"
-                        >
-                            {t('common.security')}
-                        </Link>
-                    </div>
-                </div>
-            </footer>
 
             {/* Demo Modal */}
             {isDemoModalOpen && (
@@ -1351,6 +1304,8 @@ export default function PricingPage() {
                 onClose={() => setIsCheckoutOpen(false)}
                 {...checkoutData}
             />
+
+            <Footer setIsCompanyModalOpen={setIsCompanyModalOpen} openLegal={openLegal} />
         </div>
     );
 }

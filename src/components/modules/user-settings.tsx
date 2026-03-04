@@ -261,7 +261,7 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                             : 'text-amber-600 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/10'
                             }`}
                     >
-                        <Sparkles size={14} /> Clube VIP
+                        <Sparkles size={14} /> {t('management.settings.tabs.vip')}
                     </button>
                     <button
                         onClick={() => setActiveTab('cancel')}
@@ -270,7 +270,7 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                             : 'text-slate-400 hover:text-rose-500'
                             }`}
                     >
-                        <AlertCircle size={14} /> {t('management.settings.plan.cancelSubscription')}
+                        <AlertCircle size={14} /> {t('management.settings.tabs.cancel')}
                     </button>
                 </div>
             </div>
@@ -607,7 +607,7 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                 onClose={() => setIsCheckoutOpen(false)}
                 {...checkoutData}
             />
-        </div>
+        </div >
     );
 };
 

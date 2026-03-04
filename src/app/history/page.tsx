@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Sparkles, Zap, Shield, Globe, Users, Scale, MessageSquare, Moon, Sun, LayoutDashboard } from 'lucide-react';
+import { ArrowLeft, Sparkles, Zap, Shield, Globe, Users, Scale, MessageSquare, Moon, Sun, LayoutDashboard, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslation } from '@/contexts/language-context';
 import { LanguageSelector } from '@/components/ui/language-selector';
@@ -11,6 +11,7 @@ import { createMasterClient } from '@/lib/supabase/master';
 import { LegalModal } from '@/components/legal-modal';
 import { CompanyModal } from '@/components/company-modal';
 import { AuthModal } from '@/components/auth-modal';
+import { Footer } from '@/components/shared/footer';
 
 const Logo = () => (
     <div className="bg-indigo-600/10 p-2 rounded-lg flex items-center justify-center text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400">
@@ -26,6 +27,7 @@ export default function HistoryPage() {
     const [legalModal, setLegalModal] = useState<{ isOpen: boolean; type: 'privacy' | 'terms' }>({ isOpen: false, type: 'privacy' });
     const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+    const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
 
     useEffect(() => {
         setMounted(true);
@@ -61,25 +63,37 @@ export default function HistoryPage() {
             {/* Nav */}
             <nav className="fixed top-0 w-full z-50 glass border-b transition-colors duration-300 backdrop-blur-md bg-white/70 dark:bg-slate-950/70 border-slate-200 dark:border-slate-800">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-                    <Link href="/" className="flex items-center gap-3 group">
-                        <Logo />
-                        <span className="font-extrabold text-2xl tracking-tighter text-slate-900 dark:text-white transition-all group-hover:scale-105">
-                            VERITUM <span className="text-branding-gradient">PRO</span>
-                        </span>
-                    </Link>
+                    <div className="flex items-center gap-3">
+                        <Link href="/" className="flex items-center gap-2 group">
+                            <Logo />
+                            <span className="text-xl font-black tracking-tighter text-slate-900 dark:text-white group-hover:opacity-80 transition-opacity uppercase">
+                                HISTORY <span className="text-branding-gradient">PRO</span>
+                            </span>
+                        </Link>
+                    </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="hidden lg:flex items-center gap-8">
+                        <Link href="/" className="font-medium text-branding-gradient hover:opacity-80 transition-all">{t('pricingPage.nav.portal')}</Link>
+                        <a href="#top" className="font-medium text-slate-800 dark:text-white">{t('storyPage.nav.home')}</a>
+                        <a href="#purpose" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">{t('storyPage.nav.purpose')}</a>
+                        <a href="#birth" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">{t('storyPage.nav.birth')}</a>
+                        <a href="#meaning" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">{t('storyPage.nav.meaning')}</a>
+                        <a href="#peace" className="font-medium hover:text-indigo-600 transition-colors text-slate-600 dark:text-slate-300">{t('storyPage.nav.peace')}</a>
+                    </div>
+
+                    <div className="flex items-center gap-2">
                         <button onClick={toggleTheme} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all text-slate-600 dark:text-slate-400">
                             {resolvedTheme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
                         </button>
                         <LanguageSelector />
+
                         {currentUser === undefined ? (
                             <div className="w-32 h-10 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-full" />
                         ) : currentUser ? (
                             <div className="flex items-center gap-3">
                                 <Link
                                     href="/veritum"
-                                    className="hidden sm:flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-bold text-sm shadow-xl shadow-indigo-600/20 transition-all hover:scale-105"
+                                    className="hidden xl:flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-bold text-sm shadow-xl shadow-indigo-600/20 transition-all hover:scale-105"
                                 >
                                     <LayoutDashboard size={18} />
                                     Painel Pro
@@ -87,12 +101,26 @@ export default function HistoryPage() {
                                 <UserMenu user={currentUser} supabase={createMasterClient()} />
                             </div>
                         ) : (
-                            <Link
-                                href="/"
-                                className="flex items-center gap-2 px-6 py-2.5 border border-slate-200 dark:border-slate-800 rounded-full font-bold text-sm transition-all hover:bg-slate-50 dark:hover:bg-slate-800"
-                            >
-                                <ArrowLeft size={16} /> {t('common.backToHome')}
-                            </Link>
+                            <div className="flex items-center gap-3">
+                                <button
+                                    onClick={() => {
+                                        setAuthMode('login');
+                                        setIsAuthModalOpen(true);
+                                    }}
+                                    className="hidden sm:flex items-center gap-2 font-bold px-4 py-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all cursor-pointer"
+                                >
+                                    <LogOut size={18} /> {t('nav.login')}
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setAuthMode('register');
+                                        setIsAuthModalOpen(true);
+                                    }}
+                                    className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold shadow-xl shadow-indigo-600/20 hover:scale-105 transition-all text-sm cursor-pointer"
+                                >
+                                    {t('landingPages.nexus.hero.cta1')}
+                                </button>
+                            </div>
                         )}
                     </div>
                 </div>
@@ -100,7 +128,7 @@ export default function HistoryPage() {
 
             <main className="relative">
                 {/* Hero Section */}
-                <section className="relative pt-44 pb-32 px-6 overflow-hidden flex flex-col items-center justify-center text-center">
+                <section id="top" className="relative pt-44 pb-32 px-6 overflow-hidden flex flex-col items-center justify-center text-center">
                     <motion.div
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -128,7 +156,7 @@ export default function HistoryPage() {
                 </section>
 
                 {/* Section 1: The Pain */}
-                <section className="py-32 px-6 relative bg-slate-50 dark:bg-slate-900/50 transition-colors">
+                <section id="purpose" className="py-32 px-6 relative bg-slate-50 dark:bg-slate-900/50 transition-colors">
                     <div className="max-w-4xl mx-auto">
                         <motion.div
                             initial={{ opacity: 0, x: -50 }}
@@ -157,7 +185,7 @@ export default function HistoryPage() {
                 </section>
 
                 {/* Section 2: The Birth */}
-                <section className="py-40 px-6 relative">
+                <section id="birth" className="py-40 px-6 relative">
                     <div className="max-w-4xl mx-auto text-center relative z-10">
                         <motion.div
                             initial={{ opacity: 0, scale: 0.95 }}
@@ -184,7 +212,7 @@ export default function HistoryPage() {
                 </section>
 
                 {/* Section 3: The Meaning of Veritum (Premium Card Style) */}
-                <section className="py-40 px-6 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white relative overflow-hidden transition-colors duration-500">
+                <section id="meaning" className="py-40 px-6 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white relative overflow-hidden transition-colors duration-500">
                     {/* Noise texture overlay */}
                     <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
 
@@ -251,7 +279,7 @@ export default function HistoryPage() {
                 </section>
 
                 {/* Section 4: Deep Dive */}
-                <section className="py-40 px-6 bg-white dark:bg-slate-950 transition-colors">
+                <section id="peace" className="py-40 px-6 bg-white dark:bg-slate-950 transition-colors">
                     <div className="max-w-5xl mx-auto">
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
                             <motion.div
@@ -342,47 +370,7 @@ export default function HistoryPage() {
             </main>
 
             {/* Standard Footer */}
-            <footer className="py-20 px-6 border-t border-slate-100 dark:border-slate-900 bg-slate-50 dark:bg-slate-950 transition-colors">
-                <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-                    <div className="flex items-center gap-3">
-                        <Logo />
-                        <span className="font-extrabold text-2xl tracking-tighter text-slate-900 dark:text-white uppercase">VERITUM <span className="text-branding-gradient">PRO</span></span>
-                    </div>
-                    <p className="text-sm text-slate-400 dark:text-slate-500 font-medium">
-                        <button
-                            onClick={() => setIsCompanyModalOpen(true)}
-                            className="group relative transition-all duration-300 hover:scale-[1.02] cursor-pointer not-italic inline-flex items-center"
-                        >
-                            <span className="text-slate-400 dark:text-slate-500 font-medium">
-                                {locale === 'pt' ? 'Desenvolvido por ' : locale === 'es' ? 'Desarrollado por ' : 'Developed by '}
-                            </span>
-                            <span className="text-indigo-600 dark:text-indigo-400 font-extrabold ml-1 flex items-center">
-                                AGTech
-                                <sup className="ml-0.5 text-[10px] opacity-70 group-hover:opacity-100 transition-opacity">©</sup>
-                            </span>
-                            {/* Tooltip */}
-                            <span className="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-slate-900 text-white text-[10px] font-black rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap pointer-events-none shadow-2xl border border-slate-800 scale-90 group-hover:scale-100 z-[60]">
-                                {locale === 'pt' ? 'Clique para saber mais' : locale === 'es' ? 'Clic para saber más' : 'Click to learn more'}
-                            </span>
-                        </button>
-                        {locale === 'pt' ? ' | LegalTech de Alta Performance © 2026 Todos os direitos reservados.' : ' | High Performance LegalTech © 2026 All rights reserved.'}
-                    </p>
-                    <div className="flex gap-6">
-                        <button
-                            onClick={() => openLegal('privacy')}
-                            className="text-sm text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer font-bold"
-                        >
-                            {t('common.privacy')}
-                        </button>
-                        <button
-                            onClick={() => openLegal('terms')}
-                            className="text-sm text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer font-bold"
-                        >
-                            {t('common.terms')}
-                        </button>
-                    </div>
-                </div>
-            </footer>
+            <Footer setIsCompanyModalOpen={setIsCompanyModalOpen} openLegal={openLegal} />
 
             <LegalModal
                 isOpen={legalModal.isOpen}
@@ -398,7 +386,7 @@ export default function HistoryPage() {
             <AuthModal
                 isOpen={isAuthModalOpen}
                 onClose={() => setIsAuthModalOpen(false)}
-                mode="register"
+                mode={authMode}
             />
         </div>
     );
