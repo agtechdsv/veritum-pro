@@ -19,6 +19,7 @@ import { useModule } from '@/app/veritum/layout';
 import { useTranslation } from '@/contexts/language-context';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from '@/components/ui/toast';
+import { sendEmail } from '@/lib/email';
 
 interface DemoRequest {
     id: string;
@@ -217,6 +218,17 @@ export default function SchedulingManagement() {
             const googleUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${eventTitle}&dates=${formatDateGoogle(startTime)}/${formatDateGoogle(endTime)}&details=${eventDetails}&location=${eventLocation}`;
             const outlookUrl = `https://outlook.live.com/calendar/0/deeplink/compose?path=/calendar/action/compose&rru=addevent&subject=${eventTitle}&startdt=${formatDateOutlook(startTime)}&enddt=${formatDateOutlook(endTime)}&body=${eventDetails}&location=${eventLocation}`;
 
+            const translations = {
+                title: t('management.master.scheduling.email.title') || 'Sua reunião está confirmada!',
+                greeting: t('management.master.scheduling.email.greeting') || 'Olá',
+                subtitle: t('management.master.scheduling.email.subtitle') || 'Preparamos tudo para a sua demonstração exclusiva.',
+                scheduledFor: t('management.master.scheduling.email.scheduledFor') || 'AGENDADO PARA',
+                accessRoom: t('management.master.scheduling.email.accessRoom') || 'ACESSAR SALA VIRTUAL',
+                calendarReminder: t('management.master.scheduling.email.calendarReminder') || 'Lembrete na sua agenda:',
+                footerReason: t('management.master.scheduling.email.footerReason') || 'Você recebeu este e-mail devido ao seu interesse no Veritum PRO.',
+                footerSlogan: t('management.master.scheduling.email.footerSlogan') || 'Performance Jurídica Elevada.'
+            };
+
             const emailHtml = `
                 <!DOCTYPE html>
                 <html>
@@ -239,15 +251,15 @@ export default function SchedulingManagement() {
                                     </tr>
                                     <tr>
                                         <td style="padding: 48px 40px;">
-                                            <h2 style="margin: 0 0 24px 0; color: #0f172a; font-size: 26px; font-weight: 700; text-align: center; letter-spacing: -0.01em;">Sua reunião está confirmada!</h2>
+                                            <h2 style="margin: 0 0 24px 0; color: #0f172a; font-size: 26px; font-weight: 700; text-align: center; letter-spacing: -0.01em;">${translations.title}</h2>
                                             <p style="margin: 0 0 32px 0; color: #475569; font-size: 17px; line-height: 1.6; text-align: center;">
-                                                Olá, <strong>${fullName}</strong>. Preparamos tudo para a sua demonstração exclusiva.
+                                                ${translations.greeting}, <strong>${fullName}</strong>. ${translations.subtitle}
                                             </p>
                                             
                                             <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 32px 0;">
                                                 <tr>
                                                     <td style="padding: 32px; background-color: #f1f5f9; border-radius: 16px; text-align: center; border: 1px solid #e2e8f0;">
-                                                        <span style="display: block; margin-bottom: 12px; color: #64748b; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;">AGENDADO PARA</span>
+                                                        <span style="display: block; margin-bottom: 12px; color: #64748b; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;">${translations.scheduledFor}</span>
                                                         <span style="color: #0f172a; font-size: 22px; font-weight: 800;">${formattedDate}h</span>
                                                     </td>
                                                 </tr>
@@ -255,12 +267,12 @@ export default function SchedulingManagement() {
 
                                             <div style="margin: 40px 0 32px 0; text-align: center;">
                                                 <a href="${meetingLink}" style="display: inline-block; padding: 20px 48px; background-color: #10b981; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 700; border-radius: 14px; text-transform: uppercase; letter-spacing: 0.05em; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2);">
-                                                    ACESSAR SALA VIRTUAL
+                                                    ${translations.accessRoom}
                                                 </a>
                                             </div>
 
                                             <div style="text-align: center; margin-top: 40px; padding-top: 32px; border-top: 1px solid #f1f5f9;">
-                                                <p style="color: #64748b; font-size: 13px; margin-bottom: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;">Lembrete na sua agenda:</p>
+                                                <p style="color: #64748b; font-size: 13px; margin-bottom: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;">${translations.calendarReminder}</p>
                                                 <table border="0" cellpadding="0" cellspacing="0" align="center">
                                                     <tr>
                                                         <td style="padding: 0 10px;">
@@ -276,10 +288,10 @@ export default function SchedulingManagement() {
                                     </tr>
                                     <tr>
                                         <td style="padding: 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center;">
-                                            <p style="margin: 0 0 8px 0; color: #64748b; font-size: 13px; font-weight: 600;">© 2026 Veritum PRO</p>
+                                            <p style="margin: 0 0 8px 0; color: #64748b; font-size: 13px; font-weight: 600;">© ${new Date().getFullYear()} Veritum PRO</p>
                                             <p style="margin: 0; color: #94a3b8; font-size: 12px; line-height: 1.5;">
-                                                Você recebeu este e-mail devido ao seu interesse no Veritum PRO.<br>
-                                                Performance Jurídica Elevada.
+                                                ${translations.footerReason}<br>
+                                                ${translations.footerSlogan}
                                             </p>
                                         </td>
                                     </tr>
@@ -291,16 +303,20 @@ export default function SchedulingManagement() {
                 </html>
             `;
 
-            const { data, error } = await supabase.functions.invoke('send-email', {
-                body: { to: email, subject: t('management.master.scheduling.toast.emailSubject'), html: emailHtml, fullName, scenario: 'sales' }
+            const emailResult = await sendEmail(supabase, {
+                to: email,
+                subject: t('management.master.scheduling.toast.emailSubject'),
+                html: emailHtml,
+                fullName,
+                scenario: 'sales'
             });
 
-            if (!error && data?.success) {
+            if (emailResult.success) {
                 toast.success(t('management.master.scheduling.toast.emailSuccess', { email }));
                 if (overrides?.meeting_link) handleSaveEdit(overrides);
                 return true;
             } else {
-                toast.error(t('management.master.scheduling.toast.emailError', { error: error?.message || data?.error }));
+                toast.error(t('management.master.scheduling.toast.emailError', { error: emailResult.error?.message || emailResult.error }));
                 return false;
             }
         } catch (err) {

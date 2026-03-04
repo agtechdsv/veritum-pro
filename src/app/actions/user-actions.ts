@@ -66,9 +66,13 @@ export async function createUserDirectly(formData: any, parentUserId: string | n
 export async function resetTemporaryPassword(userId: string, newPassword: string) {
     const supabase = createAdminClient()
 
-    // 1. Update password in Auth
+    // 1. Update password in Auth and clear ALL reset flags in metadata
     const { data: authData, error: authError } = await supabase.auth.admin.updateUserById(userId, {
-        password: newPassword
+        password: newPassword,
+        user_metadata: {
+            need_to_change_password: false,
+            force_password_reset: false
+        }
     })
 
     if (authError) {

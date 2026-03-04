@@ -128,6 +128,13 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
             console.warn("Aviso: Perfil não sincronizado na public.users. Usando metadados do Auth.", profileError.message || profileError);
         }
 
+        // 3.5 Check for forced password reset
+        if (profile?.force_password_reset || authUser.user_metadata?.need_to_change_password || authUser.user_metadata?.force_password_reset) {
+            console.log("Forced password reset required detected in Layout. Redirecting to login...");
+            router.push('/login?reset=true');
+            return;
+        }
+
         // 4. Fetch Permissions and Suites (Dependent on profile)
         const planId = profile?.plan_id || authUser.user_metadata.plan_id;
         const queries: any[] = [

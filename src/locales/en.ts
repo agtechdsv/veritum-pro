@@ -77,8 +77,22 @@ export const en = {
             resetError: 'Error resetting password. Please try again.',
             googleError: 'Error signing in with Google.',
             inactive: 'This account is inactive. Please contact your administrator.',
-            default: 'An error occurred during authentication.'
-        }
+            default: 'An error occurred during authentication.',
+            notFound: 'Email not found. Please sign up.',
+            genResetSuccess: 'Your temporary password has been sent! Check your email (and spam folder, marking as "not spam" if needed).'
+        },
+        resetConfirmButton: 'Send Temporary Password',
+        alreadyRegistered: 'Email already registered.',
+        accountCreated: 'Account created successfully!'
+    },
+    account: {
+        settings: 'Account Settings',
+        profile: 'Profile',
+        security: 'Security',
+        notifications: 'Notifications',
+        language: 'Language',
+        theme: 'Theme',
+        signOut: 'Sign Out'
     },
     modules: {
         title: 'Specialized Modules',
@@ -913,6 +927,16 @@ export const en = {
                     emailSuccess: 'Invitation sent to {email}!',
                     emailError: 'Sending failure: {error}',
                     unexpectedError: 'Unexpected error sending email.'
+                },
+                email: {
+                    title: 'Your meeting is confirmed!',
+                    greeting: 'Hello',
+                    subtitle: 'We have prepared everything for your exclusive demonstration.',
+                    scheduledFor: 'SCHEDULED FOR',
+                    accessRoom: 'ACCESS VIRTUAL ROOM',
+                    calendarReminder: 'Reminder on your calendar:',
+                    footerReason: 'You received this email due to your interest in Veritum PRO.',
+                    footerSlogan: 'Elevated Legal Performance.'
                 }
             },
             email: {

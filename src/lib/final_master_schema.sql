@@ -414,7 +414,8 @@ BEGIN
       'full_name', NEW.name,
       'parent_user_id', NEW.parent_user_id,
       'active', NEW.active,
-      'plan_id', NEW.plan_id
+      'plan_id', NEW.plan_id,
+      'force_password_reset', NEW.force_password_reset
     )
   WHERE id = NEW.id;
 

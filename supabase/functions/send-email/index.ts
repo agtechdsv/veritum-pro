@@ -112,14 +112,14 @@ Deno.serve(async (req) => {
 
         // 6. Deliverability Logic (SPF/DKIM Compliance)
         const providerUser = Deno.env.get('SMTP_USER') || '';
-        const aliasEmail = langConfig?.email || providerUser || 'suporte@veritumpro.com';
+        // FIX: Ensure aliasEmail is a valid email, not just the 'resend' username
+        const aliasEmail = langConfig?.email || (providerUser.includes('@') ? providerUser : 'suporte@veritumpro.com');
         const senderName = langConfig?.name || 'Veritum PRO';
 
-        // To satisfy SPF/DKIM, the "From" header should ideally match the SMTP user or the authorized domain.
-        // If aliasEmail is different from providerUser, we use aliasEmail as 'From' but keep providerUser 
-        // as the sender if needed, though most providers allow using a different 'From' if the domain is verified.
         const fromHeader = `"${senderName}" <${aliasEmail}>`;
         const replyToHeader = aliasEmail;
+
+        console.log(`Preparing to send email to ${to} from ${fromHeader} using scenario: ${scenario}`);
 
         // 7. SMTP Configuration
         const transporter = nodemailer.createTransport({
@@ -139,7 +139,7 @@ Deno.serve(async (req) => {
         // 8. Execute Send
         const info = await transporter.sendMail({
             from: fromHeader,
-            sender: providerUser, // The actual authenticated account
+            // sender: providerUser, // Removed as 'resend' is not a valid email address
             replyTo: replyToHeader,
             to,
             subject,

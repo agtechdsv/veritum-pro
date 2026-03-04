@@ -85,8 +85,22 @@ export const es = {
             "resetError": "Error al restablecer la contraseña. Intente nuevamente.",
             "googleError": "Error al entrar con Google.",
             "inactive": "Esta cuenta está inactiva. Contacte al administrador.",
-            "default": "Ocurrió un error en la autenticación."
-        }
+            "default": "Ocurrió un error en la autenticación.",
+            notFound: 'El email no fue localizado. Regístrese.',
+            genResetSuccess: '¡Su contraseña provisional ha sido enviada! Revise seu correo electrónico (y la carpeta de spam, marcándola como "no es spam" si es necesario).'
+        },
+        resetConfirmButton: 'Enviar Contraseña Provisional',
+        alreadyRegistered: 'E-mail ya registrado.',
+        accountCreated: '¡Cuenta creada con éxito!'
+    },
+    account: {
+        settings: 'Configuración de la Cuenta',
+        profile: 'Perfil',
+        security: 'Seguridad',
+        notifications: 'Notificaciones',
+        language: 'Idioma',
+        theme: 'Tema',
+        signOut: 'Cerrar Sesión'
     },
     "modules": {
         "title": "Módulos Especializados",
@@ -917,6 +931,16 @@ export const es = {
                     "emailSuccess": "¡Invitación enviada para {email}!",
                     "emailError": "Falla en el envío: {error}",
                     "unexpectedError": "Error inesperado al enviar e-mail."
+                },
+                "email": {
+                    "title": "¡Su reunión está confirmada!",
+                    "greeting": "Hola",
+                    "subtitle": "Preparamos todo para su demostración exclusiva.",
+                    "scheduledFor": "AGENDADO PARA",
+                    "accessRoom": "ACCEDER A LA SALA VIRTUAL",
+                    "calendarReminder": "Recordatorio en su agenda:",
+                    "footerReason": "Usted recibió este e-mail debido a su interés en Veritum PRO.",
+                    "footerSlogan": "Rendimiento Jurídico Elevado."
                 }
             },
             "email": {

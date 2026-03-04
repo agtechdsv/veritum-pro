@@ -77,8 +77,22 @@ export const pt = {
             resetError: 'Erro ao redefinir senha. Tente novamente.',
             googleError: 'Erro ao entrar com Google.',
             inactive: 'Esta conta está inativa. Entre em contato com o administrador.',
-            default: 'Ocorreu um erro na autenticação.'
-        }
+            default: 'Ocorreu um erro na autenticação.',
+            notFound: 'O email não foi localizado. Cadastre-se.',
+            genResetSuccess: 'Sua senha provisória foi enviada! Verifique seu e-mail (e a pasta de spam, marcando como "não é spam" se necessário).'
+        },
+        resetConfirmButton: 'Enviar Senha Provisória',
+        alreadyRegistered: 'E-mail já cadastrado.',
+        accountCreated: 'Conta criada com sucesso!'
+    },
+    account: {
+        settings: 'Configurações de Conta',
+        profile: 'Perfil',
+        security: 'Segurança',
+        notifications: 'Notificações',
+        language: 'Idioma',
+        theme: 'Tema',
+        signOut: 'Sair'
     },
     modules: {
         title: 'Módulos especializados',
@@ -913,18 +927,28 @@ export const pt = {
                 },
                 toast: {
                     successConfirm: 'Agendamento confirmado!',
-                    errorConfirm: 'Erro ao confirmar agendamento.',
-                    errorTechnical: 'Falha técnica no agendamento.',
-                    successDelete: 'Agendamento excluído permanentemente.',
-                    errorDelete: 'Erro ao excluir agendamento.',
-                    successUpdate: 'Agendamento atualizado com sucesso!',
+                    errorConfirm: 'Erro ao confirmar agendamento',
+                    errorTechnical: 'Falha técnica ao tentar agendar.',
+                    successDelete: 'Solicitação excluída com sucesso!',
+                    errorDelete: 'Erro ao excluir.',
+                    successUpdate: 'Solicitação atualizada com sucesso!',
                     errorSave: 'Erro ao salvar alterações.',
-                    missingLink: 'Informe o link da reunião antes de enviar o convite.',
-                    missingDate: 'Esta solicitação não possui data agendada.',
-                    emailSubject: 'Confirmação de Reunião - Veritum PRO',
-                    emailSuccess: 'Convite enviado para {email}!',
-                    emailError: 'Falha no envio: {error}',
-                    unexpectedError: 'Erro inesperado ao enviar e-mail.'
+                    missingLink: 'Informe o Link da Reunião (Zoom, Google Meet) antes de prosseguir.',
+                    missingDate: 'A solicitação precisa ter uma Data de Agendamento definida.',
+                    emailSubject: 'Confirmação de Agendamento - Veritum PRO',
+                    emailSuccess: 'Convite enviado com sucesso para {email}!',
+                    emailError: 'Falha no envio do e-mail: {error}',
+                    unexpectedError: 'Ocorreu um erro inesperado ao notificar o cliente.'
+                },
+                email: {
+                    title: 'Sua reunião está confirmada!',
+                    greeting: 'Olá',
+                    subtitle: 'Preparamos tudo para a sua demonstração exclusiva.',
+                    scheduledFor: 'AGENDADO PARA',
+                    accessRoom: 'ACESSAR SALA VIRTUAL',
+                    calendarReminder: 'Lembrete na sua agenda:',
+                    footerReason: 'Você recebeu este e-mail devido ao seu interesse no Veritum PRO.',
+                    footerSlogan: 'Performance Jurídica Elevada.'
                 }
             },
             email: {

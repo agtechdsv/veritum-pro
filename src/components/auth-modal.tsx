@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { createMasterClient } from '@/lib/supabase/master'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { registerPublicUser, resetTemporaryPassword } from '@/app/actions/user-actions';
+import { requestPasswordReset } from '@/app/login/actions';
 import { useTranslation } from '@/contexts/language-context';
 
 interface Props {
@@ -91,7 +92,7 @@ const PasswordStrength = ({ password, t }: { password: string, t: any }) => {
 export function AuthModal({ isOpen, onClose, mode }: Props) {
     const { theme } = useTheme()
     const { t } = useTranslation()
-    const [currentMode, setCurrentMode] = useState<'login' | 'register' | 'force-reset'>(mode);
+    const [currentMode, setCurrentMode] = useState<'login' | 'register' | 'force-reset' | 'forgot_password'>(mode);
     const [loading, setLoading] = useState(false);
     const [userId, setUserId] = useState<string | null>(null);
     const [email, setEmail] = useState('');
@@ -100,15 +101,19 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
     const [showPassword, setShowPassword] = useState(false);
     const [name, setName] = useState('');
     const [error, setError] = useState<string | null>(null);
+    const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
     const emailRef = React.useRef<HTMLInputElement>(null);
     const nameRef = React.useRef<HTMLInputElement>(null);
+    const passwordRef = React.useRef<HTMLInputElement>(null);
+    const loginPasswordRef = React.useRef<HTMLInputElement>(null);
 
     // Ensure the modal resets to the requested mode whenever it's opened or changed
     useEffect(() => {
         if (isOpen) {
             setCurrentMode(mode);
             setError(null);
+            setSuccessMsg(null);
             setEmail('');
             setPassword('');
             setConfirmPassword('');
@@ -126,8 +131,9 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
     useEffect(() => {
         if (isOpen) {
             setTimeout(() => {
-                if (currentMode === 'login') emailRef.current?.focus();
+                if (currentMode === 'login' || currentMode === 'forgot_password') emailRef.current?.focus();
                 else if (currentMode === 'register') nameRef.current?.focus();
+                else if (currentMode === 'force-reset') passwordRef.current?.focus();
             }, 50);
         }
 
@@ -171,6 +177,17 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
 
                     if (profileError) {
                         console.error('Error fetching profile:', profileError);
+                    }
+
+                    // Metadata Check (Fast)
+                    if (user.user_metadata?.need_to_change_password || user.user_metadata?.force_password_reset) {
+                        setUserId(user.id);
+                        setCurrentMode('force-reset');
+                        setSuccessMsg(null);
+                        setPassword('');
+                        setConfirmPassword('');
+                        setLoading(false);
+                        return;
                     }
 
                     if (profile && !profile.active) {
@@ -230,6 +247,38 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
         }
     };
 
+    const handleForgotPassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!email) {
+            setError(t('auth.errors.default') || 'Preencha o e-mail');
+            return;
+        }
+
+        setLoading(true);
+        setError(null);
+        setSuccessMsg(null);
+
+        try {
+            const result = await requestPasswordReset(email);
+            if (result.error) {
+                if (result.notFound) {
+                    setError(t('auth.errors.notFound'));
+                } else {
+                    setError(result.error);
+                }
+            } else {
+                setSuccessMsg(t('auth.errors.genResetSuccess'));
+                setCurrentMode('login');
+                setPassword('');
+                setTimeout(() => loginPasswordRef.current?.focus(), 150);
+            }
+        } catch (err: any) {
+            setError(err.message || 'Erro ao redefinir senha.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleResetPassword = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!userId) return;
@@ -248,12 +297,38 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
         setError(null);
 
         try {
-            const result = await resetTemporaryPassword(userId, password);
-            if (!result.success) throw new Error(result.error);
+            const supabase = createMasterClient();
 
-            // Success! Proceed to dashboard
+            // 1. Update password AND metadata via client-side (this refreshes the session/JWT automatically)
+            const { error } = await supabase.auth.updateUser({
+                password: password,
+                data: {
+                    need_to_change_password: false,
+                    force_password_reset: false
+                }
+            })
+
+            if (error) {
+                setError('Erro ao atualizar senha no sistema de autenticação.')
+                setLoading(false)
+                return
+            }
+
+            // Also update the flag in the database table
+            const { error: dbError } = await supabase
+                .from('users')
+                .update({ force_password_reset: false })
+                .eq('id', userId);
+
+            if (dbError) {
+                console.error('Error updating DB reset flag:', dbError);
+            }
+
+            setLoading(false)
+            // Full reload to ensure session is correctly picked up by layout
             window.location.href = '/veritum';
-        } catch (err: any) {
+        }
+        catch (err: any) {
             setError(err.message || t('auth.errors.resetError'));
             setLoading(false);
         }
@@ -266,8 +341,39 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
             const supabase = createMasterClient();
 
             // 1. Listen for auth state change - reliable across windows on same origin
-            const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
                 if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
+                    const { data: profile } = await supabase
+                        .from('users')
+                        .select('active, force_password_reset')
+                        .eq('id', session.user.id)
+                        .single();
+
+                    if (profile && !profile.active) {
+                        await supabase.auth.signOut();
+                        setError(t('auth.errors.inactive'));
+                        setLoading(false);
+                        return;
+                    }
+
+                    // 1. Metadata check (Fast)
+                    const meta = session.user.user_metadata;
+                    if (meta?.need_to_change_password || meta?.force_password_reset) {
+                        console.log('Forced reset detected in metadata');
+                        setCurrentMode('force-reset') // Changed from setMode('change_password')
+                        setSuccessMsg('')
+                        setLoading(false)
+                        return
+                    }
+
+                    if (profile?.force_password_reset) {
+                        console.log('Forced reset detected in database');
+                        setCurrentMode('force-reset') // Changed from setMode('change_password')
+                        setSuccessMsg('')
+                        setLoading(false)
+                        return
+                    }
+
                     subscription.unsubscribe();
                     setLoading(false);
                     onClose();
@@ -333,7 +439,7 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
             <DialogContent className="sm:max-w-lg p-0 bg-transparent border-none shadow-none">
                 <div className={`relative w-full p-6 pt-10 rounded-[2.5rem] shadow-2xl border transition-colors ${theme === 'dark' ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
                     <DialogTitle className="sr-only">{currentMode === 'login' ? t('auth.signIn') : t('auth.signUp')}</DialogTitle>
-                    <button onClick={onClose} className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                    <button onClick={onClose} className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">
                         <X size={20} />
                     </button>
 
@@ -359,7 +465,7 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                                 <button
                                     onClick={handleGoogleLogin}
                                     disabled={loading}
-                                    className="w-full flex items-center justify-center gap-3 py-3 border border-slate-200 dark:border-slate-800 rounded-2xl font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all disabled:opacity-50 dark:text-white bg-transparent"
+                                    className="w-full flex items-center justify-center gap-3 py-3 border border-slate-200 dark:border-slate-800 rounded-2xl font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all disabled:opacity-50 dark:text-white bg-transparent cursor-pointer"
                                 >
                                     <svg className="w-5 h-5" viewBox="0 0 24 24">
                                         <path
@@ -392,14 +498,55 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                         {error && (
                             <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-xs font-bold border border-rose-100 dark:border-rose-900/30">
                                 {error}
+                                {error === t('auth.errors.notFound') && (
+                                    <button type="button" onClick={() => setCurrentMode('register')} className="ml-2 font-bold underline cursor-pointer">
+                                        {t('auth.signUp')}
+                                    </button>
+                                )}
                             </div>
                         )}
 
-                        {currentMode === 'force-reset' ? (
+                        {successMsg && (
+                            <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold border border-emerald-100 dark:border-emerald-900/30">
+                                {successMsg}
+                            </div>
+                        )}
+
+                        {currentMode === 'forgot_password' ? (
+                            <form className="space-y-4" onSubmit={handleForgotPassword}>
+                                <div className="relative">
+                                    <Mail className="absolute left-4 top-3.5 text-slate-400" size={20} />
+                                    <input
+                                        ref={emailRef}
+                                        required
+                                        type="email"
+                                        placeholder={t('auth.emailLabel')}
+                                        className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 dark:text-white"
+                                        value={email}
+                                        onChange={e => setEmail(e.target.value)}
+                                    />
+                                </div>
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="w-full bg-branding-gradient animate-gradient text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-2xl shadow-blue-600/20 hover:scale-[1.01] transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                                >
+                                    {loading ? t('common.loading') : t('auth.resetConfirmButton')} <ArrowRight size={20} strokeWidth={3} />
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setCurrentMode('login')}
+                                    className="w-full py-3 text-slate-500 font-bold hover:text-slate-700 dark:hover:text-slate-300 cursor-pointer"
+                                >
+                                    {t('auth.backToLogin') || 'Voltar ao Login'}
+                                </button>
+                            </form>
+                        ) : currentMode === 'force-reset' ? (
                             <form className="space-y-4" onSubmit={handleResetPassword}>
                                 <div className="relative">
                                     <Lock className="absolute left-4 top-3.5 text-slate-400" size={20} />
                                     <input
+                                        ref={passwordRef}
                                         required
                                         type={showPassword ? "text" : "password"}
                                         placeholder={t('auth.newPasswordPlaceholder')}
@@ -410,7 +557,7 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-4 top-3.5 text-slate-400 hover:text-indigo-600 transition-colors"
+                                        className="absolute right-4 top-3.5 text-slate-400 hover:text-indigo-600 transition-colors cursor-pointer"
                                     >
                                         {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                     </button>
@@ -433,7 +580,7 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="w-full bg-branding-gradient animate-gradient text-white py-4 rounded-2xl font-bold shadow-2xl shadow-blue-600/20 hover:scale-[1.01] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                    className="w-full bg-branding-gradient animate-gradient text-white py-4 rounded-2xl font-bold shadow-2xl shadow-blue-600/20 hover:scale-[1.01] transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
                                 >
                                     {loading ? t('common.loading') : t('auth.resetTitle')} <ArrowRight size={20} />
                                 </button>
@@ -472,6 +619,7 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                                 <div className="relative">
                                     <Lock className="absolute left-4 top-3.5 text-slate-400" size={20} />
                                     <input
+                                        ref={loginPasswordRef}
                                         required
                                         type={showPassword ? "text" : "password"}
                                         placeholder={t('auth.passwordLabel')}
@@ -482,11 +630,23 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-4 top-3.5 text-slate-400 hover:text-indigo-600 transition-colors"
+                                        className="absolute right-4 top-3.5 text-slate-400 hover:text-indigo-600 transition-colors cursor-pointer"
                                     >
                                         {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                     </button>
                                 </div>
+
+                                {currentMode === 'login' && (
+                                    <div className="flex justify-end pt-1">
+                                        <button
+                                            type="button"
+                                            onClick={() => { setError(null); setSuccessMsg(null); setCurrentMode('forgot_password') }}
+                                            className="text-sm font-medium hover:underline text-indigo-600 dark:text-indigo-400 cursor-pointer"
+                                        >
+                                            {t('auth.forgotPassword') || 'Esqueci minha senha'}
+                                        </button>
+                                    </div>
+                                )}
 
                                 {currentMode === 'register' && (
                                     <>
@@ -509,7 +669,7 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="w-full bg-branding-gradient animate-gradient text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-2xl shadow-blue-600/20 hover:scale-[1.01] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                    className="w-full bg-branding-gradient animate-gradient text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-2xl shadow-blue-600/20 hover:scale-[1.01] transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
                                 >
                                     {loading ? t('common.loading') : (currentMode === 'login' ? t('auth.loginButton') : t('auth.registerButton'))} <ArrowRight size={20} strokeWidth={3} />
                                 </button>
@@ -520,12 +680,12 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                             </form>
                         )}
 
-                        {currentMode !== 'force-reset' && (
+                        {currentMode !== 'force-reset' && currentMode !== 'forgot_password' && (
                             <p className="text-center text-sm text-slate-500">
                                 {currentMode === 'login' ? t('auth.noAccount').split('?')[0] + '?' : t('auth.hasAccount').split('?')[0] + '?'}
                                 <button
                                     onClick={() => setCurrentMode(currentMode === 'login' ? 'register' : 'login')}
-                                    className="ml-2 text-indigo-600 font-bold hover:underline"
+                                    className="ml-2 text-indigo-600 font-bold hover:underline cursor-pointer"
                                 >
                                     {currentMode === 'login' ? t('auth.signUp') : t('auth.signIn')}
                                 </button>
@@ -534,6 +694,6 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                     </div>
                 </div>
             </DialogContent>
-        </Dialog>
+        </Dialog >
     );
 }
