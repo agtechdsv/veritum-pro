@@ -389,16 +389,16 @@ const ClubeVIP: React.FC<Props> = ({ user, onUpdateUser }) => {
                                             extractData.map((item, i) => (
                                                 <div key={i} className="flex flex-col md:flex-row md:items-center justify-between p-4 bg-slate-50 dark:bg-slate-950 rounded-[1.5rem] border border-slate-100 dark:border-slate-800/50 hover:border-slate-200 dark:hover:border-slate-700 transition-all gap-4">
                                                     <div className="flex items-center gap-4">
-                                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${item.status === 'approved' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>
-                                                            {item.status === 'approved' ? <Check size={16} strokeWidth={3} /> : <Target size={16} />}
+                                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${item.status === 'confirmed' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>
+                                                            {item.status === 'confirmed' ? <Check size={16} strokeWidth={3} /> : <Target size={16} />}
                                                         </div>
                                                         <div>
                                                             <h4 className="text-sm font-black text-slate-800 dark:text-white truncate max-w-[150px] md:max-w-xs">{item.name}</h4>
                                                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{item.plan}</span>
                                                         </div>
                                                     </div>
-                                                    <div className={`px-4 py-2 text-xs font-black uppercase tracking-widest rounded-xl shrink-0 self-start md:self-auto ${item.status === 'approved' ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>
-                                                        {item.status === 'approved' ? `+ ${item.points} Pontos` : 'Pendente'}
+                                                    <div className={`px-4 py-2 text-xs font-black uppercase tracking-widest rounded-xl shrink-0 self-start md:self-auto ${item.status === 'confirmed' ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>
+                                                        {item.status === 'confirmed' ? `+ ${item.points} Pontos` : 'Pendente'}
                                                     </div>
                                                 </div>
                                             ))

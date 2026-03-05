@@ -223,6 +223,7 @@ Deno.serve(async (req: Request) => {
       const defaultPayload: any = {
         user_id: userId,
         plan_id: planId,
+        billing_cycle: billingCycle, // Yearly, Monthly, etc.
         status: "active",
         is_trial: false, // Mark as paid
         start_date: new Date().toISOString(),

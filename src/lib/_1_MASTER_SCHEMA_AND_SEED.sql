@@ -150,6 +150,7 @@ CREATE TABLE public.user_subscriptions (
     end_date TIMESTAMPTZ,
     status TEXT DEFAULT 'active' CHECK (status IN ('active', 'expired', 'canceled')),
     is_trial BOOLEAN DEFAULT FALSE,
+    billing_cycle TEXT DEFAULT 'monthly' CHECK (billing_cycle IN ('monthly', 'quarterly', 'semiannual', 'annual', 'yearly')),
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -413,7 +414,10 @@ BEGIN
           IF inviter_id IS NOT NULL THEN
               INSERT INTO public.user_referrals (referrer_id, referred_id, referred_email, plan_id, status)
               VALUES (inviter_id, new.id, new.email, user_plan_id, 'pending')
-              ON CONFLICT DO NOTHING;
+              ON CONFLICT (referred_email) DO UPDATE SET
+                  referred_id = EXCLUDED.referred_id,
+                  plan_id = EXCLUDED.plan_id
+              WHERE public.user_referrals.status = 'pending';
           END IF;
       EXCEPTION WHEN OTHERS THEN
           -- Silently ignore VIP referral errors to not block user registration
@@ -612,7 +616,7 @@ create table if not exists public.user_referrals (
     referred_email text not null, -- E-mail do amigo indicado (usado para convite)
     plan_id uuid references public.plans(id), -- Qual plano o amigo assinou
     points_generated integer default 0,
-    status text not null default 'pending' check (status in ('pending', 'approved', 'revoked', 'expired')),
+    status text not null default 'pending' check (status in ('pending', 'confirmed', 'rejected', 'expired')),
     payment_confirmed_at timestamptz, -- Data/hora que o pagamento foi confirmado
     points_credited_at timestamptz, -- Data/hora que os pontos entraram no saldo real após 7 dias
     created_at timestamptz default now(),
@@ -626,6 +630,84 @@ create table if not exists public.user_vip_balance (
     total_points integer default 0,
     updated_at timestamptz default now()
 );
+
+-- ============================================================================
+-- CLUBE VIP: LOGICA PARA CREDITAR PONTOS NA ASSINATURA (MEMBER GET MEMBER)
+-- ============================================================================
+
+CREATE OR REPLACE FUNCTION public.process_referral_points()
+RETURNS trigger AS $$
+DECLARE
+    v_referrer_id uuid;
+    v_points integer;
+    v_rule_cycle text;
+BEGIN
+    -- Só processamos se o plano deixou de ser TRIAL (virou oficial)
+    -- Ou se mudou de plano mantendo is_trial = false (upgrade de plano pago)
+    IF (OLD.is_trial IS TRUE AND NEW.is_trial IS FALSE) OR (OLD.plan_id IS DISTINCT FROM NEW.plan_id AND NEW.is_trial IS FALSE) THEN
+        
+        -- Mapear Cycle para a regra (yearly -> annual)
+        v_rule_cycle := CASE 
+            WHEN NEW.billing_cycle = 'yearly' THEN 'annual'
+            WHEN NEW.billing_cycle = 'semiannual' THEN 'semiannual'
+            WHEN NEW.billing_cycle = 'quarterly' THEN 'quarterly'
+            ELSE 'monthly'
+        END;
+
+        -- 1. Tentar encontrar a indicação pendente para este usuário
+        SELECT referrer_id INTO v_referrer_id 
+        FROM public.user_referrals 
+        WHERE referred_id = NEW.user_id AND status = 'pending'
+        LIMIT 1;
+
+        IF v_referrer_id IS NOT NULL THEN
+            -- 2. Buscar quantos pontos essa combinação Plano + Ciclo gera
+            SELECT points_generated INTO v_points
+            FROM public.referral_rules
+            WHERE plan_id = NEW.plan_id 
+              AND (billing_cycle = v_rule_cycle OR billing_cycle = 'monthly') -- Busca específica ou fallback mensal
+            ORDER BY (billing_cycle = v_rule_cycle) DESC -- Prioriza a busca exata do ciclo
+            LIMIT 1;
+
+            IF v_points IS NOT NULL AND v_points > 0 THEN
+                -- 3. Atualizar a indicação para CONFIRMED e registrar pontos
+                UPDATE public.user_referrals
+                SET 
+                    status = 'confirmed',
+                    points_generated = v_points,
+                    payment_confirmed_at = NOW(),
+                    points_credited_at = NOW(),
+                    plan_id = NEW.plan_id,
+                    updated_at = NOW()
+                WHERE referred_id = NEW.user_id AND status = 'pending';
+
+                -- 4. Somar pontos no saldo do padrinho (Referrer)
+                INSERT INTO public.user_vip_balance (user_id, total_points, updated_at)
+                VALUES (v_referrer_id, v_points, NOW())
+                ON CONFLICT (user_id) DO UPDATE SET
+                    total_points = public.user_vip_balance.total_points + EXCLUDED.total_points,
+                    updated_at = NOW();
+                
+                RAISE NOTICE 'Pontos VIP creditados: % para o indicador %', v_points, v_referrer_id;
+            END IF;
+        END IF;
+    END IF;
+
+    RETURN NEW;
+EXCEPTION
+    WHEN OTHERS THEN
+        -- Evita que erros na pontuação bloqueiem a atualização da assinatura principal
+        RAISE WARNING 'Erro ao processar pontos VIP: %', SQLERRM;
+        RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS trg_process_referral_points ON public.user_subscriptions;
+CREATE TRIGGER trg_process_referral_points
+    AFTER UPDATE ON public.user_subscriptions
+    FOR EACH ROW
+    WHEN (OLD.is_trial IS DISTINCT FROM NEW.is_trial OR OLD.plan_id IS DISTINCT FROM NEW.plan_id)
+    EXECUTE FUNCTION public.process_referral_points();
 
 -- POLÍTICAS DE RLS (Row Level Security)
 alter table public.vip_benefits enable row level security;
