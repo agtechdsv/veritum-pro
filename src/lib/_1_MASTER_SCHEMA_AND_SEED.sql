@@ -646,11 +646,12 @@ BEGIN
     -- Ou se mudou de plano mantendo is_trial = false (upgrade de plano pago)
     IF (OLD.is_trial IS TRUE AND NEW.is_trial IS FALSE) OR (OLD.plan_id IS DISTINCT FROM NEW.plan_id AND NEW.is_trial IS FALSE) THEN
         
-        -- Mapear Cycle para a regra (yearly -> annual)
+        -- Mapear Cycle para a regra (yearly/annual -> annual)
         v_rule_cycle := CASE 
-            WHEN NEW.billing_cycle = 'yearly' THEN 'annual'
-            WHEN NEW.billing_cycle = 'semiannual' THEN 'semiannual'
-            WHEN NEW.billing_cycle = 'quarterly' THEN 'quarterly'
+            WHEN lower(NEW.billing_cycle) = 'yearly' THEN 'annual'
+            WHEN lower(NEW.billing_cycle) = 'annual' THEN 'annual'
+            WHEN lower(NEW.billing_cycle) = 'semiannual' THEN 'semiannual'
+            WHEN lower(NEW.billing_cycle) = 'quarterly' THEN 'quarterly'
             ELSE 'monthly'
         END;
 

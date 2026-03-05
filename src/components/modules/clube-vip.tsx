@@ -29,15 +29,12 @@ const ClubeVIP: React.FC<Props> = ({ user, onUpdateUser }) => {
 
     const supabase = React.useMemo(() => createMasterClient(), []);
 
-    // Auto-sync with parent updates (eg DB realtime sync changes parent props)
+    // Auto-sync with parent updates for activity status only
     React.useEffect(() => {
         if (user.vip_active && !isVipActive) {
             setIsVipActive(true);
         }
-        if (user.vip_points !== undefined && user.vip_points !== vipPoints) {
-            setVipPoints(user.vip_points);
-        }
-    }, [user.vip_active, user.vip_points, isVipActive, vipPoints]);
+    }, [user.vip_active, isVipActive]);
 
     React.useEffect(() => {
         if (!isVipActive) return;
@@ -52,11 +49,6 @@ const ClubeVIP: React.FC<Props> = ({ user, onUpdateUser }) => {
         };
 
         const fetchVipData = async () => {
-            const { data: balanceData } = await supabase.from('user_vip_balance').select('total_points').eq('user_id', user.id).maybeSingle();
-            if (balanceData) {
-                setVipPoints(balanceData.total_points);
-            }
-
             const { data: referrals } = await supabase.from('user_referrals')
                 .select('id, referred_email, plan_id, points_generated, status, plans(name)')
                 .eq('referrer_id', user.id)
@@ -69,23 +61,56 @@ const ClubeVIP: React.FC<Props> = ({ user, onUpdateUser }) => {
                     points: r.points_generated,
                     status: r.status
                 })));
+
+                // Sync points from confirmed referrals as a reliable source for the UI
+                const confirmedPoints = referrals
+                    .filter((r: any) => r.status === 'confirmed')
+                    .reduce((sum: number, r: any) => sum + (r.points_generated || 0), 0);
+
+                const { data: balanceData } = await supabase.from('user_vip_balance').select('total_points').eq('user_id', user.id).maybeSingle();
+                const finalPoints = balanceData ? Math.max(balanceData.total_points, confirmedPoints) : confirmedPoints;
+
+                setVipPoints(finalPoints);
+                if (user.vip_points !== finalPoints) {
+                    onUpdateUser({ ...user, vip_points: finalPoints });
+                }
             }
         };
 
         // Realtime Subscription
-        const channel = supabase
-            .channel('vip_realtime')
+        const referralsChannel = supabase
+            .channel('referrals_realtime')
             .on(
                 'postgres_changes',
                 {
-                    event: 'INSERT',
+                    event: '*', // Listen for ALL changes (INSERT, UPDATE)
                     schema: 'public',
                     table: 'user_referrals',
                     filter: `referrer_id=eq.${user.id}`
                 },
                 () => {
                     fetchVipData();
-                    toast.info('Nova indicação detectada no Clube VIP!');
+                    toast.info('Clube VIP: Atualização detectada!');
+                }
+            )
+            .subscribe();
+
+        const balanceChannel = supabase
+            .channel('balance_realtime')
+            .on(
+                'postgres_changes',
+                {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'user_vip_balance',
+                    filter: `user_id=eq.${user.id}`
+                },
+                (payload) => {
+                    if (payload.new && typeof payload.new.total_points === 'number') {
+                        setVipPoints(payload.new.total_points);
+                        toast.success('Seus Pontos VIP foram atualizados!');
+                    }
+                    fetchVipData();
                 }
             )
             .subscribe();
@@ -94,7 +119,8 @@ const ClubeVIP: React.FC<Props> = ({ user, onUpdateUser }) => {
         ensureVipCode();
 
         return () => {
-            supabase.removeChannel(channel);
+            supabase.removeChannel(referralsChannel);
+            supabase.removeChannel(balanceChannel);
         };
     }, [isVipActive, user.id, user.vip_code, vipCode]);
 

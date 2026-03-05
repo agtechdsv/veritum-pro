@@ -171,9 +171,12 @@ Deno.serve(async (req: Request) => {
       const parts = String(externalReference ?? "").split("|");
       const userId = parts[0]?.trim();
       const planName = parts[1]?.trim();
-      const billingCycle = parts[2]?.trim() || "monthly";
+      let billingCycle = parts[2]?.trim()?.toLowerCase() || "monthly";
       const cloudPlanIdRaw = parts[3]?.trim();
       const cloudPlanId = cloudPlanIdRaw && cloudPlanIdRaw !== "byodb" ? cloudPlanIdRaw : null;
+
+      // Standardization: annual -> yearly for user_subscriptions compatibility
+      if (billingCycle === "annual") billingCycle = "yearly";
 
       if (!userId || !planName) {
         console.error("Confirmed payment but missing data in externalReference:", externalReference);
@@ -211,9 +214,14 @@ Deno.serve(async (req: Request) => {
 
       // Calculate validity
       const validUntil = new Date();
-      if (billingCycle === "yearly") {
+      if (billingCycle === "yearly" || billingCycle === "annual") {
         validUntil.setFullYear(validUntil.getFullYear() + 1);
+      } else if (billingCycle === "semiannual") {
+        validUntil.setMonth(validUntil.getMonth() + 6);
+      } else if (billingCycle === "quarterly") {
+        validUntil.setMonth(validUntil.getMonth() + 3);
       } else {
+        // monthly or anything else
         validUntil.setMonth(validUntil.getMonth() + 1);
       }
       validUntil.setHours(23, 59, 59, 999);
