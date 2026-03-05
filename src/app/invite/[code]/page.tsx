@@ -26,6 +26,9 @@ export default function InvitePage() {
     }, [code]);
 
     const handleAccept = () => {
+        if (code) {
+            localStorage.setItem('veritum_ref_code', code.toUpperCase());
+        }
         router.push(`/?signup=true&invite=${code.toUpperCase()}`);
     };
 

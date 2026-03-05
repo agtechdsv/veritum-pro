@@ -92,7 +92,14 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
     useEffect(() => {
         if (mounted) {
             const accessParam = searchParams.get('access');
+            const inviteParam = searchParams.get('invite');
             const savedAccess = localStorage.getItem('veritum_access');
+
+            // Persist invitation code
+            if (inviteParam) {
+                console.log('Detectada indicação VIP:', inviteParam);
+                localStorage.setItem('veritum_ref_code', inviteParam.toUpperCase());
+            }
 
             if (accessParam === 'veritas') {
                 localStorage.setItem('veritum_access', 'granted');

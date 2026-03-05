@@ -234,12 +234,16 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                     return;
                 }
 
+                const invite_code = new URLSearchParams(window.location.search).get('invite') || localStorage.getItem('veritum_ref_code');
                 const result = await registerPublicUser({
                     email,
                     password,
                     name,
-                    invite_code: new URLSearchParams(window.location.search).get('invite')
+                    invite_code: invite_code
                 });
+
+                // Clear the persistence after successful registration attempt
+                if (invite_code) localStorage.removeItem('veritum_ref_code');
 
                 if (!result.success) {
                     throw new Error(result.error);
@@ -355,11 +359,17 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
         setError(null);
         try {
             const supabase = createMasterClient();
-            const invite_code = new URLSearchParams(window.location.search).get('invite');
+            const invite_code = new URLSearchParams(window.location.search).get('invite') || localStorage.getItem('veritum_ref_code');
+
+            // Clean storage if found to avoid pollution
+            if (invite_code && invite_code === localStorage.getItem('veritum_ref_code')) {
+                // We keep it in storage until actual login success to be safe, 
+                // but we already have it in local variable
+            }
 
             // 1. Listen for auth state change - reliable across windows on same origin
             const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-                if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
+                if ((event === 'SIGNED_IN') && session) {
                     const { data: profile } = await supabase
                         .from('users')
                         .select('active, force_password_reset')
@@ -394,6 +404,10 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                     subscription.unsubscribe();
                     setLoading(false);
                     onClose();
+
+                    // Clear persistent referral code
+                    localStorage.removeItem('veritum_ref_code');
+
                     window.location.href = '/veritum';
                 }
             });
