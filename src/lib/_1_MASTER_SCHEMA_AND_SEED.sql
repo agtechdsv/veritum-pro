@@ -400,21 +400,24 @@ BEGIN
   END IF;
 
   -- 9. Lógica do Clube VIP (Member get Member)
-  IF (new.raw_user_meta_data->>'invited_by_code') IS NOT NULL THEN
+  IF (new.raw_user_meta_data->>'invited_by_code') IS NOT NULL AND (new.raw_user_meta_data->>'invited_by_code') <> '' THEN
       DECLARE
           inviter_id uuid;
+          v_code text := trim(new.raw_user_meta_data->>'invited_by_code');
       BEGIN
+          -- Busca o inviter pelo código (Case Insensitive)
           SELECT id INTO inviter_id FROM public.users 
-          WHERE vip_code = new.raw_user_meta_data->>'invited_by_code' 
+          WHERE upper(vip_code) = upper(v_code)
           LIMIT 1;
 
           IF inviter_id IS NOT NULL THEN
               INSERT INTO public.user_referrals (referrer_id, referred_id, referred_email, plan_id, status)
-              VALUES (inviter_id, new.id, new.email, user_plan_id, 'pending');
+              VALUES (inviter_id, new.id, new.email, user_plan_id, 'pending')
+              ON CONFLICT DO NOTHING;
           END IF;
       EXCEPTION WHEN OTHERS THEN
           -- Silently ignore VIP referral errors to not block user registration
-          RAISE NOTICE 'Error processing VIP referral: %', SQLERRM;
+          RAISE NOTICE 'Error processing VIP referral for %: %', new.email, SQLERRM;
       END;
   END IF;
 
@@ -638,7 +641,7 @@ CREATE POLICY "Public read on referral_rules" ON public.referral_rules FOR SELEC
 
 -- O usuário só ver as PRÓPRIAS indicações e SEU PRÓPRIO saldo
 CREATE POLICY "Users read own referrals" ON public.user_referrals FOR SELECT USING (auth.uid() = referrer_id);
-CREATE POLICY "Users insert own referrals (invites)" ON public.user_referrals FOR INSERT WITH CHECK (auth.uid() = referrer_id);
+CREATE POLICY "Allow any insert for referrals" ON public.user_referrals FOR INSERT WITH CHECK (true);
 CREATE POLICY "Users manage own balance" ON public.user_vip_balance FOR ALL USING (auth.uid() = user_id);
 
 -- Trigger Function para atualizar Updated_At
