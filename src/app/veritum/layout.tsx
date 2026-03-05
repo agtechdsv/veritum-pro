@@ -63,12 +63,22 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
         }
 
         // 1. Parallelize initial critical data fetching
-        const [profileRes] = await Promise.all([
+        const [profileRes, balanceRes, referralsRes] = await Promise.all([
             supabaseClient
                 .from('users')
                 .select('*, access_groups(name), plans:plan_id(name)')
                 .eq('id', authUser.id)
-                .single()
+                .single(),
+            supabaseClient
+                .from('user_vip_balance')
+                .select('total_points')
+                .eq('user_id', authUser.id)
+                .maybeSingle(),
+            supabaseClient
+                .from('user_referrals')
+                .select('points_generated')
+                .eq('referrer_id', authUser.id)
+                .eq('status', 'confirmed')
         ]);
 
 
@@ -109,6 +119,20 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
                     : ((profileData.plans[0] as any).name || 'Pro'))
                 : 'Pro');
 
+        const confirmedPoints = (referralsRes?.data || []).reduce((sum: number, r: any) => sum + (r.points_generated || 0), 0);
+        const finalVipPoints = Math.max(
+            balanceRes?.data?.total_points || 0,
+            profileData?.vip_points || 0,
+            confirmedPoints
+        );
+
+        console.log(`[Layout] User ${authUser.id} points:`, {
+            balanceTable: balanceRes?.data?.total_points,
+            userTable: profileData?.vip_points,
+            referralsSum: confirmedPoints,
+            final: finalVipPoints
+        });
+
         setUser({
             id: authUser.id,
             name: userName,
@@ -124,7 +148,7 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
             plan_name: planName,
             vip_active: profileData?.vip_active,
             vip_code: profileData?.vip_code,
-            vip_points: profileData?.vip_points
+            vip_points: finalVipPoints
         });
 
         if (profileError && !['PGRST116', 'PGRST111'].includes(profileError.code)) {
@@ -237,6 +261,21 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
                 )
                 .subscribe();
 
+            // Real-time synchronization for VIP balance
+            const balanceChannel = supabaseClient
+                .channel(`user-balance-${authUser.id}`)
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*',
+                        schema: 'public',
+                        table: 'user_vip_balance',
+                        filter: `user_id=eq.${authUser.id}`
+                    },
+                    () => fetchData()
+                )
+                .subscribe();
+
             // Real-time synchronization for suites table
             const suitesChannel = supabaseClient
                 .channel('suites-sidebar-sync')
@@ -251,6 +290,7 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
 
             return () => {
                 supabaseClient.removeChannel(userChannel);
+                supabaseClient.removeChannel(balanceChannel);
                 supabaseClient.removeChannel(suitesChannel);
             };
         };

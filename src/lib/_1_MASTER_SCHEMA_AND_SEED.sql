@@ -682,12 +682,17 @@ BEGIN
                     updated_at = NOW()
                 WHERE referred_id = NEW.user_id AND status = 'pending';
 
-                -- 4. Somar pontos no saldo do padrinho (Referrer)
+                -- 4. Somar pontos no saldo do padrinho (Referrer) - Double Redundancy
                 INSERT INTO public.user_vip_balance (user_id, total_points, updated_at)
                 VALUES (v_referrer_id, v_points, NOW())
                 ON CONFLICT (user_id) DO UPDATE SET
                     total_points = public.user_vip_balance.total_points + EXCLUDED.total_points,
                     updated_at = NOW();
+
+                UPDATE public.users 
+                SET vip_points = COALESCE(vip_points, 0) + v_points,
+                    updated_at = NOW()
+                WHERE id = v_referrer_id;
                 
                 RAISE NOTICE 'Pontos VIP creditados: % para o indicador %', v_points, v_referrer_id;
             END IF;
