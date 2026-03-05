@@ -7,6 +7,7 @@ export async function GET(request: Request) {
     const next = searchParams.get('next') ?? '/veritum' // Default to Veritum after login
 
     if (code) {
+        const invite = searchParams.get('invite')
         const supabase = await createMasterServerClient()
         const { error } = await supabase.auth.exchangeCodeForSession(code)
 
@@ -15,6 +16,18 @@ export async function GET(request: Request) {
             const { data: { user } } = await supabase.auth.getUser()
 
             if (user) {
+                // FALLBACK: If invite code was passed but is missing from metadata (Google flow issue)
+                if (invite && (!user.user_metadata?.invited_by_code)) {
+                    await supabase.auth.updateUser({
+                        data: { invited_by_code: invite }
+                    });
+
+                    // Directly trigger the DB function to be sure (since trigger only runs on INSERT into auth.users)
+                    await supabase.rpc('apply_referral_code', {
+                        p_user_id: user.id,
+                        p_invite_code: invite
+                    });
+                }
                 // The profile sync is now handled by a Database Trigger on the Master SB.
                 // We only need to check for BYODB preferences if needed.
 

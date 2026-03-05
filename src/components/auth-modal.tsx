@@ -423,7 +423,7 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
             const { data, error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: `${window.location.origin}/auth/callback`,
+                    redirectTo: `${window.location.origin}/auth/callback${invite_code ? `?invite=${invite_code}` : ''}`,
                     queryParams: {
                         access_type: 'offline',
                         prompt: 'select_account',
