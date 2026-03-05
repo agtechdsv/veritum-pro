@@ -74,7 +74,7 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
         } else {
             fetchTargetUser(selectedUserId);
         }
-    }, [selectedUserId, activeTab]);
+    }, [selectedUserId, activeTab, user]);
 
     const fetchAllUsers = async () => {
         const { data, error } = await supabase

@@ -57,6 +57,8 @@ CREATE TABLE public.users (
   access_group_id UUID, -- Referenciada via ALTER TABLE abaixo
   plan_id UUID,         -- Referenciada via ALTER TABLE abaixo
   parent_user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+  vip_active BOOLEAN DEFAULT false,
+  vip_code TEXT UNIQUE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   CONSTRAINT users_email_key UNIQUE (email)
@@ -304,7 +306,7 @@ $$;
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
 DECLARE
-  default_role text := 'Administrador';
+  default_role text := 'Sócio Administrador';
   user_role text;
   user_name text;
   user_plan_id uuid;
@@ -395,6 +397,25 @@ BEGIN
             )
           WHERE id = new.id;
       END IF;
+  END IF;
+
+  -- 9. Lógica do Clube VIP (Member get Member)
+  IF (new.raw_user_meta_data->>'invited_by_code') IS NOT NULL THEN
+      DECLARE
+          inviter_id uuid;
+      BEGIN
+          SELECT id INTO inviter_id FROM public.users 
+          WHERE vip_code = new.raw_user_meta_data->>'invited_by_code' 
+          LIMIT 1;
+
+          IF inviter_id IS NOT NULL THEN
+              INSERT INTO public.user_referrals (referrer_id, referred_id, referred_email, plan_id, status)
+              VALUES (inviter_id, new.id, new.email, user_plan_id, 'pending');
+          END IF;
+      EXCEPTION WHEN OTHERS THEN
+          -- Silently ignore VIP referral errors to not block user registration
+          RAISE NOTICE 'Error processing VIP referral: %', SQLERRM;
+      END;
   END IF;
 
   RETURN new;
@@ -618,7 +639,7 @@ CREATE POLICY "Public read on referral_rules" ON public.referral_rules FOR SELEC
 -- O usuário só ver as PRÓPRIAS indicações e SEU PRÓPRIO saldo
 CREATE POLICY "Users read own referrals" ON public.user_referrals FOR SELECT USING (auth.uid() = referrer_id);
 CREATE POLICY "Users insert own referrals (invites)" ON public.user_referrals FOR INSERT WITH CHECK (auth.uid() = referrer_id);
-CREATE POLICY "Users read own balance" ON public.user_vip_balance FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users manage own balance" ON public.user_vip_balance FOR ALL USING (auth.uid() = user_id);
 
 -- Trigger Function para atualizar Updated_At
 create or replace function public.handle_updated_at()

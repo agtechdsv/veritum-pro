@@ -29,6 +29,11 @@ export default function ClubeVipPage() {
     const [isCompanyModalOpen, setIsCompanyModalOpen] = React.useState(false);
     const { locale, t } = useTranslation();
 
+    const [plans, setPlans] = React.useState<any[]>([]);
+    const [referralRules, setReferralRules] = React.useState<any[]>([]);
+    const [benefits, setBenefits] = React.useState<any[]>([]);
+    const [isLoading, setIsLoading] = React.useState(true);
+
     const openLegal = (type: 'privacy' | 'terms') => {
         setLegalModal({ isOpen: true, type });
     };
@@ -39,6 +44,20 @@ export default function ClubeVipPage() {
     const supabase = createMasterClient();
 
     React.useEffect(() => {
+        const fetchInitialData = async () => {
+            setIsLoading(true);
+            const [{ data: p }, { data: r }, { data: b }] = await Promise.all([
+                supabase.from('plans').select('id, name, is_combo').order('order_index'),
+                supabase.from('referral_rules').select('*'),
+                supabase.from('vip_benefits').select('*').eq('status', 'active').order('order_index')
+            ]);
+
+            if (p) setPlans(p);
+            if (r) setReferralRules(r);
+            if (b) setBenefits(b);
+            setIsLoading(false);
+        };
+
         const checkUser = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
@@ -51,6 +70,8 @@ export default function ClubeVipPage() {
                 setCurrentUser({ ...user, profile });
             }
         };
+
+        fetchInitialData();
         checkUser();
     }, []);
 
@@ -176,73 +197,72 @@ export default function ClubeVipPage() {
                 </div>
             </section>
 
-            {/* SEÇÃO 1: E-MAIL EXCLUSIVO */}
+            {/* LOJA DE PREMIOS DINÂMICA (SUBSTITUINDO O E-MAIL FIXO) */}
             <section id="beneficios" className="py-24 md:py-32 px-6 bg-slate-900 border-y border-white/5 relative overflow-hidden">
-                <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 md:gap-24 items-center">
-                    <div className="order-2 lg:order-1 relative">
-                        <div className="absolute inset-0 bg-indigo-500/20 blur-[100px] rounded-full pointer-events-none" />
-
-                        <div className="bg-[#0f172a] border border-slate-700/50 rounded-[3rem] p-8 md:p-12 shadow-2xl relative z-10 hover:-translate-y-2 transition-transform duration-500">
-                            <div className="flex items-center gap-3 mb-8">
-                                <div className="p-4 bg-indigo-500/10 rounded-2xl flex items-center justify-center">
-                                    <ShieldCheck size={32} className="text-indigo-400" />
-                                </div>
-                                <div>
-                                    <h4 className="text-xl font-black text-white uppercase tracking-tighter">{t('clubeVip.benefits.webmail')}</h4>
-                                    <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest">{t('clubeVip.benefits.military')}</p>
-                                </div>
-                            </div>
-
-                            <div className="space-y-6">
-                                <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/5 flex items-center justify-between group cursor-pointer hover:border-indigo-500/50 transition-colors">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center group-hover:bg-indigo-500/20 transition-colors">
-                                            <Mail size={20} className="text-slate-400 group-hover:text-indigo-400 transition-colors" />
-                                        </div>
-                                        <div>
-                                            <p className="text-xs font-black text-white uppercase tracking-widest">{t('clubeVip.benefits.address')}</p>
-                                            <p className="text-sm font-bold text-indigo-400 mt-1">seu.nome@veritumpro.com</p>
-                                        </div>
-                                    </div>
-                                    <ArrowUpRight size={20} className="text-slate-600 group-hover:text-indigo-400 transition-colors opacity-0 group-hover:opacity-100" />
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="p-5 bg-slate-900/50 border border-white/5 rounded-2xl">
-                                        <Target size={20} className="text-emerald-400 mb-3" />
-                                        <h5 className="text-[10px] font-black text-white uppercase tracking-widest mb-1">{t('clubeVip.benefits.smartFilter')}</h5>
-                                        <p className="text-[10px] text-slate-500 font-semibold">{t('clubeVip.benefits.smartFilterDesc')}</p>
-                                    </div>
-                                    <div className="p-5 bg-slate-900/50 border border-white/5 rounded-2xl">
-                                        <Zap size={20} className="text-amber-400 mb-3" />
-                                        <h5 className="text-[10px] font-black text-white uppercase tracking-widest mb-1">{t('clubeVip.benefits.earlyAccess')}</h5>
-                                        <p className="text-[10px] text-slate-500 font-semibold">{t('clubeVip.benefits.earlyAccessDesc')}</p>
-                                    </div>
-                                </div>
-                            </div>
+                <div className="absolute inset-0 bg-indigo-500/5 blur-[120px] rounded-full pointer-events-none" />
+                <div className="max-w-7xl mx-auto relative z-10">
+                    <div className="text-center max-w-3xl mx-auto mb-16 md:mb-24">
+                        <div className="w-20 h-20 bg-amber-500/10 rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-[0_0_40px_rgba(245,158,11,0.2)]">
+                            <Sparkles size={32} className="text-amber-400" />
                         </div>
-                    </div>
-
-                    <div className="order-1 lg:order-2 space-y-6">
-                        <h2 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter leading-[0.9]">
-                            {t('clubeVip.benefits.title').split(' ').slice(0, -2).join(' ')} <br className="hidden md:block" />
-                            {t('clubeVip.benefits.title').split(' ').slice(-2).join(' ')}
+                        <h2 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter leading-[0.9] mb-6">
+                            Loja de <span className="text-amber-400">Prêmios</span>
                         </h2>
                         <p className="text-lg text-slate-400 leading-relaxed font-medium">
-                            {t('clubeVip.benefits.subtitle').split('@veritumpro.com')[0]}
-                            <strong className="text-indigo-400 font-bold">@veritumpro.com</strong>
-                            {t('clubeVip.benefits.subtitle').split('@veritumpro.com')[1] || '.'}
+                            Troque seus pontos VIP por recompensas exclusivas, upgrades e benefícios automáticos.
                         </p>
-                        <p className="text-sm text-slate-500 leading-relaxed">
-                            {t('clubeVip.benefits.description')}
-                        </p>
-                        <ul className="space-y-4 pt-6">
-                            {(t('clubeVip.benefits.items') as string[]).map((item, i) => (
-                                <li key={i} className="flex items-center gap-3 text-xs font-black text-slate-300 uppercase tracking-widest">
-                                    <CheckCircle2 size={16} className="text-indigo-500" /> {item}
-                                </li>
-                            ))}
-                        </ul>
                     </div>
+
+                    {isLoading ? (
+                        <div className="flex justify-center flex-col items-center gap-4 py-20">
+                            <div className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                            <p className="text-slate-500 font-medium uppercase tracking-widest text-xs">Carregando Benefícios...</p>
+                        </div>
+                    ) : benefits.length === 0 ? (
+                        <div className="text-center py-20 border border-slate-800 rounded-3xl bg-slate-900/50">
+                            <p className="text-slate-500 font-medium uppercase tracking-widest text-xs">Nenhum benefício disponível no momento.</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+                            {benefits.map(benefit => {
+                                const bName = typeof benefit.name === 'object' ? (benefit.name[locale as keyof typeof benefit.name] || benefit.name.pt) : benefit.name;
+                                const bDesc = typeof benefit.short_desc === 'object' ? (benefit.short_desc[locale as keyof typeof benefit.short_desc] || benefit.short_desc.pt) : benefit.short_desc;
+                                const bCost = typeof benefit.metadata === 'object' && benefit.metadata?.cost_in_points ? benefit.metadata.cost_in_points : 'Automático';
+                                const IconComponent = benefit.icon_name === 'Sparkles' ? Sparkles : benefit.icon_name === 'Crown' ? Crown : benefit.icon_name === 'Mail' ? Mail : benefit.icon_name === 'Zap' ? Zap : benefit.icon_name === 'Moon' ? Moon : benefit.icon_name === 'Sun' ? Sun : ShieldCheck;
+
+                                return (
+                                    <div key={benefit.id} className="bg-[#0f172a] border border-slate-700/50 rounded-[2.5rem] p-8 shadow-xl hover:-translate-y-2 hover:border-amber-500/50 transition-all duration-300 group flex flex-col h-full relative overflow-hidden">
+
+                                        <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-[40px] pointer-events-none -translate-y-1/2 translate-x-1/2 group-hover:bg-amber-500/10 transition-colors" />
+
+                                        <div className="flex items-center gap-4 mb-6 relative">
+                                            <div className="w-14 h-14 bg-slate-800 group-hover:bg-amber-500/10 rounded-2xl flex items-center justify-center transition-colors shrink-0">
+                                                <IconComponent size={28} className="text-slate-400 group-hover:text-amber-400 transition-colors" />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-lg font-black text-white uppercase tracking-tight">{bName}</h4>
+                                                <div className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 bg-slate-800 rounded-lg text-[10px] font-black tracking-widest uppercase">
+                                                    {bCost === 'Automático' ? (
+                                                        <span className="text-emerald-400 flex items-center gap-1"><CheckCircle2 size={12} /> {bCost}</span>
+                                                    ) : (
+                                                        <span className="text-amber-400 flex items-center gap-1"><Trophy size={12} /> {bCost} Pontos VIP</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <p className="text-sm text-slate-400 leading-relaxed font-medium mb-auto flex-1 relative">{bDesc}</p>
+
+                                        <div className="pt-6 mt-6 border-t border-slate-800 relative">
+                                            <Link href="/veritum/settings?tab=vip" onClick={handleActivateClick} className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-colors">
+                                                Acessar Clube VIP <ArrowUpRight size={14} />
+                                            </Link>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
             </section>
 
@@ -272,12 +292,17 @@ export default function ClubeVipPage() {
                             <div className="space-y-4 pt-4">
                                 <h4 className="text-xs font-black uppercase tracking-widest text-slate-500 mb-6">{t('clubeVip.rewards.accelerators')}</h4>
 
-                                {(() => {
-                                    const pointsTable = {
-                                        start: [1, 2, 3, 5],
-                                        growth: [2, 4, 7, 10],
-                                        strategy: [3, 6, 11, 15]
-                                    };
+                                {isLoading ? (
+                                    <div className="p-6 bg-slate-900 rounded-3xl animate-pulse h-24 border border-slate-800" />
+                                ) : (() => {
+                                    // Filtrar planos que tem regras de recomendação configuradas com mais que 0 pontos
+                                    const plansWithRules = plans.filter(p => p.is_combo).filter(p => {
+                                        return referralRules.some(r => r.plan_id === p.id && r.points_generated > 0);
+                                    });
+
+                                    if (plansWithRules.length === 0) {
+                                        return <div className="p-6 bg-slate-900 border border-slate-800 rounded-3xl text-sm font-medium text-slate-500 text-center">As recompensas ainda estão sendo mapeadas pelo administrador.</div>
+                                    }
 
                                     const PlanTooltip = ({ points }: { points: number[] }) => (
                                         <div className="absolute right-full top-1/2 -translate-y-1/2 mr-6 w-52 bg-slate-900/98 backdrop-blur-3xl border border-white/10 rounded-2xl p-4 shadow-[0_0_50px_rgba(0,0,0,0.8),0_0_20px_rgba(99,102,241,0.1)] opacity-0 invisible translate-x-2 scale-95 group-hover:opacity-100 group-hover:visible group-hover:translate-x-0 group-hover:scale-100 transition-all duration-300 z-50 pointer-events-none">
@@ -298,55 +323,47 @@ export default function ClubeVipPage() {
                                         </div>
                                     );
 
-                                    return (
-                                        <>
-                                            <div className="p-6 bg-slate-900 border border-slate-800 rounded-3xl flex items-center justify-between group hover:border-slate-700 transition-colors relative overflow-visible">
-                                                <PlanTooltip points={pointsTable.start} />
-                                                <div className="flex items-center gap-4">
-                                                    <div className="w-12 h-12 bg-slate-800 rounded-full flex justify-center items-center font-black text-slate-400">01</div>
-                                                    <div>
-                                                        <h5 className="text-sm font-black text-white uppercase tracking-widest">{t('clubeVip.rewards.plans.start.name')}</h5>
-                                                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">{t('clubeVip.rewards.plans.start.desc')}</p>
-                                                    </div>
-                                                </div>
-                                                <div className="text-right">
-                                                    <p className="text-2xl font-black text-cyan-400">{t('clubeVip.rewards.plans.start.points')}</p>
-                                                    <p className="text-[9px] font-black text-cyan-400/50 uppercase tracking-widest">{t('clubeVip.rewards.plans.start.label')}</p>
-                                                </div>
-                                            </div>
+                                    return plansWithRules.map((plan, index) => {
+                                        const rRules = referralRules.filter(r => r.plan_id === plan.id);
+                                        const points = [
+                                            rRules.find(r => r.billing_cycle === 'monthly')?.points_generated || 0,
+                                            rRules.find(r => r.billing_cycle === 'quarterly')?.points_generated || 0,
+                                            rRules.find(r => r.billing_cycle === 'semiannual')?.points_generated || 0,
+                                            rRules.find(r => r.billing_cycle === 'annual')?.points_generated || 0,
+                                        ];
 
-                                            <div className="p-6 bg-slate-900 border border-slate-800 rounded-3xl flex items-center justify-between group hover:border-amber-500/30 transition-colors relative overflow-visible">
-                                                <PlanTooltip points={pointsTable.growth} />
-                                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-500/5 to-transparent flex translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 pointer-events-none" />
+                                        const pName = typeof plan.name === 'object' ? (plan.name[locale as keyof typeof plan.name] || plan.name.pt) : plan.name;
+                                        const maxPoints = Math.max(...points);
+
+                                        // Apply dynamic colors based on index/order
+                                        const colorClasses = [
+                                            { bgBase: 'bg-slate-900 hover:border-slate-500', iconBg: 'bg-slate-800 text-slate-400', valText: 'text-cyan-400' },
+                                            { bgBase: 'bg-slate-900 hover:border-amber-500/30', iconBg: 'bg-amber-500/10 text-amber-500', valText: 'text-amber-400' },
+                                            { bgBase: 'bg-gradient-to-br from-indigo-900 to-slate-900 border-indigo-500/30 shadow-[0_0_30px_rgba(99,102,241,0.1)] hover:border-indigo-400', iconBg: 'bg-indigo-500 text-white shadow-lg', valText: 'text-indigo-400' }
+                                        ];
+                                        const themeClass = colorClasses[index % colorClasses.length];
+
+                                        return (
+                                            <div key={plan.id} className={`p-6 border border-slate-800 rounded-3xl flex items-center justify-between group transition-colors relative overflow-visible ${themeClass.bgBase}`}>
+                                                <PlanTooltip points={points} />
                                                 <div className="flex items-center gap-4 relative z-10">
-                                                    <div className="w-12 h-12 bg-amber-500/10 text-amber-500 rounded-full flex justify-center items-center font-black">02</div>
+                                                    <div className={`w-12 h-12 rounded-full flex justify-center items-center font-black ${themeClass.iconBg}`}>
+                                                        0{index + 1}
+                                                    </div>
                                                     <div>
-                                                        <h5 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">{t('clubeVip.rewards.plans.growth.name')} <Sparkles size={14} className="text-amber-500" /></h5>
-                                                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">{t('clubeVip.rewards.plans.growth.desc')}</p>
+                                                        <h5 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
+                                                            {pName} {index === 1 && <Sparkles size={14} className="text-amber-500" />} {index === 2 && <Crown size={14} className="text-indigo-400" />}
+                                                        </h5>
+                                                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Ao indicar este plano</p>
                                                     </div>
                                                 </div>
                                                 <div className="text-right relative z-10">
-                                                    <p className="text-2xl font-black text-amber-400">{t('clubeVip.rewards.plans.growth.points')}</p>
-                                                    <p className="text-[9px] font-black text-amber-400/50 uppercase tracking-widest">{t('clubeVip.rewards.plans.growth.label')}</p>
+                                                    <p className={`text-2xl font-black ${themeClass.valText}`}>Até {maxPoints}</p>
+                                                    <p className={`text-[9px] font-black uppercase tracking-widest ${themeClass.valText} opacity-50`}>Pontos</p>
                                                 </div>
                                             </div>
-
-                                            <div className="p-6 bg-gradient-to-br from-indigo-900 to-slate-900 border border-indigo-500/30 rounded-3xl flex items-center justify-between shadow-[0_0_30px_rgba(99,102,241,0.1)] group hover:border-indigo-400 transition-colors relative overflow-visible">
-                                                <PlanTooltip points={pointsTable.strategy} />
-                                                <div className="flex items-center gap-4">
-                                                    <div className="w-12 h-12 bg-indigo-500 text-white rounded-full flex justify-center items-center font-black shadow-lg">03</div>
-                                                    <div>
-                                                        <h5 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">{t('clubeVip.rewards.plans.strategy.name')} <Crown size={14} className="text-indigo-400" /></h5>
-                                                        <p className="text-[10px] text-indigo-300 font-bold uppercase tracking-widest mt-1">{t('clubeVip.rewards.plans.strategy.desc')}</p>
-                                                    </div>
-                                                </div>
-                                                <div className="text-right">
-                                                    <p className="text-2xl font-black text-indigo-400">{t('clubeVip.rewards.plans.strategy.points')}</p>
-                                                    <p className="text-[9px] font-black text-indigo-400/50 uppercase tracking-widest">{t('clubeVip.rewards.plans.strategy.label')}</p>
-                                                </div>
-                                            </div>
-                                        </>
-                                    );
+                                        );
+                                    });
                                 })()}
                             </div>
                         </div>

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User } from '@/types';
-import { Crown, Sparkles, Mail, Link, Copy, Check, Target, Trophy, ChevronDown, ChevronUp, Gift } from 'lucide-react';
+import { Crown, Sparkles, Mail, Link, Copy, Check, Target, Trophy, ChevronDown, ChevronUp, Gift, Lock } from 'lucide-react';
 import { toast } from '../ui/toast';
+import { createMasterClient } from '@/lib/supabase/master';
 
 interface Props {
     user: User;
@@ -12,32 +13,118 @@ interface Props {
 const ClubeVIP: React.FC<Props> = ({ user, onUpdateUser }) => {
     // For demo/development purposes, falling back to local state if db fields dont exist yet
     const [isVipActive, setIsVipActive] = useState(user.vip_active || false);
-    const [vipPoints, setVipPoints] = useState(user.vip_points || 0); // 0 to start
-    const [vipCode, setVipCode] = useState(user.vip_code || `VIP-${user.name.split(' ')[0].toUpperCase()}`);
+    const [vipPoints, setVipPoints] = useState(user.vip_points || 0);
+    const generateUniqueCode = (name: string, id: string) => {
+        if (!name || !id) return '';
+        const baseName = name.split(' ')[0].toUpperCase().replace(/\W/g, '');
+        const hash = id.split('-')[0].substring(0, 4).toUpperCase();
+        return `VIP-${baseName}-${hash}`;
+    };
+
+    const [vipCode, setVipCode] = useState(user.vip_code || generateUniqueCode(user.name, user.id));
 
     const [copiedLink, setCopiedLink] = useState(false);
     const [showExtract, setShowExtract] = useState(false);
+    const [extractData, setExtractData] = useState<any[]>([]);
 
-    // Mock data for extract
-    const extractMocks = [
-        { name: 'João Silva Advocacia', plan: 'Plano Growth Anual', points: 12 },
-        { name: 'Pereira & Associados', plan: 'Plano Strategy Mensal', points: 8 },
-        { name: 'Mendes Legal', plan: 'Plano Start Anual', points: 5 },
-    ];
+    const supabase = createMasterClient();
+
+    // Auto-sync with parent updates (eg DB realtime sync changes parent props)
+    React.useEffect(() => {
+        if (user.vip_active && !isVipActive) {
+            setIsVipActive(true);
+        }
+        if (user.vip_points !== undefined && user.vip_points !== vipPoints) {
+            setVipPoints(user.vip_points);
+        }
+    }, [user.vip_active, user.vip_points, isVipActive, vipPoints]);
+
+    React.useEffect(() => {
+        if (!isVipActive) return;
+
+        const ensureVipCode = async () => {
+            if (!user.vip_code && vipCode) {
+                const { error } = await supabase.from('users').update({ vip_code: vipCode }).eq('id', user.id);
+                if (!error) {
+                    onUpdateUser({ ...user, vip_code: vipCode });
+                }
+            }
+        };
+
+        const fetchVipData = async () => {
+            const { data: balanceData } = await supabase.from('user_vip_balance').select('total_points').eq('user_id', user.id).maybeSingle();
+            if (balanceData) {
+                setVipPoints(balanceData.total_points);
+            }
+
+            const { data: referrals } = await supabase.from('user_referrals')
+                .select('id, referred_email, plan_id, points_generated, status, plans(name)')
+                .eq('referrer_id', user.id)
+                .order('created_at', { ascending: false });
+
+            if (referrals) {
+                setExtractData(referrals.map((r: any) => ({
+                    name: r.referred_email,
+                    plan: typeof r.plans?.name === 'object' ? (r.plans.name.pt || r.plans.name.en) : (r.plans?.name || 'Sem plano'),
+                    points: r.points_generated,
+                    status: r.status
+                })));
+            }
+        };
+
+        // Realtime Subscription
+        const channel = supabase
+            .channel('vip_realtime')
+            .on(
+                'postgres_changes',
+                {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'user_referrals',
+                    filter: `referrer_id=eq.${user.id}`
+                },
+                () => {
+                    fetchVipData();
+                    toast.info('Nova indicação detectada no Clube VIP!');
+                }
+            )
+            .subscribe();
+
+        fetchVipData();
+        ensureVipCode();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [isVipActive, user.id, user.vip_code, vipCode]);
 
     // Compute progress
     const progress = Math.min(vipPoints, 100);
     const extraPoints = Math.max(0, vipPoints - 100);
     const discount = progress;
 
-    const handleActivateSubmit = () => {
+    const normalizedPlanName = (user.plan_name || '').toLowerCase();
+    const hasEmailAccess = normalizedPlanName.includes('growth') || normalizedPlanName.includes('strategy');
+
+    const handleActivateSubmit = async () => {
         setIsVipActive(true);
+
+        await supabase.from('users').update({ vip_active: true, vip_code: vipCode }).eq('id', user.id);
+
+        const { error } = await supabase.from('user_vip_balance')
+            .upsert({ user_id: user.id, total_points: 0 }, { onConflict: 'user_id', ignoreDuplicates: true });
+
+        if (error) {
+            console.error('Failed to create user vip balance:', error);
+        }
+
         onUpdateUser({ ...user, vip_active: true, vip_points: 0, vip_code: vipCode });
         toast.success('Clube VIP Ativado com Sucesso!');
     };
 
     const handleCopy = () => {
-        navigator.clipboard.writeText(`https://veritumpro.com/invite/${vipCode}`);
+        const origin = typeof window !== 'undefined' ? window.location.origin : 'https://veritumpro.com';
+        navigator.clipboard.writeText(`${origin}/invite/${vipCode}`);
         setCopiedLink(true);
         toast.success('Link copiado para a área de transferência!');
         setTimeout(() => setCopiedLink(false), 2000);
@@ -106,23 +193,44 @@ const ClubeVIP: React.FC<Props> = ({ user, onUpdateUser }) => {
                 {/* BLOCO 1 & BLOCO 2 (Left Column) */}
                 <div className="lg:col-span-1 space-y-8">
                     {/* Bloco 1: Acessos */}
-                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 shadow-xl shadow-slate-200/50 dark:shadow-none transition-all hover:scale-[1.01]">
+                    <div className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 transition-all hover:scale-[1.01] relative overflow-hidden ${hasEmailAccess ? 'shadow-xl shadow-slate-200/50 dark:shadow-none' : 'opacity-90'}`}>
+                        {!hasEmailAccess && (
+                            <div className="absolute top-6 right-6 p-2 bg-slate-50 dark:bg-slate-950 text-slate-400 rounded-xl border border-slate-100 dark:border-slate-800">
+                                <Lock size={16} />
+                            </div>
+                        )}
                         <div className="flex items-center gap-3 mb-6">
-                            <div className="p-3 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-xl">
+                            <div className={`p-3 rounded-xl ${hasEmailAccess ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : 'bg-slate-100 dark:bg-slate-950 text-slate-400'}`}>
                                 <Mail size={20} />
                             </div>
-                            <h3 className="text-sm font-black uppercase tracking-widest text-slate-800 dark:text-white">Seus Acessos</h3>
+                            <h3 className={`text-sm font-black uppercase tracking-widest ${hasEmailAccess ? 'text-slate-800 dark:text-white' : 'text-slate-500'}`}>Seus Acessos</h3>
                         </div>
-                        <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
-                            Sua caixa postal VIP está ativa! Acesse em: <br />
-                            <span className="text-slate-900 dark:text-white mt-1 inline-block font-black text-xs">{user.name.split(' ')[0].toLowerCase()}@veritumpro.com</span>
-                        </p>
-                        <a
-                            href="#"
-                            className="inline-flex w-full items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-900/30 dark:hover:text-indigo-400 transition-all border border-transparent hover:border-indigo-200 dark:hover:border-indigo-800"
-                        >
-                            <Mail size={14} /> Acessar Webmail
-                        </a>
+                        {hasEmailAccess ? (
+                            <>
+                                <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
+                                    Sua caixa postal VIP está ativa! Acesse em: <br />
+                                    <span className="text-slate-900 dark:text-white mt-1 inline-block font-black text-xs">{user.name.split(' ')[0].toLowerCase()}@veritumpro.com</span>
+                                </p>
+                                <a
+                                    href="#"
+                                    className="inline-flex w-full items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-900/30 dark:hover:text-indigo-400 transition-all border border-transparent hover:border-indigo-200 dark:hover:border-indigo-800"
+                                >
+                                    <Mail size={14} /> Acessar Webmail
+                                </a>
+                            </>
+                        ) : (
+                            <>
+                                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mb-6 leading-relaxed">
+                                    A caixa postal personalizada <strong className="text-slate-500 dark:text-slate-400">@veritumpro.com</strong> é um benefício exclusivo para assinantes dos planos Growth ou Strategy.
+                                </p>
+                                <button
+                                    disabled
+                                    className="inline-flex w-full items-center justify-center gap-2 bg-slate-50 dark:bg-slate-950/50 text-slate-400 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-slate-200/50 dark:border-slate-800/50 cursor-not-allowed"
+                                >
+                                    <Lock size={14} /> Bloqueado no seu Plano
+                                </button>
+                            </>
+                        )}
                     </div>
 
                     {/* Bloco 2: Link Indicação */}
@@ -137,14 +245,15 @@ const ClubeVIP: React.FC<Props> = ({ user, onUpdateUser }) => {
                             Compartilhe o link abaixo com seus colegas de profissão ou peça para inserirem o seu código no checkout.
                         </p>
                         <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30 p-4 rounded-[1.5rem] mb-6">
-                            <p className="text-[10px] font-bold text-amber-700 dark:text-amber-500 flex items-center gap-2 leading-relaxed italic">
-                                💡 Convites que resultam em assinaturas <strong className="font-black">Anuais</strong> multiplicam os seus pontos rapidamente!
+                            <p className="text-[10px] font-bold text-amber-700 dark:text-amber-500 flex items-start gap-2 leading-relaxed italic">
+                                <span>💡</span>
+                                <span>Convites que resultam em assinaturas <strong className="font-black">Anuais</strong> multiplicam os seus pontos rapidamente!</span>
                             </p>
                         </div>
 
                         <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-2 pl-4 rounded-[1.5rem] mb-4">
                             <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 truncate pr-2">
-                                veritumpro.com/invite/{vipCode}
+                                /invite/{vipCode}
                             </span>
                             <button
                                 onClick={handleCopy}
@@ -225,7 +334,7 @@ const ClubeVIP: React.FC<Props> = ({ user, onUpdateUser }) => {
                                 )}
                             </div>
                             <div className="bg-slate-900/60 border border-amber-900/30 p-5 rounded-3xl backdrop-blur-md">
-                                <p className="text-[9px] font-black text-amber-500/70 uppercase tracking-widest mb-2">Saldo Extra (Próx. Mês)</p>
+                                <p className="text-[9px] font-black text-amber-500/70 uppercase tracking-widest mb-2">Saldo Extra (Próx. Ciclo)</p>
                                 <p className="text-3xl font-black text-amber-400 flex items-baseline gap-1">
                                     {extraPoints} <span className="text-[10px] text-amber-500/50 uppercase">Pts</span>
                                 </p>
@@ -236,10 +345,10 @@ const ClubeVIP: React.FC<Props> = ({ user, onUpdateUser }) => {
                         <div className="mt-8 pt-6 border-t border-slate-800 flex items-center justify-between z-10 relative">
                             <span className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Apenas para Gamificação (Testes UI):</span>
                             <div className="flex gap-2">
-                                <button onClick={() => setVipPoints(v => Math.max(0, v - 10))} className="px-3 py-1 bg-slate-800 text-slate-400 rounded-lg text-xs font-bold">-10</button>
-                                <button onClick={() => setVipPoints(v => v + 25)} className="px-3 py-1 bg-indigo-500/20 text-indigo-400 rounded-lg text-xs font-bold">+25</button>
-                                <button onClick={() => setVipPoints(100)} className="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-lg text-xs font-bold">100</button>
-                                <button onClick={() => setVipPoints(140)} className="px-3 py-1 bg-amber-500/20 text-amber-400 rounded-lg text-xs font-bold">140</button>
+                                <button onClick={() => { setVipPoints(Math.max(0, vipPoints - 10)); onUpdateUser({ ...user, vip_points: Math.max(0, vipPoints - 10) }) }} className="px-3 py-1 bg-slate-800 text-slate-400 rounded-lg text-xs font-bold">-10</button>
+                                <button onClick={() => { setVipPoints(vipPoints + 25); onUpdateUser({ ...user, vip_points: vipPoints + 25 }) }} className="px-3 py-1 bg-indigo-500/20 text-indigo-400 rounded-lg text-xs font-bold">+25</button>
+                                <button onClick={() => { setVipPoints(100); onUpdateUser({ ...user, vip_points: 100 }) }} className="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-lg text-xs font-bold">100</button>
+                                <button onClick={() => { setVipPoints(140); onUpdateUser({ ...user, vip_points: 140 }) }} className="px-3 py-1 bg-amber-500/20 text-amber-400 rounded-lg text-xs font-bold">140</button>
                             </div>
                         </div>
                     </div>
@@ -274,22 +383,26 @@ const ClubeVIP: React.FC<Props> = ({ user, onUpdateUser }) => {
                                     className="border-t border-slate-100 dark:border-slate-800"
                                 >
                                     <div className="p-8 md:px-10 space-y-4">
-                                        {extractMocks.map((item, i) => (
-                                            <div key={i} className="flex flex-col md:flex-row md:items-center justify-between p-4 bg-slate-50 dark:bg-slate-950 rounded-[1.5rem] border border-slate-100 dark:border-slate-800/50 hover:border-slate-200 dark:hover:border-slate-700 transition-all gap-4">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0">
-                                                        <Check size={16} strokeWidth={3} />
+                                        {extractData.length === 0 ? (
+                                            <p className="text-center text-slate-500 font-bold uppercase tracking-widest text-[10px] py-4">Nenhuma indicação confirmada ainda.</p>
+                                        ) : (
+                                            extractData.map((item, i) => (
+                                                <div key={i} className="flex flex-col md:flex-row md:items-center justify-between p-4 bg-slate-50 dark:bg-slate-950 rounded-[1.5rem] border border-slate-100 dark:border-slate-800/50 hover:border-slate-200 dark:hover:border-slate-700 transition-all gap-4">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${item.status === 'approved' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>
+                                                            {item.status === 'approved' ? <Check size={16} strokeWidth={3} /> : <Target size={16} />}
+                                                        </div>
+                                                        <div>
+                                                            <h4 className="text-sm font-black text-slate-800 dark:text-white truncate max-w-[150px] md:max-w-xs">{item.name}</h4>
+                                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{item.plan}</span>
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <h4 className="text-sm font-black text-slate-800 dark:text-white">{item.name}</h4>
-                                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{item.plan}</span>
+                                                    <div className={`px-4 py-2 text-xs font-black uppercase tracking-widest rounded-xl shrink-0 self-start md:self-auto ${item.status === 'approved' ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>
+                                                        {item.status === 'approved' ? `+ ${item.points} Pontos` : 'Pendente'}
                                                     </div>
                                                 </div>
-                                                <div className="px-4 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-xl font-black text-xs uppercase tracking-widest shrink-0 self-start md:self-auto">
-                                                    + {item.points} Pontos
-                                                </div>
-                                            </div>
-                                        ))}
+                                            ))
+                                        )}
                                     </div>
                                 </motion.div>
                             )}

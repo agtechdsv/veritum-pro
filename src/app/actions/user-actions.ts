@@ -196,7 +196,21 @@ export async function deleteUserDirectly(userId: string) {
 export async function registerPublicUser(formData: any) {
     const supabase = createAdminClient()
 
-    // Public registration always defaults to Administrador
+    // 1. Find the "Trial 14 Dias" plan ID dynamically
+    let planId = null;
+    try {
+        const { data: trialPlan } = await supabase
+            .from('plans')
+            .select('id')
+            .ilike('name->>pt', '%Trial%')
+            .limit(1)
+            .single();
+        if (trialPlan) planId = trialPlan.id;
+    } catch (e) {
+        console.warn("Could not find trial plan automatically", e);
+    }
+
+    // Public registration should default to Sócio Administrador for root users
     const { data, error } = await supabase.auth.admin.createUser({
         email: formData.email,
         password: formData.password,
@@ -204,7 +218,9 @@ export async function registerPublicUser(formData: any) {
         user_metadata: {
             full_name: formData.name,
             name: formData.name,
-            role: 'Administrador'
+            role: 'Sócio Administrador',
+            plan_id: planId,
+            invited_by_code: formData.invite_code || null
         }
     })
 

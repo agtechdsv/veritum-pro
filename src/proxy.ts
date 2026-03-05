@@ -33,7 +33,7 @@ export async function proxy(request: NextRequest) {
     const path = request.nextUrl.pathname
     const isPublicPath = path === '/' || path === '/login' || path === '/pricing' || path === '/history' ||
         path === '/privacy' || path === '/terms' || path === '/sitemap.xml' || path === '/robots.txt' ||
-        path === '/infrastructure' || path === '/clube-vip' ||
+        path === '/infrastructure' || path === '/clube-vip' || path.startsWith('/invite') ||
         path.startsWith('/auth') ||
         ['/sentinel', '/nexus', '/scriptor', '/valorem', '/cognitio', '/vox', '/history'].includes(path)
     const isSetupPath = path === '/setup'

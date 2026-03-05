@@ -76,13 +76,18 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
     const router = useRouter();
     const supabase = createMasterClient();
 
-    useEffect(() => {
-        if (searchParams.get('login') === 'true' && (hasAccess || currentUser)) {
-            setAuthMode('login');
-            setIsAuthModalOpen(true);
-            router.replace('/', { scroll: false });
-        }
-    }, [searchParams, router, hasAccess, currentUser]);
+    const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
+    const [legalModal, setLegalModal] = useState<{ isOpen: boolean; type: 'privacy' | 'terms' }>({
+        isOpen: false,
+        type: 'privacy'
+    });
+
+    const [detailModal, setDetailModal] = useState<{ isOpen: boolean; suite: DbSuite | null }>({
+        isOpen: false,
+        suite: null
+    });
+    const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+    const [checkoutData, setCheckoutData] = useState<{ planName?: string; moduleName?: string; type: 'plan' | 'module' }>({ type: 'plan' });
 
     useEffect(() => {
         if (mounted) {
@@ -106,70 +111,78 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
         }
     }, [mounted, searchParams, router]);
 
-    const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
-    const [legalModal, setLegalModal] = useState<{ isOpen: boolean; type: 'privacy' | 'terms' }>({
-        isOpen: false,
-        type: 'privacy'
-    });
+    const loadInitialData = React.useCallback(async () => {
+        const { data: { user } } = await supabase.auth.getUser();
 
-    const [detailModal, setDetailModal] = useState<{ isOpen: boolean; suite: DbSuite | null }>({
-        isOpen: false,
-        suite: null
-    });
-    const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
-    const [checkoutData, setCheckoutData] = useState<{ planName?: string; moduleName?: string; type: 'plan' | 'module' }>({ type: 'plan' });
+        if (user) {
+            const { data: profile, error: profileError } = await supabase
+                .from('users')
+                .select('name, avatar_url, role, plan_id, access_group_id, access_groups(name), plans:plan_id(name)')
+                .eq('id', user.id)
+                .single();
 
+            if (profileError && profileError.code !== 'PGRST116') {
+                console.error("Error fetching user profile:", profileError.message || profileError);
+            }
 
-    useEffect(() => {
-        const loadInitialData = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
+            if (profile) {
+                const profileData = profile as any;
+                const groupRes = Array.isArray(profileData?.access_groups) ? profileData.access_groups[0] : profileData?.access_groups;
 
-            if (user) {
-                const { data: profile, error } = await supabase
-                    .from('users')
-                    .select('name, avatar_url, role, plan_id, access_group_id, access_groups(name), plans:plan_id(name)')
-                    .eq('id', user.id)
-                    .single();
+                const groupNameRaw = typeof groupRes?.name === 'object' ? (groupRes.name.pt || groupRes.name.en || '') : (groupRes?.name || '');
+                const groupNameTranslated = typeof groupRes?.name === 'object' ? (groupRes.name[locale] || groupNameRaw) : groupNameRaw;
 
-                if (error && error.code !== 'PGRST116') {
-                    console.error("Error fetching user profile:", error.message || error);
-                }
+                const userName = typeof profileData?.name === 'object'
+                    ? (profileData.name[locale] || profileData.name.pt || profileData.name.en || 'Usuário')
+                    : (profileData?.name || user.user_metadata?.full_name || user.user_metadata?.name || 'Usuário');
 
-                if (profile) {
-                    const profileData = profile as any;
-                    const groupRes = Array.isArray(profileData?.access_groups) ? profileData.access_groups[0] : profileData?.access_groups;
+                const rawPlanName = profileData?.plans
+                    ? (typeof (profileData.plans as any).name === 'object'
+                        ? ((profileData.plans as any).name[locale] || (profileData.plans as any).name.pt || (profileData.plans as any).name.en || 'Pro')
+                        : ((profileData.plans as any).name || 'Pro'))
+                    : (Array.isArray(profileData?.plans) && profileData.plans[0]
+                        ? (typeof (profileData.plans[0] as any).name === 'object'
+                            ? ((profileData.plans[0] as any).name[locale] || (profileData.plans[0] as any).name.pt || (profileData.plans[0] as any).name.en || 'Pro')
+                            : ((profileData.plans[0] as any).name || 'Pro'))
+                        : 'Pro');
 
-                    const groupNameRaw = typeof groupRes?.name === 'object' ? (groupRes.name.pt || groupRes.name.en || '') : (groupRes?.name || '');
-                    const groupNameTranslated = typeof groupRes?.name === 'object' ? (groupRes.name[locale] || groupNameRaw) : groupNameRaw;
+                profileData.name = userName;
+                profileData.plan_name = rawPlanName;
+                profileData.access_group_name = groupNameRaw;
+                profileData.translated_group_name = groupNameTranslated;
 
-                    const userName = typeof profileData?.name === 'object'
-                        ? (profileData.name[locale] || profileData.name.pt || profileData.name.en || 'Usuário')
-                        : (profileData?.name || user.user_metadata?.full_name || user.user_metadata?.name || 'Usuário');
+                setUserGroupName(groupNameRaw);
 
-                    const rawPlanName = profileData?.plans
-                        ? (typeof (profileData.plans as any).name === 'object'
-                            ? ((profileData.plans as any).name[locale] || (profileData.plans as any).name.pt || (profileData.plans as any).name.en || 'Pro')
-                            : ((profileData.plans as any).name || 'Pro'))
-                        : (Array.isArray(profileData?.plans) && profileData.plans[0]
-                            ? (typeof (profileData.plans[0] as any).name === 'object'
-                                ? ((profileData.plans[0] as any).name[locale] || (profileData.plans[0] as any).name.pt || (profileData.plans[0] as any).name.en || 'Pro')
-                                : ((profileData.plans[0] as any).name || 'Pro'))
-                            : 'Pro');
+                // Fetch plan permissions
+                const planId = profile.plan_id;
+                if (planId) {
+                    const { data: perms } = await supabase
+                        .from('plan_permissions')
+                        .select('features(suites(suite_key))')
+                        .eq('plan_id', planId);
 
-                    profileData.name = userName;
-                    profileData.plan_name = rawPlanName;
-                    profileData.access_group_name = groupNameRaw;
-                    profileData.translated_group_name = groupNameTranslated;
+                    if (perms) {
+                        const suitesWithAccess = Array.from(new Set(
+                            perms.map((p: any) => p.features?.suites?.suite_key?.toLowerCase().replace('_key', ''))
+                                .filter(Boolean)
+                        )) as string[];
+                        setPlanPermissions(suitesWithAccess);
+                    }
+                } else if (user.user_metadata?.parent_user_id) {
+                    const { data: parent } = await supabase
+                        .from('users')
+                        .select('plan_id, plans:plan_id(name)')
+                        .eq('id', user.user_metadata.parent_user_id)
+                        .single();
+                    if (parent?.plan_id) {
+                        const parentData = parent as any;
+                        const inheritedPlanName = parentData?.plans?.name || (Array.isArray(parentData?.plans) ? parentData?.plans[0]?.name : undefined);
+                        profileData.plan_name = inheritedPlanName;
 
-                    setUserGroupName(groupNameRaw);
-
-                    // Fetch plan permissions
-                    const planId = profile.plan_id;
-                    if (planId) {
                         const { data: perms } = await supabase
                             .from('plan_permissions')
                             .select('features(suites(suite_key))')
-                            .eq('plan_id', planId);
+                            .eq('plan_id', parent.plan_id);
 
                         if (perms) {
                             const suitesWithAccess = Array.from(new Set(
@@ -178,59 +191,72 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                             )) as string[];
                             setPlanPermissions(suitesWithAccess);
                         }
-                    } else if (user.user_metadata?.parent_user_id) {
-                        const { data: parent } = await supabase
-                            .from('users')
-                            .select('plan_id, plans:plan_id(name)')
-                            .eq('id', user.user_metadata.parent_user_id)
-                            .single();
-                        if (parent?.plan_id) {
-                            const parentData = parent as any;
-                            const inheritedPlanName = parentData?.plans?.name || (Array.isArray(parentData?.plans) ? parentData?.plans[0]?.name : undefined);
-                            profileData.plan_name = inheritedPlanName;
-
-                            const { data: perms } = await supabase
-                                .from('plan_permissions')
-                                .select('features(suites(suite_key))')
-                                .eq('plan_id', parent.plan_id);
-
-                            if (perms) {
-                                const suitesWithAccess = Array.from(new Set(
-                                    perms.map((p: any) => p.features?.suites?.suite_key?.toLowerCase().replace('_key', ''))
-                                        .filter(Boolean)
-                                )) as string[];
-                                setPlanPermissions(suitesWithAccess);
-                            }
-                        }
-                    }
-
-                    // Fetch Dynamic Permissions (RBAC)
-                    const { data: featData } = await supabase.from('features').select('id, suite_id');
-                    if (featData) setAllFeatures(featData as any);
-
-                    if (profileData?.access_group_id && profileData?.role !== 'Master') {
-                        const { data: permData } = await supabase
-                            .from('group_permissions')
-                            .select('*')
-                            .eq('group_id', profileData.access_group_id);
-
-                        if (permData) setGroupPermissions(permData);
                     }
                 }
 
-                setCurrentUser({ ...user, profile });
+                // Fetch Dynamic Permissions (RBAC)
+                const { data: featData } = await supabase.from('features').select('id, suite_id');
+                if (featData) setAllFeatures(featData as any);
+
+                if (profileData?.access_group_id && profileData?.role !== 'Master') {
+                    const { data: permData } = await supabase
+                        .from('group_permissions')
+                        .select('*')
+                        .eq('group_id', profileData.access_group_id);
+
+                    if (permData) setGroupPermissions(permData);
+                }
+                setCurrentUser({ ...user, profile: profileData });
             } else {
-                setCurrentUser(null);
+                setCurrentUser({ ...user, profile: null });
             }
+        } else {
+            setCurrentUser(null);
+        }
 
-            const { data: suitesRes } = await supabase.from('suites').select('*').eq('active', true).order('order_index', { ascending: true });
-            if (suitesRes) setSuites(suitesRes);
+        const { data: suitesRes } = await supabase.from('suites').select('*').eq('active', true).order('order_index', { ascending: true });
+        if (suitesRes) setSuites(suitesRes);
 
-            setIsLoading(false);
-        };
-
-        loadInitialData();
+        setIsLoading(false);
     }, [supabase, locale]);
+
+    useEffect(() => {
+        loadInitialData();
+
+        // Listener para mudanças de autenticação (importante para login via Popup/Google)
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+            if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED') {
+                loadInitialData();
+            }
+        });
+
+        return () => subscription.unsubscribe();
+    }, [loadInitialData, supabase]);
+
+    useEffect(() => {
+        if (currentUser && isAuthModalOpen) {
+            setIsAuthModalOpen(false);
+        }
+    }, [currentUser, isAuthModalOpen]);
+
+    useEffect(() => {
+        const isLogin = searchParams.get('login') === 'true';
+        const isSignup = searchParams.get('signup') === 'true';
+
+        if (isLogin && !currentUser && currentUser !== undefined) {
+            setAuthMode('login');
+            setIsAuthModalOpen(true);
+            const params = new URLSearchParams(searchParams.toString());
+            params.delete('login');
+            router.replace(params.toString() ? `/?${params.toString()}` : '/', { scroll: false });
+        } else if (isSignup && !currentUser && currentUser !== undefined) {
+            setAuthMode('register');
+            setIsAuthModalOpen(true);
+            const params = new URLSearchParams(searchParams.toString());
+            params.delete('signup');
+            router.replace(params.toString() ? `/?${params.toString()}` : '/', { scroll: false });
+        }
+    }, [searchParams, router, currentUser]);
 
     const openAuth = (mode: 'login' | 'register') => {
         setAuthMode(mode);

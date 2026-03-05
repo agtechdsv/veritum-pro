@@ -102,6 +102,21 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
     const [name, setName] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [successMsg, setSuccessMsg] = useState<string | null>(null);
+    const [trialPlanId, setTrialPlanId] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchTrialPlan = async () => {
+            const supabase = createMasterClient();
+            const { data } = await supabase
+                .from('plans')
+                .select('id')
+                .ilike('name->>pt', '%Trial%')
+                .limit(1)
+                .single();
+            if (data?.id) setTrialPlanId(data.id);
+        };
+        fetchTrialPlan();
+    }, []);
 
     const emailRef = React.useRef<HTMLInputElement>(null);
     const nameRef = React.useRef<HTMLInputElement>(null);
@@ -222,7 +237,8 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                 const result = await registerPublicUser({
                     email,
                     password,
-                    name
+                    name,
+                    invite_code: new URLSearchParams(window.location.search).get('invite')
                 });
 
                 if (!result.success) {
@@ -339,6 +355,7 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
         setError(null);
         try {
             const supabase = createMasterClient();
+            const invite_code = new URLSearchParams(window.location.search).get('invite');
 
             // 1. Listen for auth state change - reliable across windows on same origin
             const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -381,6 +398,14 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                 }
             });
 
+            // Fetch trial plan on the fly to avoid race conditions
+            const { data: trialPlan } = await supabase
+                .from('plans')
+                .select('id')
+                .ilike('name->>pt', '%Trial%')
+                .limit(1)
+                .single();
+
             const { data, error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
@@ -389,8 +414,13 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                         access_type: 'offline',
                         prompt: 'select_account',
                     },
+                    data: {
+                        invited_by_code: invite_code,
+                        plan_id: trialPlan?.id || trialPlanId,
+                        role: 'Sócio Administrador'
+                    },
                     skipBrowserRedirect: true
-                },
+                } as any,
             });
 
             if (error) {

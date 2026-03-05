@@ -121,7 +121,10 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
             access_group_id: profileData?.access_group_id || authUser.user_metadata?.access_group_id,
             access_group_name: accessGroupNameRaw,
             translated_group_name: accessGroupNameTranslated,
-            plan_name: planName
+            plan_name: planName,
+            vip_active: profileData?.vip_active,
+            vip_code: profileData?.vip_code,
+            vip_points: profileData?.vip_points
         });
 
         if (profileError && !['PGRST116', 'PGRST111'].includes(profileError.code)) {
