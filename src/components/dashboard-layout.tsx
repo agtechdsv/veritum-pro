@@ -23,6 +23,7 @@ import { EmailSettingsManager } from './modules/email-config';
 import AccessManagement from './modules/access-management';
 import ProfileModal from './ui/profile-modal';
 import { CheckoutModal } from './modules/checkout-modal';
+import VipManagement from './modules/vip-management';
 
 import {
     LayoutDashboard, Scale, FileEdit, DollarSign, BarChart3,
@@ -180,6 +181,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
         { id: ModuleId.EMAIL_CONFIG, label: t('management.master.email.menu'), icon: Mail, color: 'text-cyan-500' },
         { id: ModuleId.FINTECH, label: 'Gestão Fintech', icon: CreditCard, color: 'text-emerald-500' },
         { id: ModuleId.CLOUD_CONFIG, label: 'Gestão de Cloud / Add-Ons', icon: Cloud, color: 'text-cyan-400' },
+        { id: ModuleId.VIP_MANAGEMENT, label: 'Gestão Clube VIP', icon: Crown, color: 'text-amber-500' },
     ];
 
     // PLAN PERMISSIONS FILTER: Only for non-Master users + Intern Safety (RBAC)
@@ -337,6 +339,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
             case 'dashboard_suites': return <SuiteDashboard items={suiteItems} onModuleChange={onModuleChange} />;
             case 'dashboard_admin': return <AdminDashboard items={filteredAdminItems} onModuleChange={onModuleChange} />;
             case 'dashboard_master': return <MasterDashboard items={masterItems} onModuleChange={onModuleChange} />;
+            case 'vip_management': return <VipManagement credentials={creds} />;
             case 'dashboard_root': return <RootDashboard onModuleChange={onModuleChange} userRole={user.role} userGroupName={user.access_group_name} />;
             default:
                 return (

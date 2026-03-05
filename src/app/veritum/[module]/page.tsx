@@ -23,6 +23,7 @@ import PersonManagement from '@/components/modules/person-management';
 import { EmailSettingsManager } from '@/components/modules/email-config';
 import { CloudSettingsManager } from '@/components/modules/cloud-manager';
 import InfraManagement from '@/components/modules/infra-management';
+import VipManagement from '@/components/modules/vip-management';
 import { ModuleId } from '@/types';
 import { BASE_SUITE_ITEMS } from '@/utils/module-meta';
 import { GitBranch, FileEdit, DollarSign, BarChart3, MessageSquare, ShieldAlert, Users, Settings, Crown, Calendar as CalendarIcon, Mail, Shield, Zap, User as UserIcon, CreditCard, Server, Cloud } from 'lucide-react';
@@ -156,6 +157,7 @@ export default function DynamicModulePage() {
         { id: ModuleId.EMAIL_CONFIG, label: t('management.master.email.title'), icon: Mail, color: 'text-cyan-500' },
         { id: ModuleId.FINTECH, label: 'Gestão Fintech', icon: CreditCard, color: 'text-emerald-500' },
         { id: ModuleId.CLOUD_CONFIG, label: 'Gestão de Cloud / Add-Ons', icon: Cloud, color: 'text-cyan-400' },
+        { id: ModuleId.VIP_MANAGEMENT, label: 'Gestão Clube VIP', icon: Crown, color: 'text-amber-500' },
     ];
 
     switch (moduleToRender) {
@@ -176,6 +178,7 @@ export default function DynamicModulePage() {
         case 'access_groups': return <AccessManagement currentUser={user} />;
         case 'infra': return <InfraManagement currentUser={user} />;
         case 'persons': return <PersonManagement credentials={credentials} preferences={preferences} currentUser={user} />;
+        case 'vip_management': return <VipManagement credentials={credentials} />;
         case 'dashboard_suites': return <SuiteDashboard items={suiteItems} onModuleChange={onModuleChange} currentUser={user} />;
         case 'dashboard_admin': return <AdminDashboard items={filteredAdminItems} onModuleChange={onModuleChange} />;
         case 'dashboard_master': return <MasterDashboard items={masterItems} onModuleChange={onModuleChange} />;
