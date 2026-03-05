@@ -27,7 +27,7 @@ const ClubeVIP: React.FC<Props> = ({ user, onUpdateUser }) => {
     const [showExtract, setShowExtract] = useState(false);
     const [extractData, setExtractData] = useState<any[]>([]);
 
-    const supabase = createMasterClient();
+    const supabase = React.useMemo(() => createMasterClient(), []);
 
     // Auto-sync with parent updates (eg DB realtime sync changes parent props)
     React.useEffect(() => {

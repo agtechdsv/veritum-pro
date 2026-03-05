@@ -43,6 +43,7 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
     const [groupPermissions, setGroupPermissions] = useState<any[]>([]);
     const [allFeatures, setAllFeatures] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const hasFetchedInitialRef = React.useRef(false);
     const router = useRouter();
     const pathname = usePathname();
     // 5. Memoize Supabase Client to prevent unnecessary re-renders/re-fetches
@@ -50,10 +51,9 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
 
     const { t, locale, setLocale } = useTranslation();
     const { theme, setTheme } = useTheme();
-    const [isInitialLoad, setIsInitialLoad] = useState(true);
 
     const fetchData = React.useCallback(async () => {
-        if (isInitialLoad) setLoading(true);
+        if (!hasFetchedInitialRef.current) setLoading(true);
         const { data: auth } = await supabaseClient.auth.getUser();
         const authUser = auth.user;
 
@@ -190,7 +190,7 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
         }
 
         setLoading(false);
-        setIsInitialLoad(false);
+        hasFetchedInitialRef.current = true;
     }, [supabaseClient, router]); // Removed locale to prevent refetching on language change
 
     // EFFECT 1: Initial Data Fetch
@@ -200,7 +200,7 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
 
     // EFFECT 2: Reactive Translation Update (No refetching)
     useEffect(() => {
-        if (!user || isInitialLoad) return;
+        if (!user || !hasFetchedInitialRef.current) return;
 
         // When locale changes, we only need to update the translated strings in the user object
         // without triggering a full "Sincronizando Ecossistema" (loading state)
