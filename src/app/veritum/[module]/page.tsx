@@ -137,7 +137,6 @@ export default function DynamicModulePage() {
 
     const adminItems = [
         { id: ModuleId.USERS, label: t('management.users.title'), icon: Users, color: 'text-slate-500' },
-        { id: ModuleId.PERSONS, label: t('management.master.persons.title'), icon: UserIcon, color: 'text-emerald-600' },
         { id: ModuleId.ACCESS_GROUPS, label: t('management.accessGroups.title'), icon: Shield, color: 'text-indigo-600' },
         { id: ModuleId.SETTINGS, label: t('management.settings.title'), icon: Settings, color: 'text-slate-500' },
         { id: ModuleId.INFRA, label: 'Infraestrutura', icon: Server, color: 'text-slate-500' },

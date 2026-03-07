@@ -4,6 +4,12 @@ import { DatabaseService } from '@/services/database';
 import { IPersonRepository } from './person-repository.interface';
 import { SupabasePersonRepository } from './supabase-person-repository';
 import { DrizzlePersonRepository } from './drizzle-person-repository';
+import { ILawsuitRepository } from './lawsuit-repository.interface';
+import { SupabaseLawsuitRepository } from './supabase-lawsuit-repository';
+import { ITaskRepository } from './task-repository.interface';
+import { SupabaseTaskRepository } from './supabase-task-repository';
+import { ITeamRepository } from './team-repository.interface';
+import { SupabaseTeamRepository } from './supabase-team-repository';
 
 /**
  * RepositoryFactory implements the "Brain" logic.
@@ -18,5 +24,29 @@ export class RepositoryFactory {
         // STANDARD BYODB: Utiliza as credenciais resolvidas no servidor para obter o cliente correto
         const client = DatabaseService.getClient(credentials);
         return new SupabasePersonRepository(client);
+    }
+
+    /**
+     * Resolves the Lawsuit Repository.
+     */
+    static getLawsuitRepository(credentials: Credentials, preferences: UserPreferences): ILawsuitRepository {
+        const client = DatabaseService.getClient(credentials);
+        return new SupabaseLawsuitRepository(client);
+    }
+
+    /**
+     * Resolves the Task Repository.
+     */
+    static getTaskRepository(credentials: Credentials, preferences: UserPreferences): ITaskRepository {
+        const client = DatabaseService.getClient(credentials);
+        return new SupabaseTaskRepository(client);
+    }
+
+    /**
+     * Resolves the Team Repository.
+     */
+    static getTeamRepository(credentials: Credentials, preferences: UserPreferences): ITeamRepository {
+        const client = DatabaseService.getClient(credentials);
+        return new SupabaseTeamRepository(client);
     }
 }

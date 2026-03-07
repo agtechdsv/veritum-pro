@@ -76,15 +76,13 @@ async function resolveSecurityContext(targetUserId?: string) {
     const configUrl = safeDecrypt(tenantConfig?.custom_supabase_url, 'url');
     const configKey = safeDecrypt(tenantConfig?.custom_supabase_key_encrypted, 'key');
     const configGemini = safeDecrypt(tenantConfig?.custom_gemini_key_encrypted, 'gemini');
-
-    // Lógica BYODB-First: Se existe registro no tenant_configs, usamos ele. 
-    // Se a descriptografia falhar e retornar undefined, o sistema vai usar as chaves Master,
-    // mas agora o log vai denunciar isso.
+    const configConn = safeDecrypt(tenantConfig?.db_connection_encrypted, 'connection');
 
     const credentials: Credentials = {
         supabaseUrl: configUrl || process.env.NEXT_PUBLIC_SUPABASE_URL || '',
         supabaseAnonKey: configKey || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
         geminiKey: configGemini || process.env.NEXT_PUBLIC_GEMINI_API_KEY || '',
+        dbConnectionString: configConn
     };
 
     const isUsingMaster = credentials.supabaseUrl === process.env.NEXT_PUBLIC_SUPABASE_URL;

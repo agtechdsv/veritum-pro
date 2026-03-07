@@ -1,7 +1,8 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { Shield, Plus, Trash2, CheckCircle2, XCircle, Layout, Filter, Scale, FileEdit, DollarSign, BarChart3, MessageSquare, ShieldAlert, ChevronRight, Check, ChevronDown, Database, Layers, Package, Wand2, Sparkles, Lock, Briefcase, X, RefreshCw } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Shield, Plus, Trash2, CheckCircle2, XCircle, Layout, Filter, Scale, FileEdit, DollarSign, BarChart3, MessageSquare, ShieldAlert, ChevronRight, Check, ChevronDown, Database, Layers, Package, Wand2, Sparkles, Lock, Briefcase, X, RefreshCw, Zap } from 'lucide-react';
 import { AccessGroup, GroupPermission, User, ModuleId, Suite, Feature, GroupTemplate, Role } from '@/types';
 import { createMasterClient } from '@/lib/supabase/master';
 import { toast } from '../ui/toast';
@@ -56,6 +57,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
 
     const [activeLang, setActiveLang] = useState<'pt' | 'en' | 'es'>('pt');
     const [isTranslating, setIsTranslating] = useState(false);
+    const [activeTab, setActiveTab] = useState<'identification' | 'permissions'>('identification');
 
     // Master Client Filter State
     const [clients, setClients] = useState<User[]>([]);
@@ -540,9 +542,9 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
         setExpandedSuites(suitesWithFeatures);
 
         if (hasBlockedFeatures) {
-            toast.success(`Template "${template.name}" aplicado! (Recursos premium ignorados)`);
+            toast.success(`Template "${getLoc(template.name, activeLang)}" aplicado! (Recursos premium ignorados)`);
         } else {
-            toast.success(`Template "${template.name}" aplicado!`);
+            toast.success(`Template "${getLoc(template.name, activeLang)}" aplicado!`);
         }
     };
 
@@ -560,37 +562,50 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
     return (
         <div className="space-y-8 animate-in fade-in duration-700">
             <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">{t('management.accessGroups.title') || 'Grupos de Acesso'}</h1>
-                    <p className="text-slate-500 dark:text-slate-400 font-medium tracking-tight uppercase text-xs">{t('management.accessGroups.subtitle') || 'Refinamento Granular: Defina permissões por funcionalidade.'}</p>
-                </div>
-                <div className="flex items-center gap-4">
-                    {currentUser.role === 'Master' && (
-                        <div className="relative group/filter z-50">
-                            <div className="flex items-center gap-2 px-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm text-sm font-bold text-slate-700 dark:text-slate-300">
-                                <Filter size={16} className="text-amber-500" />
-                                <select
-                                    className="bg-transparent outline-none appearance-none pr-6 cursor-pointer"
-                                    value={selectedClientId}
-                                    onChange={e => setSelectedClientId(e.target.value)}
-                                >
-                                    <option value={currentUser.id}>{t('management.access.masterGroups') || 'Master (Meus Grupos)'}</option>
-                                    <optgroup label={t('management.access.privateAdmins') || 'Sócio-Administradores Privados'}>
-                                        {clients.map(c => (
-                                            <option key={c.id} value={c.id}>🏢 {(typeof c.name === 'object' ? ((c.name as any).pt || (c.name as any).en || '') : (c.name || '')).toUpperCase()} ({c.email})</option>
-                                        ))}
-                                    </optgroup>
-                                </select>
-                                <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
-                            </div>
-                        </div>
-                    )}
+                <div className="flex items-center gap-6">
+                    <div>
+                        <h1 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">{t('management.accessGroups.title') || 'Grupos de Acesso'}</h1>
+                        <p className="text-slate-500 dark:text-slate-400 font-medium tracking-tight uppercase text-xs">{t('management.accessGroups.subtitle') || 'Refinamento Granular: Defina permissões por funcionalidade.'}</p>
+                    </div>
                     <button
                         onClick={() => handleOpenModal()}
                         className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold shadow-xl shadow-indigo-600/20 hover:scale-105 transition-all flex items-center gap-2 cursor-pointer"
                     >
                         <Plus size={20} /> {t('management.access.newGroup')}
                     </button>
+                </div>
+                <div className="flex items-center gap-4">
+                    {currentUser.role === 'Master' && (
+                        <div className="flex items-center gap-4 bg-white dark:bg-slate-900 p-2 pl-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-xl">
+                            <div className="flex flex-col items-end">
+                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none mb-1">Contexto Master</span>
+                                <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 leading-none">Selecione o Cliente</span>
+                            </div>
+                            <div className="relative">
+                                <select
+                                    className="bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-6 py-3 text-xs font-black tracking-widest text-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-600 outline-none transition-all cursor-pointer min-w-[260px] appearance-none pr-10"
+                                    value={selectedClientId}
+                                    onChange={e => setSelectedClientId(e.target.value)}
+                                >
+                                    <option value="">--- Selecione um Cliente ---</option>
+                                    <option value={currentUser.id}>Meu Contexto Mestre</option>
+                                    <optgroup label={t('management.access.privateAdmins')?.toUpperCase() || 'CLIENTES (SÓCIOS ADM)'}>
+                                        {clients.map(c => {
+                                            const rawName = typeof c.name === 'object' ? ((c.name as any).pt || (c.name as any).en || '') : (c.name || '');
+                                            const formattedName = rawName.toLowerCase().split(' ').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+                                            const formattedEmail = (c.email || '').toLowerCase();
+                                            return (
+                                                <option key={c.id} value={c.id}>
+                                                    🏢 {formattedName} ({formattedEmail})
+                                                </option>
+                                            );
+                                        })}
+                                    </optgroup>
+                                </select>
+                                <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -678,22 +693,43 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                 ))}
             </div>
 
-            {/* Access Group Modal */}
-            {isModalOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-sm animate-in fade-in duration-300">
-                    <div className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-[3.5rem] border border-slate-200 dark:border-slate-800 shadow-2xl p-12 relative overflow-hidden max-h-[90vh] flex flex-col">
-                        <div className="mb-10 text-center">
-                            <h2 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">
-                                {editingGroup?.id ? t('management.access.modal.editTitle') : t('management.access.modal.addTitle')}
-                            </h2>
-                            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium uppercase tracking-tight">{t('management.access.modal.subtitle')}</p>
-                        </div>
+            {/* Access Group Drawer (Gaveta) */}
+            <AnimatePresence>
+                {isModalOpen && (
+                    <div className="fixed inset-0 z-[100] flex justify-end overflow-hidden">
+                        {/* Backdrop */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm"
+                            onClick={() => { if (!isTranslating) setIsModalOpen(false); }}
+                        />
 
-                        <form onSubmit={handleSaveGroup} className="flex-1 flex flex-col min-h-0">
-                            {/* Header and Templates (Fixed) */}
-                            <div className="space-y-8 mb-8">
-                                {/* Header and Translation */}
-                                <div className="flex items-center justify-between mb-2">
+                        <motion.div
+                            initial={{ x: '100%' }}
+                            animate={{ x: 0 }}
+                            exit={{ x: '100%' }}
+                            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+                            className="relative w-full max-w-2xl bg-white dark:bg-slate-900 shadow-[-20px_0_50px_-10px_rgba(0,0,0,0.1)] h-full flex flex-col border-l border-slate-200 dark:border-slate-800 p-0 overflow-hidden"
+                        >
+                            {/* Drawer Header */}
+                            <div className="p-8 pb-4 shrink-0 bg-slate-50/50 dark:bg-slate-800/50">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">
+                                        {editingGroup?.id ? t('management.access.modal.editTitle') : t('management.access.modal.addTitle')}
+                                    </h2>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsModalOpen(false)}
+                                        className="p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-400 rounded-xl hover:text-indigo-600 transition-all shadow-sm"
+                                    >
+                                        <X size={20} />
+                                    </button>
+                                </div>
+
+                                {/* Flags and Translate Button ABOVE TABS */}
+                                <div className="flex items-center justify-between mb-6">
                                     <div className="flex items-center gap-2">
                                         {(['pt', 'en', 'es'] as const).map(lang => (
                                             <button
@@ -715,299 +751,321 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                         type="button"
                                         onClick={handleTranslateGroup}
                                         disabled={isTranslating}
-                                        className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-all disabled:opacity-50"
+                                        className="flex items-center gap-2 px-4 py-2 bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-all disabled:opacity-50 shadow-sm"
                                     >
-                                        <RefreshCw size={12} className={isTranslating ? 'animate-spin' : ''} />
+                                        <RefreshCw size={14} className={isTranslating ? 'animate-spin' : ''} />
                                         {isTranslating ? (t('management.access.modal.translating') || 'Traduzindo...') : (t('management.access.modal.translateIA') || 'Traduzir com IA')}
                                     </button>
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">{t('management.access.modal.groupName')}</label>
-                                    <input
-                                        required
-                                        placeholder={t('management.access.modal.groupNamePlaceholder')}
-                                        className="w-full px-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white font-bold shadow-sm"
-                                        value={(editingGroup?.name as any)?.[activeLang] || ''}
-                                        onChange={e => {
-                                            const currentName = (editingGroup?.name as any) || {};
-                                            const updatedName = { ...currentName, [activeLang]: e.target.value };
-                                            setEditingGroup(prev => prev ? { ...prev, name: updatedName } : null);
-                                        }}
-                                    />
-                                </div>
 
-                                <div className="space-y-4">
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 flex items-center gap-2">
-                                        <Wand2 size={12} className="text-indigo-500" /> {t('management.access.modal.templateLabel')}
-                                    </label>
-                                    <div className="relative group/select">
-                                        <select
-                                            onChange={(e) => {
-                                                const template = templates.find(t => t.id === e.target.value);
-                                                if (template) applyTemplate(template);
-                                                else if (e.target.value === 'clear') {
-                                                    setSelectedFeatureIds([]);
-                                                    toast.success(t('management.access.modal.clearSelectionSuccess') || 'Permissões limpas.');
-                                                }
-                                            }}
-                                            className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl text-xs font-bold text-slate-600 dark:text-slate-400 outline-none focus:ring-2 focus:ring-indigo-600 appearance-none cursor-pointer transition-all hover:border-slate-300 dark:hover:border-slate-700"
-                                            defaultValue=""
-                                        >
-                                            <option value="" disabled className="text-slate-400">
-                                                {t('management.access.modal.templatePlaceholder') || 'Selecione um template para preenchimento rápido...'}
-                                            </option>
-                                            {[...templates].sort((a, b) => getLoc(a.name, activeLang).localeCompare(getLoc(b.name, activeLang))).map(t => {
-                                                const tName = getLoc(t.name, activeLang);
-                                                return <option key={t.id} value={t.id}>✨ {tName}</option>
-                                            })}
-                                            <option value="clear" className="text-rose-500 font-bold border-t border-slate-200 mt-2">🛑 {t('management.access.modal.clearSelection')}</option>
-                                        </select>
-                                        <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                                            <ChevronDown size={16} />
-                                        </div>
-                                    </div>
+                                {/* Tabs Navigation */}
+                                <div className="flex bg-slate-100 dark:bg-slate-950/50 p-1.5 rounded-[2.5rem] w-full">
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveTab('identification')}
+                                        className={`flex-1 px-4 py-3 rounded-3xl text-[10px] font-black uppercase tracking-[0.2em] transition-all ${activeTab === 'identification' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-xl shadow-indigo-600/10' : 'text-slate-500 hover:text-slate-700'}`}
+                                    >
+                                        Identificação
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveTab('permissions')}
+                                        className={`flex-1 px-4 py-3 rounded-3xl text-[10px] font-black uppercase tracking-[0.2em] transition-all ${activeTab === 'permissions' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-xl shadow-indigo-600/10' : 'text-slate-500 hover:text-slate-700'}`}
+                                    >
+                                        Permissões
+                                    </button>
                                 </div>
                             </div>
 
-                            {/* Roles Management MultiSelect */}
-                            <div className="space-y-4 border-t border-slate-100 dark:border-slate-800 pt-6 mb-8">
-                                <div className="flex items-center justify-between">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 flex items-center gap-2">
-                                        <Briefcase size={12} className="text-indigo-500" /> {t('management.access.modal.linkedRoles')}
-                                    </label>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setEditingRole({ name: '' });
-                                            const activeLocale = (locale === 'en' || locale === 'es') ? locale : 'pt';
-                                            setActiveLang(activeLocale);
-                                            setShowRoleModal(true);
-                                        }}
-                                        className="flex items-center gap-1.5 text-[10px] font-black uppercase text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1.5 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
-                                    >
-                                        <Plus size={12} /> {t('management.access.modal.newRole')}
-                                    </button>
-                                </div>
+                            <form onSubmit={handleSaveGroup} className="flex-1 flex flex-col overflow-hidden">
+                                {/* Scrollable Content */}
+                                <div className="flex-1 overflow-y-auto p-10 custom-scrollbar">
+                                    {activeTab === 'identification' && (
+                                        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                            {/* Group Name Input */}
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">{t('management.access.modal.groupName')}</label>
+                                                <div className="relative">
+                                                    <Shield className="absolute left-5 top-5 text-indigo-400" size={24} />
+                                                    <input
+                                                        required
+                                                        placeholder={t('management.access.modal.groupNamePlaceholder')}
+                                                        className="w-full pl-16 pr-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl font-bold focus:ring-4 focus:ring-indigo-600/10 outline-none text-slate-800 dark:text-white transition-all text-lg"
+                                                        value={(editingGroup?.name as any)?.[activeLang] || ''}
+                                                        onChange={e => {
+                                                            const currentName = (editingGroup?.name as any) || {};
+                                                            const updatedName = { ...currentName, [activeLang]: e.target.value };
+                                                            setEditingGroup(prev => prev ? { ...prev, name: updatedName } : null);
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>
 
-                                <div className="relative">
-                                    <div
-                                        className="min-h-[50px] w-full px-4 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl flex items-center flex-wrap gap-2 cursor-text transition-all focus-within:ring-2 focus-within:ring-indigo-600 hover:border-slate-300 dark:hover:border-slate-700"
-                                        onClick={() => setIsRoleSelectOpen(true)}
-                                    >
-                                        {selectedRoleIds.length === 0 && (
-                                            <span className="text-xs font-medium text-slate-400 pl-2">{t('management.access.modal.rolesPlaceholder')}</span>
-                                        )}
-                                        {selectedRoleIds.map(id => {
-                                            const role = roles.find(r => r.id === id);
-                                            if (!role) return null;
-                                            return (
-                                                <div
-                                                    key={role.id}
-                                                    className="flex items-center gap-1.5 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-900 dark:text-indigo-100 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm"
-                                                    onClick={(e) => e.stopPropagation()}
-                                                >
-                                                    {getLoc(role.name, activeLang)}
+                                            {/* Role Selector Link */}
+                                            <div className="space-y-4">
+                                                <div className="flex items-center justify-between">
+                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 flex items-center gap-2">
+                                                        <Briefcase size={14} className="text-indigo-500" /> {t('management.access.modal.linkedRoles')}
+                                                    </label>
                                                     <button
                                                         type="button"
-                                                        onClick={() => setSelectedRoleIds(prev => prev.filter(rId => rId !== id))}
-                                                        className="ml-1 hover:text-indigo-500 dark:hover:text-indigo-300"
+                                                        onClick={() => {
+                                                            setEditingRole({ name: { pt: '', en: '', es: '' } });
+                                                            const activeLocale = (locale === 'en' || locale === 'es') ? locale : 'pt';
+                                                            setActiveLang(activeLocale);
+                                                            setShowRoleModal(true);
+                                                        }}
+                                                        className="flex items-center gap-1.5 text-[10px] font-black uppercase text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1.5 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
                                                     >
-                                                        <X size={12} />
+                                                        <Plus size={12} /> {t('management.access.modal.newRole')}
                                                     </button>
                                                 </div>
-                                            );
-                                        })}
 
-                                        {/* Dropdown Toggle Context Area */}
-                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                                            <ChevronDown size={16} className={`transition-transform duration-200 ${isRoleSelectOpen ? 'rotate-180' : ''}`} />
-                                        </div>
-                                    </div>
-
-                                    {/* Dropdown Options */}
-                                    {isRoleSelectOpen && (
-                                        <>
-                                            <div
-                                                className="fixed inset-0 z-10"
-                                                onClick={() => setIsRoleSelectOpen(false)}
-                                            />
-                                            <div className="absolute z-20 mt-2 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl max-h-56 overflow-y-auto custom-scrollbar p-2">
-                                                {roles.length === 0 ? (
-                                                    <div className="p-3 text-center text-xs text-slate-500 dark:text-slate-400">{t('management.access.noRoles') || 'Nenhum cargo encontrado. Crie um novo primeiro.'}</div>
-                                                ) : (
-                                                    (() => {
-                                                        // Group roles by access_group_id
-                                                        const groupedRoles: Record<string, Role[]> = {};
-
-                                                        roles.forEach(role => {
-                                                            const groupId = role.access_group_id || 'none';
-                                                            if (!groupedRoles[groupId]) groupedRoles[groupId] = [];
-                                                            groupedRoles[groupId].push(role);
-                                                        });
-
-                                                        return Object.keys(groupedRoles).map(groupId => {
-                                                            const groupRoles = groupedRoles[groupId];
-                                                            const group = groups.find(g => g.id === groupId);
-                                                            const groupName = group
-                                                                ? (getLoc(group.name, activeLang))
-                                                                : t('management.access.modal.others');
-
+                                                <div className="relative">
+                                                    <div
+                                                        className="min-h-[120px] w-full px-5 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-[2rem] flex items-start flex-wrap gap-2 cursor-pointer transition-all hover:bg-white dark:hover:bg-slate-900 hover:shadow-lg hover:shadow-indigo-500/5 group/roles"
+                                                        onClick={() => setIsRoleSelectOpen(true)}
+                                                    >
+                                                        {selectedRoleIds.length === 0 && (
+                                                            <span className="text-xs font-bold text-slate-400 pl-2 uppercase tracking-tight">{t('management.access.modal.rolesPlaceholder')}</span>
+                                                        )}
+                                                        {selectedRoleIds.map(id => {
+                                                            const role = roles.find(r => r.id === id);
+                                                            if (!role) return null;
                                                             return (
-                                                                <div key={groupId} className="mb-2 last:mb-0">
-                                                                    <div className="sticky top-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm px-3 py-1.5 z-10">
-                                                                        <span className="text-[10px] font-black tracking-widest uppercase text-indigo-500/80 dark:text-indigo-400/80">
-                                                                            {groupName}
-                                                                        </span>
-                                                                    </div>
-                                                                    <div className="space-y-0.5">
-                                                                        {groupRoles.map(role => {
-                                                                            const isSelected = selectedRoleIds.includes(role.id);
+                                                                <div
+                                                                    key={role.id}
+                                                                    className="flex items-center gap-2 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-950 dark:text-indigo-100 px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-tight shadow-sm"
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                >
+                                                                    {getLoc(role.name, activeLang)}
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => setSelectedRoleIds(prev => prev.filter(rId => rId !== id))}
+                                                                        className="opacity-50 hover:opacity-100 transition-opacity"
+                                                                    >
+                                                                        <X size={12} />
+                                                                    </button>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                        <div className="ml-auto text-slate-400 group-hover/roles:text-indigo-500 transition-colors pr-2">
+                                                            <ChevronDown size={18} />
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Dropdown Options for Roles */}
+                                                    {isRoleSelectOpen && (
+                                                        <>
+                                                            <div className="fixed inset-0 z-10" onClick={() => setIsRoleSelectOpen(false)} />
+                                                            <div className="absolute z-20 left-0 right-0 top-full mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl max-h-80 overflow-y-auto custom-scrollbar p-3 animate-in fade-in zoom-in-95 duration-200">
+                                                                {roles.length === 0 ? (
+                                                                    <div className="p-4 text-center text-xs text-slate-500 font-bold uppercase tracking-widest">{t('management.access.noRoles') || 'Nenhum cargo encontrado.'}</div>
+                                                                ) : (
+                                                                    (() => {
+                                                                        const groupedRoles: Record<string, Role[]> = {};
+                                                                        roles.forEach(role => {
+                                                                            const groupId = role.access_group_id || 'none';
+                                                                            if (!groupedRoles[groupId]) groupedRoles[groupId] = [];
+                                                                            groupedRoles[groupId].push(role);
+                                                                        });
+
+                                                                        return Object.keys(groupedRoles).map(groupId => {
+                                                                            const groupRoles = groupedRoles[groupId];
+                                                                            const group = groups.find(g => g.id === groupId);
+                                                                            const groupName = group ? (getLoc(group.name, activeLang)) : t('management.access.modal.others');
+
                                                                             return (
-                                                                                <div
-                                                                                    key={role.id}
-                                                                                    className={`flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors mx-1 ${isSelected ? 'bg-indigo-50/50 dark:bg-indigo-900/10' : ''}`}
-                                                                                    onClick={(e) => {
-                                                                                        e.stopPropagation();
-                                                                                        if (isSelected) {
-                                                                                            setSelectedRoleIds(prev => prev.filter(id => id !== role.id));
-                                                                                        } else {
-                                                                                            setSelectedRoleIds(prev => [...prev, role.id]);
-                                                                                        }
-                                                                                    }}
-                                                                                >
-                                                                                    <div className="flex items-center gap-2">
-                                                                                        <div className={`flex items-center justify-center w-4 h-4 rounded border ${isSelected ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 dark:border-slate-700'}`}>
-                                                                                            {isSelected && <Check size={10} strokeWidth={3} />}
-                                                                                        </div>
-                                                                                        <span className={`text-xs font-semibold ${isSelected ? 'text-indigo-900 dark:text-indigo-100' : 'text-slate-600 dark:text-slate-300'}`}>
-                                                                                            {getLoc(role.name, activeLang)}
+                                                                                <div key={groupId} className="mb-4 last:mb-0">
+                                                                                    <div className="px-3 py-1.5 mb-1">
+                                                                                        <span className="text-[9px] font-black tracking-[0.2em] uppercase text-indigo-500">
+                                                                                            {groupName}
                                                                                         </span>
                                                                                     </div>
-
-                                                                                    <button
-                                                                                        type="button"
-                                                                                        onClick={(e) => {
-                                                                                            e.stopPropagation();
-                                                                                            setEditingRole({
-                                                                                                id: role.id,
-                                                                                                name: role.name
-                                                                                            });
-                                                                                            const activeLocale = (locale === 'en' || locale === 'es') ? locale : 'pt';
-                                                                                            setActiveLang(activeLocale);
-                                                                                            setShowRoleModal(true);
-                                                                                            setIsRoleSelectOpen(false);
-                                                                                        }}
-                                                                                        className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/40 transition-all opacity-50 hover:opacity-100"
-                                                                                    >
-                                                                                        <FileEdit size={12} />
-                                                                                    </button>
+                                                                                    <div className="space-y-1">
+                                                                                        {groupRoles.map(role => {
+                                                                                            const isSelected = selectedRoleIds.includes(role.id);
+                                                                                            return (
+                                                                                                <div
+                                                                                                    key={role.id}
+                                                                                                    className={`flex items-center justify-between px-3 py-3 rounded-2xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all ${isSelected ? 'bg-indigo-50/50 dark:bg-indigo-900/10' : ''}`}
+                                                                                                    onClick={(e) => {
+                                                                                                        e.stopPropagation();
+                                                                                                        if (isSelected) setSelectedRoleIds(prev => prev.filter(rId => rId !== role.id));
+                                                                                                        else setSelectedRoleIds(prev => [...prev, role.id]);
+                                                                                                    }}
+                                                                                                >
+                                                                                                    <div className="flex items-center gap-3">
+                                                                                                        <div className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all ${isSelected ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg' : 'border-slate-200 dark:border-slate-800'}`}>
+                                                                                                            {isSelected && <Check size={12} strokeWidth={4} />}
+                                                                                                        </div>
+                                                                                                        <span className={`text-xs font-bold uppercase tracking-tight ${isSelected ? 'text-indigo-900 dark:text-indigo-100' : 'text-slate-600 dark:text-slate-300'}`}>
+                                                                                                            {getLoc(role.name, activeLang)}
+                                                                                                        </span>
+                                                                                                    </div>
+                                                                                                    <button
+                                                                                                        type="button"
+                                                                                                        onClick={(e) => {
+                                                                                                            e.stopPropagation();
+                                                                                                            setEditingRole({ id: role.id, name: role.name });
+                                                                                                            setActiveLang((locale === 'en' || locale === 'es') ? locale : 'pt');
+                                                                                                            setShowRoleModal(true);
+                                                                                                            setIsRoleSelectOpen(false);
+                                                                                                        }}
+                                                                                                        className="p-2 rounded-xl text-slate-400 hover:bg-white dark:hover:bg-slate-950 hover:shadow-md transition-all opacity-0 group-hover:opacity-100"
+                                                                                                    >
+                                                                                                        <FileEdit size={14} />
+                                                                                                    </button>
+                                                                                                </div>
+                                                                                            );
+                                                                                        })}
+                                                                                    </div>
                                                                                 </div>
+                                                                            );
+                                                                        });
+                                                                    })()
+                                                                )}
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {activeTab === 'permissions' && (
+                                        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                            {/* Template Selector Card */}
+                                            <div className="space-y-4">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 flex items-center gap-2">
+                                                    <Wand2 size={14} className="text-amber-500" /> {t('management.access.modal.templateLabel')}
+                                                </label>
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <select
+                                                        onChange={(e) => {
+                                                            const template = templates.find(t => t.id === e.target.value);
+                                                            if (template) applyTemplate(template);
+                                                            else if (e.target.value === 'clear') {
+                                                                setSelectedFeatureIds([]);
+                                                                toast.success(t('management.access.modal.clearSelectionSuccess') || 'Permissões limpas.');
+                                                            }
+                                                        }}
+                                                        className="col-span-2 w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl text-xs font-bold text-slate-600 dark:text-slate-400 outline-none focus:ring-4 focus:ring-amber-500/10 appearance-none cursor-pointer transition-all hover:bg-white dark:hover:bg-slate-900"
+                                                        defaultValue=""
+                                                    >
+                                                        <option value="" disabled>{t('management.access.modal.templatePlaceholder')}</option>
+                                                        {[...templates].sort((a, b) => getLoc(a.name, activeLang).localeCompare(getLoc(b.name, activeLang))).map(t => (
+                                                            <option key={t.id} value={t.id}>✨ {getLoc(t.name, activeLang)}</option>
+                                                        ))}
+                                                        <option value="clear" className="text-rose-500">🛑 {t('management.access.modal.clearSelection')}</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            {/* Granular Permissions Section */}
+                                            <div className="space-y-6 pt-10 border-t border-slate-100 dark:border-slate-800">
+                                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-2">{t('management.access.modal.granularTitle')}</label>
+                                                <div className="space-y-4">
+                                                    {suites.map(suite => {
+                                                        const suiteFeatures = features.filter(f => f.suite_id === suite.id);
+                                                        const isExpanded = expandedSuites.includes(suite.id);
+                                                        const enabledInSuite = suiteFeatures.filter(f => selectedFeatureIds.includes(f.id));
+                                                        const allEnabled = suiteFeatures.length > 0 && enabledInSuite.length === suiteFeatures.length;
+                                                        const Icon = getIcon(suite.suite_key);
+
+                                                        return (
+                                                            <div key={suite.id} className={`rounded-[2rem] border transition-all overflow-hidden ${enabledInSuite.length > 0 ? 'border-indigo-200 dark:border-indigo-800 bg-white dark:bg-slate-900 shadow-md' : 'border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-950/20 opacity-80'}`}>
+                                                                <div className="flex items-center justify-between p-5">
+                                                                    <div className="flex items-center gap-5 cursor-pointer flex-1" onClick={() => toggleSuiteExpansion(suite.id)}>
+                                                                        <div className={`w-12 h-12 rounded-[1.25rem] flex items-center justify-center transition-all ${enabledInSuite.length > 0 ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>
+                                                                            <Icon size={24} />
+                                                                        </div>
+                                                                        <div className="flex-1">
+                                                                            <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight mb-1">
+                                                                                {getLoc(suite.name, activeLang)}
+                                                                            </h4>
+                                                                            <div className="flex items-center gap-2">
+                                                                                <div className="h-1.5 w-24 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                                                                    <div
+                                                                                        className="h-full bg-indigo-500 transition-all duration-500"
+                                                                                        style={{ width: `${(enabledInSuite.length / suiteFeatures.length) * 100}%` }}
+                                                                                    />
+                                                                                </div>
+                                                                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{enabledInSuite.length}/{suiteFeatures.length}</span>
+                                                                            </div>
+                                                                        </div>
+                                                                        <ChevronDown size={20} className={`text-slate-300 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+                                                                    </div>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => toggleSuiteAllFeatures(suite.id)}
+                                                                        className={`ml-4 w-10 h-10 rounded-xl transition-all flex items-center justify-center ${allEnabled ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-indigo-600'}`}
+                                                                    >
+                                                                        {allEnabled ? <CheckCircle2 size={18} /> : <Layers size={18} />}
+                                                                    </button>
+                                                                </div>
+
+                                                                {isExpanded && (
+                                                                    <div className="p-6 pt-0 grid grid-cols-1 gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                                                                        {suiteFeatures.map(f => {
+                                                                            const isActive = selectedFeatureIds.includes(f.id);
+                                                                            const isAllowed = isFeatureAllowed(f);
+                                                                            return (
+                                                                                <button
+                                                                                    key={f.id}
+                                                                                    type="button"
+                                                                                    onClick={() => toggleFeaturePermission(f.id)}
+                                                                                    className={`flex items-center gap-4 px-6 py-5 rounded-3xl border-2 transition-all text-left group/feat shadow-sm ${!isAllowed
+                                                                                        ? 'bg-slate-50 border-slate-100 dark:bg-slate-900/20 dark:border-slate-800/30 opacity-60 cursor-not-allowed'
+                                                                                        : isActive
+                                                                                            ? 'bg-indigo-50/50 border-indigo-500 text-indigo-900 dark:bg-indigo-500/10 dark:border-indigo-500 dark:text-indigo-100'
+                                                                                            : 'bg-white border-slate-200 text-slate-600 dark:bg-slate-900 dark:border-slate-800 hover:border-slate-300'
+                                                                                        }`}
+                                                                                >
+                                                                                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center border-2 transition-all shrink-0 ${!isAllowed
+                                                                                        ? 'bg-slate-100 border-slate-200 text-slate-400'
+                                                                                        : isActive
+                                                                                            ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-600/30'
+                                                                                            : 'bg-slate-50 border-slate-200 dark:bg-slate-950 dark:border-slate-800'
+                                                                                        }`}>
+                                                                                        {!isAllowed ? <Lock size={14} strokeWidth={3} /> : isActive ? <Check size={18} strokeWidth={4} /> : <div className="w-1.5 h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 group-hover/feat:bg-indigo-300" />}
+                                                                                    </div>
+                                                                                    <div className="flex-1">
+                                                                                        <span className={`block text-[11px] font-black uppercase tracking-tight mb-1 ${isActive ? 'text-indigo-950 dark:text-indigo-50' : 'text-slate-800 dark:text-slate-200'}`}>
+                                                                                            {getLoc(f.display_name, activeLang, f.feature_key)}
+                                                                                        </span>
+                                                                                        {f.description?.pt && (
+                                                                                            <span className={`text-[10px] font-bold normal-case block leading-relaxed line-clamp-2 ${isActive ? 'text-indigo-600/70 dark:text-indigo-400/70' : 'text-slate-400'}`}>
+                                                                                                {getLoc(f.description, activeLang)}
+                                                                                            </span>
+                                                                                        )}
+                                                                                    </div>
+                                                                                </button>
                                                                             );
                                                                         })}
                                                                     </div>
-                                                                </div>
-                                                            );
-                                                        });
-                                                    })()
-                                                )}
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
                                             </div>
-                                        </>
+                                        </div>
                                     )}
                                 </div>
-                            </div>
 
-                            {/* Granular Permissions (Scrollable) */}
-                            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-4 mb-4">
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">{t('management.access.modal.granularTitle')}</label>
-                                <div className="space-y-3">
-                                    {suites.map(suite => {
-                                        const suiteFeatures = features.filter(f => f.suite_id === suite.id);
-                                        const isExpanded = expandedSuites.includes(suite.id);
-                                        const enabledInSuite = suiteFeatures.filter(f => selectedFeatureIds.includes(f.id));
-                                        const allEnabled = suiteFeatures.length > 0 && enabledInSuite.length === suiteFeatures.length;
-                                        const Icon = getIcon(suite.suite_key);
-
-                                        return (
-                                            <div key={suite.id} className={`rounded-[2rem] border transition-all overflow-hidden ${enabledInSuite.length > 0 ? 'border-indigo-200 dark:border-indigo-800 bg-white dark:bg-slate-900 shadow-sm' : 'border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/20'}`}>
-                                                <div className="flex items-center justify-between p-4">
-                                                    <div className="flex items-center gap-4 cursor-pointer flex-1" onClick={() => toggleSuiteExpansion(suite.id)}>
-                                                        <div className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all ${enabledInSuite.length > 0 ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>
-                                                            <Icon size={20} />
-                                                        </div>
-                                                        <div className="flex-1">
-                                                            <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight leading-none mb-1">
-                                                                {getLoc(suite.name, activeLang)}
-                                                            </h4>
-                                                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{t('management.access.modal.featuresActive', { count: enabledInSuite.length, total: suiteFeatures.length })}</p>
-                                                        </div>
-                                                        <ChevronDown size={18} className={`text-slate-300 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                                                    </div>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => toggleSuiteAllFeatures(suite.id)}
-                                                        className={`ml-4 p-2 rounded-xl transition-all ${allEnabled ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-indigo-600'}`}
-                                                        title={t('management.access.modal.toggleAll')}
-                                                    >
-                                                        {allEnabled ? <CheckCircle2 size={18} /> : <Layers size={18} />}
-                                                    </button>
-                                                </div>
-
-                                                {isExpanded && (
-                                                    <div className="p-5 pt-0 grid grid-cols-1 gap-3 animate-in fade-in slide-in-from-top-4 duration-500">
-                                                        {suiteFeatures.map(f => {
-                                                            const isActive = selectedFeatureIds.includes(f.id);
-                                                            const isAllowed = isFeatureAllowed(f);
-                                                            return (
-                                                                <button
-                                                                    key={f.id}
-                                                                    type="button"
-                                                                    onClick={() => toggleFeaturePermission(f.id)}
-                                                                    title={!isAllowed ? t('management.access.modal.planRestriction') : ""}
-                                                                    className={`flex items-center gap-4 px-6 py-4 rounded-[1.5rem] border-2 transition-all text-left group/feat shadow-sm ${!isAllowed
-                                                                        ? 'bg-slate-50 border-slate-100 text-slate-400 dark:bg-slate-900/40 dark:border-slate-800/50 dark:text-slate-500 cursor-not-allowed opacity-80'
-                                                                        : isActive
-                                                                            ? 'bg-emerald-50 border-emerald-500 text-emerald-900 dark:bg-emerald-500/10 dark:border-emerald-500 dark:text-emerald-100'
-                                                                            : 'bg-white border-slate-200 text-slate-600 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700'
-                                                                        }`}
-                                                                >
-                                                                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center border-2 transition-all ${!isAllowed
-                                                                        ? 'bg-slate-100 border-slate-200 text-slate-400 dark:bg-slate-800 dark:border-slate-700'
-                                                                        : isActive
-                                                                            ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/30'
-                                                                            : 'bg-slate-50 border-slate-200 dark:bg-slate-950 dark:border-slate-800'
-                                                                        }`}>
-                                                                        {!isAllowed ? <Lock size={12} strokeWidth={3} /> : isActive && <Check size={14} strokeWidth={4} />}
-                                                                    </div>
-                                                                    <div className="flex-1">
-                                                                        <span className={`block text-xs font-black uppercase tracking-tight transition-colors ${isActive ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-300'}`}>
-                                                                            {getLoc(f.display_name, activeLang, f.feature_key)}
-                                                                        </span>
-                                                                        {f.description?.pt && (
-                                                                            <span className={`text-[9px] font-bold normal-case block leading-relaxed mt-1 transition-opacity ${isActive ? 'opacity-100 text-emerald-600/80 dark:text-emerald-500/80' : 'opacity-60 text-slate-500 dark:text-slate-500'}`}>
-                                                                                {getLoc(f.description, activeLang)}
-                                                                            </span>
-                                                                        )}
-                                                                    </div>
-                                                                </button>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
+                                {/* Drawer Actions */}
+                                <div className="p-8 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex items-center justify-end gap-6 shrink-0">
+                                    <button type="button" onClick={() => setIsModalOpen(false)} className="px-8 py-5 text-slate-500 font-black uppercase text-[10px] tracking-[0.2em] hover:text-slate-700 active:scale-95 transition-all">{t('management.access.modal.close')}</button>
+                                    <button type="submit" className="bg-indigo-600 text-white px-12 py-5 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] shadow-2xl shadow-indigo-600/30 hover:scale-105 active:scale-95 transition-all flex items-center gap-3">
+                                        <Zap size={16} /> {editingGroup?.id ? t('management.access.modal.save') : t('management.access.modal.save')}
+                                    </button>
                                 </div>
-                            </div>
-
-                            {/* Fixed Bottom Actions */}
-                            <div className="flex gap-4 pt-6 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 mt-auto">
-                                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-8 py-5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-[1.5rem] font-black uppercase tracking-widest hover:bg-slate-200 transition-all text-xs">{t('management.access.modal.close')}</button>
-                                <button type="submit" className="flex-[2] px-8 py-5 bg-indigo-600 text-white rounded-[1.5rem] font-black uppercase tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-600/30 transition-all text-xs">{t('management.access.modal.save')}</button>
-                            </div>
-                        </form>
+                            </form>
+                        </motion.div>
                     </div>
-                </div>
-            )}
+                )}
+            </AnimatePresence>
 
             {/* Modal: Delete Confirmation */}
             {groupToDelete && (
@@ -1038,65 +1096,104 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                 </div>
             )}
 
-            {/* Mini Modal para Cadastro de Cargo */}
-            {showRoleModal && (
-                <div className="fixed inset-0 z-[120] flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl p-8 text-center relative overflow-hidden">
-                        <button
-                            type="button"
+            {/* Role Management Drawer (Gaveta Lateral Direita) */}
+            <AnimatePresence>
+                {showRoleModal && (
+                    <div className="fixed inset-0 z-[120] flex justify-end overflow-hidden">
+                        {/* Backdrop */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
                             onClick={() => setShowRoleModal(false)}
-                            className="absolute top-6 right-6 p-2 bg-slate-100 dark:bg-slate-800 text-slate-400 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+                        />
+
+                        <motion.div
+                            initial={{ x: '100%' }}
+                            animate={{ x: 0 }}
+                            exit={{ x: '100%' }}
+                            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+                            className="relative w-full max-w-sm bg-white dark:bg-slate-900 shadow-[-20px_0_50px_-10px_rgba(0,0,0,0.3)] h-full flex flex-col border-l border-slate-200 dark:border-slate-800 overflow-hidden"
                         >
-                            <X size={16} />
-                        </button>
-
-                        <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 mx-auto mb-6">
-                            <Briefcase size={32} />
-                        </div>
-
-                        <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-2">
-                            {editingRole.id ? t('management.access.roleModal.editTitle') : t('management.access.roleModal.addTitle')}
-                        </h3>
-                        <p className="text-xs text-slate-500 font-medium mb-6 uppercase tracking-widest">{t('management.access.roleModal.subtitle') || 'Defina o nome da função'}</p>
-
-                        <form onSubmit={handleSaveRole} className="space-y-4">
-                            <div className="flex items-center justify-center gap-2 mb-2">
-                                {(['pt', 'en', 'es'] as const).map(lang => (
+                            {/* Header */}
+                            <div className="p-8 border-b border-slate-100 dark:border-slate-800 shrink-0 bg-slate-50 dark:bg-slate-800/50">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                                        <Briefcase size={24} />
+                                    </div>
                                     <button
-                                        key={lang}
-                                        type="button"
-                                        onClick={() => setActiveLang(lang)}
-                                        className={`w-6 h-6 rounded-full overflow-hidden border-2 transition-all p-0.5 hover:scale-110 active:scale-95 ${activeLang === lang ? 'border-indigo-600 shadow-lg shadow-indigo-600/20' : 'border-transparent opacity-40 hover:opacity-100'}`}
-                                        title={lang.toUpperCase()}
+                                        onClick={() => setShowRoleModal(false)}
+                                        className="p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-400 rounded-xl hover:text-indigo-600 transition-all shadow-sm"
                                     >
-                                        <img
-                                            src={lang === 'pt' ? BR_FLAG : lang === 'en' ? US_FLAG : ES_FLAG}
-                                            alt={lang}
-                                            className="w-full h-full object-cover rounded-full"
-                                        />
+                                        <X size={20} />
                                     </button>
-                                ))}
+                                </div>
+                                <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">
+                                    {editingRole.id ? t('management.access.roleModal.editTitle') : t('management.access.roleModal.addTitle')}
+                                </h3>
+                                <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">{t('management.access.roleModal.subtitle') || 'Defina o nome da função'}</p>
                             </div>
-                            <input
-                                required
-                                autoFocus
-                                placeholder={t('management.access.roleModal.namePlaceholder')}
-                                className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white font-bold text-center"
-                                value={(editingRole.name as any)?.[activeLang] || ''}
-                                onChange={(e) => {
-                                    const currentName = (editingRole.name as any) || {};
-                                    const updatedName = { ...currentName, [activeLang]: e.target.value };
-                                    setEditingRole({ ...editingRole, name: updatedName });
-                                }}
-                            />
 
-                            <button type="submit" className="w-full bg-indigo-600 text-white py-4 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 transition-all text-xs">
-                                {t('management.access.roleModal.save')}
-                            </button>
-                        </form>
+                            <form onSubmit={handleSaveRole} className="flex-1 flex flex-col p-8 overflow-hidden">
+                                <div className="flex-1 space-y-8 overflow-y-auto no-scrollbar">
+                                    {/* Language Select */}
+                                    <div className="flex items-center justify-center gap-3">
+                                        {(['pt', 'en', 'es'] as const).map(lang => (
+                                            <button
+                                                key={lang}
+                                                type="button"
+                                                onClick={() => setActiveLang(lang)}
+                                                className={`w-10 h-10 rounded-full overflow-hidden border-2 transition-all p-0.5 hover:scale-110 active:scale-95 ${activeLang === lang ? 'border-indigo-600 shadow-xl shadow-indigo-600/30 scale-110' : 'border-transparent opacity-40 hover:opacity-100'}`}
+                                                title={lang.toUpperCase()}
+                                            >
+                                                <img
+                                                    src={lang === 'pt' ? BR_FLAG : lang === 'en' ? US_FLAG : ES_FLAG}
+                                                    alt={lang}
+                                                    className="w-full h-full object-cover rounded-full"
+                                                />
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    {/* Name Input */}
+                                    <div className="space-y-4">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Nome do Cargo ({activeLang.toUpperCase()})</label>
+                                        <input
+                                            required
+                                            autoFocus
+                                            placeholder={t('management.access.roleModal.namePlaceholder')}
+                                            className="w-full px-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl focus:ring-4 focus:ring-indigo-600/10 outline-none text-slate-800 dark:text-white font-bold text-lg transition-all"
+                                            value={(editingRole.name as any)?.[activeLang] || ''}
+                                            onChange={(e) => {
+                                                const currentName = (editingRole.name as any) || {};
+                                                const updatedName = { ...currentName, [activeLang]: e.target.value };
+                                                setEditingRole({ ...editingRole, name: updatedName });
+                                            }}
+                                        />
+                                    </div>
+
+                                    <div className="p-6 bg-indigo-50/50 dark:bg-indigo-900/10 rounded-3xl border border-indigo-100/50 dark:border-indigo-800/30">
+                                        <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-widest leading-relaxed">
+                                            <Sparkles size={12} className="inline mr-1 mb-1" />
+                                            O Cargo será vinculado ao Grupo de Acesso que você está editando no momento.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="pt-8 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-3 shrink-0">
+                                    <button type="submit" className="w-full bg-indigo-600 text-white py-5 rounded-2xl font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-600/30 hover:scale-[1.02] active:scale-95 transition-all text-[10px]">
+                                        {t('management.access.roleModal.save') || 'Salvar Função'}
+                                    </button>
+                                    <button type="button" onClick={() => setShowRoleModal(false)} className="w-full py-4 text-slate-400 font-black uppercase tracking-[0.2em] hover:text-slate-600 transition-all text-[10px]">
+                                        {t('common.cancel') || 'Cancelar'}
+                                    </button>
+                                </div>
+                            </form>
+                        </motion.div>
                     </div>
-                </div>
-            )}
+                )}
+            </AnimatePresence>
         </div>
     );
 };

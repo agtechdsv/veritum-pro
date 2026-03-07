@@ -124,7 +124,7 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
         if (user) {
             const { data: profile, error: profileError } = await supabase
                 .from('users')
-                .select('name, avatar_url, role, plan_id, access_group_id, access_groups(name), plans:plan_id(name)')
+                .select('name, avatar_url, role, plan_id, access_group_id, force_password_reset, access_groups(name), plans:plan_id(name)')
                 .eq('id', user.id)
                 .single();
 
@@ -242,7 +242,18 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
 
     useEffect(() => {
         if (currentUser && isAuthModalOpen) {
-            setIsAuthModalOpen(false);
+            // Check if user needs password reset (from metadata or profile)
+            const needsReset = currentUser.user_metadata?.force_password_reset ||
+                currentUser.user_metadata?.need_to_change_password ||
+                currentUser.profile?.force_password_reset;
+
+            // Only auto-close if NO reset is needed
+            if (!needsReset) {
+                console.log("Auth successful, no reset needed. Closing modal.");
+                setIsAuthModalOpen(false);
+            } else {
+                console.log("Password reset detected, keeping modal open.");
+            }
         }
     }, [currentUser, isAuthModalOpen]);
 

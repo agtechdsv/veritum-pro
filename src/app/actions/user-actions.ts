@@ -13,6 +13,32 @@ export async function getTemplates() {
     return { success: true, data };
 }
 
+export async function listUsersAction(currentUser: any, selectedClientId?: string) {
+    const supabase = createAdminClient();
+    let query = supabase.from('users').select('*');
+
+    if (currentUser.role === 'Master') {
+        if (selectedClientId) {
+            query = query.or(`id.eq.${selectedClientId},parent_user_id.eq.${selectedClientId}`);
+        }
+    } else {
+        const conditions = [`id.eq.${currentUser.id}`, `parent_user_id.eq.${currentUser.id}`];
+        if (currentUser.parent_user_id) {
+            conditions.push(`id.eq.${currentUser.parent_user_id}`);
+            conditions.push(`parent_user_id.eq.${currentUser.parent_user_id}`);
+        }
+        query = query.or(conditions.join(','));
+    }
+
+    const { data, error } = await query.order('name', { ascending: true });
+
+    if (error) {
+        console.error('Error listing users:', error);
+        return { success: false, data: [] };
+    }
+    return { success: true, data };
+}
+
 export async function createUserDirectly(formData: any, parentUserId: string | null) {
     const supabase = createAdminClient();
 
@@ -20,14 +46,17 @@ export async function createUserDirectly(formData: any, parentUserId: string | n
 
     if (parentUserId) {
         // Obter o plano do criador da conta (herança de plano)
+        // Busca no perfil (users) E na assinatura ativa (user_subscriptions) para garantir
         const { data: parentData } = await supabase
             .from('users')
-            .select('plan_id')
+            .select('plan_id, user_subscriptions(plan_id)')
             .eq('id', parentUserId)
             .single();
 
         if (parentData?.plan_id) {
             assignedPlanId = parentData.plan_id;
+        } else if ((parentData as any)?.user_subscriptions?.[0]?.plan_id) {
+            assignedPlanId = (parentData as any).user_subscriptions[0].plan_id;
         }
     }
 
@@ -39,6 +68,8 @@ export async function createUserDirectly(formData: any, parentUserId: string | n
             full_name: formData.name,
             name: formData.name,
             role: formData.role,
+            phone: formData.phone,
+            cpf_cnpj: formData.cpf_cnpj,
             parent_user_id: parentUserId,
             plan_id: assignedPlanId,
             access_group_id: formData.access_group_id || null
@@ -55,7 +86,8 @@ export async function createUserDirectly(formData: any, parentUserId: string | n
         .update({
             plan_id: assignedPlanId,
             access_group_id: formData.access_group_id || null,
-            force_password_reset: true // Ensure new users are forced to reset
+            force_password_reset: true, // Ensure new users are forced to reset
+            active: formData.active !== undefined ? formData.active : true
         })
         .eq('id', data.user.id)
 
@@ -145,8 +177,11 @@ export async function updateUserDirectly(userId: string, formData: any) {
             full_name: formData.name,
             name: formData.name,
             role: formData.role,
+            phone: formData.phone,
+            cpf_cnpj: formData.cpf_cnpj,
             plan_id: formData.plan_id || null,
-            access_group_id: formData.access_group_id || null
+            access_group_id: formData.access_group_id || null,
+            parent_user_id: formData.parent_user_id || undefined
         }
     }
 
@@ -167,8 +202,12 @@ export async function updateUserDirectly(userId: string, formData: any) {
             name: formData.name,
             role: formData.role,
             email: formData.email,
+            phone: formData.phone,
+            cpf_cnpj: formData.cpf_cnpj,
             plan_id: formData.plan_id || null,
-            access_group_id: formData.access_group_id || null
+            access_group_id: formData.access_group_id || null,
+            active: formData.active !== undefined ? formData.active : true,
+            parent_user_id: formData.parent_user_id || undefined
         })
         .eq('id', userId)
 

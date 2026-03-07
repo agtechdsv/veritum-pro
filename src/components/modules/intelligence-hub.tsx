@@ -7,8 +7,10 @@ import {
     Layout, Search, BookOpen, Scale, FileText, ChevronRight
 } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
+import { useTranslation } from '@/contexts/language-context';
 
 const IntelligenceHub: React.FC<{ credentials: Credentials; user: User; permissions: any }> = ({ credentials, user, permissions }) => {
+    const { t, locale } = useTranslation();
     const [alerts, setAlerts] = useState<(GoldenAlert & { clipping?: Clipping, knowledge?: KnowledgeArticle })[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<'all' | 'unread' | 'actioned'>('all');
@@ -75,20 +77,20 @@ const IntelligenceHub: React.FC<{ credentials: Credentials; user: User; permissi
                         <Zap size={24} />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-bold text-slate-800 dark:text-white transition-colors text-gradient">INTELLIGENCE HUB</h1>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Insights Proativos & Oportunidades Jurídicas</p>
+                        <h1 className="text-2xl font-bold text-slate-800 dark:text-white transition-colors text-gradient">{t('modules.intelligence.title')}</h1>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">{t('modules.intelligence.subtitle')}</p>
                     </div>
                 </div>
                 <div className="flex bg-white dark:bg-slate-900 p-1 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    {(['all', 'unread', 'actioned'] as const).map((t) => (
+                    {(['all', 'unread', 'actioned'] as const).map((filterType) => (
                         <button
-                            key={t}
-                            onClick={() => setFilter(t)}
-                            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filter === t
+                            key={filterType}
+                            onClick={() => setFilter(filterType)}
+                            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filter === filterType
                                 ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20'
                                 : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}
                         >
-                            {t === 'all' ? 'Tudo' : t === 'unread' ? 'Novos' : 'Processados'}
+                            {filterType === 'all' ? t('modules.intelligence.filters.all') : filterType === 'unread' ? t('modules.intelligence.filters.unread') : t('modules.intelligence.filters.actioned')}
                         </button>
                     ))}
                 </div>
@@ -98,22 +100,22 @@ const IntelligenceHub: React.FC<{ credentials: Credentials; user: User; permissi
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-slate-900 text-white p-6 rounded-[2rem] shadow-xl relative overflow-hidden group">
                     <div className="relative z-10">
-                        <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest mb-1">Total Intelligence</p>
+                        <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest mb-1">{t('modules.intelligence.stats.total')}</p>
                         <h2 className="text-3xl font-black">{alerts.length}</h2>
-                        <p className="text-[10px] text-slate-400 font-bold mt-2">Alertas gerados este mês</p>
+                        <p className="text-[10px] text-slate-400 font-bold mt-2">{t('modules.intelligence.stats.alertsMonth')}</p>
                     </div>
                     <Sparkles className="absolute right-[-10px] bottom-[-10px] opacity-10 group-hover:scale-125 transition-transform duration-1000" size={120} />
                 </div>
                 <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between">
                     <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Ações Pendentes</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t('modules.intelligence.stats.pending')}</p>
                         <h2 className="text-3xl font-black text-slate-800 dark:text-white">{alerts.filter(a => a.status === 'unread').length}</h2>
                     </div>
                     <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 rounded-2xl"><Target size={24} /></div>
                 </div>
                 <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between">
                     <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Taxa de Conversão</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t('modules.intelligence.stats.conversion')}</p>
                         <h2 className="text-3xl font-black text-emerald-600">85%</h2>
                     </div>
                     <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-2xl"><TrendingUp size={24} /></div>
@@ -125,14 +127,14 @@ const IntelligenceHub: React.FC<{ credentials: Credentials; user: User; permissi
                 {loading ? (
                     <div className="h-full flex flex-col items-center justify-center space-y-4 text-slate-300">
                         <Zap className="animate-spin" size={48} />
-                        <p className="text-sm font-black uppercase tracking-widest">Sincronizando Inteligência...</p>
+                        <p className="text-sm font-black uppercase tracking-widest">{t('modules.intelligence.loading')}</p>
                     </div>
                 ) : alerts.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center space-y-4 opacity-40">
                         <Brain size={64} className="text-slate-300" />
                         <div className="text-center">
-                            <p className="text-sm font-black uppercase tracking-widest">Nenhum Golden Alert</p>
-                            <p className="text-[10px] font-bold">Monitore mais termos no Sentinel PRO para gerar insights.</p>
+                            <p className="text-sm font-black uppercase tracking-widest">{t('modules.intelligence.empty.title')}</p>
+                            <p className="text-[10px] font-bold">{t('modules.intelligence.empty.desc')}</p>
                         </div>
                     </div>
                 ) : (
@@ -147,7 +149,7 @@ const IntelligenceHub: React.FC<{ credentials: Credentials; user: User; permissi
                                 <div className="md:w-32 flex flex-col items-center justify-center gap-3 shrink-0">
                                     <div className={`w-20 h-20 rounded-full flex flex-col items-center justify-center border-2 ${getScoreColor(alert.match_score)} transition-all group-hover:scale-110`}>
                                         <span className="text-2xl font-black">{Math.round(alert.match_score)}</span>
-                                        <span className="text-[8px] font-black uppercase tracking-tighter opacity-60">Impacto</span>
+                                        <span className="text-[8px] font-black uppercase tracking-tighter opacity-60">{t('modules.intelligence.card.impact')}</span>
                                     </div>
                                     <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${alert.intelligence_type === 'Opportunity' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' :
                                         alert.intelligence_type === 'Risk' ? 'bg-rose-50 text-rose-600 border-rose-200' :
@@ -162,17 +164,17 @@ const IntelligenceHub: React.FC<{ credentials: Credentials; user: User; permissi
                                     <div className="space-y-1">
                                         <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 tracking-widest uppercase">
                                             <Scale size={14} className="text-indigo-500" />
-                                            Detectado via {alert.clipping?.source || 'Portal Externo'}
+                                            {t('modules.intelligence.card.detectedVia')} {alert.clipping?.source || 'Portal Externo'}
                                         </div>
                                         <h3 className="text-lg font-black text-slate-800 dark:text-white leading-tight">
-                                            {alert.clipping?.content ? (alert.clipping.content.length > 120 ? alert.clipping.content.substring(0, 120) + '...' : alert.clipping.content) : 'Publicação sem conteúdo'}
+                                            {alert.clipping?.content ? (alert.clipping.content.length > 120 ? alert.clipping.content.substring(0, 120) + '...' : alert.clipping.content) : t('modules.intelligence.card.noContent')}
                                         </h3>
                                     </div>
 
                                     <div className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 relative">
                                         <Sparkles className="absolute top-4 right-4 text-amber-500 opacity-20" size={24} />
                                         <h4 className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-2 flex items-center gap-2">
-                                            <Brain size={14} /> Raciocínio Estratégico IA
+                                            <Brain size={14} /> {t('modules.intelligence.card.reasoning')}
                                         </h4>
                                         <p className="text-xs text-slate-600 dark:text-slate-300 font-medium leading-relaxed italic">
                                             "{alert.reasoning}"
@@ -183,15 +185,15 @@ const IntelligenceHub: React.FC<{ credentials: Credentials; user: User; permissi
                                         <div className="flex items-center gap-2 px-3 py-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-xl border border-indigo-100 dark:border-indigo-800 transition-all hover:bg-indigo-100">
                                             <BookOpen size={14} />
                                             <div className="flex flex-col">
-                                                <span className="text-[8px] font-black uppercase opacity-60">Tese Correlata</span>
-                                                <span className="text-[10px] font-bold truncate max-w-[200px]">{alert.knowledge?.title || 'Conhecimento Interno'}</span>
+                                                <span className="text-[8px] font-black uppercase opacity-60">{t('modules.intelligence.card.thesis')}</span>
+                                                <span className="text-[10px] font-bold truncate max-w-[200px]">{alert.knowledge?.title || t('modules.intelligence.card.internalKnowledge')}</span>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 dark:bg-slate-800 text-slate-500 rounded-xl border border-slate-100 dark:border-slate-700">
                                             <Clock size={14} />
                                             <div className="flex flex-col">
-                                                <span className="text-[8px] font-black uppercase opacity-60">Capturado em</span>
-                                                <span className="text-[10px] font-bold">{new Date(alert.created_at || '').toLocaleDateString('pt-BR')}</span>
+                                                <span className="text-[8px] font-black uppercase opacity-60">{t('modules.intelligence.card.capturedAt')}</span>
+                                                <span className="text-[10px] font-bold">{new Date(alert.created_at || '').toLocaleDateString(locale === 'pt' ? 'pt-BR' : locale === 'es' ? 'es-ES' : 'en-US')}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -203,27 +205,27 @@ const IntelligenceHub: React.FC<{ credentials: Credentials; user: User; permissi
                                         onClick={() => handleAction(alert.id, 'actioned')}
                                         className="w-full bg-slate-900 text-white dark:bg-white dark:text-slate-900 py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:scale-105 transition-all flex items-center justify-center gap-2 shadow-xl"
                                     >
-                                        <FileText size={16} /> Criar Petição
+                                        <FileText size={16} /> {t('modules.intelligence.card.createPetition')}
                                     </button>
                                     <div className="flex gap-2">
                                         <button
                                             onClick={() => handleAction(alert.id, 'actioned')}
                                             className="flex-1 bg-emerald-500 text-white py-3 rounded-2xl font-black uppercase tracking-widest text-[9px] hover:bg-emerald-600 transition-all flex items-center justify-center gap-1.5"
                                         >
-                                            <CheckCircle size={14} /> Validar
+                                            <CheckCircle size={14} /> {t('modules.intelligence.card.validate')}
                                         </button>
                                         <button
                                             onClick={() => handleAction(alert.id, 'dismissed')}
                                             className="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-400 py-3 rounded-2xl font-black uppercase tracking-widest text-[9px] hover:bg-rose-50 hover:text-rose-500 transition-all flex items-center justify-center gap-1.5"
                                         >
-                                            <XCircle size={14} /> Ignorar
+                                            <XCircle size={14} /> {t('modules.intelligence.card.ignore')}
                                         </button>
                                     </div>
                                 </div>
 
                                 {alert.status === 'unread' && (
                                     <div className="absolute top-0 right-0 w-24 h-24 overflow-hidden pointer-events-none">
-                                        <div className="absolute top-2 right-[-24px] rotate-45 bg-amber-500 text-white px-8 py-1 text-[8px] font-black uppercase tracking-widest shadow-xl">Novo</div>
+                                        <div className="absolute top-2 right-[-24px] rotate-45 bg-amber-500 text-white px-8 py-1 text-[8px] font-black uppercase tracking-widest shadow-xl">{t('modules.intelligence.card.newLabel')}</div>
                                     </div>
                                 )}
                             </div>

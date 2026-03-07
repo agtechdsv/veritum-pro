@@ -505,15 +505,24 @@ CREATE POLICY "Public: Read plan permissions" ON public.plan_permissions FOR SEL
 -- 9.3 Políticas de Usuários e Equipe
 CREATE POLICY "Users: Manage own profile" ON public.users FOR ALL USING (auth.uid() = id);
 CREATE POLICY "Admins: Manage team members" ON public.users FOR ALL USING (auth.uid() = parent_user_id);
+CREATE POLICY "Users: View colleagues and parent" ON public.users FOR SELECT USING (
+    parent_user_id = (SELECT parent_user_id FROM public.users WHERE id = auth.uid()) OR
+    id = (SELECT parent_user_id FROM public.users WHERE id = auth.uid())
+);
 CREATE POLICY "Admins manage own config" ON public.tenant_configs FOR ALL USING (auth.uid() = owner_id OR (auth.jwt() -> 'user_metadata' ->> 'role') = 'Master');
 CREATE POLICY "Admins manage organization" ON public.organizations FOR ALL USING (auth.uid() = admin_id OR (auth.jwt() -> 'user_metadata' ->> 'role') = 'Master');
 
 -- 9.4 Políticas de RBAC (Contexto do Administrador do Workspace)
 CREATE POLICY "Admins manage access groups" ON public.access_groups FOR ALL USING (auth.uid() = admin_id OR (auth.jwt() -> 'user_metadata' ->> 'role') = 'Master');
+CREATE POLICY "Users: View own access group" ON public.access_groups FOR SELECT USING (id = (SELECT access_group_id FROM public.users WHERE id = auth.uid()));
+
 CREATE POLICY "Admins manage roles" ON public.roles FOR ALL USING (auth.uid() = admin_id OR (auth.jwt() -> 'user_metadata' ->> 'role') = 'Master');
+CREATE POLICY "Users: View own roles" ON public.roles FOR SELECT USING (access_group_id = (SELECT access_group_id FROM public.users WHERE id = auth.uid()));
+
 CREATE POLICY "Admins manage group perms" ON public.group_permissions FOR ALL USING (
     EXISTS (SELECT 1 FROM public.access_groups ag WHERE ag.id = group_id AND (ag.admin_id = auth.uid() OR (auth.jwt() -> 'user_metadata' ->> 'role') = 'Master'))
 );
+CREATE POLICY "Users: View own group perms" ON public.group_permissions FOR SELECT USING (group_id = (SELECT access_group_id FROM public.users WHERE id = auth.uid()));
 
 -- 9.5 Políticas de Cobrança & Assinatura
 CREATE POLICY "Users view own subscription" ON public.user_subscriptions FOR SELECT USING (auth.uid() = user_id OR (auth.jwt() -> 'user_metadata' ->> 'role') = 'Master');

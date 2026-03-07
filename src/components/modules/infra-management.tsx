@@ -102,10 +102,10 @@ export default function InfraManagement({ currentUser }: Props) {
             const payload = { ...config, owner_id: selectedUserId };
             const result = await saveTenantConfig(payload);
             if (result.success) {
-                toast.success('Ecossistema infra atualizado com sucesso!');
+                toast.success(t('management.settings.infra.saveSuccess') || 'Ecossistema infra atualizado com sucesso!');
             }
         } catch (error: any) {
-            toast.error(error.message || 'Erro ao salvar configurações.');
+            toast.error(error.message || t('management.settings.infra.saveError') || 'Erro ao salvar configurações.');
         } finally {
             setSaving(false);
         }
@@ -116,12 +116,12 @@ export default function InfraManagement({ currentUser }: Props) {
         try {
             const result = await deleteTenantConfig(selectedUserId);
             if (result.success) {
-                toast.success('Ecossistema infra excluído com sucesso!');
+                toast.success(t('management.settings.infra.deleteSuccess') || 'Ecossistema infra excluído com sucesso!');
                 fetchConfig(selectedUserId); // re-fetch to reset
                 setShowDeleteConfirm(false);
             }
         } catch (error: any) {
-            toast.error(error.message || 'Erro ao excluir configurações.');
+            toast.error(error.message || t('management.settings.infra.saveError') || 'Erro ao excluir configurações.');
         } finally {
             setDeleting(false);
         }
@@ -131,7 +131,7 @@ export default function InfraManagement({ currentUser }: Props) {
         return (
             <div className="flex flex-col items-center justify-center py-24 space-y-4">
                 <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-                <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Carregando Ecossistema de Infra...</p>
+                <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">{t('management.settings.infra.loading')}</p>
             </div>
         );
     }
@@ -140,23 +140,34 @@ export default function InfraManagement({ currentUser }: Props) {
         <div className="max-w-4xl mx-auto space-y-8 pb-12 animate-in fade-in duration-700">
             {/* Master Context Selector */}
             {isMaster && (
-                <div className="flex justify-center mb-8">
-                    <div className="relative group/filter z-50">
-                        <div className="flex items-center gap-2 px-6 py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm text-sm font-bold text-slate-700 dark:text-slate-300">
-                            <Filter size={18} className="text-amber-500" />
+                <div className="flex justify-end mb-8">
+                    <div className="flex items-center gap-4 bg-white dark:bg-slate-900 p-2 pl-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-xl">
+                        <div className="flex flex-col items-end">
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none mb-1">{t('nav.master')}</span>
+                            <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 leading-none">{t('management.users.masterFilter.selectClient')}</span>
+                        </div>
+                        <div className="relative">
                             <select
-                                className="bg-transparent outline-none appearance-none pr-8 cursor-pointer font-black uppercase tracking-tight"
+                                className="bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-6 py-3 text-xs font-black tracking-widest text-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-600 outline-none transition-all cursor-pointer min-w-[260px] appearance-none pr-10"
                                 value={selectedUserId}
                                 onChange={e => setSelectedUserId(e.target.value)}
                             >
-                                <option value={currentUser.id}>{t('management.users.masterFilter.self') || 'MEU PRÓPRIO CONTEXTO'}</option>
-                                <optgroup label={t('management.users.masterFilter.clients') || 'CLIENTES'}>
-                                    {allUsers.filter(u => u.id !== currentUser.id).map(c => (
-                                        <option key={c.id} value={c.id}>🏢 {(typeof c.name === 'object' ? ((c.name as any).pt || (c.name as any).en || '') : (c.name || '')).toUpperCase()} ({c.email})</option>
-                                    ))}
+                                <option value="">--- {t('management.users.masterFilter.selectClient')} ---</option>
+                                <option value={currentUser.id}>{t('management.users.masterFilter.self')}</option>
+                                <optgroup label={t('management.users.masterFilter.clients')?.toUpperCase() || 'CLIENTES (SÓCIOS ADM)'}>
+                                    {allUsers.filter(u => u.id !== currentUser.id).map(c => {
+                                        const rawName = typeof c.name === 'object' ? ((c.name as any).pt || (c.name as any).en || '') : (c.name || '');
+                                        const formattedName = rawName.toLowerCase().split(' ').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+                                        const formattedEmail = (c.email || '').toLowerCase();
+                                        return (
+                                            <option key={c.id} value={c.id}>
+                                                🏢 {formattedName} ({formattedEmail})
+                                            </option>
+                                        );
+                                    })}
                                 </optgroup>
                             </select>
-                            <ChevronDown size={16} className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
+                            <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
                         </div>
                     </div>
                 </div>
@@ -166,9 +177,9 @@ export default function InfraManagement({ currentUser }: Props) {
             <div className="flex flex-col items-center mb-12">
                 <div className="flex items-center gap-3 mb-2">
                     <Server size={32} className="text-indigo-600" />
-                    <h1 className="text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Gateway de Conectividade</h1>
+                    <h1 className="text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">{t('management.settings.infra.title')}</h1>
                 </div>
-                <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-[0.2em] text-[10px]">Configurações Enterprise & BYODB</p>
+                <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-[0.2em] text-[10px]">{t('management.settings.infra.subtitle')}</p>
             </div>
 
             {/* Main Config Card */}
@@ -181,7 +192,7 @@ export default function InfraManagement({ currentUser }: Props) {
                             </div>
                             <div>
                                 <h3 className="text-2xl font-black uppercase tracking-tighter">Bring Your Own Database (BYODB)</h3>
-                                <p className="text-indigo-300 text-[10px] font-black uppercase tracking-widest mt-1">Sincronização de Dados Privada</p>
+                                <p className="text-indigo-300 text-[10px] font-black uppercase tracking-widest mt-1">{t('management.settings.infra.syncData')}</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-3">
@@ -190,7 +201,7 @@ export default function InfraManagement({ currentUser }: Props) {
                                     onClick={() => setShowDeleteConfirm(true)}
                                     disabled={saving || deleting}
                                     className="bg-white/10 text-white px-4 py-4 rounded-2xl hover:bg-rose-500 hover:text-white transition-all shadow-xl disabled:opacity-50"
-                                    title="Excluir Configurações"
+                                    title={t('management.settings.infra.deleteConfig')}
                                 >
                                     <Trash2 size={18} />
                                 </button>
@@ -201,7 +212,7 @@ export default function InfraManagement({ currentUser }: Props) {
                                 className="bg-white text-indigo-900 px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-3 disabled:opacity-50"
                             >
                                 {saving ? <div className="w-4 h-4 border-2 border-indigo-900 border-t-transparent rounded-full animate-spin" /> : <Save size={18} />}
-                                {saving ? 'SALVANDO...' : 'SALVAR INFRA'}
+                                {saving ? t('management.settings.infra.saving')?.toUpperCase() : t('management.settings.infra.save')?.toUpperCase()}
                             </button>
                         </div>
                     </div>
@@ -215,7 +226,7 @@ export default function InfraManagement({ currentUser }: Props) {
                             {/* Column 1: DB Config */}
                             <div className="space-y-6">
                                 <div>
-                                    <label className="block text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-3 ml-2">Provedor de Banco de Dados</label>
+                                    <label className="block text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-3 ml-2">{t('management.settings.infra.providerLabel')}</label>
                                     <div className="grid grid-cols-3 gap-2">
                                         {['supabase', 'postgres', 'oracle'].map((provider) => (
                                             <button
@@ -234,14 +245,14 @@ export default function InfraManagement({ currentUser }: Props) {
                                 {config.db_provider === 'supabase' ? (
                                     <>
                                         <div>
-                                            <label className="block text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-2 ml-2">Custom Supabase URL</label>
+                                            <label className="block text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-2 ml-2">{t('management.settings.infra.urlLabel')}</label>
                                             <div className="relative">
                                                 <Globe className="absolute left-4 top-4 text-indigo-400/50" size={18} />
                                                 <input
                                                     type={showUrl ? "text" : "password"}
                                                     value={config.custom_supabase_url || ''}
                                                     onChange={e => setConfig({ ...config, custom_supabase_url: e.target.value })}
-                                                    placeholder="https://sua-instancia.supabase.co"
+                                                    placeholder={t('management.settings.infra.urlPlaceholder')}
                                                     className="w-full pl-12 pr-12 py-4 bg-white/10 border border-white/20 rounded-2xl focus:ring-2 focus:ring-white/50 outline-none placeholder:text-indigo-300/30 text-white transition-all font-bold text-sm"
                                                 />
                                                 <button onClick={() => setShowUrl(!showUrl)} className="absolute right-4 top-4 text-indigo-400 hover:text-white transition-colors">
@@ -250,7 +261,7 @@ export default function InfraManagement({ currentUser }: Props) {
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="block text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-2 ml-2">Custom Supabase Key</label>
+                                            <label className="block text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-2 ml-2">{t('management.settings.infra.keyLabel')}</label>
                                             <div className="relative">
                                                 <Lock className="absolute left-4 top-4 text-indigo-400/50" size={18} />
                                                 <input
@@ -290,14 +301,14 @@ export default function InfraManagement({ currentUser }: Props) {
                             {/* Column 2: IA & Meta */}
                             <div className="space-y-6">
                                 <div>
-                                    <label className="block text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-2 ml-2">Custom Gemini IA Key</label>
+                                    <label className="block text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-2 ml-2">{t('management.settings.infra.geminiLabel')}</label>
                                     <div className="relative">
                                         <Zap className="absolute left-4 top-4 text-indigo-400/50" size={18} />
                                         <input
                                             type={showGemini ? "text" : "password"}
                                             value={config.custom_gemini_key_encrypted || ''}
                                             onChange={e => setConfig({ ...config, custom_gemini_key_encrypted: e.target.value })}
-                                            placeholder="Sua chave API da Google AI"
+                                            placeholder={t('management.settings.infra.geminiPlaceholder')}
                                             className="w-full pl-12 pr-12 py-4 bg-white/10 border border-white/20 rounded-2xl focus:ring-2 focus:ring-white/50 outline-none placeholder:text-indigo-300/30 text-white transition-all font-bold text-sm"
                                         />
                                         <button onClick={() => setShowGemini(!showGemini)} className="absolute right-4 top-4 text-indigo-400 hover:text-white transition-colors">
@@ -309,10 +320,10 @@ export default function InfraManagement({ currentUser }: Props) {
                                 <div className="p-8 bg-white/5 border border-white/10 rounded-[2rem] backdrop-blur-sm space-y-4">
                                     <div className="flex items-center gap-2">
                                         <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-                                        <h4 className="text-[10px] font-black uppercase tracking-widest text-emerald-400">Privacidade Garantida</h4>
+                                        <h4 className="text-[10px] font-black uppercase tracking-widest text-emerald-400">{t('management.settings.infra.privacyTitle')}</h4>
                                     </div>
                                     <p className="text-[11px] text-indigo-100/80 leading-relaxed font-bold italic">
-                                        "Ao utilizar o BYODB, seus dados de clientes, processos e faturamento nunca saem do seu próprio servidor. O Veritum Pro atua apenas como uma ponte inteligente."
+                                        {t('management.settings.infra.privacyDesc')}
                                     </p>
                                 </div>
 
@@ -393,9 +404,9 @@ export default function InfraManagement({ currentUser }: Props) {
                                 <AlertTriangle size={40} />
                             </div>
                             <div className="space-y-2">
-                                <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">EXCLUIR INFRAESTRUTURA</h3>
+                                <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">{t('management.settings.infra.deleteConfirmTitle')?.toUpperCase() || 'EXCLUIR INFRAESTRUTURA'}</h3>
                                 <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
-                                    Tem certeza que deseja excluir as configurações de infraestrutura deste usuário? O banco de dados voltará ao padrão (Veritum Pro).
+                                    {t('management.settings.infra.deleteConfirmMessage')}
                                 </p>
                             </div>
                             <div className="flex gap-4 pt-4">
@@ -404,7 +415,7 @@ export default function InfraManagement({ currentUser }: Props) {
                                     disabled={deleting}
                                     className="flex-1 px-6 py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-slate-200 transition-all disabled:opacity-50"
                                 >
-                                    CANCELAR
+                                    {t('common.cancel')?.toUpperCase() || 'CANCELAR'}
                                 </button>
                                 <button
                                     onClick={handleDelete}
@@ -412,7 +423,7 @@ export default function InfraManagement({ currentUser }: Props) {
                                     className="flex-1 px-6 py-4 bg-rose-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-rose-600/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                                 >
                                     {deleting ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : null}
-                                    {deleting ? 'EXCLUINDO...' : 'CONFIRMAR'}
+                                    {deleting ? (t('common.deleting')?.toUpperCase() || 'EXCLUINDO...') : (t('common.confirm')?.toUpperCase() || 'CONFIRMAR')}
                                 </button>
                             </div>
                         </motion.div>

@@ -130,7 +130,12 @@ const ClubeVIP: React.FC<Props> = ({ user, onUpdateUser }) => {
     const discount = progress;
 
     const normalizedPlanName = (user.plan_name || '').toLowerCase();
-    const hasEmailAccess = normalizedPlanName.includes('growth') || normalizedPlanName.includes('strategy');
+    const billingCycle = (user.billing_cycle || '').toLowerCase();
+
+    const isGrowthOrStrategy = normalizedPlanName.includes('growth') || normalizedPlanName.includes('strategy');
+    const isLongTerm = billingCycle === 'semiannual' || billingCycle === 'annual' || billingCycle === 'yearly';
+
+    const hasEmailAccess = isGrowthOrStrategy && isLongTerm;
 
     const handleActivateSubmit = async () => {
         setIsVipActive(true);
@@ -247,7 +252,7 @@ const ClubeVIP: React.FC<Props> = ({ user, onUpdateUser }) => {
                         ) : (
                             <>
                                 <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mb-6 leading-relaxed">
-                                    A caixa postal personalizada <strong className="text-slate-500 dark:text-slate-400">@veritumpro.com</strong> é um benefício exclusivo para assinantes dos planos Growth ou Strategy.
+                                    A caixa postal personalizada <strong className="text-slate-500 dark:text-slate-400">@veritumpro.com</strong> é um benefício exclusivo para assinantes dos planos Growth ou Strategy (Semestral ou Anual).
                                 </p>
                                 <button
                                     disabled
@@ -367,16 +372,6 @@ const ClubeVIP: React.FC<Props> = ({ user, onUpdateUser }) => {
                             </div>
                         </div>
 
-                        {/* Temporary DEV Controller for showing Gamification */}
-                        <div className="mt-8 pt-6 border-t border-slate-800 flex items-center justify-between z-10 relative">
-                            <span className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Apenas para Gamificação (Testes UI):</span>
-                            <div className="flex gap-2">
-                                <button onClick={() => { setVipPoints(Math.max(0, vipPoints - 10)); onUpdateUser({ ...user, vip_points: Math.max(0, vipPoints - 10) }) }} className="px-3 py-1 bg-slate-800 text-slate-400 rounded-lg text-xs font-bold">-10</button>
-                                <button onClick={() => { setVipPoints(vipPoints + 25); onUpdateUser({ ...user, vip_points: vipPoints + 25 }) }} className="px-3 py-1 bg-indigo-500/20 text-indigo-400 rounded-lg text-xs font-bold">+25</button>
-                                <button onClick={() => { setVipPoints(100); onUpdateUser({ ...user, vip_points: 100 }) }} className="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-lg text-xs font-bold">100</button>
-                                <button onClick={() => { setVipPoints(140); onUpdateUser({ ...user, vip_points: 140 }) }} className="px-3 py-1 bg-amber-500/20 text-amber-400 rounded-lg text-xs font-bold">140</button>
-                            </div>
-                        </div>
                     </div>
 
                     {/* Bloco 4: Extrato de Indicações */}

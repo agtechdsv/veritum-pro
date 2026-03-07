@@ -9,6 +9,7 @@ import {
     ChevronLeft, Scale, Info, Archive, Trash2, XCircle
 } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
+import { useTranslation } from '@/contexts/language-context';
 
 const Vox: React.FC<{ credentials: Credentials; user: User; permissions: any }> = ({ credentials, user, permissions }) => {
     // Data State
@@ -23,6 +24,7 @@ const Vox: React.FC<{ credentials: Credentials; user: User; permissions: any }> 
     const [inputText, setInputText] = useState('');
     const [isTranslating, setIsTranslating] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const { t, locale } = useTranslation();
 
     const supabase = createClient(credentials.supabaseUrl, credentials.supabaseAnonKey);
     const gemini = new GeminiService(credentials.geminiKey);
@@ -141,7 +143,7 @@ const Vox: React.FC<{ credentials: Credentials; user: User; permissions: any }> 
             <div className="w-80 border-r border-slate-50 dark:border-slate-800 flex flex-col bg-slate-50/20 dark:bg-slate-900/40">
                 <div className="p-6 space-y-4">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">VOX PRO</h2>
+                        <h2 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">{t('modules.vox.title')}</h2>
                         <button className="p-2 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-600/20 active:scale-90 transition-transform">
                             <Plus size={18} />
                         </button>
@@ -151,7 +153,7 @@ const Vox: React.FC<{ credentials: Credentials; user: User; permissions: any }> 
                         <input
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
-                            placeholder="Buscar conversas..."
+                            placeholder={t('dashboard.search')}
                             className="w-full pl-10 pr-4 py-3 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl text-[11px] font-bold outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-700 dark:text-white"
                         />
                     </div>
@@ -159,7 +161,7 @@ const Vox: React.FC<{ credentials: Credentials; user: User; permissions: any }> 
 
                 <div className="flex-1 overflow-y-auto no-scrollbar">
                     {loading ? (
-                        <div className="p-10 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest animate-pulse">Sincronizando chats...</div>
+                        <div className="p-10 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest animate-pulse">{t('modules.vox.syncing')}</div>
                     ) : filteredChats.map((chat) => (
                         <div
                             key={chat.id}
@@ -179,10 +181,10 @@ const Vox: React.FC<{ credentials: Credentials; user: User; permissions: any }> 
                                 <div className="flex justify-between items-baseline mb-0.5">
                                     <h4 className="font-black text-slate-800 dark:text-slate-100 text-[11px] truncate uppercase">{getPersonName(chat.person_id)}</h4>
                                     <span className="text-[9px] text-slate-400 font-bold">
-                                        {chat.updated_at ? new Date(chat.updated_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : ''}
+                                        {chat.updated_at ? new Date(chat.updated_at).toLocaleDateString(locale === 'pt' ? 'pt-BR' : locale === 'es' ? 'es-ES' : 'en-US', { day: '2-digit', month: 'short' }) : ''}
                                     </span>
                                 </div>
-                                <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate font-medium">Aguardando interação...</p>
+                                <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate font-medium">{t('modules.vox.waiting')}</p>
                             </div>
                         </div>
                     ))}
@@ -202,12 +204,12 @@ const Vox: React.FC<{ credentials: Credentials; user: User; permissions: any }> 
                                 <div className="flex items-center gap-2 mt-1">
                                     <div className="flex items-center gap-1 px-2 py-0.5 bg-emerald-50 dark:bg-emerald-900/20 rounded-full">
                                         <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
-                                        <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-black uppercase tracking-widest">Portal Ativo</span>
+                                        <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-black uppercase tracking-widest">{t('modules.vox.activePortal')}</span>
                                     </div>
                                     {activeChat.lawsuit_id && (
                                         <div className="flex items-center gap-1 px-2 py-0.5 bg-indigo-50 dark:bg-indigo-900/20 rounded-full">
                                             <Scale size={10} className="text-indigo-600" />
-                                            <span className="text-[9px] text-indigo-600 dark:text-indigo-400 font-black uppercase tracking-widest">Nexus Link</span>
+                                            <span className="text-[9px] text-indigo-600 dark:text-indigo-400 font-black uppercase tracking-widest">{t('modules.vox.nexusLink')}</span>
                                         </div>
                                     )}
                                 </div>
@@ -231,8 +233,8 @@ const Vox: React.FC<{ credentials: Credentials; user: User; permissions: any }> 
                                     <MessageCircle size={40} className="text-slate-400" />
                                 </div>
                                 <div>
-                                    <p className="text-xs font-black text-slate-500 uppercase tracking-widest">Nenhuma mensagem ainda</p>
-                                    <p className="text-[10px] text-slate-400 font-bold">Inicie o atendimento clicando abaixo.</p>
+                                    <p className="text-xs font-black text-slate-500 uppercase tracking-widest">{t('modules.vox.emptyMessages')}</p>
+                                    <p className="text-[10px] text-slate-400 font-bold">{t('modules.vox.emptyPrompt')}</p>
                                 </div>
                             </div>
                         ) : messages.map((msg, i) => {
@@ -250,7 +252,7 @@ const Vox: React.FC<{ credentials: Credentials; user: User; permissions: any }> 
                                     </div>
                                     <div className={`flex items-center gap-1.5 mt-1.5 px-2 ${isMe ? 'flex-row-reverse' : ''}`}>
                                         <span className="text-[9px] text-slate-400 font-black uppercase">
-                                            {new Date(msg.created_at || '').toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                            {new Date(msg.created_at || '').toLocaleTimeString(locale === 'pt' ? 'pt-BR' : locale === 'es' ? 'es-ES' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
                                         </span>
                                         {isMe && <CheckCircle2 size={10} className="text-emerald-500" />}
                                     </div>
@@ -273,14 +275,14 @@ const Vox: React.FC<{ credentials: Credentials; user: User; permissions: any }> 
                                             }`}
                                     >
                                         <Sparkles size={14} className={isTranslating ? 'animate-spin' : ''} />
-                                        {isTranslating ? 'Traduzindo...' : 'VOX LEGAL (IA)'}
+                                        {isTranslating ? t('modules.vox.translating') : t('modules.vox.voxLegal')}
                                     </button>
                                     <div className="w-px h-4 bg-slate-200 dark:bg-slate-800" />
-                                    <span className="text-[9px] text-slate-400 font-bold uppercase tracking-tight">O Vox Legal simplifica o juridiquês para o cliente.</span>
+                                    <span className="text-[9px] text-slate-400 font-bold uppercase tracking-tight">{t('modules.vox.voxLegalNote')}</span>
                                 </div>
                                 <div className="flex items-end gap-3 p-1">
                                     <textarea
-                                        placeholder="Escreva sua mensagem operacional ou jurídica..."
+                                        placeholder={t('modules.vox.placeholder')}
                                         rows={2}
                                         className="flex-1 bg-transparent border-none focus:outline-none text-[11px] font-bold text-slate-700 dark:text-white px-2 py-1 resize-none no-scrollbar leading-relaxed"
                                         value={inputText}
@@ -315,8 +317,8 @@ const Vox: React.FC<{ credentials: Credentials; user: User; permissions: any }> 
                         </div>
                     </div>
                     <div>
-                        <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter mb-2">Selecione um Atendimento</h3>
-                        <p className="text-xs text-slate-500 font-medium max-w-xs mx-auto">Selecione um cliente na barra lateral para carregar a central de comunicação Vox PRO.</p>
+                        <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter mb-2">{t('modules.vox.title')}</h3>
+                        <p className="text-xs text-slate-500 font-medium max-w-xs mx-auto">{t('modules.vox.description')}</p>
                     </div>
                 </div>
             )}

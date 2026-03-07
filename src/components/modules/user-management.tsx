@@ -1,10 +1,12 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, UserPlus, Trash2, Mail, User as UserIcon, Lock, FileEdit, Radio, ShieldAlert, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, CheckSquare, Package, Shield, Briefcase, ChevronDown, Filter } from 'lucide-react';
-import { User, AccessGroup, ModuleId, Role } from '@/types';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ShieldCheck, UserPlus, Users, Trash2, Mail, User as UserIcon, Lock, FileEdit, Radio, ShieldAlert, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, CheckSquare, Package, Shield, Briefcase, ChevronDown, Filter, XCircle, X, Zap } from 'lucide-react';
+import { User, AccessGroup, ModuleId, Role, TeamMember } from '@/types';
 import { createMasterClient } from '@/lib/supabase/master';
-import { createUserDirectly, updateUserDirectly, deleteUserDirectly } from '@/app/actions/user-actions';
+import { createUserDirectly, updateUserDirectly, deleteUserDirectly, listUsersAction } from '@/app/actions/user-actions';
+import { listTeamMembers, saveTeamMember, deleteTeamMember } from '@/app/actions/team-actions';
 import { toast } from '../ui/toast';
 import { useTranslation } from '@/contexts/language-context';
 
@@ -14,6 +16,23 @@ interface Props {
 
 const UserManagement: React.FC<Props> = ({ currentUser }) => {
     const { t, locale } = useTranslation();
+
+    const maskCPF = (value: string) => {
+        return value
+            .replace(/\D/g, '')
+            .replace(/(\d{3})(\d)/, '$1.$2')
+            .replace(/(\d{3})(\d)/, '$1.$2')
+            .replace(/(\d{3})(\d{1,2})/, '$1-$2')
+            .slice(0, 14);
+    };
+
+    const maskPhone = (value: string) => {
+        return value
+            .replace(/\D/g, '')
+            .replace(/(\d{2})(\d)/, '($1) $2')
+            .replace(/(\d{5})(\d)/, '$1-$2')
+            .slice(0, 15);
+    };
 
     const [roles, setRoles] = useState<Role[]>([]);
 
@@ -54,22 +73,49 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
 
         return typeof roleName === 'object' ? (roleName[locale] || roleName.pt || '') : String(roleName);
     };
-    const [users, setUsers] = useState<User[]>([]);
+
+    const [selectedClientId, setSelectedClientId] = useState<string>(currentUser.id);
+    const [activeMainTab, setActiveMainTab] = useState<'users' | 'members'>('members');
+
+    // Shared UI State
     const [loading, setLoading] = useState(true);
-    const [showAddModal, setShowAddModal] = useState(false);
-    const [userToDelete, setUserToDelete] = useState<User | null>(null);
-    const [editingUser, setEditingUser] = useState<User | null>(null);
     const [plans, setPlans] = useState<any[]>([]);
     const [accessGroups, setAccessGroups] = useState<AccessGroup[]>([]);
 
-    const [formData, setFormData] = useState({
+    // Users State
+    const [users, setUsers] = useState<User[]>([]);
+    const [userToDelete, setUserToDelete] = useState<User | null>(null);
+
+    // Team Members State
+    const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+
+    const [showUnifiedModal, setShowUnifiedModal] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
+    const [activeTab, setActiveTab] = useState<'basic' | 'professional'>('basic');
+
+    const initialUnifiedData = {
         name: '',
         email: '',
         password: '',
         role: '',
         plan_id: '',
-        access_group_id: ''
-    });
+        access_group_id: '',
+        cpf_cnpj: '',
+        phone: '',
+        specialty: '',
+        oab_number: '',
+        oab_uf: '',
+        city: '',
+        state: '',
+        pix_key: '',
+        notes: '',
+        isSystemUser: false,
+        is_active: true
+    };
+
+    const [unifiedFormData, setUnifiedFormData] = useState(initialUnifiedData);
+    const [memberToDelete, setMemberToDelete] = useState<TeamMember | null>(null);
 
     const [filters, setFilters] = useState({
         search: '',
@@ -90,7 +136,6 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
 
     // Master Client Filter State
     const [clients, setClients] = useState<User[]>([]);
-    const [selectedClientId, setSelectedClientId] = useState<string>(currentUser.id);
 
     useEffect(() => {
         if (currentUser.role === 'Master') {
@@ -100,6 +145,7 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
 
     useEffect(() => {
         fetchUsers();
+        fetchTeamMembers();
         fetchAccessGroups();
         fetchRoles();
     }, [selectedClientId, currentUser]);
@@ -111,7 +157,7 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
     const fetchClients = async () => {
         const { data } = await supabase
             .from('users')
-            .select('id, name, email, role, active')
+            .select('id, name, email, role, active, plan_id')
             .in('role', ['Sócio-Administrador', 'Sócio Administrador'])
             .order('name');
         if (data) setClients(data);
@@ -174,39 +220,28 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
         if (data) setPlans(data);
     };
 
+    const fetchTeamMembers = async () => {
+        setLoading(true);
+        setTeamMembers([]); // Limpa a lista antes de buscar para evitar a "piscada" com dados anteriores
+        const result = await listTeamMembers(currentUser.role === 'Master' ? selectedClientId : undefined);
+        if (result.success && result.data) setTeamMembers(result.data);
+        else setTeamMembers([]); // Garante que fique vazio em caso de erro ou sem BYODB
+        setLoading(false);
+    };
+
     useEffect(() => {
-        if (showAddModal) {
+        if (showUnifiedModal) {
+            // Aumentei o delay para focar apenas quando a gaveta já estiver quase parando
             setTimeout(() => {
                 nameRef.current?.focus();
-            }, 100);
+            }, 500);
         }
-    }, [showAddModal]);
+    }, [showUnifiedModal]);
 
     const fetchUsers = async () => {
         setLoading(true);
-        let query = supabase
-            .from('users')
-            .select('*');
-
-        // Hierarchy Filtering
-        const isAdmin = ['Administrador', 'Sócio-Administrador', 'Sócio Administrador'].includes(currentUser.role);
-
-        if (currentUser.role === 'Master') {
-            query = query.or(`id.eq.${selectedClientId},parent_user_id.eq.${selectedClientId}`);
-        } else {
-            // Universal hierarchy logic: see self, subordinates, boss, and peers
-            const conditions = [`id.eq.${currentUser.id}`, `parent_user_id.eq.${currentUser.id}`];
-
-            if (currentUser.parent_user_id) {
-                conditions.push(`id.eq.${currentUser.parent_user_id}`);
-                conditions.push(`parent_user_id.eq.${currentUser.parent_user_id}`);
-            }
-
-            query = query.or(conditions.join(','));
-        }
-
-        const { data, error } = await query;
-        if (!error && data) setUsers(data);
+        const result = await listUsersAction(currentUser, selectedClientId);
+        if (result.success && result.data) setUsers(result.data as User[]);
         setLoading(false);
     };
 
@@ -230,6 +265,23 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
         return 0;
     });
 
+    const sortedMembers = [...teamMembers].sort((a, b) => {
+        if (!sortConfig) return 0;
+        const { key, direction } = sortConfig;
+
+        let aVal = a[key as keyof TeamMember] as any;
+        let bVal = b[key as keyof TeamMember] as any;
+
+        if (key === 'name') {
+            aVal = a.full_name;
+            bVal = b.full_name;
+        }
+
+        if (aVal < bVal) return direction === 'asc' ? -1 : 1;
+        if (aVal > bVal) return direction === 'asc' ? 1 : -1;
+        return 0;
+    });
+
     const filteredUsers = sortedUsers.filter(u => {
         const uName = typeof u.name === 'object' ? ((u.name as any).pt || (u.name as any).en || (u.name as any).es || '') : (u.name || '');
         const matchesSearch = uName.toLowerCase().includes(filters.search.toLowerCase()) ||
@@ -242,11 +294,21 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
         return matchesSearch && matchesRole && matchesStatus && matchesAdmin;
     });
 
+    const filteredMembers = sortedMembers.filter(m => {
+        const matchesSearch = (m.full_name || '').toLowerCase().includes(filters.search.toLowerCase()) ||
+            (m.email || '').toLowerCase().includes(filters.search.toLowerCase());
+        const matchesStatus = filters.status === 'all' ||
+            (filters.status === 'active' ? m.is_active : !m.is_active);
+
+        return matchesSearch && matchesStatus;
+    });
+
     // Pagination Logic
-    const totalItems = filteredUsers.length;
+    const totalItems = activeMainTab === 'users' ? filteredUsers.length : filteredMembers.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
     const startIndex = (currentPage - 1) * itemsPerPage;
     const paginatedUsers = filteredUsers.slice(startIndex, startIndex + itemsPerPage);
+    const paginatedMembers = filteredMembers.slice(startIndex, startIndex + itemsPerPage);
 
     useEffect(() => {
         setCurrentPage(1); // Reset to first page when filters change
@@ -310,44 +372,103 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
     const superAdminGroups = ['Sócio-Administrativo', 'Sócio-Administrador', 'Sócio Administrador'];
     const isSuperAdmin = currentUser.role === 'Master' || (currentUser.access_group_name && superAdminGroups.some(g => currentUser.access_group_name?.includes(g)));
 
-    const handleSaveUser = async (e: React.FormEvent) => {
+    const handleSaveUnified = async (e: React.FormEvent) => {
         e.preventDefault();
-
-        if (!isSuperAdmin) {
-            toast.error(t('management.users.toast.superAdminOnly'));
-            return;
-        }
-
-        if (currentUser.role === 'Operador' && formData.role === 'Administrador') {
-            toast.error(t('management.users.toast.operatorRestriction'));
-            return;
-        }
-
+        setIsSaving(true);
         try {
-            if (editingUser) {
-                // Check if user is allowed to edit this specific user
-                if (!isSuperAdmin && editingUser.id !== currentUser.id) {
-                    toast.error(t('management.users.toast.selfEditOnly'));
-                    return;
-                }
-                const result = await updateUserDirectly(editingUser.id, formData);
-                if (!result.success) throw new Error(result.error);
-                toast.success(t('management.users.toast.successEdit'));
-            } else {
-                const parentUserId = currentUser.role === 'Master' ? selectedClientId : (currentUser.parent_user_id || currentUser.id);
-                // When Master assigns to another Master account, make sure we aren't creating a cyclic loop
-                const finalParentUserId = parentUserId === currentUser.id && formData.role === 'Master' ? null : parentUserId;
-                const result = await createUserDirectly(formData, finalParentUserId as string);
-                if (!result.success) throw new Error(result.error);
-                toast.success(t('management.users.toast.successAdd'));
+            // Determinar o ID do "Pai" (Dono/Empresa) para o Banco Master
+            const parentId = currentUser.role === 'Master' ? selectedClientId : (currentUser.parent_user_id || currentUser.id);
+
+            // Campos comuns entre os dois modelos para garantir consistência
+            const commonData = {
+                name: unifiedFormData.name,
+                email: unifiedFormData.email,
+                role: unifiedFormData.role,
+                phone: unifiedFormData.phone,
+                cpf_cnpj: unifiedFormData.cpf_cnpj,
+                is_active: unifiedFormData.is_active
+            };
+
+            // 1. Payload para Equipe (Banco do Cliente - CRM)
+            // Buscar ID do integrante se ele já existir (evita duplicidade ao salvar vindo da lista de Usuários)
+            let finalMemberId = editingMember?.id;
+            if (!finalMemberId) {
+                const foundMember = teamMembers.find(m => m.email?.toLowerCase() === commonData.email.toLowerCase());
+                if (foundMember) finalMemberId = foundMember.id;
             }
 
-            setShowAddModal(false);
-            setEditingUser(null);
+            const teamPayload = {
+                id: finalMemberId,
+                full_name: commonData.name,
+                email: commonData.email,
+                role: commonData.role,
+                phone: commonData.phone,
+                cpf: commonData.cpf_cnpj,
+                is_active: commonData.is_active,
+                specialty: unifiedFormData.specialty,
+                oab_number: unifiedFormData.oab_number,
+                oab_uf: unifiedFormData.oab_uf,
+                city: unifiedFormData.city,
+                state: unifiedFormData.state,
+                pix_key: unifiedFormData.pix_key,
+                notes: unifiedFormData.notes
+            };
+
+            const memberResult = await saveTeamMember(
+                teamPayload,
+                currentUser.role === 'Master' ? selectedClientId : undefined
+            );
+
+            if (!memberResult.success) throw new Error('Erro ao salvar integrante na equipe');
+
+            // 2. Orquestração com o Banco Master (Usuário do Sistema)
+            const existingUser = users.find(u => u.email && u.email.toLowerCase() === commonData.email.toLowerCase());
+
+            if (unifiedFormData.isSystemUser) {
+                // Determinar o plan_id do "Pai" (Sócio Administrativo)
+                // Se for Master, pega do cliente selecionado. Se for Admin, pega do próprio currentUser.
+                // Fallback robusto: se não achar no currentUser, tenta achar na lista de usuários o registro do pai
+                const parentPlanId = currentUser.role === 'Master'
+                    ? clients.find(c => c.id === selectedClientId)?.plan_id
+                    : (currentUser.plan_id || users.find(u => u.id === currentUser.id)?.plan_id || users.find(u => u.id === currentUser.parent_user_id)?.plan_id);
+
+                const userPayload = {
+                    name: commonData.name,
+                    email: commonData.email,
+                    password: unifiedFormData.password,
+                    role: commonData.role,
+                    phone: commonData.phone,
+                    cpf_cnpj: commonData.cpf_cnpj,
+                    parent_user_id: parentId,
+                    active: commonData.is_active,
+                    plan_id: parentPlanId || unifiedFormData.plan_id,
+                    access_group_id: unifiedFormData.access_group_id
+                };
+
+                if (existingUser) {
+                    await updateUserDirectly(existingUser.id, userPayload);
+                } else {
+                    if (!unifiedFormData.password) throw new Error('Senha é obrigatória para novos usuários');
+                    await createUserDirectly(userPayload, parentId);
+                }
+            } else if (existingUser && existingUser.active) {
+                // Se o acesso foi removido mas o usuário existe e está ativo, desativamos no Master
+                await updateUserDirectly(existingUser.id, {
+                    ...existingUser,
+                    active: false
+                });
+            }
+
+            toast.success('Integrante salvo com sucesso!');
+            setShowUnifiedModal(false);
+            setUnifiedFormData(initialUnifiedData);
+            setEditingMember(null);
             fetchUsers();
-            setFormData({ name: '', email: '', password: '', role: 'Operador', plan_id: '', access_group_id: '' });
+            fetchTeamMembers();
         } catch (err: any) {
-            toast.error(err.message || t('management.users.toast.errorProcess'));
+            toast.error(err.message || 'Erro ao processar salvamento');
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -384,60 +505,141 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
         }
     };
 
+    const handleDeleteMember = async () => {
+        if (!memberToDelete) return;
+        try {
+            const result = await deleteTeamMember(memberToDelete.id, currentUser.role === 'Master' ? selectedClientId : undefined);
+            if (result.success) {
+                toast.success('Membro excluído!');
+                fetchTeamMembers();
+                setMemberToDelete(null);
+            } else {
+                throw new Error(result.error);
+            }
+        } catch (err: any) {
+            toast.error(err.message || 'Erro ao excluir membro');
+        }
+    };
+
+    const openEditMemberModal = (member: TeamMember) => {
+        const correspondingUser = users.find(u => u.email && u.email.toLowerCase() === member.email?.toLowerCase());
+
+        setEditingMember(member);
+        setUnifiedFormData({
+            ...initialUnifiedData,
+            name: member.full_name || '',
+            email: member.email || '',
+            phone: member.phone || '',
+            role: member.role || '',
+            cpf_cnpj: member.cpf || '',
+            specialty: member.specialty || '',
+            oab_number: member.oab_number || '',
+            oab_uf: member.oab_uf || '',
+            city: member.city || '',
+            state: member.state || '',
+            pix_key: member.pix_key || '',
+            notes: member.notes || '',
+            is_active: member.is_active,
+            isSystemUser: !!correspondingUser,
+            plan_id: correspondingUser?.plan_id || '',
+            access_group_id: correspondingUser?.access_group_id || ''
+        });
+        setActiveTab('basic');
+        setShowUnifiedModal(true);
+    };
+
     const openEditModal = (user: User) => {
-        setEditingUser(user);
-        setFormData({
+        setEditingMember(null); // Not editing a team member directly
+        setUnifiedFormData({
+            ...initialUnifiedData,
             name: typeof user.name === 'object' ? ((user.name as any).pt || (user.name as any).en || '') : (user.name || ''),
             email: user.email || '',
-            password: '',
+            password: '', // Password should not be pre-filled for security
             role: user.role as any,
             plan_id: user.plan_id || '',
-            access_group_id: user.access_group_id || ''
+            access_group_id: user.access_group_id || '',
+            cpf_cnpj: user.cpf_cnpj || '',
+            phone: user.phone || '',
+            isSystemUser: true, // This is definitely a system user
+            is_active: user.active
         });
-        setShowAddModal(true);
+        setActiveTab('basic');
+        setShowUnifiedModal(true);
     };
 
     return (
         <div className="space-y-8 animate-in fade-in duration-700">
             <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">{t('management.users.title')}</h1>
-                    <p className="text-slate-500 dark:text-slate-400 font-medium tracking-tight uppercase text-xs">{t('management.users.subtitle')}</p>
+                <div className="flex items-center gap-8">
+                    <div>
+                        <h1 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">{t('management.users.title')}</h1>
+                        <p className="text-slate-500 dark:text-slate-400 font-medium tracking-tight uppercase text-xs">{t('management.users.subtitle')}</p>
+                    </div>
+
+                    {isSuperAdmin && (
+                        <button
+                            onClick={() => {
+                                setEditingMember(null);
+                                setUnifiedFormData(initialUnifiedData);
+                                setActiveTab('basic');
+                                setShowUnifiedModal(true);
+                            }}
+                            className="bg-indigo-600 text-white px-6 py-2.5 rounded-2xl font-bold shadow-xl shadow-indigo-600/20 hover:scale-105 transition-all flex items-center gap-2 cursor-pointer text-sm"
+                        >
+                            <UserPlus size={18} /> Novo Integrante
+                        </button>
+                    )}
                 </div>
+
                 <div className="flex items-center gap-4">
                     {currentUser.role === 'Master' && (
-                        <div className="relative group/filter z-50">
-                            <div className="flex items-center gap-2 px-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm text-sm font-bold text-slate-700 dark:text-slate-300">
-                                <Filter size={16} className="text-amber-500" />
+                        <div className="flex items-center gap-4 bg-white dark:bg-slate-900 p-2 pl-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-xl">
+                            <div className="flex flex-col items-end">
+                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none mb-1">Contexto Master</span>
+                                <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 leading-none">Selecione o Cliente</span>
+                            </div>
+                            <div className="relative">
                                 <select
-                                    className="bg-transparent outline-none appearance-none pr-6 cursor-pointer"
+                                    className="bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-6 py-3 text-xs font-black tracking-widest text-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-600 outline-none transition-all cursor-pointer min-w-[260px] appearance-none pr-10"
                                     value={selectedClientId}
                                     onChange={e => setSelectedClientId(e.target.value)}
                                 >
-                                    <option value={currentUser.id}>{t('management.users.masterFilter.self')}</option>
-                                    <optgroup label={t('management.users.masterFilter.clients')}>
-                                        {clients.map(c => (
-                                            <option key={c.id} value={c.id}>🏢 {(typeof c.name === 'object' ? ((c.name as any).pt || (c.name as any).en || '') : (c.name || '')).toUpperCase()} ({c.email})</option>
-                                        ))}
+                                    <option value="">--- Selecione um Cliente ---</option>
+                                    <option value={currentUser.id}>Meu Contexto Mestre</option>
+                                    <optgroup label={t('management.users.masterFilter.clients')?.toUpperCase() || 'CLIENTES (SÓCIOS ADM)'}>
+                                        {clients.map(c => {
+                                            const rawName = typeof c.name === 'object' ? ((c.name as any).pt || (c.name as any).en || '') : (c.name || '');
+                                            const formattedName = rawName.toLowerCase().split(' ').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+                                            const formattedEmail = (c.email || '').toLowerCase();
+                                            return (
+                                                <option key={c.id} value={c.id}>
+                                                    🏢 {formattedName} ({formattedEmail})
+                                                </option>
+                                            );
+                                        })}
                                     </optgroup>
                                 </select>
                                 <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
                             </div>
                         </div>
                     )}
-                    {isSuperAdmin && (
-                        <button
-                            onClick={() => {
-                                setEditingUser(null);
-                                setFormData({ name: '', email: '', password: '', role: 'Operador', plan_id: '', access_group_id: '' });
-                                setShowAddModal(true);
-                            }}
-                            className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold shadow-xl shadow-indigo-600/20 hover:scale-105 transition-all flex items-center gap-2 cursor-pointer"
-                        >
-                            <UserPlus size={20} /> {t('management.users.newUser')}
-                        </button>
-                    )}
                 </div>
+            </div>
+
+            {/* Main Tabs */}
+            <div className="flex bg-slate-100 dark:bg-slate-800/50 p-1.5 rounded-[2rem] w-fit">
+                <button
+                    onClick={() => setActiveMainTab('members')}
+                    className={`px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all ${activeMainTab === 'members' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-xl shadow-indigo-600/10' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                    Membros da Equipe
+                </button>
+                <button
+                    onClick={() => setActiveMainTab('users')}
+                    className={`px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all ${activeMainTab === 'users' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-xl shadow-indigo-600/10' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                    Usuários do Sistema
+                </button>
             </div>
 
             {/* Filters */}
@@ -520,8 +722,17 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                     {t('management.users.table.member')} {sortConfig?.key === 'name' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                                 </div>
                             </th>
-                            <th className="px-4 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('management.users.table.accessGroup')}</th>
-                            <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center" onClick={() => handleSort('role')}>{t('management.users.table.role')}</th>
+                            {activeMainTab === 'users' ? (
+                                <>
+                                    <th className="px-4 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('management.users.table.accessGroup')}</th>
+                                    <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center" onClick={() => handleSort('role')}>{t('management.users.table.role')}</th>
+                                </>
+                            ) : (
+                                <>
+                                    <th className="px-4 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Especialidade / OAB</th>
+                                    <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Telefone</th>
+                                </>
+                            )}
                             <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">{t('management.users.table.status')}</th>
                             <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">{t('management.users.table.controls')}</th>
                         </tr>
@@ -529,86 +740,151 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
                         {loading ? (
                             <tr><td colSpan={6} className="py-20 text-center text-slate-300 font-bold uppercase tracking-widest opacity-50">{t('management.users.table.syncing')}</td></tr>
-                        ) : paginatedUsers.length === 0 ? (
-                            <tr><td colSpan={6} className="py-20 text-center text-slate-400 font-bold italic opacity-30">{t('management.users.table.noUser')}</td></tr>
-                        ) : paginatedUsers.map(u => (
-                            <tr key={u.id} className={`hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-all ${selectedUserIds.includes(u.id) ? 'bg-indigo-50/30 dark:bg-indigo-950/10' : ''}`}>
-                                <td className="px-8 py-6 text-center">
-                                    <input
-                                        type="checkbox"
-                                        className="w-5 h-5 rounded-lg border-slate-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer"
-                                        checked={selectedUserIds.includes(u.id)}
-                                        onChange={() => handleSelectUser(u.id)}
-                                    />
-                                </td>
-                                <td className="px-4 py-6">
-                                    <div className="flex items-center gap-4">
-                                        <div className="relative group/avatar">
-                                            <img src={u.avatar_url || `https://ui-avatars.com/api/?name=${u.name}&background=6366f1&color=fff&bold=true`} className="w-12 h-12 rounded-2xl shadow-sm group-hover/avatar:scale-105 transition-transform" />
-                                            {u.active && <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full" />}
+                        ) : activeMainTab === 'users' ? (
+                            paginatedUsers.length === 0 ? (
+                                <tr><td colSpan={6} className="py-20 text-center text-slate-400 font-bold italic opacity-30">{t('management.users.table.noUser')}</td></tr>
+                            ) : paginatedUsers.map(u => (
+                                <tr key={u.id} className={`hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-all ${selectedUserIds.includes(u.id) ? 'bg-indigo-50/30 dark:bg-indigo-950/10' : ''}`}>
+                                    <td className="px-8 py-6 text-center">
+                                        <input
+                                            type="checkbox"
+                                            className="w-5 h-5 rounded-lg border-slate-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer"
+                                            checked={selectedUserIds.includes(u.id)}
+                                            onChange={() => handleSelectUser(u.id)}
+                                        />
+                                    </td>
+                                    <td className="px-4 py-6">
+                                        <div className="flex items-center gap-4">
+                                            <div className="relative group/avatar">
+                                                <img src={u.avatar_url || `https://ui-avatars.com/api/?name=${u.name}&background=6366f1&color=fff&bold=true`} className="w-12 h-12 rounded-2xl shadow-sm group-hover/avatar:scale-105 transition-transform" />
+                                                {u.active && <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full" />}
+                                            </div>
+                                            <div>
+                                                <p className="font-black text-slate-800 dark:text-white leading-tight uppercase tracking-tight">
+                                                    {typeof u.name === 'object' ? ((u.name as any)[locale] || (u.name as any).pt || '') : (u.name || '')}
+                                                </p>
+                                                <p className="text-xs text-slate-400 font-medium">{u.email}</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="font-black text-slate-800 dark:text-white leading-tight uppercase tracking-tight">
-                                                {typeof u.name === 'object' ? ((u.name as any)[locale] || (u.name as any).pt || '') : (u.name || '')}
-                                            </p>
-                                            <p className="text-xs text-slate-400 font-medium">{u.email}</p>
+                                    </td>
+                                    <td className="px-4 py-6">
+                                        {u.access_group_id ? (
+                                            <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800 rounded-xl w-fit">
+                                                <Shield size={12} className="text-indigo-600 dark:text-indigo-400" />
+                                                <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase">
+                                                    {(() => {
+                                                        const group = accessGroups.find(g => g.id === u.access_group_id);
+                                                        if (!group) return loading ? t('common.loading') : 'Não Encontrado';
+                                                        return (group.name && typeof group.name === 'object')
+                                                            ? ((group.name as any)[locale] || (group.name as any).pt || '')
+                                                            : (group.name || '');
+                                                    })()}
+                                                </span>
+                                            </div>
+                                        ) : (
+                                            <span className="text-[10px] text-slate-300 font-bold uppercase tracking-widest italic opacity-50">{t('management.users.table.noGroup')}</span>
+                                        )}
+                                    </td>
+                                    <td className="px-8 py-6 text-center">
+                                        <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tight ${u.role === 'Master' ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/40' :
+                                            u.role?.includes('Sócio') || u.role?.includes('Administrador') ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40' :
+                                                u.role?.includes('Coordenador') || u.role?.includes('Sênior') ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/40' :
+                                                    u.role?.includes('Estagiário') || u.role?.includes('Paralegal') ? 'bg-violet-100 text-violet-600 dark:bg-violet-900/40' :
+                                                        u.role?.includes('Financeiro') ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40' :
+                                                            'bg-slate-100 text-slate-500 dark:bg-slate-800'
+                                            }`}>
+                                            {getRoleTranslation(u.role)}
+                                        </span>
+                                    </td>
+                                    <td className="px-8 py-6 text-center">
+                                        <div className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase inline-flex items-center gap-1.5 ${u.active ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20' : 'bg-slate-100 text-slate-400 dark:bg-slate-800'}`}>
+                                            <div className={`w-1.5 h-1.5 rounded-full ${u.active ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
+                                            {u.active ? t('management.users.active') : t('management.users.inactive')}
                                         </div>
-                                    </div>
-                                </td>
-                                <td className="px-4 py-6">
-                                    {u.access_group_id ? (
-                                        <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800 rounded-xl w-fit">
-                                            <Shield size={12} className="text-indigo-600 dark:text-indigo-400" />
-                                            <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase">
-                                                {(() => {
-                                                    const group = accessGroups.find(g => g.id === u.access_group_id);
-                                                    if (!group) return loading ? t('common.loading') : 'Não Encontrado';
-                                                    return (group.name && typeof group.name === 'object')
-                                                        ? ((group.name as any)[locale] || (group.name as any).pt || '')
-                                                        : (group.name || '');
-                                                })()}
+                                    </td>
+                                    <td className="px-8 py-6 text-right">
+                                        <div className="flex items-center justify-end gap-1">
+                                            {isSuperAdmin || currentUser.id === u.id ? (
+                                                <>
+                                                    {isSuperAdmin && (
+                                                        <button onClick={() => handleToggleStatus(u)} className={`p-2 rounded-xl transition-all ${u.active ? 'text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20' : 'text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}`} title={t('management.users.table.tooltips.toggleStatus')}><Radio size={20} /></button>
+                                                    )}
+                                                    <button onClick={() => openEditModal(u)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all" title={t('management.users.table.tooltips.edit')}><FileEdit size={20} /></button>
+                                                    {currentUser.id !== u.id && isSuperAdmin && (
+                                                        <button onClick={() => setUserToDelete(u)} className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all" title={t('management.users.table.tooltips.delete')}><Trash2 size={20} /></button>
+                                                    )}
+                                                </>
+                                            ) : (
+                                                <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest italic flex items-center justify-end px-2">{t('management.users.table.readOnly')}</div>
+                                            )}
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            paginatedMembers.length === 0 ? (
+                                <tr><td colSpan={6} className="py-20 text-center text-slate-400 font-bold italic opacity-30">Nenhum membro da equipe cadastrado.</td></tr>
+                            ) : paginatedMembers.map(m => (
+                                <tr key={m.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-all border-b border-slate-100 dark:border-slate-800/50">
+                                    <td className="px-8 py-6 text-center">
+                                        <input type="checkbox" className="w-5 h-5 rounded-lg border-slate-300 text-indigo-600 cursor-pointer" />
+                                    </td>
+                                    <td className="px-4 py-6">
+                                        <div className="flex items-center gap-4">
+                                            {(() => {
+                                                const linkedUser = users.find(u => u.email?.toLowerCase() === m.email?.toLowerCase());
+                                                return (
+                                                    <>
+                                                        <div className="relative group/avatar">
+                                                            <img
+                                                                src={linkedUser?.avatar_url || `https://ui-avatars.com/api/?name=${m.full_name}&background=6366f1&color=fff&bold=true`}
+                                                                className="w-12 h-12 rounded-2xl shadow-sm group-hover/avatar:scale-105 transition-transform"
+                                                                alt={m.full_name}
+                                                            />
+                                                            {linkedUser && (
+                                                                <div
+                                                                    className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full shadow-sm"
+                                                                    title="Usuário do Sistema Ativo"
+                                                                />
+                                                            )}
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-black text-slate-800 dark:text-white uppercase leading-tight tracking-tight">{m.full_name}</p>
+                                                            <p className="text-xs text-slate-400 font-medium">{m.email}</p>
+                                                        </div>
+                                                    </>
+                                                );
+                                            })()}
+                                        </div>
+                                    </td>
+                                    <td className="px-4 py-6">
+                                        <div className="flex flex-col gap-1">
+                                            <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
+                                                {m.specialty || 'Geral'}
+                                            </span>
+                                            <span className="text-[10px] text-slate-400 font-bold">
+                                                OAB: {m.oab_number ? `${m.oab_number}/${m.oab_uf}` : 'Não Inf.'}
                                             </span>
                                         </div>
-                                    ) : (
-                                        <span className="text-[10px] text-slate-300 font-bold uppercase tracking-widest italic opacity-50">{t('management.users.table.noGroup')}</span>
-                                    )}
-                                </td>
-                                <td className="px-8 py-6 text-center">
-                                    <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tight ${u.role === 'Master' ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/40' :
-                                        u.role?.includes('Sócio') || u.role?.includes('Administrador') ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40' :
-                                            u.role?.includes('Coordenador') || u.role?.includes('Sênior') ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/40' :
-                                                u.role?.includes('Estagiário') || u.role?.includes('Paralegal') ? 'bg-violet-100 text-violet-600 dark:bg-violet-900/40' :
-                                                    u.role?.includes('Financeiro') ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40' :
-                                                        'bg-slate-100 text-slate-500 dark:bg-slate-800'
-                                        }`}>
-                                        {getRoleTranslation(u.role)}
-                                    </span>
-                                </td>
-                                <td className="px-8 py-6 text-center">
-                                    <div className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase inline-flex items-center gap-1.5 ${u.active ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20' : 'bg-slate-100 text-slate-400 dark:bg-slate-800'}`}>
-                                        <div className={`w-1.5 h-1.5 rounded-full ${u.active ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
-                                        {u.active ? t('management.users.active') : t('management.users.inactive')}
-                                    </div>
-                                </td>
-                                <td className="px-8 py-6 text-right">
-                                    <div className="flex items-center justify-end gap-1">
-                                        {isSuperAdmin || currentUser.id === u.id ? (
-                                            <>
-                                                {isSuperAdmin && (
-                                                    <button onClick={() => handleToggleStatus(u)} className={`p-2 rounded-xl transition-all ${u.active ? 'text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20' : 'text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}`} title={t('management.users.table.tooltips.toggleStatus')}><Radio size={20} /></button>
-                                                )}
-                                                <button onClick={() => openEditModal(u)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all" title={t('management.users.table.tooltips.edit')}><FileEdit size={20} /></button>
-                                                {currentUser.id !== u.id && isSuperAdmin && (
-                                                    <button onClick={() => setUserToDelete(u)} className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all" title={t('management.users.table.tooltips.delete')}><Trash2 size={20} /></button>
-                                                )}
-                                            </>
-                                        ) : (
-                                            <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest italic flex items-center justify-end px-2">{t('management.users.table.readOnly')}</div>
-                                        )}
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
+                                    </td>
+                                    <td className="px-8 py-6 text-center">
+                                        <p className="text-xs font-bold text-slate-500">{m.phone || '-'}</p>
+                                    </td>
+                                    <td className="px-8 py-6 text-center">
+                                        <div className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase inline-flex items-center gap-1.5 ${m.is_active ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20' : 'bg-slate-100 text-slate-400 dark:bg-slate-800'}`}>
+                                            <div className={`w-1.5 h-1.5 rounded-full ${m.is_active ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
+                                            {m.is_active ? 'Ativo' : 'Inativo'}
+                                        </div>
+                                    </td>
+                                    <td className="px-8 py-6 text-right">
+                                        <div className="flex items-center justify-end gap-1">
+                                            <button onClick={() => openEditMemberModal(m)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all"><FileEdit size={20} /></button>
+                                            <button onClick={() => setMemberToDelete(m)} className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all"><Trash2 size={20} /></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))
+                        )}
                     </tbody>
                 </table>
 
@@ -624,135 +900,284 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                 </div>
             </div>
 
-            {/* Modal: Add/Edit User */}
-            {
-                showAddModal && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-sm animate-in fade-in duration-300">
-                        <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[3.5rem] border border-slate-200 dark:border-slate-800 shadow-2xl p-12 relative overflow-hidden">
-                            <div className="mb-10 text-center">
-                                <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/40 rounded-[1.5rem] flex items-center justify-center text-indigo-600 dark:text-indigo-400 mx-auto mb-4">
-                                    <UserPlus size={32} />
+            {/* Unified Drawer: Integration Management */}
+            <AnimatePresence>
+                {showUnifiedModal && (
+                    <div className="fixed inset-0 z-[100] flex justify-end overflow-hidden">
+                        {/* Backdrop */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm"
+                            onClick={() => { if (!isSaving) setShowUnifiedModal(false); }}
+                        />
+
+                        <motion.div
+                            initial={{ x: '100%' }}
+                            animate={{ x: 0 }}
+                            exit={{ x: '100%' }}
+                            transition={{ type: 'spring', damping: 38, stiffness: 220, mass: 1 }}
+                            className="relative w-full max-w-2xl bg-white dark:bg-slate-900 shadow-[-30px_0_70px_-15px_rgba(0,0,0,0.3)] h-full flex flex-col border-l border-slate-200 dark:border-slate-800 overflow-hidden p-0"
+                        >
+                            {/* Header */}
+                            <div className="p-8 border-b border-slate-100 dark:border-slate-800 shrink-0 bg-slate-50/50 dark:bg-slate-800/50">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <h2 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">
+                                            {editingMember ? 'Editar Integrante' : 'Novo Integrante'}
+                                        </h2>
+                                        <p className="text-slate-500 dark:text-slate-400 font-bold uppercase text-[10px] tracking-widest mt-1">Gestão Unificada de Equipe e Acesso</p>
+                                    </div>
+                                    <button
+                                        onClick={() => setShowUnifiedModal(false)}
+                                        className="p-3 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-2xl transition-all"
+                                    >
+                                        <XCircle size={28} />
+                                    </button>
                                 </div>
-                                <h2 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">{editingUser ? t('management.users.modal.editTitle') : t('management.users.modal.addTitle')}</h2>
-                                <p className="text-sm text-slate-500 font-medium uppercase tracking-tight">{t('management.users.modal.subtitle')}</p>
                             </div>
 
-                            <form onSubmit={handleSaveUser} className="space-y-5">
-                                <div className="relative">
-                                    <UserIcon className="absolute left-5 top-5 text-slate-400" size={20} />
-                                    <input ref={nameRef} required placeholder={t('management.users.modal.name')} className="w-full pl-14 pr-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl font-bold focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white shadow-sm" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                            {/* Navigation Tabs */}
+                            <div className="px-8 pt-6 shrink-0">
+                                <div className="flex bg-slate-100 dark:bg-slate-800/50 p-1.5 rounded-[2rem] w-80">
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveTab('basic')}
+                                        className={`flex-1 px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all ${activeTab === 'basic' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-xl shadow-indigo-600/10' : 'text-slate-500 hover:text-slate-700'}`}
+                                    >
+                                        Básico
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveTab('professional')}
+                                        className={`flex-1 px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all ${activeTab === 'professional' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-xl shadow-indigo-600/10' : 'text-slate-500 hover:text-slate-700'}`}
+                                    >
+                                        Profissional
+                                    </button>
                                 </div>
-                                <div className="relative">
-                                    <Mail className="absolute left-5 top-5 text-slate-400" size={20} />
-                                    <input required type="email" placeholder={t('management.users.modal.email')} disabled={!!editingUser} className="w-full pl-14 pr-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl font-bold focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white shadow-sm disabled:opacity-50" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
-                                </div>
-                                <div className="relative">
-                                    <Lock className="absolute left-5 top-5 text-slate-400" size={20} />
-                                    <input required={!editingUser} type="password" placeholder={editingUser ? t('management.users.modal.passwordEdit') : t('management.users.modal.password')} className="w-full pl-14 pr-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl font-bold focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white shadow-sm" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} />
-                                </div>
+                            </div>
 
-                                <div className="space-y-1.5 pb-2">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">{t('management.users.modal.role')}</label>
-                                    <div className="relative">
-                                        <Briefcase className="absolute left-5 top-5 text-slate-400" size={20} />
-                                        <select
-                                            disabled={!isSuperAdmin}
-                                            className="w-full pl-14 pr-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl font-bold focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white appearance-none cursor-pointer shadow-sm disabled:opacity-50"
-                                            value={formData.role}
-                                            onChange={e => {
-                                                const selectedValue = e.target.value;
-                                                const roleObj = roles.find(r => {
-                                                    const rName = typeof r.name === 'object' ? r.name.pt : r.name;
-                                                    return rName === selectedValue;
-                                                });
-                                                setFormData({
-                                                    ...formData,
-                                                    role: selectedValue,
-                                                    access_group_id: roleObj ? roleObj.access_group_id : ''
-                                                });
-                                            }}
-                                        >
-                                            <option value="" disabled>{t('management.users.modal.selectRole')}</option>
-                                            {/* Dynamic groupings based on Access Groups */}
-                                            {accessGroups.map(group => {
-                                                const groupRoles = roles.filter(r => r.access_group_id === group.id);
-                                                if (groupRoles.length === 0) return null;
-                                                const gName = group.name && typeof group.name === 'object'
-                                                    ? (group.name[locale as keyof typeof group.name] || group.name.pt || '')
-                                                    : (group.name || '');
-                                                return (
-                                                    <optgroup key={group.id} label={gName}>
-                                                        {groupRoles.map(role => {
-                                                            const rName = role.name && typeof role.name === 'object'
-                                                                ? (role.name[locale as keyof typeof role.name] || role.name.pt || '')
-                                                                : (role.name || '');
-                                                            // We use the Portuguese name as the internal value for the select
-                                                            const rValue = role.name && typeof role.name === 'object' ? role.name.pt : role.name;
-                                                            return (
-                                                                <option key={role.id} value={rValue}>
-                                                                    {rName}
-                                                                </option>
-                                                            );
-                                                        })}
-                                                    </optgroup>
-                                                );
-                                            })}
-                                            {currentUser?.role === 'Master' && (
-                                                <optgroup label={t('management.users.modal.globalSystem')}>
-                                                    <option value="Master">{t('management.users.modal.godMode')}</option>
-                                                </optgroup>
-                                            )}
-                                        </select>
-                                        <ChevronDown className="absolute right-5 top-6 text-slate-400 pointer-events-none" size={16} />
-                                    </div>
-                                    {!isSuperAdmin && editingUser && (
-                                        <p className="text-[9px] font-black uppercase tracking-widest text-amber-500 mt-2 ml-2 italic">
-                                            {t('management.users.modal.roleRestriction')}
-                                        </p>
-                                    )}
-                                    {formData.access_group_id && formData.role !== 'Master' && (
-                                        <div className="flex items-center gap-2 mt-3 ml-2 px-3 py-2 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800 rounded-xl w-fit animate-in fade-in slide-in-from-top-2">
-                                            <Shield size={14} className="text-indigo-600 dark:text-indigo-400" />
-                                            <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
-                                                {(() => {
-                                                    const g = accessGroups.find(g => g.id === formData.access_group_id);
-                                                    const gName = g?.name && typeof g.name === 'object'
-                                                        ? ((g.name as any)[locale] || (g.name as any).pt || '')
-                                                        : (g?.name || '');
-                                                    return t('management.users.modal.inherited', { name: gName });
-                                                })()}
-                                            </span>
+                            <form onSubmit={handleSaveUnified} className="flex-1 flex flex-col overflow-hidden">
+                                <div className="flex-1 overflow-y-auto p-10 no-scrollbar space-y-8">
+                                    {activeTab === 'basic' && (
+                                        <div className="space-y-6">
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Nome Completo</label>
+                                                <div className="relative">
+                                                    <UserIcon className="absolute left-5 top-5 text-slate-300" size={20} />
+                                                    <input ref={nameRef} required className="w-full pl-14 pr-6 py-5 bg-slate-50 dark:bg-slate-800 border-none rounded-3xl font-bold focus:ring-2 focus:ring-indigo-600/20 outline-none text-slate-800 dark:text-white transition-all" value={unifiedFormData.name} onChange={e => setUnifiedFormData({ ...unifiedFormData, name: e.target.value })} placeholder="Ex: João da Silva" />
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">E-mail Principal</label>
+                                                <div className="relative">
+                                                    <Mail className="absolute left-5 top-5 text-slate-300" size={20} />
+                                                    <input required type="email" className="w-full pl-14 pr-6 py-5 bg-slate-50 dark:bg-slate-800 border-none rounded-3xl font-bold focus:ring-2 focus:ring-indigo-600/20 outline-none text-slate-800 dark:text-white transition-all" value={unifiedFormData.email} onChange={e => setUnifiedFormData({ ...unifiedFormData, email: e.target.value })} placeholder="exemplo@veritum.com" />
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-6">
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">CPF / CNPJ</label>
+                                                    <div className="relative">
+                                                        <ShieldCheck className="absolute left-5 top-5 text-slate-300" size={20} />
+                                                        <input className="w-full pl-14 pr-6 py-5 bg-slate-50 dark:bg-slate-800 border-none rounded-3xl font-bold focus:ring-2 focus:ring-indigo-600/20 outline-none text-slate-800 dark:text-white transition-all" value={unifiedFormData.cpf_cnpj} onChange={e => setUnifiedFormData({ ...unifiedFormData, cpf_cnpj: maskCPF(e.target.value) })} placeholder="000.000.000-00" />
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Telefone</label>
+                                                    <input className="w-full px-6 py-5 bg-slate-50 dark:bg-slate-800 border-none rounded-3xl font-bold focus:ring-2 focus:ring-indigo-600/20 outline-none text-slate-800 dark:text-white transition-all" value={unifiedFormData.phone} onChange={e => setUnifiedFormData({ ...unifiedFormData, phone: maskPhone(e.target.value) })} placeholder="(00) 00000-0000" />
+                                                </div>
+                                            </div>
+
+                                            <div className="pt-4 space-y-6">
+                                                <div className="p-6 bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-800/50 rounded-3xl flex items-center justify-between group">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${unifiedFormData.isSystemUser ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-200 dark:bg-slate-700 text-slate-400'}`}>
+                                                            <Lock size={18} />
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-black text-slate-900 dark:text-white uppercase tracking-tight text-xs">Liberar Acesso ao Sistema</p>
+                                                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Transformar integrante em usuário</p>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setUnifiedFormData({ ...unifiedFormData, isSystemUser: !unifiedFormData.isSystemUser })}
+                                                        className={`w-12 h-7 rounded-full relative transition-all ${unifiedFormData.isSystemUser ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-700'}`}
+                                                    >
+                                                        <div className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow-md transition-all ${unifiedFormData.isSystemUser ? 'left-6' : 'left-1'}`} />
+                                                    </button>
+                                                </div>
+
+                                                {unifiedFormData.isSystemUser && (
+                                                    <div className="space-y-2 animate-in zoom-in-95 duration-300">
+                                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Senha Temporária</label>
+                                                        <div className="relative">
+                                                            <Lock className="absolute left-5 top-5 text-slate-300" size={20} />
+                                                            <input type="password" required={!editingMember} className="w-full pl-14 pr-6 py-5 bg-slate-50 dark:bg-slate-800 border-none rounded-3xl font-bold focus:ring-2 focus:ring-indigo-600/20 outline-none text-slate-800 dark:text-white transition-all" value={unifiedFormData.password} onChange={e => setUnifiedFormData({ ...unifiedFormData, password: e.target.value })} placeholder="••••••••" />
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     )}
+
+                                    {activeTab === 'professional' && (
+                                        <div className="space-y-6">
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Cargo / Função do Sistema</label>
+                                                <div className="relative">
+                                                    <Briefcase className="absolute left-5 top-5 text-slate-300" size={20} />
+                                                    <select
+                                                        className="w-full pl-14 pr-12 py-5 bg-slate-50 dark:bg-slate-800 border-none rounded-3xl font-bold focus:ring-2 focus:ring-indigo-600/20 outline-none text-slate-800 dark:text-white appearance-none cursor-pointer transition-all"
+                                                        value={unifiedFormData.role}
+                                                        onChange={e => {
+                                                            const roleValue = e.target.value;
+                                                            const selectedRole = roles.find(r => {
+                                                                const rValue = r.name && typeof r.name === 'object' ? r.name.pt : r.name;
+                                                                return rValue === roleValue;
+                                                            });
+                                                            setUnifiedFormData({
+                                                                ...unifiedFormData,
+                                                                role: roleValue,
+                                                                access_group_id: selectedRole?.access_group_id || unifiedFormData.access_group_id
+                                                            });
+                                                        }}
+                                                    >
+                                                        <option value="" disabled>Selecione o Cargo</option>
+                                                        {accessGroups.map(group => {
+                                                            const groupRoles = roles.filter(r => r.access_group_id === group.id);
+                                                            if (groupRoles.length === 0) return null;
+                                                            const gName = group.name && typeof group.name === 'object' ? (group.name[locale as keyof typeof group.name] || group.name.pt || '') : (group.name || '');
+                                                            return (
+                                                                <optgroup key={group.id} label={gName}>
+                                                                    {groupRoles.map(role => {
+                                                                        const rName = role.name && typeof role.name === 'object' ? (role.name[locale as keyof typeof role.name] || role.name.pt || '') : (role.name || '');
+                                                                        const rValue = role.name && typeof role.name === 'object' ? role.name.pt : role.name;
+                                                                        return <option key={role.id} value={rValue}>{rName}</option>;
+                                                                    })}
+                                                                </optgroup>
+                                                            );
+                                                        })}
+                                                    </select>
+                                                    <ChevronDown className="absolute right-5 top-6 text-slate-400 pointer-events-none" size={16} />
+                                                </div>
+                                            </div>
+
+                                            {unifiedFormData.isSystemUser && (
+                                                <div className="space-y-2 animate-in fade-in duration-500">
+                                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Grupo de Acesso (Automático)</label>
+                                                    <div className="relative">
+                                                        <Shield className="absolute left-5 top-5 text-indigo-400" size={20} />
+                                                        <div className="w-full pl-14 pr-6 py-5 bg-indigo-50/30 dark:bg-indigo-900/10 border border-indigo-100/50 dark:border-indigo-800/30 rounded-3xl font-bold text-slate-600 dark:text-slate-300">
+                                                            {(() => {
+                                                                const group = accessGroups.find(g => g.id === unifiedFormData.access_group_id);
+                                                                if (!group) return "Nenhum grupo vinculado ao cargo";
+                                                                return typeof group.name === 'object' ? (group.name[locale as keyof typeof group.name] || group.name.pt || '') : (group.name || '');
+                                                            })()}
+                                                        </div>
+                                                    </div>
+                                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest ml-2 italic">
+                                                        As permissões são definidas com base no Grupo de Acesso vinculado ao cargo selecionado.
+                                                    </p>
+                                                </div>
+                                            )}
+
+                                            <div className="grid grid-cols-2 gap-6">
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Especialidade</label>
+                                                    <div className="relative">
+                                                        <Package className="absolute left-5 top-5 text-slate-300" size={20} />
+                                                        <select className="w-full pl-14 pr-12 py-5 bg-slate-50 dark:bg-slate-800 border-none rounded-3xl font-bold focus:ring-2 focus:ring-indigo-600/20 outline-none text-slate-800 dark:text-white appearance-none cursor-pointer transition-all" value={unifiedFormData.specialty} onChange={e => setUnifiedFormData({ ...unifiedFormData, specialty: e.target.value })}>
+                                                            <option value="" disabled>Selecione a Especialidade</option>
+                                                            {['Cível', 'Trabalhista', 'Tributário', 'Penal', 'Previdenciário', 'Administrativo', 'Família e Sucessões', 'Empresarial', 'Imobiliário', 'Propriedade Intelectual', 'Ambiental', 'Digital / LGPD', 'Outros'].map(area => (<option key={area} value={area}>{area}</option>))}
+                                                        </select>
+                                                        <ChevronDown className="absolute right-5 top-6 text-slate-400 pointer-events-none" size={16} />
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Nº OAB</label>
+                                                    <div className="relative">
+                                                        <Shield className="absolute left-5 top-5 text-slate-300" size={20} />
+                                                        <input className="w-full pl-14 pr-6 py-5 bg-slate-50 dark:bg-slate-800 border-none rounded-3xl font-bold focus:ring-2 focus:ring-indigo-600/20 outline-none text-slate-800 dark:text-white transition-all" value={unifiedFormData.oab_number} onChange={e => setUnifiedFormData({ ...unifiedFormData, oab_number: e.target.value })} placeholder="Nº da Inscrição" />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-6">
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">UF OAB</label>
+                                                    <div className="relative">
+                                                        <select className="w-full px-6 py-5 bg-slate-50 dark:bg-slate-800 border-none rounded-3xl font-bold focus:ring-2 focus:ring-indigo-600/20 outline-none text-slate-800 dark:text-white appearance-none cursor-pointer transition-all" value={unifiedFormData.oab_uf} onChange={e => setUnifiedFormData({ ...unifiedFormData, oab_uf: e.target.value })}>
+                                                            <option value="" disabled>UF</option>
+                                                            {['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'].map(uf => (<option key={uf} value={uf}>{uf}</option>))}
+                                                        </select>
+                                                        <ChevronDown className="absolute right-5 top-6 text-slate-400 pointer-events-none" size={16} />
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Chave PIX</label>
+                                                    <input className="w-full px-6 py-5 bg-slate-50 dark:bg-slate-800 border-none rounded-3xl font-bold focus:ring-2 focus:ring-indigo-600/20 outline-none text-slate-800 dark:text-white transition-all" value={unifiedFormData.pix_key} onChange={e => setUnifiedFormData({ ...unifiedFormData, pix_key: e.target.value })} placeholder="Email, CPF ou Chave" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Observações Internas</label>
+                                        <textarea className="w-full px-6 py-5 bg-slate-50 dark:bg-slate-800 border-none rounded-3xl font-bold focus:ring-2 focus:ring-indigo-600/20 outline-none text-slate-800 dark:text-white transition-all min-h-[100px]" value={unifiedFormData.notes} onChange={e => setUnifiedFormData({ ...unifiedFormData, notes: e.target.value })} placeholder="Qualificações, notas, etc." />
+                                    </div>
                                 </div>
 
-                                <div className="flex gap-4 pt-6">
-                                    <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 px-8 py-5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-[1.5rem] font-black uppercase tracking-widest hover:bg-slate-200 transition-all text-xs">{t('management.users.modal.close')}</button>
-                                    <button type="submit" className="flex-[2] px-8 py-5 bg-indigo-600 text-white rounded-[1.5rem] font-black uppercase tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-600/30 transition-all text-xs">{editingUser ? t('management.users.modal.submitEdit') : t('management.users.modal.submitAdd')}</button>
+                                <div className="p-8 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex items-center justify-end gap-4 shrink-0">
+                                    <button type="button" onClick={() => setShowUnifiedModal(false)} className="px-8 py-4 text-slate-500 font-bold uppercase text-[10px] tracking-[0.2em] hover:text-slate-700 transition-all">Cancelar</button>
+                                    <button type="submit" disabled={isSaving} className="bg-indigo-600 text-white px-10 py-4 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] shadow-xl shadow-indigo-600/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-3 disabled:opacity-50">
+                                        {isSaving ? <><Radio className="animate-pulse" size={16} /> Salvando...</> : <><Zap size={16} /> Salvar Integrante</>}
+                                    </button>
                                 </div>
                             </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* Modal: Delete Member Confirmation */}
+            {
+                memberToDelete && (
+                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-6">
+                        <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-500" onClick={() => setMemberToDelete(null)} />
+                        <div className="relative bg-white dark:bg-slate-900 w-full max-w-md p-10 rounded-[3rem] shadow-2xl animate-in zoom-in-95 duration-300">
+                            <div className="w-20 h-20 bg-rose-50 dark:bg-rose-900/20 rounded-[2rem] flex items-center justify-center mb-8 mx-auto">
+                                <Trash2 size={40} className="text-rose-500" />
+                            </div>
+                            <h3 className="text-2xl font-black text-slate-800 dark:text-white text-center uppercase tracking-tighter mb-4">Excluir Membro?</h3>
+                            <p className="text-slate-500 dark:text-slate-400 text-center font-medium mb-10">Você está prestes a excluir <span className="text-slate-800 dark:text-white font-bold">{memberToDelete.full_name}</span>. Esta ação não pode ser desfeita.</p>
+                            <div className="grid grid-cols-2 gap-4">
+                                <button onClick={() => setMemberToDelete(null)} className="py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">Cancelar</button>
+                                <button onClick={handleDeleteMember} className="bg-rose-500 text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-rose-500/20 hover:scale-105 transition-all">Excluir</button>
+                            </div>
                         </div>
                     </div>
                 )
             }
 
-            {/* Modal: Delete Confirmation */}
+            {/* Modal: Delete Confirmation User */}
             {
                 userToDelete && (
-                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-md animate-in fade-in duration-300">
-                        <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[3rem] border border-slate-200 dark:border-slate-800 shadow-2xl p-12 text-center relative overflow-hidden">
-                            <div className="w-20 h-20 bg-rose-100 dark:bg-rose-900/30 rounded-3xl flex items-center justify-center text-rose-600 dark:text-rose-400 mx-auto mb-6">
-                                <ShieldAlert size={40} />
+                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-6">
+                        <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-500" onClick={() => setUserToDelete(null)} />
+                        <div className="relative bg-white dark:bg-slate-900 w-full max-w-md p-10 rounded-[3rem] shadow-2xl animate-in zoom-in-95 duration-300">
+                            <div className="w-20 h-20 bg-rose-50 dark:bg-rose-900/20 rounded-[2rem] flex items-center justify-center mb-8 mx-auto">
+                                <Trash2 size={40} className="text-rose-500" />
                             </div>
-                            <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-2 uppercase tracking-tighter">{t('management.users.delete.title')}</h2>
-                            <p className="text-sm text-slate-500 font-medium mb-10 leading-relaxed uppercase tracking-tight">
-                                {t('management.users.delete.message', {
-                                    name: typeof userToDelete.name === 'object' ? ((userToDelete.name as any)[locale] || (userToDelete.name as any).pt || '') : (userToDelete.name || '')
-                                })}
-                            </p>
-                            <div className="flex flex-col gap-3">
-                                <button onClick={handleDeleteUser} className="w-full bg-rose-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-rose-600/20 hover:bg-rose-700 transition-all text-xs">{t('management.users.delete.confirm')}</button>
-                                <button onClick={() => setUserToDelete(null)} className="w-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-200 transition-all text-xs">{t('management.users.delete.cancel')}</button>
+                            <h3 className="text-2xl font-black text-slate-800 dark:text-white text-center uppercase tracking-tighter mb-4">{t('management.users.modals.delete.title')}</h3>
+                            <p className="text-slate-500 dark:text-slate-400 text-center font-medium mb-10">{t('management.users.modals.delete.description', { name: typeof userToDelete.name === 'object' ? ((userToDelete.name as any).pt || '') : (userToDelete.name || '') })}</p>
+                            <div className="grid grid-cols-2 gap-4">
+                                <button onClick={() => setUserToDelete(null)} className="py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">{t('common.cancel')}</button>
+                                <button onClick={handleDeleteUser} className="bg-rose-500 text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-rose-500/20 hover:scale-105 transition-all">{t('common.delete')}</button>
                             </div>
                         </div>
                     </div>

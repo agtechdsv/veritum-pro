@@ -151,6 +151,7 @@ export interface Credentials {
     supabaseUrl: string;
     supabaseAnonKey: string;
     geminiKey: string;
+    dbConnectionString?: string; // For Drizzle/Postgres/Oracle/etc
 }
 
 export type UserRole = 'Master' | 'Administrador' | 'Sócio-Administrador' | 'Sócio Administrador' | 'Operador' |
@@ -181,6 +182,7 @@ export interface User {
     vip_active?: boolean;
     vip_points?: number;
     vip_code?: string;
+    billing_cycle?: string;
 }
 
 export interface Role {
@@ -262,6 +264,7 @@ export interface Lawsuit {
     chamber?: string;
     city?: string;
     state?: string;
+    rito?: string;
     value: number;
 }
 
@@ -274,11 +277,11 @@ export interface Person {
     email?: string;
     phone?: string;
     rg?: string;
+    ctps?: string;
+    pis?: string;
     legal_data?: {
         marital_status?: string;
         profession?: string;
-        ctps?: string;
-        pis?: string;
         history?: string;
     };
     address?: {
@@ -428,6 +431,26 @@ export interface Organization {
     address_city?: string;
     address_state?: string;
     logo_url?: string;
+    created_at?: string;
+    updated_at?: string;
+}
+
+export interface TeamMember {
+    id: string;
+    full_name: string;
+    cpf?: string;
+    email: string;
+    phone?: string;
+    role?: string;
+    specialty?: string;
+    oab_number?: string;
+    oab_uf?: string;
+    city?: string;
+    state?: string;
+    pix_key?: string;
+    notes?: string;
+    is_active: boolean;
+    workspace_id?: string;
     created_at?: string;
     updated_at?: string;
 }

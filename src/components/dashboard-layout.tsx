@@ -168,10 +168,9 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
 
     const adminItems = [
         { id: ModuleId.USERS, label: t('management.users.menu'), icon: Users, color: 'text-slate-500' },
-        { id: ModuleId.PERSONS, label: t('management.master.persons.menu'), icon: UserIcon, color: 'text-emerald-600' },
         { id: ModuleId.ACCESS_GROUPS, label: t('management.access.menu'), icon: Shield, color: 'text-indigo-600' },
         { id: ModuleId.SETTINGS, label: t('management.settings.menu'), icon: Settings, color: 'text-slate-500' },
-        { id: ModuleId.INFRA, label: 'Infraestrutura', icon: Server, color: 'text-slate-500' },
+        { id: ModuleId.INFRA, label: t('management.settings.tabs.infra'), icon: Server, color: 'text-slate-500' },
     ];
 
     const masterItems = [
@@ -179,9 +178,9 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
         { id: ModuleId.PLANS, label: t('management.master.plans.menu'), icon: DollarSign, color: 'text-indigo-500' },
         { id: ModuleId.SCHEDULING, label: t('management.master.scheduling.menu'), icon: CalendarIcon, color: 'text-rose-500' },
         { id: ModuleId.EMAIL_CONFIG, label: t('management.master.email.menu'), icon: Mail, color: 'text-cyan-500' },
-        { id: ModuleId.FINTECH, label: 'Gestão Fintech', icon: CreditCard, color: 'text-emerald-500' },
-        { id: ModuleId.CLOUD_CONFIG, label: 'Gestão de Cloud / Add-Ons', icon: Cloud, color: 'text-cyan-400' },
-        { id: ModuleId.VIP_MANAGEMENT, label: 'Gestão Clube VIP', icon: Crown, color: 'text-amber-500' },
+        { id: ModuleId.FINTECH, label: t('management.master.fintech.menu'), icon: CreditCard, color: 'text-emerald-500' },
+        { id: ModuleId.CLOUD_CONFIG, label: t('management.master.cloud.menu'), icon: Cloud, color: 'text-cyan-400' },
+        { id: ModuleId.VIP_MANAGEMENT, label: t('management.master.vip.menu'), icon: Crown, color: 'text-amber-500' },
     ];
 
     // PLAN PERMISSIONS FILTER: Only for non-Master users + Intern Safety (RBAC)
@@ -251,8 +250,8 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
         }).map(bs => ({ ...bs, isLocked: false }));
 
     const filteredAdminItems = adminItems.filter(item => {
-        if (item.id === ModuleId.USERS || item.id === ModuleId.PERSONS) {
-            // USERS & PERSONS (CRM): Visible for Master, Admins, and Sócio-Administradores
+        if (item.id === ModuleId.USERS) {
+            // USERS: Visible for Master, Admins, and Sócio-Administradores
             return isAdmin;
         }
         // ACCESS_GROUPS, SETTINGS, INFRA: Restricted to SuperAdmin (Sócio-Administrativo group)
@@ -358,7 +357,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
             <ToastContainer />
             {/* Sidebar */}
             <aside className={`bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transition-all duration-300 flex flex-col z-50 ${isSidebarOpen ? 'w-64' : 'w-20'}`}>
-                <Tooltip content="Voltar ao Início" enabled={true}>
+                <Tooltip content={t('common.backToHome')} enabled={true}>
                     <Link href="/" className="p-6 flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all cursor-pointer">
                         <Logo />
                         <AnimatePresence>
@@ -436,55 +435,59 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                         ))}
                     </div>
 
-                    {/* Debossed Separator Line */}
-                    <div className="mx-2 my-2 transition-all">
-                        <div className="h-px bg-slate-200 dark:bg-slate-800 shadow-[0_1px_0_0_rgba(255,255,255,1)] dark:shadow-[0_1px_0_0_rgba(255,255,255,0.02)]" />
-                    </div>
-
                     {/* Administração Group */}
-                    <div className="space-y-1">
-                        <AnimatePresence>
-                            {isSidebarOpen && (
-                                <motion.button
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0 }}
-                                    onClick={() => onModuleChange(ModuleId.DASHBOARD_ADMIN)}
-                                    className="group flex items-center gap-2 px-3 mb-2 w-full text-left cursor-pointer overflow-hidden"
-                                >
-                                    <div className={`w-1 h-3 rounded-full transition-all ${normalize(activeModule).includes('dashboard_admin') || filteredAdminItems.some(i => i.id === activeModule) ? 'bg-indigo-600 h-5' : 'bg-slate-300 group-hover:bg-indigo-400'}`} />
-                                    <h3 className={`text-[10px] font-black uppercase tracking-widest transition-colors whitespace-nowrap ${normalize(activeModule).includes('dashboard_admin') || filteredAdminItems.some(i => i.id === activeModule) ? 'text-indigo-600' : 'text-slate-400 group-hover:text-slate-600'}`}>{t('dashboard.groups.admin.title')}</h3>
-                                </motion.button>
-                            )}
-                        </AnimatePresence>
-                        {filteredAdminItems.map((item) => (
-                            <Tooltip key={item.id} content={item.label} enabled={!isSidebarOpen}>
-                                <Link
-                                    key={item.id}
-                                    href={`/veritum/${normalize(item.id)}`}
-                                    className={`w-full flex items-center gap-3 py-2 px-3 rounded-xl transition-all duration-200 cursor-pointer ${normalize(activeModule) === normalize(item.id)
-                                        ? 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white font-bold'
-                                        : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
-                                        }`}
-                                >
-                                    <item.icon size={20} className={normalize(activeModule) === normalize(item.id) ? 'text-indigo-600' : 'text-slate-400 dark:text-slate-500'} />
-                                    <AnimatePresence>
-                                        {isSidebarOpen && (
-                                            <motion.span
-                                                initial={{ opacity: 0, width: 0 }}
-                                                animate={{ opacity: 1, width: 'auto' }}
-                                                exit={{ opacity: 0, width: 0 }}
-                                                transition={{ duration: 0.2 }}
-                                                className="text-sm whitespace-nowrap overflow-hidden"
-                                            >
-                                                {item.label}
-                                            </motion.span>
-                                        )}
-                                    </AnimatePresence>
-                                </Link>
-                            </Tooltip>
-                        ))}
-                    </div>
+                    {filteredAdminItems.length > 0 && (
+                        <>
+                            {/* Debossed Separator Line */}
+                            <div className="mx-2 my-2 transition-all">
+                                <div className="h-px bg-slate-200 dark:bg-slate-800 shadow-[0_1px_0_0_rgba(255,255,255,1)] dark:shadow-[0_1px_0_0_rgba(255,255,255,0.02)]" />
+                            </div>
+
+                            <div className="space-y-1">
+                                <AnimatePresence>
+                                    {isSidebarOpen && (
+                                        <motion.button
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            exit={{ opacity: 0 }}
+                                            onClick={() => onModuleChange(ModuleId.DASHBOARD_ADMIN)}
+                                            className="group flex items-center gap-2 px-3 mb-2 w-full text-left cursor-pointer overflow-hidden"
+                                        >
+                                            <div className={`w-1 h-3 rounded-full transition-all ${normalize(activeModule).includes('dashboard_admin') || filteredAdminItems.some(i => i.id === activeModule) ? 'bg-indigo-600 h-5' : 'bg-slate-300 group-hover:bg-indigo-400'}`} />
+                                            <h3 className={`text-[10px] font-black uppercase tracking-widest transition-colors whitespace-nowrap ${normalize(activeModule).includes('dashboard_admin') || filteredAdminItems.some(i => i.id === activeModule) ? 'text-indigo-600' : 'text-slate-400 group-hover:text-slate-600'}`}>{t('dashboard.groups.admin.title')}</h3>
+                                        </motion.button>
+                                    )}
+                                </AnimatePresence>
+                                {filteredAdminItems.map((item) => (
+                                    <Tooltip key={item.id} content={item.label} enabled={!isSidebarOpen}>
+                                        <Link
+                                            key={item.id}
+                                            href={`/veritum/${normalize(item.id)}`}
+                                            className={`w-full flex items-center gap-3 py-2 px-3 rounded-xl transition-all duration-200 cursor-pointer ${normalize(activeModule) === normalize(item.id)
+                                                ? 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white font-bold'
+                                                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                                                }`}
+                                        >
+                                            <item.icon size={20} className={normalize(activeModule) === normalize(item.id) ? 'text-indigo-600' : 'text-slate-400 dark:text-slate-500'} />
+                                            <AnimatePresence>
+                                                {isSidebarOpen && (
+                                                    <motion.span
+                                                        initial={{ opacity: 0, width: 0 }}
+                                                        animate={{ opacity: 1, width: 'auto' }}
+                                                        exit={{ opacity: 0, width: 0 }}
+                                                        transition={{ duration: 0.2 }}
+                                                        className="text-sm whitespace-nowrap overflow-hidden"
+                                                    >
+                                                        {item.label}
+                                                    </motion.span>
+                                                )}
+                                            </AnimatePresence>
+                                        </Link>
+                                    </Tooltip>
+                                ))}
+                            </div>
+                        </>
+                    )}
 
                     {/* Master Group */}
                     {user.role === 'Master' && (
@@ -540,29 +543,23 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
 
                 {/* 💎 CURRENT PLAN DISPLAY */}
                 <div className="px-4 pb-6">
-                    <Tooltip content="Fazer Upgrade Assinatura" enabled={!isSidebarOpen} side="right">
+                    <Tooltip content={isSuperAdmin ? "Fazer Upgrade Assinatura" : "Seu Plano Atual"} enabled={!isSidebarOpen} side="right">
                         <div
-                            className={`p-3 rounded-2xl border transition-all flex flex-col gap-3 ${isSidebarOpen ? 'bg-gradient-to-br from-indigo-50 to-indigo-100/50 dark:from-indigo-900/20 dark:to-indigo-900/10 border-indigo-200/50 dark:border-indigo-800/50 hover:border-indigo-300 dark:hover:border-indigo-700' : 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-100 dark:border-indigo-800/50 justify-center items-center'}`}
+                            onClick={() => {
+                                if (isSuperAdmin) {
+                                    setCheckoutData({ type: 'plan', planName: (typeof user.plan_name === 'object' ? ((user.plan_name as any).pt || (user.plan_name as any).en || 'Pro') : (user.plan_name || 'Pro')) });
+                                    setIsCheckoutOpen(true);
+                                }
+                            }}
+                            className={`p-3 rounded-2xl border transition-all flex flex-col gap-3 ${isSidebarOpen ? 'bg-gradient-to-br from-indigo-50 to-indigo-100/50 dark:from-indigo-900/20 dark:to-indigo-900/10 border-indigo-200/50 dark:border-indigo-800/50 hover:border-indigo-300 dark:hover:border-indigo-700' : 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-100 dark:border-indigo-800/50 justify-center items-center'} ${isSuperAdmin ? 'cursor-pointer' : 'cursor-default'}`}
                         >
-                            <div className="flex items-center gap-3 w-full"
-                                onClick={() => {
-                                    if (!isSidebarOpen) {
-                                        if (isSuperAdmin) {
-                                            setCheckoutData({ type: 'plan', planName: (typeof user.plan_name === 'object' ? ((user.plan_name as any).pt || (user.plan_name as any).en || 'Pro') : (user.plan_name || 'Pro')) });
-                                            setIsCheckoutOpen(true);
-                                        } else {
-                                            toast.error('Acesso restrito. Apenas administradores podem gerenciar o plano.');
-                                        }
-                                    }
-                                }}
-                                style={{ cursor: !isSidebarOpen ? 'pointer' : 'default' }}
-                            >
+                            <div className="flex items-center gap-3 w-full">
                                 <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-indigo-600/20 hover:scale-105 transition-transform">
                                     <Crown size={16} className="text-amber-300" />
                                 </div>
                                 {isSidebarOpen && (
                                     <div className="flex flex-col overflow-hidden flex-1">
-                                        <span className="text-[9px] font-black uppercase tracking-widest text-indigo-400 dark:text-indigo-500 mb-0.5">Meu Plano</span>
+                                        <span className="text-[9px] font-black uppercase tracking-widest text-indigo-400 dark:text-indigo-500 mb-0.5">{t('dashboard.myPlan')}</span>
                                         <span className="text-xs font-black text-indigo-900 dark:text-indigo-100 truncate w-full">
                                             {typeof user.plan_name === 'object' ? ((user.plan_name as any)[locale] || (user.plan_name as any).pt || 'Carregando...') : (user.plan_name || 'Carregando...')}
                                         </span>
@@ -570,21 +567,11 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                 )}
                             </div>
 
-                            {isSidebarOpen && (
+                            {isSidebarOpen && isSuperAdmin && (
                                 <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        if (isSuperAdmin) {
-                                            const normalizedName = typeof user.plan_name === 'object' ? ((user.plan_name as any).pt || (user.plan_name as any).en || 'START') : (user.plan_name || 'START');
-                                            setCheckoutData({ type: 'plan', planName: normalizedName });
-                                            setIsCheckoutOpen(true);
-                                        } else {
-                                            toast.error('Acesso restrito. Apenas administradores podem gerenciar o plano.');
-                                        }
-                                    }}
                                     className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white text-[10px] font-black uppercase tracking-wider rounded-xl transition-all shadow-md shadow-indigo-600/20 active:scale-95 flex items-center justify-center gap-2 mt-1"
                                 >
-                                    Fazer Upgrade <ChevronRight size={12} strokeWidth={3} />
+                                    {t('management.settings.plan.upgrade')} <ChevronRight size={12} strokeWidth={3} />
                                 </button>
                             )}
                         </div>
@@ -593,10 +580,20 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
 
                 {/* VIP MENU ITEM (BOTTOM SIDEBAR) */}
                 <div className="px-4 pb-6 mt-auto">
-                    <Tooltip content="Seu Programa de Recompensas" enabled={!isSidebarOpen} side="right">
-                        <Link
-                            href="/veritum/settings?tab=vip"
-                            className={`flex flex-col gap-1 p-3 rounded-2xl border transition-all ${isSidebarOpen ? 'bg-gradient-to-r from-amber-500/10 to-orange-500/10 border-amber-500/30 hover:border-amber-500/50' : 'bg-amber-500/10 border-amber-500/30 justify-center items-center hover:bg-amber-500/20'}`}
+                    <Tooltip content={isSuperAdmin ? t('clubeVip.hero.ctaLearn') : t('clubeVip.exclusiveInvite')} enabled={!isSidebarOpen} side="right">
+                        <div
+                            onClick={(e) => {
+                                if (isSuperAdmin) {
+                                    onModuleChange(ModuleId.SETTINGS);
+                                    // Add a small delay to allow settings to load before switching tab
+                                    setTimeout(() => {
+                                        const url = new URL(window.location.href);
+                                        url.searchParams.set('tab', 'vip');
+                                        window.history.replaceState({}, '', url);
+                                    }, 100);
+                                }
+                            }}
+                            className={`flex flex-col gap-1 p-3 rounded-2xl border transition-all ${isSuperAdmin ? 'cursor-pointer' : 'cursor-default'} ${isSidebarOpen ? 'bg-gradient-to-r from-amber-500/10 to-orange-500/10 border-amber-500/30 hover:border-amber-500/50' : 'bg-amber-500/10 border-amber-500/30 justify-center items-center hover:bg-amber-500/20'}`}
                         >
                             <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-amber-500/20">
@@ -604,18 +601,20 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                 </div>
                                 {isSidebarOpen && (
                                     <div className="flex flex-col">
-                                        <span className="text-xs font-black text-amber-600 dark:text-amber-500 uppercase tracking-tighter">Clube VIP</span>
-                                        <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">{user.vip_active ? `${user.vip_points || 0} Pontos` : 'Ativar Agora'}</span>
+                                        <span className="text-xs font-black text-amber-600 dark:text-amber-500 uppercase tracking-tighter">{t('management.settings.tabs.vip')}</span>
+                                        <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">
+                                            {(user.vip_points || 0) > 0 ? t('dashboard.vipPoints', { count: user.vip_points || 0 }) : (isSuperAdmin ? t('dashboard.activateNow') : t('dashboard.activeProgram'))}
+                                        </span>
                                     </div>
                                 )}
                             </div>
-                        </Link>
+                        </div>
                     </Tooltip>
                 </div>
-            </aside>
+            </aside >
 
             {/* Main Content Area */}
-            <main className="flex-1 flex flex-col overflow-hidden relative transition-colors duration-300">
+            < main className="flex-1 flex flex-col overflow-hidden relative transition-colors duration-300" >
                 <header className="h-20 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8 z-40 transition-colors">
                     <div className="flex items-center gap-4">
                         <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all text-slate-500 dark:text-slate-400 cursor-pointer">
@@ -797,7 +796,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                     onClose={() => setIsCheckoutOpen(false)}
                     {...checkoutData}
                 />
-            </main>
+            </main >
         </div >
     );
 };

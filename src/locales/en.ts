@@ -173,6 +173,41 @@ export const en = {
             },
             label: 'Sentinel'
         },
+        intelligence: {
+            label: 'Intelligence Hub',
+            title: 'INTELLIGENCE HUB',
+            subtitle: 'Proactive Insights & Legal Opportunities',
+            description: 'Strategic insights and proactive legal opportunities. The brain of the ecosystem. Centralize AI processing, connect external APIs, and automate complex workflows across all modules.',
+            filters: {
+                all: 'All',
+                unread: 'New',
+                actioned: 'Processed'
+            },
+            stats: {
+                total: 'Total Intelligence',
+                alertsMonth: 'Alerts generated this month',
+                pending: 'Pending Actions',
+                conversion: 'Conversion Rate'
+            },
+            loading: 'Syncing Intelligence...',
+            empty: {
+                title: 'No Golden Alerts',
+                desc: 'Monitor more terms in Sentinel PRO to generate insights.'
+            },
+            card: {
+                impact: 'Impact',
+                detectedVia: 'Detected via',
+                noContent: 'No content available',
+                reasoning: 'AI Strategic Reasoning',
+                thesis: 'Related Thesis',
+                internalKnowledge: 'Internal Knowledge',
+                capturedAt: 'Captured on',
+                createPetition: 'Create Petition',
+                validate: 'Validate',
+                ignore: 'Ignore',
+                newLabel: 'New'
+            }
+        },
         nexus: {
             label: 'Nexus',
             title: 'NEXUS PRO',
@@ -209,6 +244,7 @@ export const en = {
             modals: {
                 lawsuit: {
                     title: 'Case Registration',
+                    titleEdit: 'Edit Case',
                     subtitle: 'Relational linking for Sentinel PRO automation.',
                     labelCnj: 'Case Number (CNJ - Strict)',
                     placeholderCnj: '0000000-00.0000.0.00.0000',
@@ -221,8 +257,18 @@ export const en = {
                     advancedHide: 'Hide Advanced Fields',
                     labelLawyer: 'Responsible Lawyer',
                     selectTeam: 'Select from Team...',
+                    labelCourt: 'Court (Tribunal)',
+                    placeholderCourt: 'Ex: TRT-2, District Court',
+                    labelChamber: 'Chamber / Room',
+                    placeholderChamber: 'Ex: 12th Labor Court',
+                    labelCity: 'City / District',
+                    placeholderCity: 'Ex: New York',
+                    labelState: 'State (UF)',
+                    placeholderState: 'Ex: NY',
                     labelSphere: 'Sphere',
                     placeholderSphere: 'Ex: Labor',
+                    labelRito: 'Procedural Rite',
+                    placeholderRito: 'Ex: Summary, Ordinary',
                     labelValue: 'Case Value ($)',
                     placeholderValue: '0.00',
                     cancel: 'Cancel',
@@ -251,38 +297,161 @@ export const en = {
                     cancel: 'Cancel',
                     save: 'Create Task'
                 }
+            },
+            tabs: {
+                people: 'People',
+                processes: 'Cases',
+                tasks: 'Tasks',
+                calendar: 'Calendar',
+                assets: 'Assets',
+                corporate: 'Corporate'
+            },
+            empty: {
+                processes: 'No processes found.',
+                tasks: 'No tasks found.',
+                syncing: 'Syncing processes...'
+            },
+            comingSoon: {
+                title: 'Coming Soon to Nexus Pro',
+                assetsSubtitle: 'Total control of your assets and procedural guarantees will come here.',
+                corporateSubtitle: 'Corporate management and long-term contracts will be centralized here.'
             }
         },
         scriptor: {
             label: 'Scriptor',
             title: 'SCRIPTOR PRO',
-            subtitle: 'Document Automation & AI Legal Writing',
-            description: 'Transform the writing process with dynamic templates and AI-powered assistance for complex petitions, contracts, and technical legal opinions.'
+            subtitle: 'AI-Augmented Legal Writing',
+            description: 'Produce petitions, contracts, and legal opinions in seconds with GenAI trained in a legal context.',
+            saving: 'Saving...',
+            synced: 'Synced',
+            saveError: 'Save Error',
+            newDocument: 'New Document',
+            nexusContext: 'Nexus Context',
+            noProcessLink: 'No case link',
+            draftInstruction: 'Draft Instruction',
+            draftPlaceholder: 'Describe what you want to write...',
+            generateAI: 'Generate via AI',
+            library: 'Library',
+            docTitlePlaceholder: 'Document Title',
+            editorPlaceholder: 'The petition starts here...',
+            history: 'History'
         },
         valorem: {
             label: 'Valorem',
             title: 'VALOREM PRO',
-            subtitle: 'Financial Management & Fee Control',
-            description: 'Master your firm\'s cash flow. Fee management, cost control, automated billing, and profitability reports per case.'
+            subtitle: 'Financial Controller',
+            description: 'Precise fee management and judicial calculations',
+            newTransaction: 'New Subaccount',
+            masterContext: 'Master Context',
+            selectClient: 'Select Client',
+            clientPlaceholder: '--- Select a Client ---',
+            clientGroup: 'CLIENTS (ADMIN PARTNERS)',
+            stats: {
+                balance: 'Cash Balance',
+                income: 'Revenue (Total)',
+                pending: 'Account Receivable',
+                expense: 'Expenses'
+            },
+            chart: {
+                title: 'Cash Flow',
+                fullReports: 'View Full Reports'
+            },
+            list: {
+                title: 'Recent Entries',
+                searchPlaceholder: 'Search transactions...',
+                date: 'Date',
+                description: 'Entry',
+                status: 'Status',
+                value: 'Value',
+                loading: 'Reconciling data...',
+                empty: 'No entries found.'
+            },
+            sidebar: {
+                efficiency: 'Collection Efficiency',
+                efficiencyNote: 'Your collection rate is above the market average (85%). Keep it up!',
+                categoryDivision: 'Division by Category',
+                categories: {
+                    fees: 'Fees',
+                    operational: 'Operational',
+                    costs: 'Costs'
+                }
+            },
+            drawer: {
+                title: 'New Subaccount',
+                subtitle: 'Financial Intelligence Management',
+                income: 'Income',
+                expense: 'Expense',
+                labelDescription: 'Description / Title',
+                placeholderDescription: 'Ex: Fees - Case 001/24',
+                labelAmount: 'Value (BRL)',
+                labelStatus: 'Status',
+                labelLawsuit: 'Nexus Process',
+                placeholderLawsuit: 'Not linked to a process',
+                labelPerson: 'Person / Client',
+                placeholderPerson: 'Not linked to a person',
+                save: 'Process Subaccount',
+                statuses: {
+                    pending: 'Pending Payment',
+                    paid: 'Cleared / Paid',
+                    canceled: 'Canceled / Reversed'
+                }
+            }
         },
         cognitio: {
             label: 'Cognitio',
             title: 'COGNITIO PRO',
-            subtitle: 'Advanced Jurimetrics & Data Intelligence',
-            description: 'Fact-based decisions, not intuition. Analyze judicial trends, judge profiles, and success probabilities with structured data.'
+            subtitle: 'Legal Intelligence & Knowledge Base',
+            description: 'Fact-based decisions, not intuition. Analyze judicial trends, judge profiles, and success probabilities with structured data.',
+            newArticle: 'New Thesis / Article',
+            predictionEngine: {
+                title: 'Predictive Analysis Engine',
+                header: 'Anticipate the case outcome with precision.',
+                placeholder: 'Ex: Civil Court of New York, Judge Robert Smith, Child Support...',
+                button: 'Generate AI Prediction',
+                result: 'Estimated Outcome',
+                chanceLabel: 'chance',
+                waiting: 'Waiting for input data...',
+                judgeHistory: 'Judge History'
+            },
+            library: {
+                title: 'Thesis & Jurisprudence Library',
+                items: 'Items',
+                searchPlaceholder: 'Search by term or keywords...',
+                empty: 'No thesis found',
+                readFull: 'Read Full',
+                author: 'Veritum Team'
+            },
+            modal: {
+                title: 'Knowledge Management',
+                subtitle: 'Register new theses, jurisprudence, and study notes.',
+                labelTitle: 'Thesis / Article Title',
+                placeholderTitle: 'Clear and objective title...',
+                labelCategory: 'Legal Category',
+                placeholderCategory: 'Ex: Civil Law',
+                labelTags: 'Tags (comma separated)',
+                placeholderTags: 'Supreme Court, Appeal, Civil...',
+                labelContent: 'Legal Content',
+                placeholderContent: 'Develop the legal reasoning here...',
+                discard: 'Discard',
+                save: 'Save Knowledge'
+            }
         },
         vox: {
             label: 'Vox Clientis',
             title: 'VOX CLIENTIS PRO',
             subtitle: 'Customer Experience & Legal CRM',
-            description: 'Raise the bar for service. Client portal, automated communication workflows, and relationship management for loyalty and transparency.'
+            description: 'Raise the bar for service. Client portal, automated communication workflows, and relationship management for loyalty and transparency.',
+            syncing: 'Syncing chats...',
+            waiting: 'Waiting for interaction...',
+            activePortal: 'Active Portal',
+            nexusLink: 'Nexus Link',
+            emptyMessages: 'No messages yet',
+            emptyPrompt: 'Start the service by clicking below.',
+            translating: 'Translating...',
+            voxLegal: 'VOX LEGAL (AI)',
+            voxLegalNote: 'Vox Legal simplifies legalese for the client.',
+            placeholder: 'Write your operational or legal message...'
         },
-        intelligence: {
-            label: 'Intelligence Hub',
-            title: 'INTELLIGENCE HUB',
-            subtitle: 'AI Orchestration & Global Integrations',
-            description: 'The brain of the ecosystem. Centralize AI processing, connect external APIs, and automate complex workflows across all modules.'
-        }
     },
     pricing: {
         title: 'Plans that keep up with your growth.',
@@ -319,6 +488,10 @@ export const en = {
         adminSubtitle: 'Access control and ecosystem settings.',
         masterTitle: 'Master Panel',
         masterSubtitle: 'Structural settings of modules and commercial plans.',
+        myPlan: 'My Plan',
+        vipPoints: '{count} Points',
+        activateNow: 'Activate Now',
+        activeProgram: 'Active Program',
         groups: {
             modules: {
                 title: 'Modules',
@@ -448,7 +621,12 @@ export const en = {
             allAdmins: 'All Administrators',
             masterFilter: {
                 self: 'Master (My Users)',
-                clients: 'Private Partner-Administrators'
+                clients: 'Private Partner-Administrators',
+                selectClient: 'Select a Client'
+            },
+            tabs: {
+                team: 'Team Members',
+                users: 'System Users'
             },
             table: {
                 member: 'Member',
@@ -569,7 +747,11 @@ export const en = {
                 toggleAll: 'Toggle All',
                 planRestriction: 'Current plan does not have access to this feature.',
                 save: 'Save Group and Permissions',
-                close: 'Close'
+                close: 'Close',
+                tabs: {
+                    identification: 'Identification',
+                    permissions: 'Permissions'
+                }
             },
             roleModal: {
                 addTitle: 'New Role',
@@ -616,7 +798,9 @@ export const en = {
                 cancel: 'Cancel Subscription'
             },
             infra: {
-                title: 'Bring Your Own Database (BYODB)',
+                title: 'Connectivity Gateway',
+                subtitle: 'Enterprise Settings & BYODB',
+                syncData: 'Private Data Synchronization',
                 save: 'Save Infra',
                 urlLabel: 'Custom Supabase URL',
                 keyLabel: 'Custom Supabase Key',
@@ -626,7 +810,47 @@ export const en = {
                 geminiPlaceholder: 'AIzaSyB...',
                 privacyTitle: 'Guaranteed Privacy',
                 privacyDesc: 'By using BYODB, your client data, processes and billing never leave your own Supabase server.',
-                restricted: 'Access restricted to Partner-Administrators.'
+                restricted: 'Access restricted to Partner-Administrators.',
+                deleteConfig: 'Delete Settings',
+                deleteConfirmTitle: 'Delete?',
+                deleteConfirmMessage: 'This will remove your custom keys and return to the system default. Are you sure?',
+                loading: 'Loading Infra Ecosystem...',
+                providerLabel: 'Database Provider',
+                saving: 'Saving...'
+            },
+            vip: {
+                title: 'Veritum VIP Club',
+                panelTitle: 'Ambassador Dashboard',
+                panelSubtitle: 'Active Benefits',
+                intro1: 'You are part of the high-performance law firms group.',
+                intro2: 'Activate your VIP profile for free to claim your exclusive mailbox (@veritumpro.com) and generate your ambassador link. For each colleague who subscribes to the platform through your link, you earn VIP Points (1 Point = 1% OFF). Accumulate 100 points to zero out your subscription and save excess balances for the following months.',
+                activateBtn: 'Activate VIP Benefits',
+                successActivate: 'VIP Club Activated Successfully!',
+                copySuccess: 'Link copied to clipboard!',
+                accessTitle: 'Your Accesses',
+                mailboxActive: 'Your VIP mailbox is active! Access at:',
+                accessWebmail: 'Access Webmail',
+                mailboxRestricted: 'The @veritumpro.com custom mailbox is an exclusive benefit for Growth or Strategy plan subscribers (Semi-annual or Annual).',
+                planBlocked: 'Blocked in your Plan',
+                referralTitle: 'Your Referral Link',
+                referralDesc: 'Share the link below with your professional colleagues or ask them to enter your code at checkout.',
+                referralTip: 'Invitations that result in Annual subscriptions multiply your points quickly!',
+                yourCode: 'Your Code:',
+                discountDashboard: 'Discount Dashboard',
+                goal: 'Your Goal: 100 VIP Points (Zero Subscription)',
+                pointsTarget: '100 Points',
+                offReached: '100% OFF REACHED 🎉',
+                pointsCycle: 'Points In This Cycle',
+                discountRenewal: 'Renewal Discount',
+                extraBalance: 'Extra Balance (Next Cycle)',
+                referralExtract: 'Referral Statement',
+                extractDesc: 'See where your points came from',
+                noReferrals: 'No confirmed referrals yet.',
+                confirmed: 'Confirmed',
+                pending: 'Pending',
+                points: 'Points',
+                updateDetected: 'VIP Club: Update detected!',
+                pointsUpdated: 'Your VIP Points have been updated!'
             },
             toast: {
                 saveSuccess: 'Infrastructure settings saved!',
@@ -712,6 +936,9 @@ export const en = {
             }
         },
         master: {
+            fintech: { menu: 'Fintech Management' },
+            cloud: { menu: 'Cloud / Add-Ons Management' },
+            vip: { menu: 'VIP Club Management' },
             translate: {
                 success: 'Success!',
                 error: 'Error setting translation'
@@ -1082,6 +1309,8 @@ export const en = {
                         state: 'State',
                         maritalStatus: 'Marital Status',
                         profession: 'Profession',
+                        ctps: 'Labor ID (CTPS)',
+                        pis: 'Social Security ID (PIS)',
                         history: 'History of Roles / Notes',
                         historyPlaceholder: 'Relevant details for labor/civil processes...'
                     },

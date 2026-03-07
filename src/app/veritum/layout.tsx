@@ -63,22 +63,22 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
         }
 
         // 1. Parallelize initial critical data fetching
-        const [profileRes, balanceRes, referralsRes] = await Promise.all([
+        const [profileRes, referralsRes, subRes] = await Promise.all([
             supabaseClient
                 .from('users')
                 .select('*, access_groups(name), plans:plan_id(name)')
                 .eq('id', authUser.id)
                 .single(),
             supabaseClient
-                .from('user_vip_balance')
-                .select('total_points')
-                .eq('user_id', authUser.id)
-                .maybeSingle(),
-            supabaseClient
                 .from('user_referrals')
                 .select('points_generated')
                 .eq('referrer_id', authUser.id)
-                .eq('status', 'confirmed')
+                .eq('status', 'confirmed'),
+            supabaseClient
+                .from('user_subscriptions')
+                .select('billing_cycle')
+                .eq('user_id', authUser.id)
+                .maybeSingle()
         ]);
 
 
@@ -101,6 +101,26 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
 
         // 3. Process Profile Data
         const profileData = (profile || {}) as any;
+
+        // 3.1 Fetch Parent Data for inheritance (Points and Plan)
+        let parentData: any = null;
+        if (profileData?.parent_user_id) {
+            const { data } = await supabaseClient
+                .from('users')
+                .select('vip_points, plan_id, plans:plan_id(name)')
+                .eq('id', profileData.parent_user_id)
+                .single();
+            parentData = data;
+        }
+
+        // 3.2 Fetch VIP Balance (Considering Parent for child users)
+        const vipOwnerId = profileData?.parent_user_id || authUser.id;
+        const { data: balanceRes } = await supabaseClient
+            .from('user_vip_balance')
+            .select('total_points')
+            .eq('user_id', vipOwnerId)
+            .maybeSingle();
+
         const firstGroup = Array.isArray(profileData?.access_groups) ? profileData.access_groups[0] : profileData?.access_groups;
         const accessGroupNameRaw = typeof firstGroup?.name === 'object' ? (firstGroup.name.pt || firstGroup.name.en || '') : (firstGroup?.name || '');
         const accessGroupNameTranslated = typeof firstGroup?.name === 'object' ? (firstGroup.name[locale] || accessGroupNameRaw) : accessGroupNameRaw;
@@ -121,14 +141,16 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
 
         const confirmedPoints = (referralsRes?.data || []).reduce((sum: number, r: any) => sum + (r.points_generated || 0), 0);
         const finalVipPoints = Math.max(
-            balanceRes?.data?.total_points || 0,
+            balanceRes?.total_points || 0,
             profileData?.vip_points || 0,
+            parentData?.vip_points || 0,
             confirmedPoints
         );
 
-        console.log(`[Layout] User ${authUser.id} points:`, {
-            balanceTable: balanceRes?.data?.total_points,
+        console.log(`[Layout] User ${authUser.id} (VIP Owner: ${vipOwnerId}) points:`, {
+            balanceTable: balanceRes?.total_points,
             userTable: profileData?.vip_points,
+            parentUserTable: parentData?.vip_points,
             referralsSum: confirmedPoints,
             final: finalVipPoints
         });
@@ -148,7 +170,8 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
             plan_name: planName,
             vip_active: profileData?.vip_active,
             vip_code: profileData?.vip_code,
-            vip_points: finalVipPoints
+            vip_points: finalVipPoints,
+            billing_cycle: subRes?.data?.billing_cycle
         });
 
         if (profileError && !['PGRST116', 'PGRST111'].includes(profileError.code)) {
@@ -163,7 +186,21 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
         }
 
         // 4. Fetch Permissions and Suites (Dependent on profile)
-        const planId = profile?.plan_id || authUser.user_metadata.plan_id;
+        let planId = profile?.plan_id || authUser.user_metadata.plan_id;
+
+        // Inheritance logic: If child has no plan, use already fetched parentData
+        if (!planId && parentData) {
+            console.log(`[Layout] User ${authUser.id} inheriting plan from parent data`);
+            planId = parentData.plan_id;
+            const inheritedPlanName = (parentData.plans as any)?.name
+                ? (typeof (parentData.plans as any).name === 'object'
+                    ? ((parentData.plans as any).name[locale] || (parentData.plans as any).name.pt || (parentData.plans as any).name.en || 'Pro')
+                    : ((parentData.plans as any).name || 'Pro'))
+                : 'Pro';
+
+            setUser(prev => prev ? { ...prev, plan_id: planId, plan_name: inheritedPlanName } : null);
+        }
+
         const queries: any[] = [
             supabaseClient
                 .from('suites')

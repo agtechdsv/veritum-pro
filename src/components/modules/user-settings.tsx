@@ -206,23 +206,34 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
         <div className="max-w-6xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500">
             {/* Master Context Selector */}
             {isMaster && (
-                <div className="flex justify-center mb-0">
-                    <div className="relative group/filter z-50">
-                        <div className="flex items-center gap-2 px-6 py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm text-sm font-bold text-slate-700 dark:text-slate-300">
-                            <Filter size={18} className="text-amber-500" />
+                <div className="flex justify-end mb-4">
+                    <div className="flex items-center gap-4 bg-white dark:bg-slate-900 p-2 pl-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-xl">
+                        <div className="flex flex-col items-end">
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none mb-1">Contexto Master</span>
+                            <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 leading-none">Selecione o Cliente</span>
+                        </div>
+                        <div className="relative">
                             <select
-                                className="bg-transparent outline-none appearance-none pr-8 cursor-pointer font-black uppercase tracking-tight"
+                                className="bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-6 py-3 text-xs font-black tracking-widest text-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-600 outline-none transition-all cursor-pointer min-w-[260px] appearance-none pr-10"
                                 value={selectedUserId}
                                 onChange={e => setSelectedUserId(e.target.value)}
                             >
-                                <option value={user.id}>{t('management.users.masterFilter.self') || 'MEU PRÓPRIO CONTEXTO'}</option>
-                                <optgroup label={t('management.users.masterFilter.clients') || 'CLIENTES'}>
-                                    {allUsers.filter(u => u.id !== user.id).map(c => (
-                                        <option key={c.id} value={c.id}>🏢 {(typeof c.name === 'object' ? ((c.name as any).pt || (c.name as any).en || '') : (c.name || '')).toUpperCase()} ({c.email})</option>
-                                    ))}
+                                <option value="">--- Selecione um Cliente ---</option>
+                                <option value={user.id}>Meu Próprio Contexto</option>
+                                <optgroup label={t('management.users.masterFilter.clients')?.toUpperCase() || 'CLIENTES (SÓCIOS ADM)'}>
+                                    {allUsers.filter(u => u.id !== user.id).map(c => {
+                                        const rawName = typeof c.name === 'object' ? ((c.name as any).pt || (c.name as any).en || '') : (c.name || '');
+                                        const formattedName = rawName.toLowerCase().split(' ').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+                                        const formattedEmail = (c.email || '').toLowerCase();
+                                        return (
+                                            <option key={c.id} value={c.id}>
+                                                🏢 {formattedName} ({formattedEmail})
+                                            </option>
+                                        );
+                                    })}
                                 </optgroup>
                             </select>
-                            <ChevronDown size={16} className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
+                            <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
                         </div>
                     </div>
                 </div>

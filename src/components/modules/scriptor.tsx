@@ -10,6 +10,8 @@ import {
 import { createClient } from '@supabase/supabase-js';
 import { GeminiService } from '@/services/gemini';
 
+import { useTranslation } from '@/contexts/language-context';
+
 const Scriptor: React.FC<{ credentials: Credentials; user: User; permissions: any }> = ({ credentials, user, permissions }) => {
     // Data State
     const [documents, setDocuments] = useState<LegalDocument[]>([]);
@@ -24,6 +26,7 @@ const Scriptor: React.FC<{ credentials: Credentials; user: User; permissions: an
     const [isGenerating, setIsGenerating] = useState(false);
     const [selectedLawsuitId, setSelectedLawsuitId] = useState<string>('');
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+    const { t, locale } = useTranslation();
 
     const supabase = createClient(credentials.supabaseUrl, credentials.supabaseAnonKey);
     const gemini = new GeminiService(credentials.geminiKey);
@@ -102,7 +105,7 @@ const Scriptor: React.FC<{ credentials: Credentials; user: User; permissions: an
 
     const handleCreateNew = async () => {
         const newDoc = {
-            title: 'Novo Documento sem Título',
+            title: t('modules.scriptor.newDocument'),
             content: '',
             version: 1
         };
@@ -152,8 +155,8 @@ const Scriptor: React.FC<{ credentials: Credentials; user: User; permissions: an
                         <FileText size={24} />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-bold text-slate-800 dark:text-white transition-colors text-gradient">SCRIPTOR PRO</h1>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Redação Jurídica Aumentada por IA</p>
+                        <h1 className="text-2xl font-bold text-slate-800 dark:text-white transition-colors text-gradient">{t('modules.scriptor.title')}</h1>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">{t('modules.scriptor.subtitle')}</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -166,14 +169,14 @@ const Scriptor: React.FC<{ credentials: Credentials; user: User; permissions: an
                         {saveStatus === 'saved' && <CheckCircle2 size={12} />}
                         {saveStatus === 'error' && <AlertCircle size={12} />}
                         {saveStatus === 'idle' ? 'Cloud Sync' :
-                            saveStatus === 'saving' ? 'Salvando...' :
-                                saveStatus === 'saved' ? 'Sincronizado' : 'Erro ao Salvar'}
+                            saveStatus === 'saving' ? t('modules.scriptor.saving') :
+                                saveStatus === 'saved' ? t('modules.scriptor.synced') : t('modules.scriptor.saveError')}
                     </div>
                     <button
                         onClick={handleCreateNew}
                         className="bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:scale-105 transition-all shadow-lg active:scale-95"
                     >
-                        <Plus size={18} /> Novo Documento
+                        <Plus size={18} /> {t('modules.scriptor.newDocument')}
                     </button>
                 </div>
             </div>
@@ -191,13 +194,13 @@ const Scriptor: React.FC<{ credentials: Credentials; user: User; permissions: an
 
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Contexto do Nexus</label>
+                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">{t('modules.scriptor.nexusContext')}</label>
                                 <select
                                     value={selectedLawsuitId}
                                     onChange={(e) => setSelectedLawsuitId(e.target.value)}
                                     className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-[11px] font-bold focus:ring-2 focus:ring-amber-500 outline-none text-slate-700 dark:text-white"
                                 >
-                                    <option value="">Sem vínculo processual</option>
+                                    <option value="">{t('modules.scriptor.noProcessLink')}</option>
                                     {lawsuits.map(law => (
                                         <option key={law.id} value={law.id}>{law.cnj_number} - {law.case_title}</option>
                                     ))}
@@ -205,11 +208,11 @@ const Scriptor: React.FC<{ credentials: Credentials; user: User; permissions: an
                             </div>
 
                             <div>
-                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Instrução de Redação</label>
+                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">{t('modules.scriptor.draftInstruction')}</label>
                                 <textarea
                                     value={prompt}
                                     onChange={(e) => setPrompt(e.target.value)}
-                                    placeholder="Descreva o que deseja redigir..."
+                                    placeholder={t('modules.scriptor.draftPlaceholder')}
                                     className="w-full h-32 p-4 text-[11px] bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-amber-500 outline-none dark:text-white font-medium resize-none leading-relaxed"
                                 />
                             </div>
@@ -220,7 +223,7 @@ const Scriptor: React.FC<{ credentials: Credentials; user: User; permissions: an
                                 className="w-full bg-amber-500 text-white py-3 rounded-2xl font-black uppercase tracking-widest hover:bg-amber-600 transition-all shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 disabled:opacity-50"
                             >
                                 {isGenerating ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Wand2 size={18} />}
-                                Gerar via IA
+                                {t('modules.scriptor.generateAI')}
                             </button>
                         </div>
                     </div>
@@ -229,7 +232,7 @@ const Scriptor: React.FC<{ credentials: Credentials; user: User; permissions: an
                     <div className="flex-1 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden">
                         <div className="p-5 border-b border-slate-50 dark:border-slate-800">
                             <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                <BookOpen size={14} className="text-indigo-500" /> Biblioteca
+                                <BookOpen size={14} className="text-indigo-500" /> {t('modules.scriptor.library')}
                             </h3>
                         </div>
                         <div className="flex-1 overflow-y-auto p-4 space-y-2 no-scrollbar">
@@ -260,7 +263,7 @@ const Scriptor: React.FC<{ credentials: Credentials; user: User; permissions: an
                                     handleAutoSave(updated);
                                 }}
                                 className="bg-transparent border-none outline-none font-black text-slate-800 dark:text-white text-sm uppercase tracking-tight px-2 w-full max-w-md"
-                                placeholder="Título do Documento"
+                                placeholder={t('modules.scriptor.docTitlePlaceholder')}
                             />
                             <div className="flex items-center gap-2">
                                 <button className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/40 rounded-xl transition-all"><Download size={18} /></button>
@@ -277,7 +280,7 @@ const Scriptor: React.FC<{ credentials: Credentials; user: User; permissions: an
                                 handleAutoSave(updated);
                             }}
                             className="flex-1 p-12 bg-transparent outline-none resize-none font-serif text-lg leading-[1.8] text-slate-700 dark:text-slate-300 scrollbar-thin scrollbar-thumb-slate-100 dark:scrollbar-thumb-slate-800"
-                            placeholder="A petição começa aqui..."
+                            placeholder={t('modules.scriptor.editorPlaceholder')}
                         />
                     </div>
                 </div>
@@ -286,7 +289,7 @@ const Scriptor: React.FC<{ credentials: Credentials; user: User; permissions: an
                 <div className="lg:col-span-1 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden">
                     <div className="p-5 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between">
                         <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                            <History size={14} className="text-rose-500" /> Histórico
+                            <History size={14} className="text-rose-500" /> {t('modules.scriptor.history')}
                         </h3>
                     </div>
                     <div className="flex-1 overflow-y-auto no-scrollbar">
@@ -303,7 +306,7 @@ const Scriptor: React.FC<{ credentials: Credentials; user: User; permissions: an
                                 </div>
                                 <div className="flex items-center gap-2 text-[9px] font-bold text-slate-400">
                                     <Clock size={10} />
-                                    {new Date(doc.updated_at || '').toLocaleDateString('pt-BR')}
+                                    {new Date(doc.updated_at || '').toLocaleDateString(locale === 'pt' ? 'pt-BR' : locale === 'es' ? 'es-ES' : 'en-US')}
                                 </div>
                             </button>
                         ))}

@@ -181,6 +181,41 @@ export const es = {
             },
             "label": "Sentinel"
         },
+        "intelligence": {
+            "label": "Intelligence Hub",
+            "title": "INTELLIGENCE HUB",
+            "subtitle": "Insights Proactivos & Oportunidades Jurídicas",
+            "description": "Insights estratégicos y oportunidades jurídicas proactivas",
+            "filters": {
+                "all": "Todo",
+                "unread": "Nuevos",
+                "actioned": "Procesados"
+            },
+            "stats": {
+                "total": "Total Intelligence",
+                "alertsMonth": "Alertas generadas este mes",
+                "pending": "Acciones Pendientes",
+                "conversion": "Tasa de Conversão"
+            },
+            "loading": "Sincronizando Inteligencia...",
+            "empty": {
+                "title": "Ningún Golden Alert",
+                "desc": "Monitoree más términos en Sentinel PRO para generar insights."
+            },
+            "card": {
+                "impact": "Impacto",
+                "detectedVia": "Detectado vía",
+                "noContent": "Publicación sin contenido",
+                "reasoning": "Razonamiento Estratégico IA",
+                "thesis": "Tesis Correlacionada",
+                "internalKnowledge": "Conocimiento Interno",
+                "capturedAt": "Capturado en",
+                "createPetition": "Crear Petición",
+                "validate": "Validar",
+                "ignore": "Ignorar",
+                "newLabel": "Nuevo"
+            }
+        },
         "nexus": {
             "label": "Nexus",
             "title": "NEXUS PRO",
@@ -217,6 +252,7 @@ export const es = {
             "modals": {
                 "lawsuit": {
                     "title": "Registro de Proceso",
+                    "titleEdit": "Editar Proceso",
                     "subtitle": "Vinculación relacional para automatización Sentinel PRO.",
                     "labelCnj": "Número del Proceso (CNJ - Estricto)",
                     "placeholderCnj": "0000000-00.0000.0.00.0000",
@@ -226,12 +262,22 @@ export const es = {
                     "labelDefendant": "Polo Pasivo (Demandado)",
                     "selectCrm": "Seleccione del CRM...",
                     "advancedShow": "Ver Campos Avanzados",
-                    "advancedHide": "Ocultar Campos Avanzados",
+                    "advancedHide": "Ocultar Campos Avançados",
                     "labelLawyer": "Abogado Responsable",
                     "selectTeam": "Seleccione del Equipo...",
+                    "labelCourt": "Tribunal",
+                    "placeholderCourt": "Ej: TRT-2, TJSP, TRF-4",
+                    "labelChamber": "Juzgado / Cámara",
+                    "placeholderChamber": "Ej: 12ª Vara del Trabajo",
+                    "labelCity": "Comarca / Ciudad",
+                    "placeholderCity": "Ej: São Paulo",
+                    "labelState": "Estado (UF)",
+                    "placeholderState": "Ej: SP",
                     "labelSphere": "Esfera",
                     "placeholderSphere": "Ej: Laboral",
-                    "labelValue": "Valor de la Causa (R$)",
+                    "labelRito": "Rito Procesal",
+                    "placeholderRito": "Ej: Sumaríssimo, Ordinário",
+                    "labelValue": "Valor de la Causa ($)",
                     "placeholderValue": "0,00",
                     "cancel": "Cancelar",
                     "save": "Guardar Proceso en Nexus",
@@ -259,38 +305,161 @@ export const es = {
                     "cancel": "Cancelar",
                     "save": "Crear Tarea"
                 }
+            },
+            "tabs": {
+                "people": "Personas",
+                "processes": "Procesos",
+                "tasks": "Tareas",
+                "calendar": "Agenda",
+                "assets": "Activos",
+                "corporate": "Societario"
+            },
+            "empty": {
+                "processes": "No se encontraron procesos.",
+                "tasks": "No se encontraron tareas.",
+                "syncing": "Sincronizando procesos..."
+            },
+            "comingSoon": {
+                "title": "Próximamente en Nexus Pro",
+                "assetsSubtitle": "El control total de sus activos y garantías procesales vendrá aquí.",
+                "corporateSubtitle": "La gestión societaria y de contratos se centralizará aquí."
             }
         },
         "scriptor": {
             "label": "Scriptor",
             "title": "SCRIPTOR PRO",
-            "subtitle": "Automatización Documental & Redacción Jurídica IA",
-            "description": "Transforme el proceso de redacción con plantillas dinámicas y auxilio de IA Generativa para peticiones, contratos y dictámenes técnicos de alta complejidad."
+            "subtitle": "Redacción Jurídica Aumentada por IA",
+            "description": "Produzca peticiones, contratos y dictámenes en segundos con auxilio de IA Generativa entrenada en contexto jurídico.",
+            "saving": "Guardando...",
+            "synced": "Sincronizado",
+            "saveError": "Error al Guardar",
+            "newDocument": "Nuevo Documento",
+            "nexusContext": "Contexto del Nexus",
+            "noProcessLink": "Sin vínculo procesal",
+            "draftInstruction": "Instrucción de Redacción",
+            "draftPlaceholder": "Describa lo que desea redactar...",
+            "generateAI": "Generar vía IA",
+            "library": "Biblioteca",
+            "docTitlePlaceholder": "Título del Documento",
+            "editorPlaceholder": "La petición comienza aquí...",
+            "history": "Historial"
         },
         "valorem": {
             "label": "Valorem",
             "title": "VALOREM PRO",
-            "subtitle": "Gestión Financiera & Control de Honorarios",
-            "description": "Domine el flujo de caja de su despacho. Gestión de honorarios, control de costas, facturación automatizada y reportes de rentabilidad por caso."
+            "subtitle": "Controladoría Financiera",
+            "description": "Gestión de honorarios y cálculos judiciales precisos",
+            "newTransaction": "Nueva Subcuenta",
+            "masterContext": "Contexto Master",
+            "selectClient": "Seleccione el Cliente",
+            "clientPlaceholder": "--- Seleccione un Cliente ---",
+            "clientGroup": "CLIENTES (SOCIOS ADM)",
+            "stats": {
+                "balance": "Saldo en Caja",
+                "income": "Ingresos (Total)",
+                "pending": "Por Recibir",
+                "expense": "Gastos"
+            },
+            "chart": {
+                "title": "Movimiento de Caja",
+                "fullReports": "Ver Informes Completos"
+            },
+            "list": {
+                "title": "Extracto Reciente",
+                "searchPlaceholder": "Buscar lanzamientos...",
+                "date": "Fecha",
+                "description": "Lanzamiento",
+                "status": "Estado",
+                "value": "Valor",
+                "loading": "Conciliando datos...",
+                "empty": "No se encontron lanzamientos."
+            },
+            "sidebar": {
+                "efficiency": "Eficacia de Cobro",
+                "efficiencyNote": "Su tasa de cobro está por encima de la media del mercado (85%). ¡Siga así!",
+                "categoryDivision": "División por Categoría",
+                "categories": {
+                    "fees": "Honorarios",
+                    "operational": "Operacional",
+                    "costs": "Costas"
+                }
+            },
+            "drawer": {
+                "title": "Nueva Subcuenta",
+                "subtitle": "Gestión de Inteligencia Financiera",
+                "income": "Ingresos",
+                "expense": "Gastos",
+                "labelDescription": "Descripción / Título",
+                "placeholderDescription": "Ej: Honorarios - Proceso 001/24",
+                "labelAmount": "Valor (BRL)",
+                "labelStatus": "Estado",
+                "labelLawsuit": "Proceso Nexus",
+                "placeholderLawsuit": "No vinculado a proceso",
+                "labelPerson": "Persona / Cliente",
+                "placeholderPerson": "No vinculado a persona",
+                "save": "Efectivar Subcuenta",
+                "statuses": {
+                    "pending": "Esperando Pago",
+                    "paid": "Liquidado / Pagado",
+                    "canceled": "Cancelado / Devuelto"
+                }
+            }
         },
         "cognitio": {
             "label": "Cognitio",
             "title": "COGNITIO PRO",
-            "subtitle": "Jurimetría Avanzada & Inteligencia de Datos",
-            "description": "Decisiones basadas en hechos, no en intuición. Analice tendencias de fallos, perfiles de magistrados y probabilidades de éxito con datos estructurados."
+            "subtitle": "Inteligencia Jurídica & Base de Conocimiento",
+            "description": "Decisiones basadas en hechos, no en intuición. Analice tendencias de fallos, perfiles de magistrados y probabilidades de éxito con datos estructurados.",
+            "newArticle": "Nueva Tesis / Artículo",
+            "predictionEngine": {
+                "title": "Motor de Análisis Predictivo",
+                "header": "Anticipe el desenlace del proceso con precisión.",
+                "placeholder": "Ej: Juzgado Civil de Madrid, Magistrado Roberto García, Acción de Alimentos...",
+                "button": "Generar Predicción IA",
+                "result": "Resultado Estimado",
+                "chanceLabel": "de probabilidad",
+                "waiting": "Esperando datos de entrada...",
+                "judgeHistory": "Historial del Magistrado"
+            },
+            "library": {
+                "title": "Biblioteca de Tesis & Jurisprudencia",
+                "items": "Ítems",
+                "searchPlaceholder": "Buscar por término o palabras clave...",
+                "empty": "Nuestra inteligencia no encontró ninguna tesis",
+                "readFull": "Leer Completo",
+                "author": "Equipo Veritum"
+            },
+            "modal": {
+                "title": "Gestión de Conocimiento",
+                "subtitle": "Registre nuevas tesis, jurisprudencias y notas de estudio.",
+                "labelTitle": "Título de la Tesis / Artículo",
+                "placeholderTitle": "Título claro y objetivo...",
+                "labelCategory": "Categoría Jurídica",
+                "placeholderCategory": "Ej: Derecho Civil",
+                "labelTags": "Tags (separadas por coma)",
+                "placeholderTags": "Tribunal Supremo, Recurso, Civil...",
+                "labelContent": "Contenido Jurídico",
+                "placeholderContent": "Desarrolle el razonamiento jurídico aquí...",
+                "discard": "Descartar",
+                "save": "Guardar Conocimiento"
+            }
         },
         "vox": {
             "label": "Vox Clientis",
             "title": "VOX CLIENTIS PRO",
             "subtitle": "Experiencia del Cliente & CRM Jurídica",
-            "description": "Eleve el estándar de atención. Portal del cliente, flujos de comunicación automatizados y gestión de relaciones para fidelización y transparencia."
+            "description": "Eleve el estándar de atención. Portal del cliente, flujos de comunicación automatizados y gestión de relaciones para fidelización y transparencia.",
+            "syncing": "Sincronizando chats...",
+            "waiting": "Esperando interacción...",
+            "activePortal": "Portal Activo",
+            "nexusLink": "Nexus Link",
+            "emptyMessages": "Ningún mensaje todavía",
+            "emptyPrompt": "Inicie la atención haciendo clic abajo.",
+            "translating": "Traduciendo...",
+            "voxLegal": "VOX LEGAL (IA)",
+            "voxLegalNote": "Vox Legal simplifica el lenguaje jurídico para el cliente.",
+            "placeholder": "Escriba su mensaje operacional o jurídico..."
         },
-        "intelligence": {
-            "label": "Intelligence Hub",
-            "title": "INTELLIGENCE HUB",
-            "subtitle": "Orquestación de IA & Integraciones Globales",
-            "description": "El cerebro del ecosistema. Centralice el procesamiento de IA, conecte APIs externas y automatice flujos de trabajo complejos entre todos los módulos."
-        }
     },
     "pricing": {
         "title": "Planes que acompañan su crecimiento.",
@@ -327,6 +496,10 @@ export const es = {
         "adminSubtitle": "Control de acceso y configuraciones del ecosistema.",
         "masterTitle": "Panel Maestro",
         "masterSubtitle": "Configuraciones estructurales de módulos y planes comerciales.",
+        "myPlan": "Mi Plan",
+        "vipPoints": "{count} Puntos",
+        "activateNow": "Activar Ahora",
+        "activeProgram": "Programa Activo",
         "groups": {
             "modules": {
                 "title": "Módulos",
@@ -456,7 +629,12 @@ export const es = {
             "allAdmins": "Todos los Administradores",
             "masterFilter": {
                 "self": "Maestro (Mis Usuarios)",
-                "clients": "Socio-Administradores Privados"
+                "clients": "Socio-Administradores Privados",
+                "selectClient": "Seleccione un Cliente"
+            },
+            "tabs": {
+                "team": "Integrantes del Equipo",
+                "users": "Usuarios del Sistema"
             },
             "table": {
                 "member": "Integrante",
@@ -577,7 +755,11 @@ export const es = {
                 "toggleAll": "Alternar Todo",
                 "planRestriction": "El plan actual no tiene acceso a esta funcionalidad.",
                 "save": "Guardar Grupo y Permisos",
-                "close": "Cerrar"
+                "close": "Cerrar",
+                "tabs": {
+                    "identification": "Identificación",
+                    "permissions": "Permisos"
+                }
             },
             "roleModal": {
                 "addTitle": "Nuevo Cargo",
@@ -624,17 +806,59 @@ export const es = {
                 "cancel": "Cancelar Suscripción"
             },
             "infra": {
-                "title": "Traiga Su Propia Base de Datos (BYODB)",
+                "title": "Gateway de Conectividad",
+                "subtitle": "Configuraciones Enterprise & BYODB",
+                "syncData": "Sincronización de Datos Privada",
                 "save": "Guardar Infra",
-                "urlLabel": "URL de Supabase Personalizada",
-                "keyLabel": "Clave de Supabase Personalizada",
-                "geminiLabel": "Clave de Gemini Personalizada",
+                "urlLabel": "Custom Supabase URL",
+                "keyLabel": "Custom Supabase Key",
+                "geminiLabel": "Custom Gemini Key",
                 "urlPlaceholder": "https://su-proyecto.supabase.co",
-                "keyPlaceholder": "Clave Anon/Public...",
+                "keyPlaceholder": "Chave Anon/Public...",
                 "geminiPlaceholder": "AIzaSyB...",
                 "privacyTitle": "Privacidad Garantizada",
                 "privacyDesc": "Al utilizar BYODB, sus datos de clientes, procesos y facturación nunca salen de su propio servidor de Supabase.",
-                "restricted": "Acceso restringido a Socios-Administradores."
+                "restricted": "Acceso restringido a Socios-Administradores.",
+                "deleteConfig": "Eliminar Configuraciones",
+                "deleteConfirmTitle": "¿Eliminar?",
+                "deleteConfirmMessage": "Esto eliminará sus claves personalizadas y volverá al estándar del sistema. ¿Está seguro?",
+                "loading": "Cargando Ecosistema de Infra...",
+                "providerLabel": "Proveedor de Base de Datos",
+                "saving": "Guardando..."
+            },
+            "vip": {
+                "title": "Club VIP Veritum",
+                "panelTitle": "Panel del Embajador",
+                "panelSubtitle": "Beneficios Activos",
+                "intro1": "Usted forma parte del grupo de despachos de alto rendimiento.",
+                "intro2": "Active su perfil VIP gratuitamente para rescatar su caja de correo exclusiva (@veritumpro.com) y generar su enlace de embajador. Por cada colega que se suscriba a la plataforma por su enlace, usted gana Puntos VIP (1 Punto = 1% OFF). Acumule 100 puntos para poner a cero su suscripción y guarde saldos excedentes para los próximos meses.",
+                "activateBtn": "Activar Beneficios VIP",
+                "successActivate": "¡Club VIP Activado con Éxito!",
+                "copySuccess": "¡Enlace copiado al portapapeles!",
+                "accessTitle": "Sus Accesos",
+                "mailboxActive": "¡Su caja postal VIP está activa! Acceda en:",
+                "accessWebmail": "Acceder al Webmail",
+                "mailboxRestricted": "La caja postal personalizada @veritumpro.com es un beneficio exclusivo para suscriptores de los planes Growth o Strategy (Semestral o Anual).",
+                "planBlocked": "Bloqueado en su Plan",
+                "referralTitle": "Su Enlace de Invitación",
+                "referralDesc": "Comparta el enlace de abajo con sus colegas de profesión o pida que ingresen su código en el checkout.",
+                "referralTip": "¡Las invitaciones que resultan en suscripciones Anuales multiplican sus puntos rápidamente!",
+                "yourCode": "Su Código:",
+                "discountDashboard": "Dashboard de Descuentos",
+                "goal": "Su Meta: 100 Puntos VIP (Suscripción a Cero)",
+                "pointsTarget": "100 Puntos",
+                "offReached": "100% OFF ALCANZADO 🎉",
+                "pointsCycle": "Puntos En Este Ciclo",
+                "discountRenewal": "Descuento En La Renovación",
+                "extraBalance": "Saldo Extra (Próx. Ciclo)",
+                "referralExtract": "Extracto de Invitaciones",
+                "extractDesc": "Vea de dónde vinieron sus puntos",
+                "noReferrals": "Ninguna invitación confirmada aún.",
+                "confirmed": "Confirmado",
+                "pending": "Pendiente",
+                "points": "Puntos",
+                "updateDetected": "Club VIP: ¡Actualización detectada!",
+                "pointsUpdated": "¡Sus Puntos VIP han sido actualizados!"
             },
             "toast": {
                 "saveSuccess": "¡Configuraciones de infraestructura guardadas!",
@@ -720,6 +944,9 @@ export const es = {
             }
         },
         "master": {
+            "fintech": { "menu": "Gestión Fintech" },
+            "cloud": { "menu": "Gestión de Cloud / Add-Ons" },
+            "vip": { "menu": "Gestión Club VIP" },
             "suites": {
                 "menu": "Gestión de Módulos",
                 "title": "Gestão de Módulos",
@@ -1085,6 +1312,8 @@ export const es = {
                         "state": "Estado/Provincia",
                         "maritalStatus": "Estado Civil",
                         "profession": "Profesión",
+                        "ctps": "ID Laboral (CTPS)",
+                        "pis": "ID Seguridad Social (PIS)",
                         "history": "Historial de Funciones / Notas",
                         "historyPlaceholder": "Detalles relevantes para el proceso laboral/civil..."
                     },

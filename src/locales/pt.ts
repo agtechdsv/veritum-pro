@@ -174,21 +174,95 @@ export const pt = {
             },
             label: 'Sentinel'
         },
+        intelligence: {
+            label: 'Intelligence Hub',
+            title: 'INTELLIGENCE HUB',
+            subtitle: 'Insights Proativos & Oportunidades Jurídicas',
+            description: 'Insights estratégicos e oportunidades jurídicas proativas',
+            filters: {
+                all: 'Tudo',
+                unread: 'Novos',
+                actioned: 'Processados'
+            },
+            stats: {
+                total: 'Total Intelligence',
+                alertsMonth: 'Alertas gerados este mês',
+                pending: 'Ações Pendentes',
+                conversion: 'Taxa de Conversão'
+            },
+            loading: 'Sincronizando Inteligência...',
+            empty: {
+                title: 'Nenhum Golden Alert',
+                desc: 'Monitore mais termos no Sentinel PRO para gerar insights.'
+            },
+            card: {
+                impact: 'Impacto',
+                detectedVia: 'Detectado via',
+                noContent: 'Publicação sem conteúdo',
+                reasoning: 'Raciocínio Estratégico IA',
+                thesis: 'Tese Correlata',
+                internalKnowledge: 'Conhecimento Interno',
+                capturedAt: 'Capturado em',
+                createPetition: 'Criar Petição',
+                validate: 'Validar',
+                ignore: 'Ignorar',
+                newLabel: 'Novo'
+            }
+        },
+        cognitio: {
+            label: 'Cognitio',
+            title: 'COGNITIO PRO',
+            subtitle: 'Inteligência Jurídica & Base de Conhecimento',
+            description: 'Análise preditiva e dashboards para tomada de decisão',
+            newArticle: 'Nova Tese / Artigo',
+            predictionEngine: {
+                title: 'Motor de Análise Preditiva',
+                header: 'Antecipe o desfecho do processo com precisão.',
+                placeholder: 'Ex: Vara Cível de Curitiba, Magistrado Roberto Souza, Ação de Alimentos...',
+                button: 'Gerar Predição IA',
+                result: 'Resultado Estimado',
+                chanceLabel: 'de chance',
+                waiting: 'Aguardando dados de entrada...',
+                judgeHistory: 'Histórico do Magistrado'
+            },
+            library: {
+                title: 'Biblioteca de Teses & Jurisprudência',
+                items: 'Itens',
+                searchPlaceholder: 'Buscar por termo ou palavras-chave...',
+                empty: 'Nenhuma tese encontrada',
+                readFull: 'Ler Completo',
+                author: 'Equipe Veritum'
+            },
+            modal: {
+                title: 'Gestão de Conhecimento',
+                subtitle: 'Cadastre novas teses, jurisprudências e notas de estudo.',
+                labelTitle: 'Título da Tese / Artigo',
+                placeholderTitle: 'Título claro e objetivo...',
+                labelCategory: 'Categoria Jurídica',
+                placeholderCategory: 'Ex: Direito Civil',
+                labelTags: 'Tags (separadas por vírgula)',
+                placeholderTags: 'STF, Recurso, Civil...',
+                labelContent: 'Conteúdo Jurídico',
+                placeholderContent: 'Desenvolva o raciocínio jurídico aqui...',
+                discard: 'Descartar',
+                save: 'Salvar Conhecimento'
+            }
+        },
         nexus: {
             label: 'Nexus',
             title: 'NEXUS PRO',
-            subtitle: 'Gestão de Fluxo de Trabalho',
+            subtitle: 'Núcleo Operacional & Gestão de Processos',
             description: 'Kanban Jurídico e automação de tarefas recorrentes',
             views: {
                 kanban: 'Kanban',
-                list: 'Listagem'
+                list: 'Lista'
             },
             newLawsuit: 'Novo Processo',
             newTask: 'Agendar Tarefa',
             metrics: {
                 active: 'Processos Ativos',
-                deadlines: 'Prazos Fatais 24h',
-                pending: 'Pendências Médias',
+                deadlines: 'Prazos 24h',
+                pending: 'Média Pendente',
                 completion: 'Taxa de Conclusão'
             },
             kanban: {
@@ -211,6 +285,7 @@ export const pt = {
             modals: {
                 lawsuit: {
                     title: 'Cadastro de Processo',
+                    titleEdit: 'Editar Processo',
                     subtitle: 'Vinculação relacional para automação Sentinel PRO.',
                     labelCnj: 'Número do Processo (CNJ - Estrito)',
                     placeholderCnj: '0000000-00.0000.0.00.0000',
@@ -223,12 +298,22 @@ export const pt = {
                     advancedHide: 'Ocultar Campos Avançados',
                     labelLawyer: 'Advogado Responsável',
                     selectTeam: 'Selecione da Equipe...',
+                    labelCourt: 'Tribunal (Court)',
+                    placeholderCourt: 'Ex: TRT-2, TJSP, TRF-4',
+                    labelChamber: 'Vara / Câmara (Chamber)',
+                    placeholderChamber: 'Ex: 12ª Vara do Trabalho',
+                    labelCity: 'Comarca / Cidade',
+                    placeholderCity: 'Ex: São Paulo',
+                    labelState: 'Estado (UF)',
+                    placeholderState: 'Ex: SP',
                     labelSphere: 'Esfera',
                     placeholderSphere: 'Ex: Trabalhista',
+                    labelRito: 'Rito Processual',
+                    placeholderRito: 'Ex: Sumaríssimo, Ordinário',
                     labelValue: 'Valor da Causa (R$)',
                     placeholderValue: '0,00',
                     cancel: 'Cancelar',
-                    save: 'Salvar Processo no Nexus',
+                    save: 'Salvar no Nexus',
                     validation: {
                         cnj: 'Número CNJ Inválido! Use o formato: 0000000-00.0000.0.00.0000'
                     }
@@ -253,38 +338,122 @@ export const pt = {
                     cancel: 'Cancelar',
                     save: 'Criar Tarefa'
                 }
+            },
+            tabs: {
+                people: 'Pessoas',
+                processes: 'Processos',
+                tasks: 'Tarefas',
+                calendar: 'Agenda',
+                assets: 'Ativos',
+                corporate: 'Societário'
+            },
+            empty: {
+                processes: 'Nenhum processo localizado.',
+                tasks: 'Nenhuma tarefa localizada.',
+                syncing: 'Sincronizando processos...'
+            },
+            comingSoon: {
+                title: 'Em Breve no Nexus Pro',
+                assetsSubtitle: 'O controle total de seus ativos e garantias processuais virá para cá.',
+                corporateSubtitle: 'A gestão societária e de contratos será centralizada aqui.'
             }
         },
         scriptor: {
             label: 'Scriptor',
             title: 'SCRIPTOR PRO',
-            subtitle: 'Inteligência Documental',
-            description: 'Redação assistida por IA e gestão de contratos (CLM)'
+            subtitle: 'Redação Jurídica Aumentada por IA',
+            description: 'Produza petições, contratos e pareceres em segundos com auxílio de IA Generativa treinada em contexto jurídico.',
+            saving: 'Salvando...',
+            synced: 'Sincronizado',
+            saveError: 'Erro ao Salvar',
+            newDocument: 'Novo Documento',
+            nexusContext: 'Contexto do Nexus',
+            noProcessLink: 'Sem vínculo processual',
+            draftInstruction: 'Instrução de Redação',
+            draftPlaceholder: 'Descreva o que deseja redigir...',
+            generateAI: 'Gerar via IA',
+            library: 'Biblioteca',
+            docTitlePlaceholder: 'Título do Documento',
+            editorPlaceholder: 'A petição começa aqui...',
+            history: 'Histórico'
         },
         valorem: {
             label: 'Valorem',
             title: 'VALOREM PRO',
             subtitle: 'Controladoria Financeira',
-            description: 'Gestão de honorários e cálculos judiciais precisos'
-        },
-        cognitio: {
-            label: 'Cognitio',
-            title: 'COGNITIO PRO',
-            subtitle: 'Jurimetria Avançada',
-            description: 'Análise preditiva e dashboards para tomada de decisão'
+            description: 'Gestão de honorários e cálculos judiciais precisos',
+            newTransaction: 'Nova Subconta',
+            masterContext: 'Contexto Master',
+            selectClient: 'Selecione o Cliente',
+            clientPlaceholder: '--- Selecione um Cliente ---',
+            clientGroup: 'CLIENTES (SÓCIOS ADM)',
+            stats: {
+                balance: 'Saldo em Caixa',
+                income: 'Receita (Total)',
+                pending: 'A Receber',
+                expense: 'Despesas'
+            },
+            chart: {
+                title: 'Movimentação de Caixa',
+                fullReports: 'Ver Relatórios Completos'
+            },
+            list: {
+                title: 'Extrato Recente',
+                searchPlaceholder: 'Buscar lançamentos...',
+                date: 'Data',
+                description: 'Lançamento',
+                status: 'Status',
+                value: 'Valor',
+                loading: 'Conciliando dados...',
+                empty: 'Nenhum lançamento encontrado.'
+            },
+            sidebar: {
+                efficiency: 'Eficácia de Cobrança',
+                efficiencyNote: 'Sua taxa de recebimento está acima da média do mercado (85%). Continue assim!',
+                categoryDivision: 'Divisão por Categoria',
+                categories: {
+                    fees: 'Honorários',
+                    operational: 'Operacional',
+                    costs: 'Custas'
+                }
+            },
+            drawer: {
+                title: 'Nova Subconta',
+                subtitle: 'Gestão de Inteligência Financeira',
+                income: 'Receita',
+                expense: 'Despesa',
+                labelDescription: 'Descrição / Título',
+                placeholderDescription: 'Ex: Honorários - Processo 001/24',
+                labelAmount: 'Valor (BRL)',
+                labelStatus: 'Status',
+                labelLawsuit: 'Processo Nexus',
+                placeholderLawsuit: 'Não vinculado a processo',
+                labelPerson: 'Pessoa / Cliente',
+                placeholderPerson: 'Não vinculado a pessoa',
+                save: 'Efetivar Subconta',
+                statuses: {
+                    pending: 'Aguardando Pagamento',
+                    paid: 'Liquidado / Pago',
+                    canceled: 'Cancelado / Estornado'
+                }
+            }
         },
         vox: {
             label: 'Vox Clientis',
             title: 'VOX CLIENTIS PRO',
             subtitle: 'CRM e Portal do Cliente',
-            description: 'Comunicação transparente e tradução do "juridiquês"'
+            description: 'Comunicação transparente e tradução do "juridiquês"',
+            syncing: 'Sincronizando chats...',
+            waiting: 'Aguardando interação...',
+            activePortal: 'Portal Ativo',
+            nexusLink: 'Nexus Link',
+            emptyMessages: 'Nenhuma mensagem ainda',
+            emptyPrompt: 'Inicie o atendimento clicando abaixo.',
+            translating: 'Traduzindo...',
+            voxLegal: 'VOX LEGAL (IA)',
+            voxLegalNote: 'O Vox Legal simplifica o juridiquês para o cliente.',
+            placeholder: 'Escreva sua mensagem operacional ou jurídica...'
         },
-        intelligence: {
-            label: 'Intelligence Hub',
-            title: 'INTELLIGENCE HUB',
-            subtitle: 'Inteligência Proativa',
-            description: 'Insights estratégicos e oportunidades jurídicas proativas'
-        }
     },
     pricing: {
         title: 'Planos Que Impulsionam O Seu Crescimento.',
@@ -330,6 +499,10 @@ export const pt = {
         adminSubtitle: 'Controle de acesso e configurações do ecossistema.',
         masterTitle: 'Painel Master',
         masterSubtitle: 'Configurações estruturais de módulos e planos comerciais.',
+        myPlan: 'Meu Plano',
+        vipPoints: '{count} Pontos',
+        activateNow: 'Ativar Agora',
+        activeProgram: 'Programa Ativo',
         groups: {
             modules: {
                 title: 'Módulos',
@@ -444,13 +617,14 @@ export const pt = {
             subtitle: 'Refinamento Granular: Defina permissões por funcionalidade.'
         },
         users: {
-            title: 'Gestão de Usuários',
-            subtitle: 'Administre quem acessa seu ecossistema.',
+            title: 'Membros / Usuários',
+            subtitle: 'Administre a equipe e quem acessa seu ecossistema.',
             searchPlaceholder: 'Nome ou e-mail...',
             searchLabel: 'Buscar Integrante',
             roleLabel: 'Role/Nível',
             statusLabel: 'Status',
             newUser: 'Novo Usuário',
+            newMember: 'Novo Membro',
             allPlans: 'Todos os Planos',
             allRoles: 'Todos',
             active: 'Ativos',
@@ -459,8 +633,12 @@ export const pt = {
             allAdmins: 'Todos os Administradores',
             masterFilter: {
                 self: 'Master (Meus Usuários)',
-                clients: 'Sócio-Administradores Privados',
-                selectClient: '--- SELECIONE UM CLIENTE ---'
+                clients: 'Sócios-Administradores Privados',
+                selectClient: 'Selecione um Cliente'
+            },
+            tabs: {
+                team: 'Membros da Equipe',
+                users: 'Usuários do Sistema'
             },
             table: {
                 member: 'Integrante',
@@ -490,16 +668,32 @@ export const pt = {
                 coordinator: 'Coordenador',
                 paralegal: 'Paralegal',
                 financial: 'Financeiro',
+                correspondent: 'Correspondente',
+                founder: 'Sócio Fundador',
+                consultant: 'Consultor'
             },
             modal: {
-                addTitle: 'Novo Integrante',
-                editTitle: 'Atualizar Dados',
-                subtitle: 'Configure as credenciais e o nível de acesso.',
-                name: 'Nome Completo',
-                email: 'E-mail / Login',
+                tabMembers: 'Membros (Equipe)',
+                tabUsers: 'Usuários (Acesso)',
+                addTitle: 'Novo Cadastro',
+                editTitle: 'Atualizar Cadastro',
+                subtitle: 'Configure os dados profissionais e acesso ao sistema.',
+                fullName: 'Nome Completo',
+                cpf: 'CPF (apenas números)',
+                email: 'E-mail Profissional',
+                phone: 'Telefone / WhatsApp',
+                role: 'Cargo / Função',
+                specialty: 'Especialidade / Área',
+                oabNumber: 'Nº OAB',
+                oabUf: 'Seccional (UF)',
+                city: 'Cidade de Atuação',
+                state: 'Estado (UF)',
+                pixKey: 'Chave PIX (Diligências)',
+                notes: 'Notas Internas / Qualidade',
+                name: 'Nome de Exibição',
+                emailUser: 'E-mail de Login',
                 password: 'Senha Inicial',
                 passwordEdit: 'Trocar Senha (Opcional)',
-                role: 'Cargo / Função Corporativa',
                 selectRole: 'Selecione um Cargo...',
                 inherited: 'Permissões herdadas do Grupo: {name}',
                 close: 'Fechar',
@@ -537,7 +731,7 @@ export const pt = {
                 errorProcess: 'Erro no processamento da solicitação.',
                 unauthorized: 'Ação não autorizada.'
             },
-            menu: 'Gestão de Usuários'
+            menu: 'Membros / Usuários'
         },
         access: {
             title: 'Grupos de Acesso',
@@ -581,7 +775,11 @@ export const pt = {
                 toggleAll: 'Alternar Tudo',
                 planRestriction: 'O plano atual não tem acesso a esta funcionalidade.',
                 save: 'Salvar Grupo e Permissões',
-                close: 'Fechar'
+                close: 'Fechar',
+                tabs: {
+                    identification: 'Identificação',
+                    permissions: 'Permissões'
+                }
             },
             roleModal: {
                 addTitle: 'Novo Cargo',
@@ -628,17 +826,68 @@ export const pt = {
                 cancel: 'Cancelar Assinatura'
             },
             infra: {
-                title: 'Bring Your Own Database (BYODB)',
+                title: 'Gateway de Conectividade',
+                subtitle: 'Configurações Enterprise & BYODB',
+                syncData: 'Sincronização de Dados Privada',
                 save: 'Salvar Infra',
                 urlLabel: 'Custom Supabase URL',
                 keyLabel: 'Custom Supabase Key',
                 geminiLabel: 'Custom Gemini Key',
-                urlPlaceholder: 'https://your-project.supabase.co',
-                keyPlaceholder: 'Anon/Public Key...',
+                urlPlaceholder: 'https://seu-projeto.supabase.co',
+                keyPlaceholder: 'Chave Anon/Public...',
                 geminiPlaceholder: 'AIzaSyB...',
                 privacyTitle: 'Privacidade Garantida',
                 privacyDesc: 'Ao utilizar BYODB, seus dados de clientes, processos e faturamento nunca saem do seu próprio servidor Supabase.',
-                restricted: 'Acesso restrito a Sócio-Administradores.'
+                restricted: 'Acesso restrito a Sócios-Administradores.',
+                deleteConfig: 'Excluir Configurações',
+                deleteConfirmTitle: 'Excluir?',
+                deleteConfirmMessage: 'Isso removerá suas chaves personalizadas e voltará ao padrão do sistema. Tem certeza?',
+                loading: 'Carregando Ecossistema de Infra...',
+                providerLabel: 'Provedor de Banco de Dados',
+                saving: 'Salvando...',
+                dbStatus: 'Status do Banco',
+                aiEngine: 'Motor de IA',
+                security: 'Segurança',
+                migrationLabel: 'Modo de Migração',
+                migrationAuto: 'Automático (Cloud)',
+                migrationManual: 'Manual (Enterprise)',
+                deleteSuccess: 'Ecossistema infra excluído com sucesso!',
+                saveSuccess: 'Configurações de infraestrutura salvas!',
+                saveError: 'Erro ao salvar configurações.'
+            },
+            vip: {
+                title: 'Clube VIP Veritum',
+                panelTitle: 'Painel do Embaixador',
+                panelSubtitle: 'Benefícios Ativos',
+                intro1: 'Você faz parte do grupo de escritórios de alta performance.',
+                intro2: 'Ative o seu perfil VIP gratuitamente para resgatar sua caixa postal exclusiva (@veritumpro.com) e gerar o seu link de embaixador. A cada colega que assinar a plataforma pelo seu link, você ganha Pontos VIP (1 Ponto = 1% OFF). Acumule 100 pontos para zerar a sua assinatura e guarde saldos excedentes para os próximos meses.',
+                activateBtn: 'Ativar Benefícios VIP',
+                successActivate: 'Clube VIP Ativado com Sucesso!',
+                copySuccess: 'Link copiado para a área de transferência!',
+                accessTitle: 'Seus Acessos',
+                mailboxActive: 'Sua caixa postal VIP está ativa! Acesse em:',
+                accessWebmail: 'Acessar Webmail',
+                mailboxRestricted: 'A caixa postal personalizada @veritumpro.com é um benefício exclusivo para assinantes dos planos Growth ou Strategy (Semestral ou Anual).',
+                planBlocked: 'Bloqueado no seu Plano',
+                referralTitle: 'Seu Link de Indicação',
+                referralDesc: 'Compartilhe o link abaixo com seus colegas de profissão ou peça para inserirem o seu código no checkout.',
+                referralTip: 'Convites que resultam em assinaturas Anuais multiplicam os seus pontos rapidamente!',
+                yourCode: 'Seu Código:',
+                discountDashboard: 'Dashboard de Descontos',
+                goal: 'Sua Meta: 100 Pontos VIP (Assinatura Zerada)',
+                pointsTarget: '100 Pontos',
+                offReached: '100% OFF ALCANÇADO 🎉',
+                pointsCycle: 'Pontos Neste Ciclo',
+                discountRenewal: 'Desconto Na Renovação',
+                extraBalance: 'Saldo Extra (Próx. Ciclo)',
+                referralExtract: 'Extrato de Indicações',
+                extractDesc: 'Veja de onde vieram seus pontos',
+                noReferrals: 'Nenhuma indicação confirmada ainda.',
+                confirmed: 'Confirmado',
+                pending: 'Pendente',
+                points: 'Pontos',
+                updateDetected: 'Clube VIP: Atualização detectada!',
+                pointsUpdated: 'Seus Pontos VIP foram atualizados!'
             },
             toast: {
                 saveSuccess: 'Configurações de infraestrutura salvas!',
@@ -724,6 +973,9 @@ export const pt = {
             }
         },
         master: {
+            fintech: { menu: 'Gestão Fintech' },
+            cloud: { menu: 'Gestão de Cloud / Add-Ons' },
+            vip: { menu: 'Gestão Clube VIP' },
             translate: {
                 success: 'Sucesso!',
                 error: 'Erro na tradução'
@@ -1090,6 +1342,8 @@ export const pt = {
                         state: 'UF',
                         maritalStatus: 'Estado Civil',
                         profession: 'Profissão',
+                        ctps: 'CTPS (Carteira de Trabalho)',
+                        pis: 'PIS / NIT',
                         history: 'Histórico de Funções / Notas',
                         historyPlaceholder: 'Detalhes relevantes para o processo trabalhista/cível...'
                     },

@@ -152,11 +152,27 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
             }, 50);
         }
 
-        const handleAuthMessage = (event: MessageEvent) => {
+        const handleAuthMessage = async (event: MessageEvent) => {
             // Check origin for security
             if (event.origin !== window.location.origin) return;
 
             if (event.data?.type === 'AUTH_SUCCESS') {
+                const supabase = createMasterClient();
+                const { data: { user } } = await supabase.auth.getUser();
+
+                if (user) {
+                    const { data: profile } = await supabase
+                        .from('users')
+                        .select('force_password_reset')
+                        .eq('id', user.id)
+                        .single();
+
+                    if (profile?.force_password_reset || user.user_metadata?.force_password_reset || user.user_metadata?.need_to_change_password) {
+                        // Let onAuthStateChange handle the mode switch to force-reset
+                        return;
+                    }
+                }
+
                 setLoading(false);
                 onClose();
                 window.location.href = event.data.url;

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Person, Credentials, UserPreferences, User as AppUser } from '@/types';
-import { Plus, Search, User, Mail, Phone, MapPin, Briefcase, FileText, ChevronDown, ChevronUp, Save, Trash2, Key, Info, Pencil, XCircle, Database as DbIcon, ShieldCheck, MessageCircle, ExternalLink, Scale, FileDown, ArrowUpRight, Filter } from 'lucide-react';
+import { Plus, Search, User, Mail, Phone, MapPin, Briefcase, FileText, ChevronDown, ChevronUp, ChevronRight, Zap, Save, Trash2, Key, Info, Pencil, XCircle, Database as DbIcon, ShieldCheck, MessageCircle, ExternalLink, Scale, FileDown, ArrowUpRight, Filter } from 'lucide-react';
 import { useTranslation } from '@/contexts/language-context';
 import { toast } from '@/components/ui/toast';
+import { motion, AnimatePresence } from 'framer-motion';
 import { listPersons, savePerson, deletePerson } from '@/app/actions/crm-actions';
 import { createMasterClient } from '@/lib/supabase/master';
 
@@ -10,16 +11,24 @@ interface Props {
     credentials: Credentials;
     preferences: UserPreferences;
     currentUser: AppUser;
+    isEmbedded?: boolean;
+    externalPersons?: Person[];
+    externalLoading?: boolean;
+    masterSelectedUserId?: string;
 }
 
-const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUser }) => {
+const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUser, isEmbedded, externalPersons, externalLoading, masterSelectedUserId }) => {
     const { t } = useTranslation();
-    const [persons, setPersons] = useState<Person[]>([]);
-    const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [localPersons, setLocalPersons] = useState<Person[]>([]);
+    const [loading, setLoading] = useState(false);
+
+    // Source of truth: external props take precedence when provided and no active local search
+    const persons = (externalPersons && !searchTerm) ? externalPersons : localPersons;
+    const isLoading = (externalLoading !== undefined) ? (externalLoading || loading) : loading;
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingPerson, setEditingPerson] = useState<Partial<Person> | null>(null);
-    const [expandedFields, setExpandedFields] = useState(false);
+    const [activeTab, setActiveTab] = useState<'basic' | 'advanced'>('basic');
 
     // Deletion states
     const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
@@ -27,7 +36,8 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
 
     // Master Selection States
     const isMaster = currentUser.role === 'Master';
-    const [selectedUserId, setSelectedUserId] = useState<string>(isMaster ? '' : currentUser.id);
+    const [internalSelectedUserId, setInternalSelectedUserId] = useState<string>(isMaster ? '' : currentUser.id);
+    const selectedUserId = masterSelectedUserId !== undefined ? masterSelectedUserId : internalSelectedUserId;
     const [allUsers, setAllUsers] = useState<any[]>([]);
 
     const masterUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -40,12 +50,28 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
     }, [isMaster]);
 
     useEffect(() => {
-        if (selectedUserId) {
+        // Sync with external data if provided
+        if (externalPersons && !searchTerm) {
+            setLocalPersons(externalPersons);
+        }
+    }, [externalPersons, searchTerm]);
+
+    useEffect(() => {
+        if (selectedUserId && !externalPersons) {
             fetchPersons();
-        } else if (isMaster) {
-            setPersons([]);
+        } else if (isMaster && !externalPersons) {
+            setLocalPersons([]);
         }
     }, [selectedUserId, searchTerm]);
+
+    useEffect(() => {
+        const handleOpenModal = () => {
+            setEditingPerson({ person_type: 'Cliente' });
+            setIsModalOpen(true);
+        };
+        window.addEventListener('CRM_OPEN_MODAL', handleOpenModal);
+        return () => window.removeEventListener('CRM_OPEN_MODAL', handleOpenModal);
+    }, []);
 
     const fetchClients = async () => {
         const supabase = createMasterClient();
@@ -63,19 +89,19 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
         try {
             const result: any = await listPersons(searchTerm, selectedUserId);
             if (result && result.error === 'TABLE_NOT_FOUND') {
-                setPersons([]);
+                setLocalPersons([]);
                 toast.error('O banco de dados selecionado ainda não foi inicializado (tabelas faltando).');
             } else if (result && result.data) {
-                setPersons(result.data);
+                setLocalPersons(result.data);
                 if (result.solvedId) {
                     console.log(`[CRM] Context: ${result.solvedId} DB: ${result.credentialsUsed?.substring(0, 20)}...`);
                 }
             } else if (Array.isArray(result)) {
-                setPersons(result);
+                setLocalPersons(result);
             }
         } catch (error: any) {
             console.warn('CRM Module not fully initialized for this database (tables might be missing).', error.message || error.code || '');
-            setPersons([]);
+            setLocalPersons([]);
         } finally {
             setLoading(false);
         }
@@ -201,7 +227,7 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
             toast.success(t('management.master.persons.toasts.saveSuccess'));
             setIsModalOpen(false);
             setEditingPerson(null);
-            setExpandedFields(false);
+            setActiveTab('basic');
             fetchPersons();
         } catch (error) {
             console.error('Error saving person:', error);
@@ -236,70 +262,52 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
 
     return (
         <div className="space-y-6">
-            {/* Master Context Selector */}
-            {isMaster && (
-                <div className="flex justify-center mb-8">
-                    <div className="relative group/filter z-50">
-                        <div className="flex items-center gap-2 px-6 py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm text-sm font-bold text-slate-700 dark:text-slate-300">
-                            <Filter size={18} className="text-amber-500" />
-                            <select
-                                className="bg-transparent outline-none appearance-none pr-8 cursor-pointer font-black uppercase tracking-tight"
-                                value={selectedUserId}
-                                onChange={e => setSelectedUserId(e.target.value)}
-                            >
-                                <option value="">{t('management.users.masterFilter.selectClient') || '--- SELECIONE UM CLIENTE ---'}</option>
-                                <optgroup label={t('management.users.masterFilter.clients') || 'CLIENTES'}>
-                                    {allUsers.filter(u => u.id !== currentUser.id).map(c => (
-                                        <option key={c.id} value={c.id}>🏢 {(typeof c.name === 'object' ? ((c.name as any).pt || (c.name as any).en || '') : (c.name || '')).toUpperCase()} ({c.email})</option>
-                                    ))}
-                                </optgroup>
-                            </select>
-                            <ChevronDown size={16} className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
+            {/* Master Context Selector removed - now handled by parent module (Nexus/Suite) */}
+
+            {!isEmbedded && (
+                <div className={`flex flex-col md:flex-row gap-4 ${isEmbedded ? 'md:items-end md:justify-end text-right' : 'md:items-center justify-between'}`}>
+                    <div className={`flex items-center gap-4 ${isEmbedded ? 'md:flex-row-reverse' : ''}`}>
+                        <div className={`${isEmbedded ? 'bg-emerald-600/10 text-emerald-600 p-2 rounded-xl border border-emerald-600/20' : 'bg-emerald-600 text-white p-3 rounded-2xl shadow-lg shadow-emerald-200 dark:shadow-emerald-900/40'} animate-in zoom-in duration-500`}>
+                            <User size={isEmbedded ? 18 : 24} />
+                        </div>
+                        <div className={isEmbedded ? 'text-right' : ''}>
+                            <div className={`flex items-center gap-3 mb-1 ${isEmbedded ? 'justify-end' : ''}`}>
+                                <h2 className={`${isEmbedded ? 'text-lg' : 'text-xl'} font-bold text-slate-800 dark:text-white transition-colors uppercase tracking-tight`}>{t('management.master.persons.title')}</h2>
+                                {isBYODB ? (
+                                    <div className="flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full border border-indigo-100 dark:border-indigo-800 animate-in fade-in slide-in-from-left-4 duration-500">
+                                        <DbIcon size={12} className="shrink-0" />
+                                        <span className="text-[9px] font-black uppercase tracking-widest whitespace-nowrap">Private Cloud Active</span>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-full border border-slate-200 dark:border-slate-700">
+                                        <ShieldCheck size={12} className="shrink-0" />
+                                        <span className="text-[9px] font-black uppercase tracking-widest whitespace-nowrap">Veritum Master DB</span>
+                                    </div>
+                                )}
+                            </div>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">{t('management.master.persons.subtitle')}</p>
                         </div>
                     </div>
-                </div>
-            )}
-
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                    <div className="bg-emerald-600 text-white p-3 rounded-2xl shadow-lg shadow-emerald-200 dark:shadow-emerald-900/40 animate-in zoom-in duration-500">
-                        <User size={24} />
-                    </div>
-                    <div>
-                        <div className="flex items-center gap-3 mb-1">
-                            <h2 className="text-xl font-bold text-slate-800 dark:text-white transition-colors uppercase tracking-tight">{t('management.master.persons.title')}</h2>
-                            {isBYODB ? (
-                                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full border border-indigo-100 dark:border-indigo-800 animate-in fade-in slide-in-from-left-4 duration-500">
-                                    <DbIcon size={12} className="shrink-0" />
-                                    <span className="text-[9px] font-black uppercase tracking-widest whitespace-nowrap">Private Cloud Active</span>
-                                </div>
-                            ) : (
-                                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-full border border-slate-200 dark:border-slate-700">
-                                    <ShieldCheck size={12} className="shrink-0" />
-                                    <span className="text-[9px] font-black uppercase tracking-widest whitespace-nowrap">Veritum Master DB</span>
+                    {!isEmbedded && (
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => { setEditingPerson({ person_type: 'Cliente' }); setIsModalOpen(true); setActiveTab('basic'); }}
+                                className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-2.5 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2 border border-slate-800 dark:border-slate-100"
+                            >
+                                <Plus size={18} /> {t('management.master.persons.newEntry')}
+                            </button>
+                            {isBYODB && (
+                                <div className="p-2.5 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-600/20 group relative cursor-help">
+                                    <DbIcon size={18} />
+                                    <div className="absolute top-full right-0 mt-3 w-48 p-4 bg-slate-900 text-white rounded-2xl text-[10px] font-bold leading-relaxed opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-50 shadow-2xl">
+                                        Os dados deste módulo estão sendo gravados no seu próprio banco de dados de forma isolada e segura.
+                                    </div>
                                 </div>
                             )}
                         </div>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">{t('management.master.persons.subtitle')}</p>
-                    </div>
-                </div>
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => { setEditingPerson({ person_type: 'Cliente' }); setIsModalOpen(true); }}
-                        className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-2.5 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2 border border-slate-800 dark:border-slate-100"
-                    >
-                        <Plus size={18} /> {t('management.master.persons.newEntry')}
-                    </button>
-                    {isBYODB && (
-                        <div className="p-2.5 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-600/20 group relative cursor-help">
-                            <DbIcon size={18} />
-                            <div className="absolute top-full right-0 mt-3 w-48 p-4 bg-slate-900 text-white rounded-2xl text-[10px] font-bold leading-relaxed opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-50 shadow-2xl">
-                                Os dados deste módulo estão sendo gravados no seu próprio banco de dados de forma isolada e segura.
-                            </div>
-                        </div>
                     )}
                 </div>
-            </div>
+            )}
 
             <div className="flex flex-col md:flex-row gap-4 items-center">
                 <div className="flex-1 relative w-full">
@@ -319,7 +327,7 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {loading ? (
+                {isLoading ? (
                     <div className="col-span-full py-12 text-center text-slate-400">{t('management.master.persons.table.loading')}</div>
                 ) : filteredPersons.length === 0 ? (
                     <div className="col-span-full py-12 text-center text-slate-400">{t('management.master.persons.table.empty')}</div>
@@ -335,7 +343,7 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                                 </span>
                                 <div className="flex gap-2">
                                     <button
-                                        onClick={() => { setEditingPerson(person); setIsModalOpen(true); }}
+                                        onClick={() => { setEditingPerson(person); setIsModalOpen(true); setActiveTab('basic'); }}
                                         className="p-4 -m-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all cursor-pointer"
                                     >
                                         <Pencil size={16} />
@@ -422,251 +430,339 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                 ))}
             </div>
 
-            {/* Person Modal with Progressive Disclosure */}
-            {isModalOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
-                    <div className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 max-h-[90vh] flex flex-col">
-                        <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
-                            <h3 className="text-xl font-bold text-slate-800 dark:text-white">
-                                {editingPerson?.id ? t('management.master.persons.modal.titles.edit') : t('management.master.persons.modal.titles.new')}
-                            </h3>
-                            <button onClick={() => { setIsModalOpen(false); setExpandedFields(false); }} className="text-slate-400 hover:text-slate-600 transition-colors">
-                                <XCircle size={24} />
-                            </button>
-                        </div>
-                        <form onSubmit={handleSave} className="p-8 space-y-6 overflow-y-auto">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="md:col-span-2">
-                                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 px-1">{t('management.master.persons.modal.sections.classification')}</label>
-                                    <div className="flex flex-wrap gap-2">
-                                        {['Cliente', 'Reclamado', 'Testemunha', 'Preposto', 'Advogado Adverso'].map(type => (
-                                            <button
-                                                key={type}
-                                                type="button"
-                                                onClick={() => setEditingPerson({ ...editingPerson, person_type: type as any })}
-                                                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${editingPerson?.person_type === type
-                                                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg shadow-indigo-600/20'
-                                                    : 'bg-white dark:bg-slate-950 text-slate-500 border-slate-200 dark:border-slate-800 hover:border-indigo-300'
-                                                    }`}
-                                            >
-                                                {t(`management.master.persons.types.${type}`)}
-                                            </button>
-                                        ))}
+            {/* Person Drawer (Slide-over Pattern) */}
+            <AnimatePresence>
+                {isModalOpen && (
+                    <div className="fixed inset-0 z-[100] flex justify-end overflow-hidden">
+                        {/* Backdrop */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm"
+                            onClick={() => { setIsModalOpen(false); setActiveTab('basic'); }}
+                        />
+
+                        {/* Drawer Content */}
+                        <motion.div
+                            initial={{ x: '100%' }}
+                            animate={{ x: 0 }}
+                            exit={{ x: '100%' }}
+                            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+                            className="relative w-full max-w-xl bg-white dark:bg-slate-900 shadow-[-20px_0_50px_-10px_rgba(0,0,0,0.1)] h-full flex flex-col border-l border-slate-200 dark:border-slate-800"
+                        >
+                            {/* Header */}
+                            <div className="p-8 border-b border-slate-100 dark:border-slate-800 shrink-0 bg-slate-50/50 dark:bg-slate-800/50">
+                                <div className="flex items-center justify-between mb-6">
+                                    <div>
+                                        <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">
+                                            {editingPerson?.id ? t('management.master.persons.modal.titles.edit') : t('management.master.persons.modal.titles.new')}
+                                        </h3>
+                                        <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-1">
+                                            {editingPerson?.id ? 'Gestão de Perfis Jurídicos' : 'Novo Integrante no Ecossistema'}
+                                        </p>
                                     </div>
+                                    <button
+                                        onClick={() => { setIsModalOpen(false); setActiveTab('basic'); }}
+                                        className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all"
+                                    >
+                                        <XCircle size={28} />
+                                    </button>
                                 </div>
 
-                                <div className="md:col-span-2">
-                                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">{t('management.master.persons.modal.fields.name')}</label>
-                                    <input
-                                        required
-                                        value={editingPerson?.full_name || ''}
-                                        onChange={e => setEditingPerson({ ...editingPerson, full_name: e.target.value })}
-                                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white font-medium"
-                                        placeholder={t('management.master.persons.modal.fields.namePlaceholder')}
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">{t('management.master.persons.modal.fields.document')}</label>
-                                    <input
-                                        required
-                                        value={editingPerson?.document || ''}
-                                        onChange={e => setEditingPerson({ ...editingPerson, document: formatDocument(e.target.value) })}
-                                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white font-medium font-mono"
-                                        placeholder={t('management.master.persons.modal.fields.documentPlaceholder')}
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">{t('management.master.persons.modal.fields.phone')}</label>
-                                    <input
-                                        value={editingPerson?.phone || ''}
-                                        onChange={e => setEditingPerson({ ...editingPerson, phone: formatPhone(e.target.value) })}
-                                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white font-medium"
-                                        placeholder={t('management.master.persons.modal.fields.phonePlaceholder')}
-                                    />
-                                </div>
-
-                                <div className="md:col-span-2">
-                                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">{t('management.master.persons.modal.fields.email')}</label>
-                                    <input
-                                        type="email"
-                                        value={editingPerson?.email || ''}
-                                        onChange={e => setEditingPerson({ ...editingPerson, email: e.target.value })}
-                                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white font-medium"
-                                        placeholder={t('management.master.persons.modal.fields.emailPlaceholder')}
+                                {/* Tab Switcher */}
+                                <div className="flex bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl relative">
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveTab('basic')}
+                                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all relative z-10 ${activeTab === 'basic' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                    >
+                                        <User size={14} /> Dados Básicos
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveTab('advanced')}
+                                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all relative z-10 ${activeTab === 'advanced' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                    >
+                                        <Zap size={14} /> Avançado
+                                    </button>
+                                    <div
+                                        className={`absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-white dark:bg-slate-950 rounded-xl shadow-sm transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${activeTab === 'advanced' ? 'translate-x-full' : 'translate-x-0'}`}
                                     />
                                 </div>
                             </div>
 
-                            {/* Progressive Disclosure Section */}
-                            <div className="pt-2">
-                                <button
-                                    type="button"
-                                    onClick={() => setExpandedFields(!expandedFields)}
-                                    className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 text-xs font-black uppercase tracking-widest hover:bg-indigo-50 dark:hover:bg-indigo-900/40 px-3 py-2 rounded-lg transition-all"
-                                >
-                                    {expandedFields ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                                    {expandedFields ? t('management.master.persons.modal.sections.hideAdvanced') : t('management.master.persons.modal.sections.advanced')}
-                                </button>
-
-                                {expandedFields && (
-                                    <div className="mt-6 p-6 bg-slate-50 dark:bg-slate-800/50 rounded-[2rem] border border-slate-100 dark:border-slate-800 space-y-6 animate-in slide-in-from-top-4 duration-300">
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">{t('management.master.persons.modal.fields.rg')}</label>
-                                                <input
-                                                    value={editingPerson?.rg || ''}
-                                                    onChange={e => setEditingPerson({ ...editingPerson, rg: e.target.value })}
-                                                    className="w-full px-4 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-1 focus:ring-indigo-500 font-medium text-sm"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">{t('management.master.persons.modal.fields.cep')}</label>
-                                                <input
-                                                    value={editingPerson?.address?.cep || ''}
-                                                    onChange={e => {
-                                                        const val = formatCEP(e.target.value);
-                                                        setEditingPerson({ ...editingPerson, address: { ...editingPerson?.address, cep: val } });
-                                                        if (val.replace(/\D/g, '').length === 8) searchCEP(val);
-                                                    }}
-                                                    className="w-full px-4 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-1 focus:ring-indigo-500 font-black text-sm text-indigo-600 dark:text-indigo-400"
-                                                    placeholder="00000-000"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                            <div className="md:col-span-2">
-                                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">{t('management.master.persons.modal.fields.street')}</label>
-                                                <input
-                                                    value={editingPerson?.address?.street || ''}
-                                                    onChange={e => setEditingPerson({ ...editingPerson, address: { ...editingPerson?.address, street: e.target.value } })}
-                                                    className="w-full px-4 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-1 focus:ring-indigo-500 font-medium text-sm"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">{t('management.master.persons.modal.fields.number')}</label>
-                                                <input
-                                                    value={editingPerson?.address?.number || ''}
-                                                    onChange={e => setEditingPerson({ ...editingPerson, address: { ...editingPerson?.address, number: e.target.value } })}
-                                                    className="w-full px-4 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-1 focus:ring-indigo-500 font-medium text-sm"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                            <div>
-                                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">{t('management.master.persons.modal.fields.complement')}</label>
-                                                <input
-                                                    value={editingPerson?.address?.complement || ''}
-                                                    onChange={e => setEditingPerson({ ...editingPerson, address: { ...editingPerson?.address, complement: e.target.value } })}
-                                                    className="w-full px-4 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-1 focus:ring-indigo-500 font-medium text-sm"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">{t('management.master.persons.modal.fields.neighborhood')}</label>
-                                                <input
-                                                    value={editingPerson?.address?.neighborhood || ''}
-                                                    onChange={e => setEditingPerson({ ...editingPerson, address: { ...editingPerson?.address, neighborhood: e.target.value } })}
-                                                    className="w-full px-4 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-1 focus:ring-indigo-500 font-medium text-sm"
-                                                />
-                                            </div>
-                                            <div className="grid grid-cols-3 gap-2">
-                                                <div className="col-span-2">
-                                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">{t('management.master.persons.modal.fields.city')}</label>
-                                                    <input
-                                                        value={editingPerson?.address?.city || ''}
-                                                        onChange={e => setEditingPerson({ ...editingPerson, address: { ...editingPerson?.address, city: e.target.value } })}
-                                                        className="w-full px-4 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-1 focus:ring-indigo-500 font-medium text-sm"
-                                                    />
-                                                </div>
+                            {/* Form */}
+                            <form onSubmit={handleSave} className="flex-1 flex flex-col overflow-hidden">
+                                <div className="flex-1 overflow-y-auto p-8 no-scrollbar">
+                                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                        {activeTab === 'basic' ? (
+                                            <div className="space-y-8">
+                                                {/* Classification Selection */}
                                                 <div>
-                                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">{t('management.master.persons.modal.fields.state')}</label>
-                                                    <input
-                                                        value={editingPerson?.address?.state || ''}
-                                                        onChange={e => setEditingPerson({ ...editingPerson, address: { ...editingPerson?.address, state: e.target.value.toUpperCase().slice(0, 2) } })}
-                                                        className="w-full px-4 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-1 focus:ring-indigo-500 font-bold text-xs text-center"
-                                                        placeholder="UF"
+                                                    <label className="block text-[11px] font-bold text-slate-400 mb-4 px-1">Tipo de Classificação</label>
+                                                    <div className="grid grid-cols-3 gap-2">
+                                                        {['Cliente', 'Reclamado', 'Testemunha', 'Preposto', 'Advogado Adverso'].map(type => (
+                                                            <button
+                                                                key={type}
+                                                                type="button"
+                                                                onClick={() => setEditingPerson({ ...editingPerson, person_type: type as any })}
+                                                                className={`px-3 py-3 rounded-xl text-[10px] font-bold transition-all border ${editingPerson?.person_type === type
+                                                                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-xl shadow-indigo-600/20 scale-105'
+                                                                    : 'bg-white dark:bg-slate-950 text-slate-500 border-slate-200 dark:border-slate-800 hover:border-indigo-300'
+                                                                    }`}
+                                                            >
+                                                                {type}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-6">
+                                                    <div>
+                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Nome Completo</label>
+                                                        <input
+                                                            required
+                                                            value={editingPerson?.full_name || ''}
+                                                            onChange={e => setEditingPerson({ ...editingPerson, full_name: e.target.value })}
+                                                            className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white font-bold text-lg"
+                                                            placeholder="Digite o nome completo"
+                                                        />
+                                                    </div>
+
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <div>
+                                                            <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Documento (CPF/CNPJ)</label>
+                                                            <input
+                                                                required
+                                                                value={editingPerson?.document || ''}
+                                                                onChange={e => setEditingPerson({ ...editingPerson, document: formatDocument(e.target.value) })}
+                                                                className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white font-bold font-mono"
+                                                                placeholder="000.000.000-00"
+                                                            />
+                                                        </div>
+
+                                                        <div>
+                                                            <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Telefone</label>
+                                                            <input
+                                                                value={editingPerson?.phone || ''}
+                                                                onChange={e => setEditingPerson({ ...editingPerson, phone: formatPhone(e.target.value) })}
+                                                                className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white font-bold"
+                                                                placeholder="(00) 00000-0000"
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    <div>
+                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">E-mail</label>
+                                                        <input
+                                                            type="email"
+                                                            value={editingPerson?.email || ''}
+                                                            onChange={e => setEditingPerson({ ...editingPerson, email: e.target.value })}
+                                                            className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white font-bold"
+                                                            placeholder="exemplo@email.com"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-8 animate-in fade-in duration-300">
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">RG</label>
+                                                        <input
+                                                            value={editingPerson?.rg || ''}
+                                                            onChange={e => setEditingPerson({ ...editingPerson, rg: e.target.value })}
+                                                            className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 font-bold"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">CEP</label>
+                                                        <input
+                                                            value={editingPerson?.address?.cep || ''}
+                                                            onChange={e => {
+                                                                const val = formatCEP(e.target.value);
+                                                                setEditingPerson({ ...editingPerson, address: { ...editingPerson?.address, cep: val } });
+                                                                if (val.replace(/\D/g, '').length === 8) searchCEP(val);
+                                                            }}
+                                                            className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 font-black text-indigo-600 dark:text-indigo-400"
+                                                            placeholder="00000-000"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                    <div className="md:col-span-2">
+                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Logradouro (Rua/Avenida)</label>
+                                                        <input
+                                                            value={editingPerson?.address?.street || ''}
+                                                            onChange={e => setEditingPerson({ ...editingPerson, address: { ...editingPerson?.address, street: e.target.value } })}
+                                                            className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 font-bold"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Nº</label>
+                                                        <input
+                                                            value={editingPerson?.address?.number || ''}
+                                                            onChange={e => setEditingPerson({ ...editingPerson, address: { ...editingPerson?.address, number: e.target.value } })}
+                                                            className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 font-bold text-center"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Complemento</label>
+                                                        <input
+                                                            value={editingPerson?.address?.complement || ''}
+                                                            onChange={e => setEditingPerson({ ...editingPerson, address: { ...editingPerson?.address, complement: e.target.value } })}
+                                                            className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 font-bold"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Bairro</label>
+                                                        <input
+                                                            value={editingPerson?.address?.neighborhood || ''}
+                                                            onChange={e => setEditingPerson({ ...editingPerson, address: { ...editingPerson?.address, neighborhood: e.target.value } })}
+                                                            className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 font-bold"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-4 gap-4">
+                                                    <div className="col-span-3">
+                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Cidade</label>
+                                                        <input
+                                                            value={editingPerson?.address?.city || ''}
+                                                            onChange={e => setEditingPerson({ ...editingPerson, address: { ...editingPerson?.address, city: e.target.value } })}
+                                                            className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 font-bold"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Estado (UF)</label>
+                                                        <select
+                                                            value={editingPerson?.address?.state || ''}
+                                                            onChange={e => setEditingPerson({ ...editingPerson, address: { ...editingPerson?.address, state: e.target.value } })}
+                                                            className="w-full px-3 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 font-black text-center pr-8"
+                                                        >
+                                                            <option value="">UF</option>
+                                                            {['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'].map(uf => (
+                                                                <option key={uf} value={uf}>{uf}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Estado Civil</label>
+                                                        <input
+                                                            value={editingPerson?.legal_data?.marital_status || ''}
+                                                            onChange={e => setEditingPerson({ ...editingPerson, legal_data: { ...editingPerson?.legal_data, marital_status: e.target.value } })}
+                                                            className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 font-bold"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Profissão</label>
+                                                        <input
+                                                            value={editingPerson?.legal_data?.profession || ''}
+                                                            onChange={e => setEditingPerson({ ...editingPerson, legal_data: { ...editingPerson?.legal_data, profession: e.target.value } })}
+                                                            className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 font-bold"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">CTPS</label>
+                                                        <input
+                                                            value={editingPerson?.ctps || ''}
+                                                            onChange={e => setEditingPerson({ ...editingPerson, ctps: e.target.value })}
+                                                            className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 font-black text-indigo-600 dark:text-indigo-400"
+                                                            placeholder="000.000 / Série 000-A"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">PIS/NIT</label>
+                                                        <input
+                                                            value={editingPerson?.pis || ''}
+                                                            onChange={e => setEditingPerson({ ...editingPerson, pis: e.target.value })}
+                                                            className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 font-black text-indigo-600 dark:text-indigo-400"
+                                                            placeholder="000.00000.00-0"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Histórico / Observações</label>
+                                                    <textarea
+                                                        rows={4}
+                                                        value={editingPerson?.legal_data?.history || ''}
+                                                        onChange={e => setEditingPerson({ ...editingPerson, legal_data: { ...editingPerson?.legal_data, history: e.target.value } })}
+                                                        className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 font-bold resize-none"
+                                                        placeholder="Digite observações importantes sobre este cadastro..."
                                                     />
                                                 </div>
                                             </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">{t('management.master.persons.modal.fields.maritalStatus')}</label>
-                                                <input
-                                                    value={editingPerson?.legal_data?.marital_status || ''}
-                                                    onChange={e => setEditingPerson({ ...editingPerson, legal_data: { ...editingPerson?.legal_data, marital_status: e.target.value } })}
-                                                    className="w-full px-4 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-1 focus:ring-indigo-500 font-medium text-sm"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">{t('management.master.persons.modal.fields.profession')}</label>
-                                                <input
-                                                    value={editingPerson?.legal_data?.profession || ''}
-                                                    onChange={e => setEditingPerson({ ...editingPerson, legal_data: { ...editingPerson?.legal_data, profession: e.target.value } })}
-                                                    className="w-full px-4 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-1 focus:ring-indigo-500 font-medium text-sm"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">{t('management.master.persons.modal.fields.history')}</label>
-                                            <textarea
-                                                rows={3}
-                                                value={editingPerson?.legal_data?.history || ''}
-                                                onChange={e => setEditingPerson({ ...editingPerson, legal_data: { ...editingPerson?.legal_data, history: e.target.value } })}
-                                                className="w-full px-4 py-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-1 focus:ring-indigo-500 font-medium text-sm resize-none"
-                                                placeholder={t('management.master.persons.modal.fields.historyPlaceholder')}
-                                            />
-                                        </div>
+                                        )}
                                     </div>
-                                )}
-                            </div>
+                                </div>
 
-                            <div className="pt-4 flex gap-3 shrink-0">
-                                <button type="button" onClick={() => { setIsModalOpen(false); setExpandedFields(false); }} className="flex-1 px-4 py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl font-bold hover:bg-slate-200 transition-all">{t('management.master.persons.modal.actions.cancel')}</button>
-                                <button type="submit" className="flex-[2] px-4 py-3 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-700 shadow-xl shadow-indigo-600/30 transition-all flex items-center justify-center gap-2">
-                                    <Save size={18} /> {editingPerson?.id ? t('management.master.persons.modal.actions.update') : t('management.master.persons.modal.actions.save')}
-                                </button>
-                            </div>
-                        </form>
+                                {/* Footer Buttons */}
+                                <div className="p-8 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0 flex gap-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => { setIsModalOpen(false); setActiveTab('basic'); }}
+                                        className="flex-1 px-8 py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-200 transition-all text-xs"
+                                    >
+                                        {t('management.master.persons.modal.actions.cancel')}
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="flex-[2] px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-600/30 transition-all flex items-center justify-center gap-2 text-xs"
+                                    >
+                                        <Save size={20} /> {editingPerson?.id ? t('management.master.persons.modal.actions.update') : t('management.master.persons.modal.actions.save')}
+                                    </button>
+                                </div>
+                            </form>
+                        </motion.div>
                     </div>
-                </div >
-            )}
+                )}
+            </AnimatePresence>
 
             {/* Custom Delete Confirmation Modal */}
-            {deleteConfirmId && (
-                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-300">
-                    <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 p-8 text-center animate-in zoom-in duration-300">
-                        <div className="mx-auto w-16 h-16 bg-rose-50 dark:bg-rose-900/20 text-rose-600 rounded-full flex items-center justify-center mb-6">
-                            <Trash2 size={32} />
-                        </div>
-                        <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">
-                            {t('management.master.persons.confirmations.softDeleteTitle') || 'Excluir Integrante?'}
-                        </h3>
-                        <p className="text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">
-                            {t('management.master.persons.confirmations.softDeleteMessage', { name: deleteConfirmName }) || `Você tem certeza que deseja excluir "${deleteConfirmName}"? Esta ação é irreversível.`}
-                        </p>
-                        <div className="grid grid-cols-2 gap-3">
-                            <button
-                                onClick={() => { setDeleteConfirmId(null); setDeleteConfirmName(null); }}
-                                className="px-6 py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl font-bold hover:bg-slate-200 transition-all"
-                            >
-                                {t('common.cancel') || 'Cancelar'}
-                            </button>
-                            <button
-                                onClick={confirmDelete}
-                                className="px-6 py-3 bg-rose-600 text-white rounded-2xl font-bold hover:bg-rose-700 shadow-xl shadow-rose-600/30 transition-all flex items-center justify-center gap-2"
-                            >
-                                <Trash2 size={18} /> {t('common.delete') || 'Sim, Excluir'}
-                            </button>
+            {
+                deleteConfirmId && (
+                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-300">
+                        <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 p-8 text-center animate-in zoom-in duration-300">
+                            <div className="mx-auto w-16 h-16 bg-rose-50 dark:bg-rose-900/20 text-rose-600 rounded-full flex items-center justify-center mb-6">
+                                <Trash2 size={32} />
+                            </div>
+                            <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">
+                                {t('management.master.persons.confirmations.softDeleteTitle') || 'Excluir Integrante?'}
+                            </h3>
+                            <p className="text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">
+                                {t('management.master.persons.confirmations.softDeleteMessage', { name: deleteConfirmName }) || `Você tem certeza que deseja excluir "${deleteConfirmName}"? Esta ação é irreversível.`}
+                            </p>
+                            <div className="grid grid-cols-2 gap-3">
+                                <button
+                                    onClick={() => { setDeleteConfirmId(null); setDeleteConfirmName(null); }}
+                                    className="px-6 py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl font-bold hover:bg-slate-200 transition-all"
+                                >
+                                    {t('common.cancel') || 'Cancelar'}
+                                </button>
+                                <button
+                                    onClick={confirmDelete}
+                                    className="px-6 py-3 bg-rose-600 text-white rounded-2xl font-bold hover:bg-rose-700 shadow-xl shadow-rose-600/30 transition-all flex items-center justify-center gap-2"
+                                >
+                                    <Trash2 size={18} /> {t('common.delete') || 'Sim, Excluir'}
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 };
 
