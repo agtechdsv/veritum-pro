@@ -279,7 +279,7 @@ export default function InfraManagement({ currentUser }: Props) {
                                     </>
                                 ) : (
                                     <div>
-                                        <label className="block text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-2 ml-2">Connection String (Criptografada)</label>
+                                        <label className="block text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-2 ml-2">{t('management.settings.infra.connectionLabel')}</label>
                                         <div className="relative">
                                             <Database className="absolute left-4 top-4 text-indigo-400/50" size={18} />
                                             <textarea
@@ -328,19 +328,19 @@ export default function InfraManagement({ currentUser }: Props) {
                                 </div>
 
                                 <div>
-                                    <label className="block text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-3 ml-2">Modo de Migração</label>
+                                    <label className="block text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-3 ml-2">{t('management.settings.infra.migrationLabel')}</label>
                                     <div className="flex gap-4">
                                         <button
                                             onClick={() => setConfig({ ...config, migration_mode: 'auto' })}
                                             className={`flex-1 py-3 rounded-xl border-2 transition-all font-black text-[10px] uppercase ${config.migration_mode === 'auto' ? 'bg-indigo-600 border-white text-white' : 'bg-white/5 border-white/10 text-indigo-300'}`}
                                         >
-                                            Automático (Cloud)
+                                            {t('management.settings.infra.migrationAuto')}
                                         </button>
                                         <button
                                             onClick={() => setConfig({ ...config, migration_mode: 'manual' })}
                                             className={`flex-1 py-3 rounded-xl border-2 transition-all font-black text-[10px] uppercase ${config.migration_mode === 'manual' ? 'bg-indigo-600 border-white text-white' : 'bg-white/5 border-white/10 text-indigo-300'}`}
                                         >
-                                            Manual (Enterprise)
+                                            {t('management.settings.infra.migrationManual')}
                                         </button>
                                     </div>
                                 </div>
@@ -358,8 +358,8 @@ export default function InfraManagement({ currentUser }: Props) {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-sm flex items-center justify-between group">
                     <div>
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Status do Banco</p>
-                        <h4 className="text-sm font-black text-slate-800 dark:text-white uppercase">Sincronizado</h4>
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">{t('management.settings.infra.dbStatus')}</p>
+                        <h4 className="text-sm font-black text-slate-800 dark:text-white uppercase">{t('management.settings.infra.synced')}</h4>
                     </div>
                     <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-2xl group-hover:scale-110 transition-all">
                         <Activity size={20} />
@@ -367,7 +367,7 @@ export default function InfraManagement({ currentUser }: Props) {
                 </div>
                 <div className="p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-sm flex items-center justify-between group">
                     <div>
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Motor de IA</p>
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">{t('management.settings.infra.aiEngine')}</p>
                         <h4 className="text-sm font-black text-slate-800 dark:text-white uppercase">Gemini 1.5 Pro</h4>
                     </div>
                     <div className="p-3 bg-amber-50 dark:bg-amber-900/20 text-amber-600 rounded-2xl group-hover:scale-110 transition-all">
@@ -376,7 +376,7 @@ export default function InfraManagement({ currentUser }: Props) {
                 </div>
                 <div className="p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-sm flex items-center justify-between group">
                     <div>
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Segurança</p>
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">{t('management.settings.infra.security')}</p>
                         <h4 className="text-sm font-black text-slate-800 dark:text-white uppercase">AES-256 GCM Active</h4>
                     </div>
                     <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 rounded-2xl group-hover:scale-110 transition-all">

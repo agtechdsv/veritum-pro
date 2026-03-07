@@ -21,7 +21,9 @@ export const pt = {
         notApplicable: 'N/A',
         user: 'Usuário',
         loadingEcosystem: 'Carregando ecossistema...',
-        selectLanguage: 'Selecionar Idioma'
+        selectLanguage: 'Selecionar Idioma',
+        confirm: 'Confirmar',
+        deleting: 'Excluindo...'
     },
     nav: {
         home: 'Início',
@@ -846,11 +848,13 @@ export const pt = {
                 providerLabel: 'Provedor de Banco de Dados',
                 saving: 'Salvando...',
                 dbStatus: 'Status do Banco',
+                synced: 'Sincronizado',
                 aiEngine: 'Motor de IA',
                 security: 'Segurança',
                 migrationLabel: 'Modo de Migração',
                 migrationAuto: 'Automático (Cloud)',
                 migrationManual: 'Manual (Enterprise)',
+                connectionLabel: 'Connection String (Criptografada)',
                 deleteSuccess: 'Ecossistema infra excluído com sucesso!',
                 saveSuccess: 'Configurações de infraestrutura salvas!',
                 saveError: 'Erro ao salvar configurações.'

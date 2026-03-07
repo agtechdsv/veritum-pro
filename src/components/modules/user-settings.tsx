@@ -209,8 +209,8 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                 <div className="flex justify-end mb-4">
                     <div className="flex items-center gap-4 bg-white dark:bg-slate-900 p-2 pl-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-xl">
                         <div className="flex flex-col items-end">
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none mb-1">Contexto Master</span>
-                            <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 leading-none">Selecione o Cliente</span>
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none mb-1">{t('nav.master')}</span>
+                            <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 leading-none">{t('management.users.masterFilter.selectClient')}</span>
                         </div>
                         <div className="relative">
                             <select
@@ -218,8 +218,8 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                                 value={selectedUserId}
                                 onChange={e => setSelectedUserId(e.target.value)}
                             >
-                                <option value="">--- Selecione um Cliente ---</option>
-                                <option value={user.id}>Meu Próprio Contexto</option>
+                                <option value="">--- {t('management.users.masterFilter.selectClient')} ---</option>
+                                <option value={user.id}>{t('management.users.masterFilter.self')}</option>
                                 <optgroup label={t('management.users.masterFilter.clients')?.toUpperCase() || 'CLIENTES (SÓCIOS ADM)'}>
                                     {allUsers.filter(u => u.id !== user.id).map(c => {
                                         const rawName = typeof c.name === 'object' ? ((c.name as any).pt || (c.name as any).en || '') : (c.name || '');

@@ -21,7 +21,9 @@ export const en = {
         notApplicable: 'N/A',
         user: 'User',
         loadingEcosystem: 'Loading ecosystem...',
-        selectLanguage: 'Select Language'
+        selectLanguage: 'Select Language',
+        confirm: 'Confirm',
+        deleting: 'Deleting...'
     },
     nav: {
         home: 'Home',
@@ -816,7 +818,18 @@ export const en = {
                 deleteConfirmMessage: 'This will remove your custom keys and return to the system default. Are you sure?',
                 loading: 'Loading Infra Ecosystem...',
                 providerLabel: 'Database Provider',
-                saving: 'Saving...'
+                saving: 'Saving...',
+                dbStatus: 'Database Status',
+                synced: 'Synced',
+                aiEngine: 'AI Engine',
+                security: 'Security',
+                migrationLabel: 'Migration Mode',
+                migrationAuto: 'Automatic (Cloud)',
+                migrationManual: 'Manual (Enterprise)',
+                connectionLabel: 'Connection String (Encrypted)',
+                deleteSuccess: 'Infra ecosystem deleted successfully!',
+                saveSuccess: 'Infrastructure settings saved!',
+                saveError: 'Error saving settings.'
             },
             vip: {
                 title: 'Veritum VIP Club',

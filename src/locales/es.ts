@@ -29,7 +29,9 @@ export const es = {
         "notApplicable": "N/A",
         "user": "Usuario",
         "loadingEcosystem": "Cargando ecosistema...",
-        "selectLanguage": "Seleccionar Idioma"
+        "selectLanguage": "Seleccionar Idioma",
+        "confirm": "Confirmar",
+        "deleting": "Eliminando..."
     },
     "nav": {
         "home": "Inicio",
@@ -802,7 +804,7 @@ export const es = {
                 "infra": "Infraestructura",
                 "org": "Datos del Despacho",
                 "plan": "Mi Suscripción",
-                "vip": "Clube VIP",
+                "vip": "Club VIP",
                 "cancel": "Cancelar Suscripción"
             },
             "infra": {
@@ -824,7 +826,18 @@ export const es = {
                 "deleteConfirmMessage": "Esto eliminará sus claves personalizadas y volverá al estándar del sistema. ¿Está seguro?",
                 "loading": "Cargando Ecosistema de Infra...",
                 "providerLabel": "Proveedor de Base de Datos",
-                "saving": "Guardando..."
+                "saving": "Guardando...",
+                "dbStatus": "Estado de la Base de Datos",
+                "synced": "Sincronizado",
+                "aiEngine": "Motor de IA",
+                "security": "Seguridad",
+                "migrationLabel": "Modo de Migración",
+                "migrationAuto": "Automático (Cloud)",
+                "migrationManual": "Manual (Enterprise)",
+                "connectionLabel": "Cadena de Conexión (Cifrada)",
+                "deleteSuccess": "¡Ecosistema de infra eliminado con éxito!",
+                "saveSuccess": "¡Configuraciones de infraestructura guardadas!",
+                "saveError": "Error al guardar configuraciones."
             },
             "vip": {
                 "title": "Club VIP Veritum",
@@ -949,7 +962,7 @@ export const es = {
             "vip": { "menu": "Gestión Club VIP" },
             "suites": {
                 "menu": "Gestión de Módulos",
-                "title": "Gestão de Módulos",
+                "title": "Gestión de Módulos",
                 "subtitle": "Configure el escaparate de su ecosistema jurídico.",
                 "listTitle": "Listado de Módulos",
                 "table": {
@@ -2212,7 +2225,7 @@ export const es = {
         "noFeatures": "Ninguna feature registrada."
     },
     "clubeVip": {
-        "exclusiveInvite": "Invitación Exclusiva: Clube VIP",
+        "exclusiveInvite": "Invitación Exclusiva: Club VIP",
         "nav": {
             "home": "Inicio",
             "benefits": "Beneficios",
