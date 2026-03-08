@@ -139,7 +139,7 @@ export default function DynamicModulePage() {
         { id: ModuleId.USERS, label: t('management.users.title'), icon: Users, color: 'text-slate-500' },
         { id: ModuleId.ACCESS_GROUPS, label: t('management.accessGroups.title'), icon: Shield, color: 'text-indigo-600' },
         { id: ModuleId.SETTINGS, label: t('management.settings.title'), icon: Settings, color: 'text-slate-500' },
-        { id: ModuleId.INFRA, label: 'Infraestrutura', icon: Server, color: 'text-slate-500' },
+        { id: ModuleId.INFRA, label: t('management.settings.tabs.infra'), icon: Server, color: 'text-slate-500' },
     ];
 
     const filteredAdminItems = adminItems.filter(item => {
@@ -150,13 +150,13 @@ export default function DynamicModulePage() {
     });
 
     const masterItems = [
-        { id: ModuleId.SUITES, label: t('management.master.suites.title'), icon: Crown, color: 'text-amber-500' },
-        { id: ModuleId.PLANS, label: t('management.master.plans.title'), icon: DollarSign, color: 'text-indigo-500' },
-        { id: ModuleId.SCHEDULING, label: t('management.master.scheduling.title'), icon: CalendarIcon, color: 'text-rose-500' },
-        { id: ModuleId.EMAIL_CONFIG, label: t('management.master.email.title'), icon: Mail, color: 'text-cyan-500' },
-        { id: ModuleId.FINTECH, label: 'Gestão Fintech', icon: CreditCard, color: 'text-emerald-500' },
-        { id: ModuleId.CLOUD_CONFIG, label: 'Gestão de Cloud / Add-Ons', icon: Cloud, color: 'text-cyan-400' },
-        { id: ModuleId.VIP_MANAGEMENT, label: 'Gestão Clube VIP', icon: Crown, color: 'text-amber-500' },
+        { id: ModuleId.SUITES, label: t('management.master.suites.menu'), icon: Crown, color: 'text-amber-500' },
+        { id: ModuleId.PLANS, label: t('management.master.plans.menu'), icon: DollarSign, color: 'text-indigo-500' },
+        { id: ModuleId.SCHEDULING, label: t('management.master.scheduling.menu'), icon: CalendarIcon, color: 'text-rose-500' },
+        { id: ModuleId.EMAIL_CONFIG, label: t('management.master.email.menu'), icon: Mail, color: 'text-cyan-500' },
+        { id: ModuleId.FINTECH, label: t('management.master.fintech.menu'), icon: CreditCard, color: 'text-emerald-500' },
+        { id: ModuleId.CLOUD_CONFIG, label: t('management.master.cloud.menu'), icon: Cloud, color: 'text-cyan-400' },
+        { id: ModuleId.VIP_MANAGEMENT, label: t('management.master.vip.menu'), icon: Crown, color: 'text-amber-500' },
     ];
 
     switch (moduleToRender) {

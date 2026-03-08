@@ -156,11 +156,11 @@ const VipManagement: React.FC<Props> = ({ credentials }) => {
 
             if (editingBenefit) {
                 await supabase.from('vip_benefits').update(rowData).eq('id', editingBenefit.id);
-                toast.success('Benefício atualizado com sucesso!');
+                toast.success(t('management.master.vip.saveSuccess') || 'Benefício atualizado com sucesso!');
             } else {
                 const { data } = await supabase.from('vip_benefits').insert([rowData]).select('id').single();
                 if (data) currentBenefitId = data.id;
-                toast.success('Benefício criado com sucesso!');
+                toast.success(t('management.master.vip.saveSuccess') || 'Benefício criado com sucesso!');
             }
 
             // Save Plans mapping if we are editing or just created it
@@ -193,10 +193,10 @@ const VipManagement: React.FC<Props> = ({ credentials }) => {
         try {
             const newStatus = ben.status === 'active' ? 'inactive' : 'active';
             await supabase.from('vip_benefits').update({ status: newStatus }).eq('id', ben.id);
-            toast.success('Status atualizado');
+            toast.success(t('management.master.vip.statusUpdated') || 'Status atualizado');
             fetchBenefits();
         } catch (err: any) {
-            toast.error('Erro ao atualizar status');
+            toast.error(t('management.master.vip.statusError') || 'Erro ao atualizar status');
         }
     };
 
@@ -206,9 +206,9 @@ const VipManagement: React.FC<Props> = ({ credentials }) => {
             await supabase.from('vip_benefits').delete().eq('id', benefitToDelete.id);
             setBenefitToDelete(null);
             fetchBenefits();
-            toast.success('Benefício excluído');
+            toast.success(t('management.master.vip.deleteSuccess') || 'Benefício excluído');
         } catch (err: any) {
-            toast.error('Erro ao excluir');
+            toast.error(t('management.master.vip.deleteError') || 'Erro ao excluir');
         }
     };
 
@@ -274,10 +274,10 @@ const VipManagement: React.FC<Props> = ({ credentials }) => {
                 }
             }
 
-            toast.success('Regras de ganho de pontos atualizadas com sucesso!');
+            toast.success(t('management.master.vip.rulesSaved') || 'Regras de ganho de pontos atualizadas com sucesso!');
             await fetchReferralRules();
         } catch (err: any) {
-            toast.error(err.message || 'Erro ao salvar regras');
+            toast.error(err.message || t('common.error') || 'Erro ao salvar regras');
         } finally {
             setLoading(false);
         }
@@ -306,9 +306,9 @@ const VipManagement: React.FC<Props> = ({ credentials }) => {
                 <div className="flex flex-col gap-2">
                     <h1 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tight flex items-center gap-3">
                         <Crown className="text-amber-500" size={32} />
-                        Gestão Clube VIP
+                        {t('management.master.vip.title') || 'Gestão Clube VIP'}
                     </h1>
-                    <p className="text-slate-500 dark:text-slate-400 font-medium italic">Gerencie os benefícios e regras de indicação do programa Clube VIP.</p>
+                    <p className="text-slate-500 dark:text-slate-400 font-medium italic">{t('management.master.vip.subtitle') || 'Gerencie os benefícios e regras de indicação do programa Clube VIP.'}</p>
                 </div>
 
                 {/* Main Tabs Segment Control */}
@@ -319,7 +319,7 @@ const VipManagement: React.FC<Props> = ({ credentials }) => {
                         ${mainTab === 'benefits' ? 'bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-400 shadow-md border border-slate-100 dark:border-slate-800' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-black/5 dark:hover:bg-white/5'}`}
                     >
                         <Sparkles size={14} className={mainTab === 'benefits' ? 'animate-pulse' : ''} />
-                        Loja de Prêmios
+                        {t('management.master.vip.tabPrizes') || 'Loja de Prêmios'}
                     </button>
                     <button
                         onClick={() => setMainTab('coin_factory')}
@@ -327,14 +327,14 @@ const VipManagement: React.FC<Props> = ({ credentials }) => {
                         ${mainTab === 'coin_factory' ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-md border border-slate-100 dark:border-slate-800' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-black/5 dark:hover:bg-white/5'}`}
                     >
                         <Database size={14} className={mainTab === 'coin_factory' ? 'animate-pulse' : ''} />
-                        Fábrica de Moedas
+                        {t('management.master.vip.tabCoins') || 'Fábrica de Moedas'}
                     </button>
                 </div>
             </div>
 
             {loading && allPlans.length > 0 && (
                 <div className="fixed top-4 right-4 z-[9999] bg-slate-900 text-white px-4 py-2 rounded-xl text-xs flex items-center gap-2 shadow-2xl animate-fade-in">
-                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" /> Salvando...
+                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" /> {t('management.master.vip.saving') || 'Salvando...'}
                 </div>
             )}
 
@@ -348,9 +348,9 @@ const VipManagement: React.FC<Props> = ({ credentials }) => {
                                 <Database size={28} />
                             </div>
                             <div className="space-y-1">
-                                <h2 className="text-xl font-black text-indigo-900 dark:text-indigo-100 uppercase tracking-tight">Regras de Indicação (Fábrica de Moedas)</h2>
+                                <h2 className="text-xl font-black text-indigo-900 dark:text-indigo-100 uppercase tracking-tight">{t('management.master.vip.coinFactoryTitle') || 'Regras de Indicação (Fábrica de Moedas)'}</h2>
                                 <p className="text-sm font-medium text-indigo-700/70 dark:text-indigo-300/70 max-w-2xl">
-                                    Defina quantos <strong className="font-bold">Pontos VIP</strong> o seu cliente ganha caso a pessoa que ele indicou se torne assinante de um desses planos. Se o plano não participa da promoção, deixe tudo com valor ZERO.
+                                    {t('management.master.vip.coinFactoryDesc') || 'Defina quantos Pontos VIP o seu cliente ganha caso a pessoa que ele indicou se torne assinante de um desses planos. Se o plano não participa da promoção, deixe tudo com valor ZERO.'}
                                 </p>
                             </div>
                         </div>
@@ -360,7 +360,7 @@ const VipManagement: React.FC<Props> = ({ credentials }) => {
                             disabled={loading}
                             className="flex items-center gap-2 px-6 py-4 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 transition-all text-xs font-black uppercase tracking-widest shadow-xl shadow-indigo-600/30 whitespace-nowrap relative z-10 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            <Check size={16} /> Salvar Regras
+                            <Check size={16} /> {t('management.master.vip.saveRules') || 'Salvar Regras'}
                         </button>
                     </div>
 
@@ -384,7 +384,7 @@ const VipManagement: React.FC<Props> = ({ credentials }) => {
                                         {cycles.map(cycle => (
                                             <div key={cycle} className="flex items-center justify-between gap-4">
                                                 <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-                                                    {cycle === 'monthly' ? 'Mensal' : cycle === 'quarterly' ? 'Trimestral' : cycle === 'semiannual' ? 'Semestral' : 'Anual'}
+                                                    {cycle === 'monthly' ? (t('management.master.vip.monthly') || 'Mensal') : cycle === 'quarterly' ? (t('management.master.vip.quarterly') || 'Trimestral') : cycle === 'semiannual' ? (t('management.master.vip.semiannual') || 'Semestral') : (t('management.master.vip.annual') || 'Anual')}
                                                 </span>
                                                 <div className="flex flex-col relative w-32">
                                                     <input
@@ -392,10 +392,10 @@ const VipManagement: React.FC<Props> = ({ credentials }) => {
                                                         value={getPoints(cycle) || ''}
                                                         onChange={(e) => handleUpdateRule(plan.id, cycle, Number(e.target.value))}
                                                         className="w-full pl-4 pr-10 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-black focus:ring-2 focus:ring-indigo-500 outline-none dark:text-white transition-all text-right shadow-inner tabular-nums placeholder:text-slate-300"
-                                                        placeholder="0"
+                                                        placeholder={t('management.master.vip.pointsPlaceholder') || "0"}
                                                         min="0"
                                                     />
-                                                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[9px] font-black text-slate-400 uppercase tracking-widest pointer-events-none">PTS</span>
+                                                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[9px] font-black text-slate-400 uppercase tracking-widest pointer-events-none">{t('management.master.vip.pointsSuffix') || 'PTS'}</span>
                                                 </div>
                                             </div>
                                         ))}
@@ -412,14 +412,14 @@ const VipManagement: React.FC<Props> = ({ credentials }) => {
                     {/* Table Column */}
                     <div className="w-full lg:w-[30%] bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden min-h-[600px] sticky top-8">
                         <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Benefícios</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('management.master.vip.benefitsTitle') || 'Benefícios'}</span>
                         </div>
                         <table className="w-full text-left">
                             <thead className="bg-slate-50/50 dark:bg-slate-800/30">
                                 <tr>
-                                    <th className="px-4 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">Ord</th>
-                                    <th className="px-4 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">Nome</th>
-                                    <th className="px-4 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Ação</th>
+                                    <th className="px-4 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('management.master.vip.tableOrder') || 'Ord'}</th>
+                                    <th className="px-4 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('management.master.vip.tableName') || 'Nome'}</th>
+                                    <th className="px-4 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">{t('management.master.vip.tableAction') || 'Ação'}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -474,88 +474,86 @@ const VipManagement: React.FC<Props> = ({ credentials }) => {
                     <div className="flex-1 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden min-h-[700px]">
                         <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/20">
                             <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-amber-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-amber-500/20">
+                                <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-amber-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-amber-500/20 shrink-0">
                                     <Sparkles size={24} />
                                 </div>
                                 <div>
                                     <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
-                                        {editingBenefit ? 'Editar Benefício VIP' : 'Novo Benefício VIP'}
+                                        {editingBenefit ? (t('management.master.vip.editBenefit') || 'Editar Benefício VIP') : (t('management.master.vip.newBenefit') || 'Novo Benefício VIP')}
                                     </h2>
                                     <div className="flex items-center gap-2 mt-2">
-                                        <button onClick={() => setActiveTab('details')} className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-md transition-all ${activeTab === 'details' ? 'bg-amber-500 text-white' : 'text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800'}`}>Detalhes</button>
-                                        <button onClick={() => setActiveTab('rules')} className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-md transition-all ${activeTab === 'rules' ? 'bg-amber-500 text-white' : 'text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800'}`}>Regras & Custos</button>
-                                        <button onClick={() => setActiveTab('audience')} className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-md transition-all ${activeTab === 'audience' ? 'bg-amber-500 text-white' : 'text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800'}`}>Público</button>
+                                        <button type="button" onClick={() => setActiveTab('details')} className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-md transition-all ${activeTab === 'details' ? 'bg-amber-500 text-white' : 'text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800'}`}>{t('management.master.vip.tabDetails') || 'Detalhes'}</button>
+                                        <button type="button" onClick={() => setActiveTab('rules')} className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-md transition-all ${activeTab === 'rules' ? 'bg-amber-500 text-white' : 'text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800'}`}>{t('management.master.vip.tabRules') || 'Regras & Custos'}</button>
+                                        <button type="button" onClick={() => setActiveTab('audience')} className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-md transition-all ${activeTab === 'audience' ? 'bg-amber-500 text-white' : 'text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800'}`}>{t('management.master.vip.tabAudience') || 'Público'}</button>
                                     </div>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                                {editingBenefit ? (
-                                    <>
-                                        <button onClick={handleSave} className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-all text-[10px] font-black uppercase tracking-widest shadow-sm shadow-amber-500/20">
-                                            <Check size={14} /> Salvar
+                            <div className="flex flex-col items-end gap-3">
+                                <div className="flex items-center gap-2">
+                                    {(['pt', 'en', 'es'] as const).map(lang => (
+                                        <button key={lang} type="button" onClick={() => setActiveLang(lang)} className={`w-8 h-8 rounded-full overflow-hidden border-2 transition-all p-0.5 hover:scale-110 active:scale-95 ${activeLang === lang ? 'border-amber-500 shadow-lg shadow-amber-500/20' : 'border-transparent opacity-40 hover:opacity-100'}`} title={lang.toUpperCase()}>
+                                            <img src={lang === 'pt' ? BR_FLAG : lang === 'en' ? US_FLAG : ES_FLAG} alt={lang} className="w-full h-full object-cover rounded-full" />
                                         </button>
-                                        <button onClick={() => { setEditingBenefit(null); setFormData(initialFormData); setBenefitPlans([]); }} className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all text-[10px] font-black uppercase tracking-widest shadow-sm">
-                                            <X size={14} /> Cancelar
+                                    ))}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    {editingBenefit ? (
+                                        <>
+                                            <button type="button" onClick={handleSave} className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-all text-[10px] font-black uppercase tracking-widest shadow-sm shadow-amber-500/20">
+                                                <Check size={14} /> {t('common.save') || 'Salvar'}
+                                            </button>
+                                            <button type="button" onClick={() => { setEditingBenefit(null); setFormData(initialFormData); setBenefitPlans([]); }} className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all text-[10px] font-black uppercase tracking-widest shadow-sm">
+                                                <X size={14} /> {t('common.cancel') || 'Cancelar'}
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <button type="button" onClick={handleSave} className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-all text-[10px] font-black uppercase tracking-widest shadow-sm shadow-amber-500/20">
+                                            <Plus size={14} /> {t('management.master.vip.createBenefit') || 'Criar Benefício'}
                                         </button>
-                                    </>
-                                ) : (
-                                    <button onClick={handleSave} className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-all text-[10px] font-black uppercase tracking-widest shadow-sm shadow-amber-500/20">
-                                        <Plus size={14} /> Criar Benefício
-                                    </button>
-                                )}
+                                    )}
+                                </div>
                             </div>
                         </div>
 
                         <form onSubmit={handleSave} className="p-8 space-y-6">
-
                             {activeTab === 'details' && (
                                 <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-                                    <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
-                                        <div className="flex items-center gap-2">
-                                            {(['pt', 'en', 'es'] as const).map(lang => (
-                                                <button key={lang} type="button" onClick={() => setActiveLang(lang)} className={`w-8 h-8 rounded-full overflow-hidden border-2 transition-all p-0.5 hover:scale-110 active:scale-95 ${activeLang === lang ? 'border-amber-500 shadow-lg shadow-amber-500/20' : 'border-transparent opacity-40 hover:opacity-100'}`} title={lang.toUpperCase()}>
-                                                    <img src={lang === 'pt' ? BR_FLAG : lang === 'en' ? US_FLAG : ES_FLAG} alt={lang} className="w-full h-full object-cover rounded-full" />
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="space-y-4">
                                             <div className="space-y-1.5">
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Título</label>
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{t('management.master.vip.detailsTitle') || 'Título'}</label>
                                                 <input className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-amber-500 outline-none dark:text-white transition-all shadow-sm" placeholder="EX: E-mail Profissional" value={formData.name?.[activeLang] || ''} onChange={e => setFormData({ ...formData, name: { ...formData.name!, [activeLang]: e.target.value } })} required />
                                             </div>
 
                                             <div className="space-y-1.5">
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Descrição Curta (Resumo)</label>
-                                                <textarea className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl text-xs font-medium focus:ring-2 focus:ring-amber-500 outline-none dark:text-white resize-none min-h-[80px]" placeholder="Descreva o benefício em poucas palavras" value={formData.short_desc?.[activeLang] || ''} onChange={e => setFormData({ ...formData, short_desc: { ...formData.short_desc!, [activeLang]: e.target.value } })} />
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{t('management.master.vip.detailsShortDesc') || 'Descrição Curta (Resumo)'}</label>
+                                                <textarea className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl text-xs font-medium focus:ring-2 focus:ring-amber-500 outline-none dark:text-white resize-none min-h-[80px]" placeholder={t('management.master.vip.detailsShortDescPlaceholder') || "Descreva o benefício em poucas palavras"} value={formData.short_desc?.[activeLang] || ''} onChange={e => setFormData({ ...formData, short_desc: { ...formData.short_desc!, [activeLang]: e.target.value } })} />
                                             </div>
                                         </div>
 
                                         <div className="space-y-4">
                                             <div className="space-y-1.5">
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-amber-500 flex items-center gap-2 ml-1"><Zap size={12} /> Chave / Slug do Sistema (Key)</label>
-                                                <input className="w-full px-4 py-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-amber-500 outline-none dark:text-amber-400 transition-all shadow-sm placeholder:text-amber-400/30" placeholder="ex: discount_next_bill, unlock_module" value={formData.benefit_key || ''} onChange={e => setFormData({ ...formData, benefit_key: e.target.value })} />
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-amber-500 flex items-center gap-2 ml-1"><Zap size={12} /> {t('management.master.vip.detailsKey') || 'Chave / Slug do Sistema (Key)'}</label>
+                                                <input className="w-full px-4 py-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-amber-500 outline-none dark:text-amber-400 transition-all shadow-sm placeholder:text-amber-400/30" placeholder={t('management.master.vip.detailsKeyPlaceholder') || "ex: discount_next_bill, unlock_module"} value={formData.benefit_key || ''} onChange={e => setFormData({ ...formData, benefit_key: e.target.value })} />
                                             </div>
 
                                             <div className="space-y-1.5">
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Ícone</label>
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{t('management.master.vip.detailsIcon') || 'Ícone'}</label>
                                                 <input className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-amber-500 outline-none dark:text-white transition-all shadow-sm" placeholder="EX: ShieldCheck" value={formData.icon_name || ''} onChange={e => setFormData({ ...formData, icon_name: e.target.value })} />
                                             </div>
                                         </div>
                                     </div>
 
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Descrição Completa</label>
-                                        <textarea className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl text-xs font-medium focus:ring-2 focus:ring-amber-500 outline-none dark:text-white resize-none min-h-[120px]" placeholder="Mais informações a serem detalhadas no modal de resgate..." value={formData.long_desc?.[activeLang] || ''} onChange={e => setFormData({ ...formData, long_desc: { ...formData.long_desc!, [activeLang]: e.target.value } })} />
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{t('management.master.vip.detailsLongDesc') || 'Descrição Completa'}</label>
+                                        <textarea className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl text-xs font-medium focus:ring-2 focus:ring-amber-500 outline-none dark:text-white resize-none min-h-[120px]" placeholder={t('management.master.vip.detailsLongDescPlaceholder') || "Mais informações a serem detalhadas no modal de resgate..."} value={formData.long_desc?.[activeLang] || ''} onChange={e => setFormData({ ...formData, long_desc: { ...formData.long_desc!, [activeLang]: e.target.value } })} />
                                     </div>
 
                                     <div className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-700 hover:border-emerald-200 transition-colors shadow-sm w-max">
                                         <label className="relative inline-flex items-center cursor-pointer">
                                             <input type="checkbox" className="sr-only peer" checked={formData.status === 'active'} onChange={e => setFormData({ ...formData, status: e.target.checked ? 'active' : 'inactive' })} />
                                             <div className="w-9 h-5 bg-slate-300 rounded-full peer peer-checked:bg-emerald-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full shadow-inner"></div>
-                                            <span className="ml-3 text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-400">Ativo para Resgate de Usuários</span>
+                                            <span className="ml-3 text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-400">{t('management.master.vip.detailsActive') || 'Ativo para Resgate de Usuários'}</span>
                                         </label>
                                     </div>
                                 </div>
@@ -564,23 +562,23 @@ const VipManagement: React.FC<Props> = ({ credentials }) => {
                             {activeTab === 'rules' && (
                                 <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                                     <div className="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-200 dark:border-slate-700">
-                                        <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-6">Variáveis do Motor Matemático</h4>
+                                        <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-6">{t('management.master.vip.rulesMath') || 'Variáveis do Motor Matemático'}</h4>
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             <div className="space-y-1.5">
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Custo em Pontos</label>
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{t('management.master.vip.rulesCost') || 'Custo em Pontos'}</label>
                                                 <input type="number" className="w-full px-4 py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-amber-500 outline-none dark:text-white transition-all shadow-sm" value={formData.metadata?.cost_in_points || 0} onChange={e => setFormData({ ...formData, metadata: { ...formData.metadata, cost_in_points: Number(e.target.value) } })} />
-                                                <p className="text-[9px] text-slate-400 px-2 mt-1">(Se for inerente ao plano, deixe zero)</p>
+                                                <p className="text-[9px] text-slate-400 px-2 mt-1">{t('management.master.vip.rulesCostHint') || '(Se for inerente ao plano, deixe zero)'}</p>
                                             </div>
 
                                             <div className="space-y-1.5">
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Desconto Aplicado (%) - Opcional</label>
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{t('management.master.vip.rulesDiscount') || 'Desconto Aplicado (%) - Opcional'}</label>
                                                 <input type="number" className="w-full px-4 py-4 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-800/50 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none text-emerald-600 transition-all shadow-sm" value={formData.metadata?.discount_percentage || 0} onChange={e => setFormData({ ...formData, metadata: { ...formData.metadata, discount_percentage: Number(e.target.value) } })} />
                                             </div>
                                         </div>
 
                                         <div className="mt-6 space-y-1.5">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Metadata Avançado (Outras variáveis JSON)</label>
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{t('management.master.vip.rulesMetadata') || 'Metadata Avançado (Outras variáveis JSON)'}</label>
                                             <textarea
                                                 className="w-full px-4 py-4 bg-slate-900 text-green-400 font-mono text-xs border border-slate-800 rounded-2xl min-h-[120px] shadow-inner"
                                                 value={JSON.stringify(formData.metadata, null, 2)}
@@ -601,8 +599,8 @@ const VipManagement: React.FC<Props> = ({ credentials }) => {
                                     <div className="p-6 bg-indigo-50 dark:bg-indigo-900/20 rounded-3xl border border-indigo-100 dark:border-indigo-800/30 flex items-start gap-4">
                                         <Database size={24} className="text-indigo-500 mt-1" />
                                         <div>
-                                            <h4 className="text-sm font-black uppercase tracking-tight text-indigo-700 dark:text-indigo-400 mb-1">Elegibilidade do Benefício</h4>
-                                            <p className="text-xs text-indigo-600/70 dark:text-indigo-400/70 font-medium">Ligue os planos e os ciclos que dão direito a este benefício. Se ele não for atrelado a nenhum (venda avulsa pro clube VIP), apenas deixe tudo desativado.</p>
+                                            <h4 className="text-sm font-black uppercase tracking-tight text-indigo-700 dark:text-indigo-400 mb-1">{t('management.master.vip.audienceTitle') || 'Elegibilidade do Benefício'}</h4>
+                                            <p className="text-xs text-indigo-600/70 dark:text-indigo-400/70 font-medium">{t('management.master.vip.audienceDesc') || 'Ligue os planos e os ciclos que dão direito a este benefício. Se ele não for atrelado a nenhum (venda avulsa pro clube VIP), apenas deixe tudo desativado.'}</p>
                                         </div>
                                     </div>
 
@@ -625,7 +623,7 @@ const VipManagement: React.FC<Props> = ({ credentials }) => {
 
                                                     {isEnabled && (
                                                         <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-700 animate-in fade-in slide-in-from-top-2">
-                                                            <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Ciclos Elegíveis</span>
+                                                            <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">{t('management.master.vip.audienceCycles') || 'Ciclos Elegíveis'}</span>
                                                             <div className="grid grid-cols-2 gap-2">
                                                                 {['monthly', 'quarterly', 'semiannual', 'annual'].map(cycle => (
                                                                     <button
@@ -634,7 +632,7 @@ const VipManagement: React.FC<Props> = ({ credentials }) => {
                                                                         onClick={() => handleCycleToggle(plan.id, cycle)}
                                                                         className={`px-2 py-1.5 rounded-lg text-[9px] font-bold uppercase transition-all border ${mapping?.cycles.includes(cycle) ? 'bg-indigo-50 border-indigo-200 text-indigo-700 dark:bg-indigo-900/30 dark:border-indigo-800 dark:text-indigo-400' : 'bg-slate-50 border-slate-200 text-slate-400 dark:bg-slate-900 dark:border-slate-800 hover:bg-slate-100'}`}
                                                                     >
-                                                                        {cycle === 'monthly' ? 'Mensal' : cycle === 'quarterly' ? 'Trimestral' : cycle === 'semiannual' ? 'Semestral' : 'Anual'}
+                                                                        {cycle === 'monthly' ? (t('management.master.vip.monthly') || 'Mensal') : cycle === 'quarterly' ? (t('management.master.vip.quarterly') || 'Trimestral') : cycle === 'semiannual' ? (t('management.master.vip.semiannual') || 'Semestral') : (t('management.master.vip.annual') || 'Anual')}
                                                                     </button>
                                                                 ))}
                                                             </div>
@@ -659,14 +657,14 @@ const VipManagement: React.FC<Props> = ({ credentials }) => {
                             <AlertTriangle size={40} />
                         </div>
                         <div className="space-y-2">
-                            <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Excluir Benefício?</h3>
+                            <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">{t('management.master.vip.confirmDeleteTitle') || 'Excluir Benefício?'}</h3>
                             <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
-                                Tem certeza que deseja excluir o benefício "{benefitToDelete.name[locale as keyof TranslationStr]}"?
+                                {t('management.master.vip.confirmDeleteMessage', { name: benefitToDelete.name[locale as keyof TranslationStr] }) || `Tem certeza que deseja excluir o benefício "${benefitToDelete.name[locale as keyof TranslationStr]}"?`}
                             </p>
                         </div>
                         <div className="flex gap-4 pt-4">
-                            <button onClick={() => setBenefitToDelete(null)} className="flex-1 px-6 py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl font-black uppercase text-xs">Não</button>
-                            <button onClick={handleDelete} className="flex-1 px-6 py-4 bg-rose-600 text-white rounded-2xl font-black uppercase text-xs shadow-xl shadow-rose-600/20">Sim, Excluir</button>
+                            <button type="button" onClick={() => setBenefitToDelete(null)} className="flex-1 px-6 py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl font-black uppercase text-xs">{t('management.master.vip.confirmDeleteNo') || 'Não'}</button>
+                            <button type="button" onClick={handleDelete} className="flex-1 px-6 py-4 bg-rose-600 text-white rounded-2xl font-black uppercase text-xs shadow-xl shadow-rose-600/20">{t('management.master.vip.confirmDeleteYes') || 'Sim, Excluir'}</button>
                         </div>
                     </div>
                 </div>

@@ -280,14 +280,14 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
         if (isAdminModule) {
             if (currentNormalized === 'access_groups' || currentNormalized === 'settings' || currentNormalized === 'infra') {
                 if (!isSuperAdmin) {
-                    toast.error('Acesso restrito ao Grupo Sócio-Administrativo.');
+                    toast.error(t('common.restrictedAdminOnly'));
                     onModuleChange(ModuleId.DASHBOARD_ROOT);
                     return;
                 }
             } else if (currentNormalized === 'users') {
                 const canSeeUsers = isAdmin || user.role.includes('Advogado');
                 if (!canSeeUsers) {
-                    toast.error('Acesso restrito.');
+                    toast.error(t('common.accessRestricted'));
                     onModuleChange(ModuleId.DASHBOARD_ROOT);
                     return;
                 }
@@ -345,7 +345,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                     <div className="flex flex-col items-center justify-center h-full text-slate-400">
                         <div className="p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-xl text-center">
                             <h3 className="text-2xl font-bold mb-2 text-slate-800 dark:text-white">Módulo {activeModule}</h3>
-                            <p>Este módulo está sendo migrado do ecossistema original.</p>
+                            <p>{t('modules.underMigration') || 'Este módulo está sendo migrado do ecossistema original.'}</p>
                         </div>
                     </div>
                 );
@@ -800,3 +800,4 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
         </div >
     );
 };
+

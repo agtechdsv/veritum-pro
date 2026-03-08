@@ -130,6 +130,16 @@ export function CheckoutModal({
             byodbAlertTitle: "⚠️ Atenção: Arquitetura BYODB",
             byodbAlertMsg: "Você selecionou a arquitetura BYODB. Lembra-se: você será o responsável pela conexão, segurança e backup do banco de dados nos seus próprios servidores.",
             byodbAlertUpsell: "Prefere que a gente cuide de tudo? Conheça o Veritum Cloud Gerenciada (+ R$ 49,90/mês)",
+            infraTitle: "Infraestrutura",
+            infraSubtitle: "Aonde seus dados vão morar?",
+            byodbTitle: "BYODB (Local)",
+            byodbSovereignty: "Soberania Total",
+            byodbDesc: "Conecte aos seus servidores (AWS, Google, On-Premise). Zero custo extra de nuvem para nós. Você cuida da T.I, banco e backups.",
+            systemLabel: "Sistema",
+            infraCloudLabel: "Infra (Cloud)",
+            totalSavings: "Economia Total",
+            equivalentTo: "Equivalente a",
+            perMonth: "/ mês"
         },
         en: {
             selectedSub: "Selected Subscription",
@@ -175,6 +185,16 @@ export function CheckoutModal({
             byodbAlertTitle: "⚠️ Attention: BYODB Architecture",
             byodbAlertMsg: "You have selected the BYODB architecture. Remember: you will be responsible for the connection, security, and backup of the database on your own servers.",
             byodbAlertUpsell: "Prefer us to handle everything? Discover Veritum Managed Cloud (+ R$ 49.90/month)",
+            infraTitle: "Infrastructure",
+            infraSubtitle: "Where will your data live?",
+            byodbTitle: "BYODB (Local)",
+            byodbSovereignty: "Total Sovereignty",
+            byodbDesc: "Connect to your servers (AWS, Google, On-Premise). Zero extra cloud cost for us. You handle IT, database, and backups.",
+            systemLabel: "System",
+            infraCloudLabel: "Infra (Cloud)",
+            totalSavings: "Total Savings",
+            equivalentTo: "Equivalent to",
+            perMonth: "/ month"
         },
         es: {
             selectedSub: "Suscripción Seleccionada",
@@ -220,6 +240,16 @@ export function CheckoutModal({
             byodbAlertTitle: "⚠️ Atención: Arquitectura BYODB",
             byodbAlertMsg: "Has seleccionado la arquitectura BYODB. Recuerda: tú serás el responsable de la conexión, seguridad y copia de seguridad de la base de datos en tus propios servidores.",
             byodbAlertUpsell: "¿Prefieres que nos encarguemos de todo? Conoce Veritum Cloud Gestionada (+ R$ 49,90/mes)",
+            infraTitle: "Infraestructura",
+            infraSubtitle: "¿Dónde vivirán sus datos?",
+            byodbTitle: "BYODB (Local)",
+            byodbSovereignty: "Soberanía Total",
+            byodbDesc: "Conecte a sus servidores (AWS, Google, On-Premise). Sin costo extra de nube para nosotros. Usted se encarga de T.I., base de datos y copias de seguridad.",
+            systemLabel: "Sistema",
+            infraCloudLabel: "Infra (Cloud)",
+            totalSavings: "Ahorro Total",
+            equivalentTo: "Equivalente a",
+            perMonth: "/ mes"
         },
     };
 
@@ -679,8 +709,8 @@ export function CheckoutModal({
                                 <Database size={24} strokeWidth={2.5} />
                             </div>
                             <div>
-                                <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter">Infraestrutura</h3>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">Aonde seus dados vão morar?</p>
+                                <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter">{t.infraTitle}</h3>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">{t.infraSubtitle}</p>
                             </div>
                         </div>
 
@@ -694,15 +724,15 @@ export function CheckoutModal({
                             >
                                 <div className="flex items-start justify-between mb-2">
                                     <div>
-                                        <h4 className={`text-lg font-black ${selectedCloudPlanId === 'byodb' ? 'text-indigo-900 dark:text-indigo-100' : 'text-slate-800 dark:text-slate-200'}`}>BYODB (Local)</h4>
-                                        <div className="text-sm font-black text-slate-500 mt-1">Soberania Total</div>
+                                        <h4 className={`text-lg font-black ${selectedCloudPlanId === 'byodb' ? 'text-indigo-900 dark:text-indigo-100' : 'text-slate-800 dark:text-slate-200'}`}>{t.byodbTitle}</h4>
+                                        <div className="text-sm font-black text-slate-500 mt-1">{t.byodbSovereignty}</div>
                                     </div>
                                     <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${selectedCloudPlanId === 'byodb' ? 'border-indigo-600 bg-indigo-600' : 'border-slate-300 dark:border-slate-700'}`}>
                                         {selectedCloudPlanId === 'byodb' && <Check size={14} strokeWidth={4} className="text-white" />}
                                     </div>
                                 </div>
                                 <p className={`text-[11px] font-medium leading-relaxed mt-3 ${selectedCloudPlanId === 'byodb' ? 'text-indigo-700/80 dark:text-indigo-300/80' : 'text-slate-500'}`}>
-                                    Conecte aos seus servidores (AWS, Google, On-Premise). Zero custo extra de nuvem para nós. Você cuida da T.I, banco e backups.
+                                    {t.byodbDesc}
                                 </p>
                             </div>
 
@@ -738,7 +768,7 @@ export function CheckoutModal({
 
                                             <div className="flex items-baseline gap-1 mt-1 mb-3">
                                                 <span className={`text-xl font-black ${isSelected ? 'text-indigo-900 dark:text-indigo-100' : 'text-indigo-600 dark:text-indigo-400'}`}>+ {formatPrice(price)}</span>
-                                                <span className={`text-[10px] font-bold uppercase tracking-widest ${isSelected ? 'text-indigo-900/50 dark:text-indigo-100/50' : 'text-slate-400'}`}>/ mês</span>
+                                                <span className={`text-[10px] font-bold uppercase tracking-widest ${isSelected ? 'text-indigo-900/50 dark:text-indigo-100/50' : 'text-slate-400'}`}>{t.perMonth}</span>
 
                                                 {/* Calculate Equivalent if billing cycle > monthly */}
                                                 {billingCycle !== 'monthly' && cp.discounts && (
@@ -800,15 +830,15 @@ export function CheckoutModal({
                                 <div className="space-y-2">
                                     <div className="flex justify-between items-center text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">
                                         <div className="flex flex-col">
-                                            <span>Sistema {currentDiscountPerc > 0 ? <span className="text-[10px] text-emerald-500 font-black tracking-tighter ml-1">(-{currentDiscountPerc}%)</span> : ''}</span>
+                                            <span>{t.systemLabel} {currentDiscountPerc > 0 ? <span className="text-[10px] text-emerald-500 font-black tracking-tighter ml-1">(-{currentDiscountPerc}%)</span> : ''}</span>
                                         </div>
                                         <span>{formatPrice(baseTotal)}</span>
                                     </div>
                                     <div className="flex justify-between items-center text-xs font-bold text-slate-500 uppercase tracking-widest pb-2 border-b border-slate-200 dark:border-slate-800">
                                         <div className="flex flex-col">
-                                            <span>Infra (Cloud) {selectedCloudPlanId !== 'byodb' && cloudDiscountPerc > 0 ? <span className="text-[10px] text-emerald-500 font-black tracking-tighter ml-1">(-{cloudDiscountPerc}%)</span> : ''}</span>
+                                            <span>{t.infraCloudLabel} {selectedCloudPlanId !== 'byodb' && cloudDiscountPerc > 0 ? <span className="text-[10px] text-emerald-500 font-black tracking-tighter ml-1">(-{cloudDiscountPerc}%)</span> : ''}</span>
                                         </div>
-                                        <span>{selectedCloudPlanId === 'byodb' ? 'R$ 0,00' : formatPrice(cloudTotal)}</span>
+                                        <span>{selectedCloudPlanId === 'byodb' ? formatPrice(0) : formatPrice(cloudTotal)}</span>
                                     </div>
 
                                     {hasAnyDiscount && (
@@ -819,7 +849,7 @@ export function CheckoutModal({
                                             </div>
                                             <div className="flex justify-between items-center text-[11px] font-bold text-emerald-500 uppercase tracking-widest gap-2 mt-1">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="truncate">{t.planDiscountLabel} Economia Total</span>
+                                                    <span className="truncate">{t.planDiscountLabel} {t.totalSavings}</span>
                                                     <span className="px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 text-[9px] font-black shadow-sm">
                                                         {Math.round(((full - currentTotal) / full) * 100)}% OFF
                                                     </span>
@@ -835,7 +865,7 @@ export function CheckoutModal({
                                         </div>
                                         {billingCycle !== 'monthly' && (
                                             <div className="text-[9px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mt-1 animate-in fade-in slide-in-from-right-2">
-                                                Equivalente a {formatPrice(monthlyEquivalent)} / mês
+                                                {t.equivalentTo} {formatPrice(monthlyEquivalent)} {t.perMonth}
                                             </div>
                                         )}
                                     </div>

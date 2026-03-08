@@ -71,7 +71,7 @@ export default function FintechPage() {
             .order('created_at', { ascending: false })
 
         if (error) {
-            toast.error('Erro ao carregar contas.')
+            toast.error(t('management.master.fintech.toast.fetchError') || 'Erro ao carregar contas.')
         } else {
             setSubAccounts(data || [])
         }
@@ -83,17 +83,12 @@ export default function FintechPage() {
         setIsCreating(true)
         const formData = new FormData(e.currentTarget)
 
-        // Ensure we pass the selectedUserId if we want to create it for that context
-        // But the action currently uses auth user. Let's keep consistency for now or fix action.
-        // The action's logic might need update if Master creates FOR someone else, 
-        // but typically Admin creates for themselves. For now, let's stick to the UI polish.
-
         const result = await createFintechSubAccount(formData)
 
         if (result.error) {
             toast.error(result.error)
         } else {
-            toast.success('Subconta criada com sucesso!')
+            toast.success(t('management.master.fintech.toast.saveSuccess') || 'Subconta criada com sucesso!')
             setIsDrawerOpen(false)
             fetchSubAccounts(selectedUserId)
         }
@@ -111,8 +106,8 @@ export default function FintechPage() {
                             <CreditCard size={24} />
                         </div>
                         <div>
-                            <h1 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Gerenciamento Fintech</h1>
-                            <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-1">Subcontas e Identidades Asaas</p>
+                            <h1 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">{t('management.master.fintech.title') || 'Gerenciamento Fintech'}</h1>
+                            <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-1">{t('management.master.fintech.subtitle') || 'Subcontas e Identidades Asaas'}</p>
                         </div>
                     </div>
 
@@ -120,7 +115,7 @@ export default function FintechPage() {
                         onClick={() => setIsDrawerOpen(true)}
                         className="bg-indigo-600 text-white px-8 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest flex items-center gap-2 hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-600/30 active:scale-95"
                     >
-                        <Plus size={16} /> Nova Subconta
+                        <Plus size={16} /> {t('management.master.fintech.newSubAccount') || 'Nova Subconta'}
                     </button>
                 </div>
 
@@ -128,8 +123,8 @@ export default function FintechPage() {
                 {isMaster && (
                     <div className="flex items-center gap-4 bg-white dark:bg-slate-900 p-2 pl-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-xl">
                         <div className="flex flex-col items-end">
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none mb-1">Contexto Master</span>
-                            <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 leading-none">Selecione o Cliente</span>
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none mb-1">{t('management.master.fintech.masterContext') || 'Contexto Master'}</span>
+                            <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 leading-none">{t('management.master.fintech.selectClientTitle') || 'Selecione o Cliente'}</span>
                         </div>
                         <div className="relative">
                             <select
@@ -137,9 +132,9 @@ export default function FintechPage() {
                                 onChange={(e) => setSelectedUserId(e.target.value)}
                                 className="bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-6 py-3 text-xs font-black tracking-widest text-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-600 outline-none transition-all cursor-pointer min-w-[260px] appearance-none pr-10"
                             >
-                                <option value="">--- Selecione um Cliente ---</option>
-                                <option value={currentUser?.id}>Meu Contexto Mestre</option>
-                                <optgroup label="CLIENTES (SÓCIOS ADM)">
+                                <option value="">--- {t('management.master.fintech.selectClientTitle') || 'Selecione um Cliente'} ---</option>
+                                <option value={currentUser?.id}>{t('management.master.fintech.myContext') || 'Meu Contexto Mestre'}</option>
+                                <optgroup label={t('management.master.fintech.clientsGroup') || 'CLIENTES (SÓCIOS ADM)'}>
                                     {allUsers.map(u => {
                                         const rawName = typeof u.name === 'object' ? ((u.name as any).pt || (u.name as any).en || '') : (u.name || '');
                                         const formattedName = rawName.toLowerCase().split(' ').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
@@ -170,8 +165,8 @@ export default function FintechPage() {
                                 <CreditCard className="w-10 h-10 text-slate-300" />
                             </div>
                             <div className="space-y-2">
-                                <p className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Nenhuma subconta ativa</p>
-                                <p className="text-sm text-slate-500 max-w-sm">Comece criando uma subconta para automatizar seu faturamento e split de pagamentos.</p>
+                                <p className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">{t('management.master.fintech.noAccounts') || 'Nenhuma subconta ativa'}</p>
+                                <p className="text-sm text-slate-500 max-w-sm">{t('management.master.fintech.noAccountsDesc') || 'Comece criando uma subconta para automatizar seu faturamento e split de pagamentos.'}</p>
                             </div>
                         </CardContent>
                     </Card>
@@ -188,23 +183,23 @@ export default function FintechPage() {
                                     <Shield className="w-5 h-5" />
                                 </div>
                                 <span className={`text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest ${account.account_type === 'product' ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400'}`}>
-                                    {account.account_type === 'product' ? 'Unidade Interna' : 'Marketplace'}
+                                    {account.account_type === 'product' ? (t('management.master.fintech.accountTypeInternal') || 'Unidade Interna') : (t('management.master.fintech.accountTypeMarketplace') || 'Marketplace')}
                                 </span>
                             </div>
                             <CardTitle className="text-2xl font-black text-slate-800 dark:text-white line-clamp-1 uppercase tracking-tighter">{account.branding_name}</CardTitle>
                             <CardDescription className="flex items-center gap-2 mt-2">
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Asaas ID:</span>
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('management.master.fintech.asaasId') || 'Asaas ID'}:</span>
                                 <span className="font-mono text-xs text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50 dark:bg-indigo-500/5 px-2 py-0.5 rounded-lg">{account.asaas_id}</span>
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="p-8 pt-0 space-y-6">
                             <div className="p-5 bg-slate-50 dark:bg-slate-950/50 rounded-2xl border border-slate-100 dark:border-slate-800/50 space-y-4">
                                 <div className="flex justify-between items-center">
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Key className="w-4 h-4" /> Token API</span>
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Key className="w-4 h-4" /> {t('management.master.fintech.apiToken') || 'Token API'}</span>
                                     <span className="text-slate-900 dark:text-white font-mono text-xs font-bold bg-white dark:bg-slate-900 px-3 py-1 rounded-lg border border-slate-100 dark:border-slate-800">••••••••••••{account.api_key.slice(-4)}</span>
                                 </div>
                                 <div className="flex justify-between items-center">
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Settings2 className="w-4 h-4" /> Qualidade</span>
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Settings2 className="w-4 h-4" /> {t('management.master.fintech.quality') || 'Qualidade'}</span>
                                     <span className="flex items-center gap-2 text-emerald-500 font-black uppercase text-[10px] tracking-widest">
                                         <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                                         {account.status}
@@ -213,7 +208,7 @@ export default function FintechPage() {
                             </div>
 
                             <Button variant="outline" className="w-full h-14 border-slate-200 dark:border-slate-800 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/50 justify-between group/btn px-6 transition-all duration-300 border-2">
-                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300">Painel de Controle</span>
+                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300">{t('management.master.fintech.controlPanel') || 'Painel de Controle'}</span>
                                 <Settings2 className="w-5 h-5 text-slate-400 group-hover/btn:text-indigo-500 group-hover/btn:rotate-90 transition-all duration-500" />
                             </Button>
                         </CardContent>
@@ -230,14 +225,13 @@ export default function FintechPage() {
                         <CreditCard className="w-12 h-12 text-white" />
                     </div>
                     <div className="flex-1 space-y-3">
-                        <h3 className="text-3xl font-black text-white uppercase tracking-tighter">Automação de Recebíveis</h3>
+                        <h3 className="text-3xl font-black text-white uppercase tracking-tighter">{t('management.master.fintech.automationTitle') || 'Automação de Recebíveis'}</h3>
                         <p className="text-indigo-50 text-base max-w-2xl font-medium leading-relaxed">
-                            Agora que você pode gerenciar subcontas, o próximo passo é configurar o <strong>Split de Pagamentos Rule-Based</strong>.
-                            Mova comissões automaticamente da conta principal para cada unidade de negócio.
+                            {t('management.master.fintech.automationDesc') || 'Agora que você pode gerenciar subcontas, o próximo passo é configurar o Split de Pagamentos Rule-Based. Mova comissões automaticamente da conta principal para cada unidade de negócio.'}
                         </p>
                     </div>
                     <Button className="bg-white text-indigo-600 hover:bg-white/90 whitespace-nowrap px-10 py-7 text-xs font-black uppercase tracking-widest rounded-2xl shadow-xl transition-all active:scale-95">
-                        Guia de Integração Split
+                        {t('management.master.fintech.splitGuide') || 'Guia de Integração Split'}
                     </Button>
                 </CardContent>
             </Card>
@@ -263,8 +257,8 @@ export default function FintechPage() {
                         >
                             <div className="p-8 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
                                 <div>
-                                    <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Identidade Fintech</h3>
-                                    <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-1">Configuração de Nova Subconta Asaas</p>
+                                    <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">{t('management.master.fintech.drawerTitle') || 'Identidade Fintech'}</h3>
+                                    <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-1">{t('management.master.fintech.drawerSubtitle') || 'Configuração de Nova Subconta Asaas'}</p>
                                 </div>
                                 <button onClick={() => setIsDrawerOpen(false)} className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all">
                                     <XCircle size={28} />
@@ -275,23 +269,23 @@ export default function FintechPage() {
                                 <div className="flex-1 overflow-y-auto p-10 space-y-10 no-scrollbar">
                                     <div className="space-y-8">
                                         <div className="grid gap-4">
-                                            <Label htmlFor="brandingName" className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Nome de Branding (Ex: VERITUM PRO)</Label>
+                                            <Label htmlFor="brandingName" className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">{t('management.master.fintech.brandingNameLabel') || 'Nome de Branding (Ex: VERITUM PRO)'}</Label>
                                             <Input
                                                 id="brandingName"
                                                 name="brandingName"
-                                                placeholder="Como aparecerá no boleto"
+                                                placeholder={t('management.master.fintech.brandingPlaceholder') || 'Como aparecerá no boleto'}
                                                 required
                                                 className="h-14 px-6 bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-bold"
                                             />
                                         </div>
 
                                         <div className="grid gap-4">
-                                            <Label htmlFor="email" className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">E-mail de Notificação Financeira</Label>
+                                            <Label htmlFor="email" className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">{t('management.master.fintech.notificationEmailLabel') || 'E-mail de Notificação Financeira'}</Label>
                                             <Input
                                                 id="email"
                                                 name="email"
                                                 type="email"
-                                                placeholder="financeiro@empresa.com"
+                                                placeholder={t('management.master.fintech.emailPlaceholder') || 'financeiro@empresa.com'}
                                                 required
                                                 className="h-14 px-6 bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-bold"
                                             />
@@ -299,7 +293,7 @@ export default function FintechPage() {
 
                                         <div className="grid grid-cols-2 gap-8">
                                             <div className="grid gap-4">
-                                                <Label htmlFor="cpfCnpj" className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">CPF/CNPJ da Identidade</Label>
+                                                <Label htmlFor="cpfCnpj" className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">{t('management.master.fintech.documentLabel') || 'CPF/CNPJ da Identidade'}</Label>
                                                 <Input
                                                     id="cpfCnpj"
                                                     name="cpfCnpj"
@@ -309,14 +303,14 @@ export default function FintechPage() {
                                                 />
                                             </div>
                                             <div className="grid gap-4">
-                                                <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Tipo de Unidade</Label>
+                                                <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">{t('management.master.fintech.unitTypeLabel') || 'Tipo de Unidade'}</Label>
                                                 <div className="relative">
                                                     <select
                                                         name="accountType"
                                                         className="h-14 w-full px-6 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-black uppercase text-[10px] tracking-widest appearance-none"
                                                     >
-                                                        <option value="product">Unidade Interna</option>
-                                                        <option value="user">Marketplace / Externo</option>
+                                                        <option value="product">{t('management.master.fintech.accountTypeInternal') || 'Unidade Interna'}</option>
+                                                        <option value="user">{t('management.master.fintech.accountTypeMarketplace') || 'Marketplace / Externo'}</option>
                                                     </select>
                                                     <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
                                                 </div>
@@ -324,11 +318,11 @@ export default function FintechPage() {
                                         </div>
 
                                         <div className="grid gap-4">
-                                            <Label htmlFor="phone" className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Telefone para Contato (Opcional)</Label>
+                                            <Label htmlFor="phone" className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">{t('management.master.fintech.phoneLabel') || 'Telefone para Contato (Opcional)'}</Label>
                                             <Input
                                                 id="phone"
                                                 name="phone"
-                                                placeholder="(11) 99999-9999"
+                                                placeholder={t('management.master.fintech.phonePlaceholder') || '(11) 99999-9999'}
                                                 className="h-14 px-6 bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-bold"
                                             />
                                         </div>
@@ -339,7 +333,7 @@ export default function FintechPage() {
                                             <Shield size={18} />
                                         </div>
                                         <p className="text-[11px] font-bold text-amber-800 dark:text-amber-200 leading-relaxed uppercase tracking-tight">
-                                            Esta ação criará uma subconta vinculada no Asaas. Tenha certeza de que os dados acima estão corretos para aprovação automática.
+                                            {t('management.master.fintech.alertTitle') || 'Esta ação criará uma subconta vinculada no Asaas. Tenha certeza de que los datos acima estão corretos para aprovação automática.'}
                                         </p>
                                     </div>
                                 </div>
@@ -350,14 +344,14 @@ export default function FintechPage() {
                                         onClick={() => setIsDrawerOpen(false)}
                                         className="flex-1 px-8 py-5 bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-100 transition-all text-[10px] border-2 border-transparent"
                                     >
-                                        Descartar
+                                        {t('management.master.fintech.discard') || 'Descartar'}
                                     </button>
                                     <button
                                         type="submit"
                                         disabled={isCreating}
                                         className="flex-[2] px-8 py-5 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-700 shadow-2xl shadow-indigo-600/40 transition-all flex items-center justify-center gap-3 text-[10px] disabled:opacity-50"
                                     >
-                                        {isCreating ? 'Sincronizando...' : 'Ativar Identidade Fintech'}
+                                        {isCreating ? (t('management.master.fintech.syncing') || 'Sincronizando...') : (t('management.master.fintech.activate') || 'Ativar Identidade Fintech')}
                                     </button>
                                 </div>
                             </form>

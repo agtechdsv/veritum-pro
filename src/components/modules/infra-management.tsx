@@ -102,10 +102,10 @@ export default function InfraManagement({ currentUser }: Props) {
             const payload = { ...config, owner_id: selectedUserId };
             const result = await saveTenantConfig(payload);
             if (result.success) {
-                toast.success(t('management.settings.infra.saveSuccess') || 'Ecossistema infra atualizado com sucesso!');
+                toast.success(t('management.settings.infra.saveSuccess'));
             }
         } catch (error: any) {
-            toast.error(error.message || t('management.settings.infra.saveError') || 'Erro ao salvar configurações.');
+            toast.error(error.message || t('management.settings.infra.saveError'));
         } finally {
             setSaving(false);
         }
@@ -116,12 +116,12 @@ export default function InfraManagement({ currentUser }: Props) {
         try {
             const result = await deleteTenantConfig(selectedUserId);
             if (result.success) {
-                toast.success(t('management.settings.infra.deleteSuccess') || 'Ecossistema infra excluído com sucesso!');
+                toast.success(t('management.settings.infra.deleteSuccess'));
                 fetchConfig(selectedUserId); // re-fetch to reset
                 setShowDeleteConfirm(false);
             }
         } catch (error: any) {
-            toast.error(error.message || t('management.settings.infra.saveError') || 'Erro ao excluir configurações.');
+            toast.error(error.message || t('management.settings.infra.saveError'));
         } finally {
             setDeleting(false);
         }
@@ -154,7 +154,7 @@ export default function InfraManagement({ currentUser }: Props) {
                             >
                                 <option value="">--- {t('management.users.masterFilter.selectClient')} ---</option>
                                 <option value={currentUser.id}>{t('management.users.masterFilter.self')}</option>
-                                <optgroup label={t('management.users.masterFilter.clients')?.toUpperCase() || 'CLIENTES (SÓCIOS ADM)'}>
+                                <optgroup label={t('management.users.masterFilter.clients')?.toUpperCase()}>
                                     {allUsers.filter(u => u.id !== currentUser.id).map(c => {
                                         const rawName = typeof c.name === 'object' ? ((c.name as any).pt || (c.name as any).en || '') : (c.name || '');
                                         const formattedName = rawName.toLowerCase().split(' ').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
@@ -404,7 +404,7 @@ export default function InfraManagement({ currentUser }: Props) {
                                 <AlertTriangle size={40} />
                             </div>
                             <div className="space-y-2">
-                                <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">{t('management.settings.infra.deleteConfirmTitle')?.toUpperCase() || 'EXCLUIR INFRAESTRUTURA'}</h3>
+                                <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">{t('management.settings.infra.deleteConfirmTitle')?.toUpperCase()}</h3>
                                 <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
                                     {t('management.settings.infra.deleteConfirmMessage')}
                                 </p>
@@ -415,7 +415,7 @@ export default function InfraManagement({ currentUser }: Props) {
                                     disabled={deleting}
                                     className="flex-1 px-6 py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-slate-200 transition-all disabled:opacity-50"
                                 >
-                                    {t('common.cancel')?.toUpperCase() || 'CANCELAR'}
+                                    {t('common.cancel')?.toUpperCase()}
                                 </button>
                                 <button
                                     onClick={handleDelete}
@@ -423,7 +423,7 @@ export default function InfraManagement({ currentUser }: Props) {
                                     className="flex-1 px-6 py-4 bg-rose-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-rose-600/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                                 >
                                     {deleting ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : null}
-                                    {deleting ? (t('common.deleting')?.toUpperCase() || 'EXCLUINDO...') : (t('common.confirm')?.toUpperCase() || 'CONFIRMAR')}
+                                    {deleting ? (t('common.deleting')?.toUpperCase()) : (t('common.confirm')?.toUpperCase())}
                                 </button>
                             </div>
                         </motion.div>

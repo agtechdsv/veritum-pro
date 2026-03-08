@@ -64,7 +64,7 @@ export function CloudSettingsManager({ credentials }: { credentials?: Credential
             if (error) throw error
             setPlans(data || [])
         } catch (error: any) {
-            toast.error(t('common.error') || 'Erro ao carregar os planos Cloud.')
+            toast.error(t('management.master.cloud.fetchError') || 'Erro ao carregar os planos Cloud.')
             console.error(error)
         } finally {
             setLoading(false)
@@ -93,12 +93,12 @@ export function CloudSettingsManager({ credentials }: { credentials?: Credential
 
             if (error) throw error
             if (!data || data.length === 0) {
-                toast.error('Erro de Permissão: Nenhuma linha atualizada (RLS bloqueou).')
+                toast.error(t('management.master.cloud.rlsError') || 'Error de Permiso: Ninguna fila actualizada (RLS bloqueó).')
                 throw new Error("RLS blocked the update or zero rows affected.")
             }
-            toast.success(t('common.success') || 'Plano salvo com sucesso!')
+            toast.success(t('management.master.cloud.saveSuccess') || 'Plano salvo com sucesso!')
         } catch (error: any) {
-            toast.error(t('common.error') || 'Erro ao salvar plano.')
+            toast.error(t('management.master.cloud.saveError') || 'Erro ao salvar plano.')
             console.error(error)
         } finally {
             setSaving(null)
@@ -167,7 +167,7 @@ export function CloudSettingsManager({ credentials }: { credentials?: Credential
 
     const handleTranslatePlan = async (plan: CloudPlan) => {
         if (!gemini) {
-            toast.error(t('master.gemini.error') || 'Configure sua chave do Gemini.')
+            toast.error(t('management.master.gemini.error') || 'Configure sua chave do Gemini.')
             return
         }
 
@@ -242,10 +242,10 @@ export function CloudSettingsManager({ credentials }: { credentials?: Credential
                 }
             }))
 
-            toast.success(t('master.translate.success') || 'Sucesso!')
+            toast.success(t('management.master.translate.success') || 'Sucesso!')
         } catch (err: any) {
             console.error(err)
-            toast.error(t('master.translate.error') || 'Erro ao traduzir usando IA.')
+            toast.error(t('management.master.translate.error') || 'Erro ao traduzir usando IA.')
         } finally {
             setTranslating(null)
         }
@@ -267,14 +267,14 @@ export function CloudSettingsManager({ credentials }: { credentials?: Credential
                         <Server className="w-6 h-6 text-emerald-500" />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight">{t('managementCloud.title') || 'Gestão de Cloud / Add-Ons'}</h1>
-                        <p className="text-slate-500 dark:text-slate-400 text-sm">{t('managementCloud.subtitle') || 'Gerencie os pacotes do Veritum Cloud (banco de dados, storage) exibidos no checkout.'}</p>
+                        <h1 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight">{t('management.master.cloud.title') || 'Gestão de Cloud / Add-Ons'}</h1>
+                        <p className="text-slate-500 dark:text-slate-400 text-sm">{t('management.master.cloud.subtitle') || 'Gerencie os pacotes do Veritum Cloud (banco de dados, storage) exibidos no checkout.'}</p>
                     </div>
                 </div>
 
                 {/* Flags Selector at Top */}
-                <div className="flex items-center gap-3 p-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
-                    <span className="text-[10px] font-black uppercase text-slate-400 ml-2">{t('managementCloud.editing') || 'Editando em:'}</span>
+                <div className="flex items-center gap-3 p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
+                    <span className="text-[10px] font-black uppercase text-slate-400 ml-2">{t('management.master.cloud.editing') || 'Editando em:'}</span>
                     <div className="flex items-center gap-2">
                         {(['pt', 'en', 'es'] as const).map(l => (
                             <button
@@ -297,10 +297,10 @@ export function CloudSettingsManager({ credentials }: { credentials?: Credential
 
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                 {plans.map((plan) => (
-                    <Card key={plan.id} className="bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 overflow-hidden">
+                    <Card key={plan.id} className="bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 overflow-hidden rounded-2xl">
                         <CardHeader className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30 flex-row items-center justify-between space-y-0 p-4 sm:p-6">
                             <div>
-                                <CardTitle className="text-lg text-slate-800 dark:text-white uppercase font-black">{plan.name?.[activeLang] || plan.name?.pt || t('managementCloud.unnamed') || 'Sem Nome'}</CardTitle>
+                                <CardTitle className="text-lg text-slate-800 dark:text-white uppercase font-black">{plan.name?.[activeLang] || plan.name?.pt || t('management.master.cloud.unnamed') || 'Sem Nome'}</CardTitle>
                                 <CardDescription className="text-slate-500 font-mono text-xs">{plan.code_name}</CardDescription>
                             </div>
                             <div className="flex items-center gap-2">
@@ -308,16 +308,16 @@ export function CloudSettingsManager({ credentials }: { credentials?: Credential
                                     variant="outline" size="sm"
                                     onClick={() => handleTranslatePlan(plan)}
                                     disabled={translating === plan.id || !gemini}
-                                    className="h-9 px-3 text-[10px] uppercase font-bold bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 border-none hover:bg-indigo-100 dark:hover:bg-indigo-900/60"
+                                    className="h-9 px-3 text-[10px] uppercase font-bold bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 border-none hover:bg-indigo-100 dark:hover:bg-indigo-900/60 rounded-xl"
                                 >
                                     {translating === plan.id ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <RefreshCw className="w-3 h-3 mr-1" />}
-                                    <span className="hidden sm:inline">{t('managementCloud.translateAI') || 'Traduzir IA'}</span>
+                                    <span className="hidden sm:inline">{t('management.master.cloud.translateAI') || 'Traduzir IA'}</span>
                                 </Button>
                                 <Button
                                     size="sm"
                                     onClick={() => handleUpdate(plan)}
                                     disabled={saving === plan.id}
-                                    className="bg-emerald-600 hover:bg-emerald-500 text-white gap-2 px-4 shadow-md shadow-emerald-600/20 h-9 text-[10px] uppercase font-bold tracking-wider"
+                                    className="bg-emerald-600 hover:bg-emerald-500 text-white gap-2 px-4 shadow-md shadow-emerald-600/20 h-9 text-[10px] uppercase font-bold tracking-wider rounded-xl"
                                 >
                                     {saving === plan.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                                     <span className="hidden sm:inline">{t('common.save') || 'Salvar'}</span>
@@ -328,11 +328,11 @@ export function CloudSettingsManager({ credentials }: { credentials?: Credential
                         <CardContent className="p-4 sm:p-6 space-y-8">
                             {/* Basics */}
                             <div className="space-y-4">
-                                <h4 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-2">{t('managementCloud.baseInfo') || 'Informações Base'}</h4>
+                                <h4 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-2">{t('management.master.cloud.baseInfo') || 'Informações Base'}</h4>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div className="space-y-1.5">
-                                        <Label className="text-[10px] text-slate-500 uppercase font-black tracking-widest">{t('managementCloud.monthlyPrice') || 'Preço Mensal (R$)'}</Label>
+                                        <Label className="text-[10px] text-slate-500 uppercase font-black tracking-widest">{t('management.master.cloud.monthlyPrice') || 'Preço Mensal (R$)'}</Label>
                                         <Input
                                             type="number"
                                             value={plan.price_monthly}
@@ -341,7 +341,7 @@ export function CloudSettingsManager({ credentials }: { credentials?: Credential
                                         />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <Label className="text-[10px] text-slate-500 uppercase font-black tracking-widest">{t('managementCloud.codeName') || 'Code Name'}</Label>
+                                        <Label className="text-[10px] text-slate-500 uppercase font-black tracking-widest">{t('management.master.cloud.codeName') || 'Code Name'}</Label>
                                         <Input
                                             value={plan.code_name}
                                             onChange={(e) => updatePlan(plan.id, ['code_name'], e.target.value)}
@@ -349,7 +349,7 @@ export function CloudSettingsManager({ credentials }: { credentials?: Credential
                                         />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <Label className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Desconto Mensal (%)</Label>
+                                        <Label className="text-[10px] text-slate-500 uppercase font-black tracking-widest">{t('management.master.cloud.discountMonthly') || 'Desconto Mensal (%)'}</Label>
                                         <Input
                                             type="number"
                                             value={plan.discounts?.monthly || 0}
@@ -358,7 +358,7 @@ export function CloudSettingsManager({ credentials }: { credentials?: Credential
                                         />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <Label className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Desconto Trimestral (%)</Label>
+                                        <Label className="text-[10px] text-slate-500 uppercase font-black tracking-widest">{t('management.master.cloud.discountQuarterly') || 'Desconto Trimestral (%)'}</Label>
                                         <Input
                                             type="number"
                                             value={plan.discounts?.quarterly || 0}
@@ -367,7 +367,7 @@ export function CloudSettingsManager({ credentials }: { credentials?: Credential
                                         />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <Label className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Desconto Semestral (%)</Label>
+                                        <Label className="text-[10px] text-slate-500 uppercase font-black tracking-widest">{t('management.master.cloud.discountSemiannual') || 'Desconto Semestral (%)'}</Label>
                                         <Input
                                             type="number"
                                             value={plan.discounts?.semiannual || 0}
@@ -376,7 +376,7 @@ export function CloudSettingsManager({ credentials }: { credentials?: Credential
                                         />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <Label className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Desconto Anual (%)</Label>
+                                        <Label className="text-[10px] text-slate-500 uppercase font-black tracking-widest">{t('management.master.cloud.discountYearly') || 'Desconto Anual (%)'}</Label>
                                         <Input
                                             type="number"
                                             value={plan.discounts?.yearly || 0}
@@ -389,11 +389,11 @@ export function CloudSettingsManager({ credentials }: { credentials?: Credential
 
                             {/* Translations */}
                             <div className="space-y-4">
-                                <h4 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-2">{t('managementCloud.translationsDisplay') || 'Traduções (Display)'} - {activeLang.toUpperCase()}</h4>
+                                <h4 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-2">{t('management.master.cloud.translationsDisplay') || 'Traduções (Display)'} - {activeLang.toUpperCase()}</h4>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div className="space-y-1.5">
-                                        <Label className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">{t('managementCloud.planName') || 'Nome do Plano'}</Label>
+                                        <Label className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">{t('management.master.cloud.planName') || 'Nome do Plano'}</Label>
                                         <Input
                                             value={plan.name?.[activeLang] || ''}
                                             onChange={(e) => updatePlan(plan.id, ['name', activeLang], e.target.value)}
@@ -401,7 +401,7 @@ export function CloudSettingsManager({ credentials }: { credentials?: Credential
                                         />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <Label className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">{t('managementCloud.badge') || 'Badge (Opcional)'}</Label>
+                                        <Label className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">{t('management.master.cloud.badge') || 'Badge (Opcional)'}</Label>
                                         <Input
                                             value={plan.badge?.[activeLang] || ''}
                                             onChange={(e) => updatePlan(plan.id, ['badge', activeLang], e.target.value)}
@@ -409,7 +409,7 @@ export function CloudSettingsManager({ credentials }: { credentials?: Credential
                                         />
                                     </div>
                                     <div className="space-y-1.5 sm:col-span-2">
-                                        <Label className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">{t('managementCloud.subtitleLabel') || 'Subtítulo'}</Label>
+                                        <Label className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">{t('management.master.cloud.subtitleLabel') || 'Subtítulo'}</Label>
                                         <Input
                                             value={plan.subtitle?.[activeLang] || ''}
                                             onChange={(e) => updatePlan(plan.id, ['subtitle', activeLang], e.target.value)}
@@ -417,7 +417,7 @@ export function CloudSettingsManager({ credentials }: { credentials?: Credential
                                         />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <Label className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">{t('managementCloud.credits') || 'Créditos Inclusos'}</Label>
+                                        <Label className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">{t('management.master.cloud.credits') || 'Créditos Inclusos'}</Label>
                                         <Input
                                             value={plan.credits?.[activeLang] || ''}
                                             onChange={(e) => updatePlan(plan.id, ['credits', activeLang], e.target.value)}
@@ -425,7 +425,7 @@ export function CloudSettingsManager({ credentials }: { credentials?: Credential
                                         />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <Label className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">{t('managementCloud.needMore') || 'Call to Action (Need More)'}</Label>
+                                        <Label className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">{t('management.master.cloud.needMore') || 'Call to Action (Need More)'}</Label>
                                         <Input
                                             value={plan.need_more?.[activeLang] || ''}
                                             onChange={(e) => updatePlan(plan.id, ['need_more', activeLang], e.target.value)}
@@ -433,7 +433,7 @@ export function CloudSettingsManager({ credentials }: { credentials?: Credential
                                         />
                                     </div>
                                     <div className="space-y-1.5 sm:col-span-2">
-                                        <Label className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">{t('managementCloud.featuresTitle') || 'Título das Features'}</Label>
+                                        <Label className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">{t('management.master.cloud.featuresTitle') || 'Título das Features'}</Label>
                                         <Input
                                             value={plan.features_title?.[activeLang] || ''}
                                             onChange={(e) => updatePlan(plan.id, ['features_title', activeLang], e.target.value)}
@@ -446,9 +446,9 @@ export function CloudSettingsManager({ credentials }: { credentials?: Credential
                             {/* Features */}
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
-                                    <h4 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{t('managementCloud.featuresList') || 'Features'} - {activeLang.toUpperCase()}</h4>
+                                    <h4 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{t('management.master.cloud.featuresList') || 'Features'} - {activeLang.toUpperCase()}</h4>
                                     <Button variant="outline" size="sm" onClick={() => addFeature(plan.id)} className="h-7 text-[10px] font-bold uppercase tracking-widest rounded-lg border-dashed">
-                                        <Plus className="w-3 h-3 mr-1" /> {t('managementCloud.addFeature') || 'Adicionar Feature'}
+                                        <Plus className="w-3 h-3 mr-1" /> {t('management.master.cloud.addFeature') || 'Adicionar Feature'}
                                     </Button>
                                 </div>
 
@@ -462,20 +462,20 @@ export function CloudSettingsManager({ credentials }: { credentials?: Credential
                                                     size="sm"
                                                     onClick={() => updateFeature(plan.id, index, 'isSub', !feature.isSub)}
                                                     className={`h-8 w-8 p-0 shrink-0 ${feature.isSub ? 'text-indigo-400' : 'text-slate-300'}`}
-                                                    title={t('managementCloud.markSub') || 'Sub-feature'}
+                                                    title={t('management.master.cloud.markSub') || 'Sub-feature'}
                                                 >
                                                     <Sparkles className="w-4 h-4" />
                                                 </Button>
                                                 <Input
                                                     value={feature.category || ''}
                                                     onChange={(e) => updateFeature(plan.id, index, 'category', e.target.value)}
-                                                    placeholder={t('managementCloud.catPlaceholder') || "Categoria (ex: compute)"}
+                                                    placeholder={t('management.master.cloud.catPlaceholder') || "Categoria (ex: compute)"}
                                                     className="w-24 sm:w-32 bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-xs h-8"
                                                 />
                                                 <Input
                                                     value={textValue}
                                                     onChange={(e) => updateFeature(plan.id, index, 'text', e.target.value, activeLang)}
-                                                    placeholder={t('managementCloud.descPlaceholder') || "Texto da feature..."}
+                                                    placeholder={t('management.master.cloud.descPlaceholder') || "Texto da feature..."}
                                                     className="flex-1 bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-xs h-8"
                                                 />
                                                 <Button
@@ -490,7 +490,7 @@ export function CloudSettingsManager({ credentials }: { credentials?: Credential
                                         )
                                     })}
                                     {(plan.features || []).length === 0 && (
-                                        <p className="text-[10px] uppercase font-bold text-slate-400 text-center py-4 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg">{t('management.cloud.noFeatures') || 'Nenhuma feature cadastrada.'}</p>
+                                        <p className="text-[10px] uppercase font-bold text-slate-400 text-center py-4 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg">{t('management.master.cloud.noFeatures') || 'Nenhuma feature cadastrada.'}</p>
                                     )}
                                 </div>
                             </div>
@@ -502,3 +502,4 @@ export function CloudSettingsManager({ credentials }: { credentials?: Credential
         </div>
     )
 }
+
