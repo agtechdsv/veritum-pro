@@ -7,7 +7,7 @@ export default function robots(): MetadataRoute.Robots {
         rules: {
             userAgent: '*',
             allow: '/',
-            disallow: ['/veritum/'],
+            disallow: ['/veritumpro/'],
         },
         sitemap: `${baseUrl}/sitemap.xml`,
     }

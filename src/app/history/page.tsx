@@ -92,7 +92,7 @@ export default function HistoryPage() {
                         ) : currentUser ? (
                             <div className="flex items-center gap-3">
                                 <Link
-                                    href="/veritum"
+                                    href="/veritumpro"
                                     className="hidden xl:flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-bold text-sm shadow-xl shadow-indigo-600/20 transition-all hover:scale-105"
                                 >
                                     <LayoutDashboard size={18} />
@@ -345,7 +345,7 @@ export default function HistoryPage() {
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-6 m-12">
                             {currentUser ? (
                                 <Link
-                                    href="/veritum"
+                                    href="/veritumpro"
                                     className="px-12 py-5 bg-indigo-600 text-white rounded-full font-black text-xl shadow-2xl shadow-indigo-600/30 hover:scale-110 hover:bg-indigo-700 transition-all uppercase tracking-tight flex items-center gap-3"
                                 >
                                     {t('hero.ctaPrimary')} <ArrowLeft className="rotate-180" size={24} />

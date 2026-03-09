@@ -49,7 +49,7 @@ export async function createFintechSubAccount(formData: FormData) {
             return { error: 'Subconta criada no Asaas, mas falhou ao salvar no banco local.' }
         }
 
-        revalidatePath('/veritum/fintech')
+        revalidatePath('/veritumpro/fintech')
         return { success: true }
     } catch (err: any) {
         console.error('Erro no checkout process:', err)

@@ -236,7 +236,7 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                     }
                 }
 
-                window.location.href = '/veritum';
+                window.location.href = '/veritumpro';
             } else {
                 // Front-end validation for Register
                 if (password !== confirmPassword) {
@@ -273,7 +273,7 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
 
                 if (loginError) throw loginError;
 
-                window.location.href = '/veritum';
+                window.location.href = '/veritumpro';
             }
         } catch (err: any) {
             console.error('Auth error:', err);
@@ -362,7 +362,7 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
 
             setLoading(false)
             // Full reload to ensure session is correctly picked up by layout
-            window.location.href = '/veritum';
+            window.location.href = '/veritumpro';
         }
         catch (err: any) {
             setError(err.message || t('auth.errors.resetError'));
@@ -424,7 +424,7 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                     // Clear persistent referral code
                     localStorage.removeItem('veritum_ref_code');
 
-                    window.location.href = '/veritum';
+                    window.location.href = '/veritumpro';
                 }
             });
 

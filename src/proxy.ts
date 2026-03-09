@@ -41,7 +41,7 @@ export async function proxy(request: NextRequest) {
         path === '/privacy' || path === '/terms' || path === '/sitemap.xml' || path === '/robots.txt' ||
         path === '/infrastructure' || path === '/clube-vip' || path.startsWith('/invite') ||
         path.startsWith('/auth') ||
-        ['/sentinel', '/nexus', '/scriptor', '/valorem', '/cognitio', '/vox', '/history'].includes(path)
+        ['/sentinel', '/nexus', '/scriptor', '/valorem', '/cognitio', '/vox', '/history', '/intelligence'].includes(path)
     const isSetupPath = path === '/setup'
 
     // 1. If user is NOT logged in (Master DB)
@@ -64,7 +64,7 @@ export async function proxy(request: NextRequest) {
     if (user) {
         // If trying to access Login while logged in, go to Dashboard (or Setup check)
         if (path === '/login') {
-            return NextResponse.redirect(new URL('/veritum', request.url))
+            return NextResponse.redirect(new URL('/veritumpro', request.url))
         }
 
         // Check if BYODB keys exist in cookies (Disabled for now as requested)

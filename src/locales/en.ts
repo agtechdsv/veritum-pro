@@ -23,6 +23,13 @@ export const en = {
         loadingEcosystem: 'Loading ecosystem...',
         selectLanguage: 'Select Language',
         confirm: 'Confirm',
+        new: 'New',
+        person: 'Person',
+        basic: 'Basic Data',
+        advanced: 'Advanced Data',
+        client: 'Client',
+        status: 'Status',
+        event: 'Task',
         deleting: 'Deleting...'
     },
     nav: {
@@ -1918,6 +1925,59 @@ export const en = {
             },
             footer: {
                 slogan: 'The proactive radar for those who don\'t accept the risk of default.'
+            }
+        },
+        intelligenceHub: {
+            nav: {
+                home: 'Home',
+                vision: 'Vision',
+                features: 'Features',
+                ux: 'Ecosystem'
+            },
+            hero: {
+                tag: 'PROACTIVE INTELLIGENCE',
+                title: 'Stop reacting to processes. Start anticipating opportunities.',
+                subtitle: 'Meet the Intelligence Hub. The "Lighthouse" of Veritum PRO that crosses Artificial Intelligence with your firm\'s data to identify hidden risks and new monetization opportunities even before litigation.',
+                cta1: 'Schedule Demo',
+                cta2: 'Understand how it works'
+            },
+            pain: {
+                title: 'Traditional lawyering waits for the summons. The future of lawyering acts before it arrives.',
+                description: 'In a high-pressure legal scenario, reactive lawyering is no longer enough. The Intelligence Hub acts as an invisible strategic consultant that works 24 hours a day. It reads market trends, analyzes court decisions, and scans your client portfolio to deliver answers to questions you haven\'t even asked yet.'
+            },
+            features: {
+                title: 'Elite Features',
+                subtitle: 'Intelligence that transforms data into strategy.',
+                items: {
+                    alerts: {
+                        title: '🚨 Golden Alerts',
+                        desc: 'Your firm\'s insight engine. Receive automatic alerts categorized by AI whenever a jurisprudential change or market news directly impacts your current clients\' processes or contracts.'
+                    },
+                    semantic: {
+                        title: '🧠 Semantic Matcher (Semantic AI)',
+                        desc: 'Your collection transformed into active intelligence. Using vector databases, our AI understands the context of your legal theories and intelligently crosses them with world events.'
+                    },
+                    opportunities: {
+                        title: '💡 Opportunity Identification',
+                        desc: 'Generate new revenue without looking for new clients. The Intelligence Hub identifies which clients in your base have the exact profile to file a new legal theory.'
+                    },
+                    risks: {
+                        title: '🛡️ Early Risk Mitigation',
+                        desc: 'Act at the root of the problem. By identifying a trend of mass convictions, the Hub triggers a red alert so you can suggest preventive settlements.'
+                    }
+                }
+            },
+            flow: {
+                title: 'How the Magic Happens',
+                subtitle: 'The Power of the Integrated Ecosystem',
+                radar: 'The Radar captures: Sentinel PRO detects a new decision or news in the market.',
+                hub: 'The Hub processes: Intelligence Hub analyzes the impact through Semantic AI.',
+                profit: 'You profit (or protect): You receive a Golden Alert showing exactly which client will be affected and which document Scriptor PRO should draft.'
+            },
+            finalCta: {
+                title: 'Turn your data into a competitive advantage.',
+                subtitle: 'Top legal departments don\'t just look to the past; they predict the future. Elevate your legal performance today.',
+                button: 'I want to know the Intelligence Hub'
             }
         },
         scriptor: {

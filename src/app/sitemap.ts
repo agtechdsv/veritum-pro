@@ -11,7 +11,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
         'valorem',
         'vox',
         'cognitio',
-        'history'
+        'history',
+        'intelligence',
+        'clube-vip'
     ]
 
     return [

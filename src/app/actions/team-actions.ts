@@ -118,7 +118,7 @@ export async function saveTeamMember(member: Partial<TeamMember>, targetUserId?:
             }
         }
 
-        revalidatePath('/veritum/users');
+        revalidatePath('/veritumpro/users');
         return { success: true, data: result };
     } catch (error: any) {
         console.error('Server Action Error (saveTeamMember):', error.message);
@@ -131,7 +131,7 @@ export async function deleteTeamMember(id: string, targetUserId?: string) {
         const { credentials, preferences } = await resolveSecurityContext(targetUserId);
         const repo = RepositoryFactory.getTeamRepository(credentials, preferences);
         await repo.delete(id);
-        revalidatePath('/veritum/users');
+        revalidatePath('/veritumpro/users');
         return { success: true };
     } catch (error: any) {
         console.error('Server Action Error (deleteTeamMember):', error.message);

@@ -14,7 +14,7 @@ export default function VeritumPage() {
 
     const handleModuleChange = (newModule: ModuleId) => {
         // Redirect to the dynamic route for the module
-        router.push(`/veritum/${newModule.toLowerCase().replace('_key', '')}`);
+        router.push(`/veritumpro/${newModule.toLowerCase().replace('_key', '')}`);
     };
 
     return (

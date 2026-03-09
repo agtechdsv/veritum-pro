@@ -5,9 +5,9 @@ import { createClient } from '@supabase/supabase-js';
 import IntelligenceWidget from '../shared/intelligence-widget';
 import { useTranslation } from '@/contexts/language-context';
 import PersonManagement from './person-management';
-import { useModule } from '@/app/veritum/layout';
+import { useModule } from '@/app/veritumpro/layout';
 import { listPersons } from '@/app/actions/crm-actions';
-import { listLawsuits, saveLawsuit, deleteLawsuit, listTasks, saveTask, deleteTask, listTeam } from '@/app/actions/nexus-actions';
+import { listLawsuits, saveLawsuit, deleteLawsuit, listTasks, saveTask, deleteTask, listTeam, getCitiesByState } from '@/app/actions/nexus-actions';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from '@/components/ui/toast';
 import { createMasterClient } from '@/lib/supabase/master';
@@ -43,6 +43,12 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     const isMaster = user.role === 'Master';
     const [selectedUserId, setSelectedUserId] = useState<string>(isMaster ? '' : user.id);
     const [allUsers, setAllUsers] = useState<any[]>([]);
+
+    // Cascading & Searchable States
+    const [cities, setCities] = useState<string[]>([]);
+    const [isLoadingCities, setIsLoadingCities] = useState(false);
+    const [chambers, setChambers] = useState<string[]>([]);
+    const [isLoadingChambers, setIsLoadingChambers] = useState(false);
 
     const supabase = createClient(credentials.supabaseUrl, credentials.supabaseAnonKey);
 
@@ -96,12 +102,12 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             if (lawResult.data) setLawsuits(lawResult.data);
             if (taskResult.data) setTasks(taskResult.data);
             if (personResult.data) setPersons(personResult.data);
-            if (teamResult.data) setTeam(teamResult.data);
+            if (teamResult?.data) setTeam(teamResult.data);
 
             const hasTableError = lawResult.error === 'TABLE_NOT_FOUND' ||
                 taskResult.error === 'TABLE_NOT_FOUND' ||
                 personResult.error === 'TABLE_NOT_FOUND' ||
-                teamResult.error === 'TABLE_NOT_FOUND';
+                teamResult?.error === 'TABLE_NOT_FOUND';
 
             if (hasTableError) {
                 toast.error(t('modules.nexus.errors.notMigrated') || 'O banco de dados do cliente selecionado ainda não foi migrado (tabelas Nexus/Team faltantes).');
@@ -118,6 +124,54 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             setLoading(false);
         }
     };
+
+    // Cascading Logic: State -> City
+    useEffect(() => {
+        if (editingLawsuit?.state) {
+            const fetchCities = async () => {
+                setIsLoadingCities(true);
+                try {
+                    const data = await getCitiesByState(editingLawsuit.state as string);
+                    console.log(`[Nexus] Cidades carregadas para ${editingLawsuit.state}:`, data.length);
+                    setCities(data);
+                } catch (err) {
+                    console.error('Error fetching cities:', err);
+                    setCities([]);
+                } finally {
+                    setIsLoadingCities(false);
+                }
+            };
+            fetchCities();
+        } else {
+            setCities([]);
+        }
+    }, [editingLawsuit?.state]);
+
+    // Cascading Logic: Tribunal -> Chamber (Vara)
+    useEffect(() => {
+        if (editingLawsuit?.court) {
+            const fetchChambers = async () => {
+                setIsLoadingChambers(true);
+                // Get unique existing chambers for this tribunal to build the autocomplete base
+                const uniqueChambers = Array.from(new Set(
+                    lawsuits
+                        .filter(l => l.court === editingLawsuit.court)
+                        .map(l => l.chamber)
+                )).filter(Boolean) as string[];
+
+                // Common defaults if none exist
+                const defaults = editingLawsuit.sphere === 'Trabalhista'
+                    ? ['1ª VARA DO TRABALHO', '2ª VARA DO TRABALHO', '3ª VARA DO TRABALHO', '4ª VARA DO TRABALHO', '5ª VARA DO TRABALHO']
+                    : ['1ª VARA CÍVEL', '2ª VARA CÍVEL', '3ª VARA CÍVEL', '1ª VARA FEDERAL', '2ª VARA FEDERAL'];
+
+                setChambers(Array.from(new Set([...uniqueChambers, ...defaults])).sort());
+                setIsLoadingChambers(false);
+            };
+            fetchChambers();
+        } else {
+            setChambers([]);
+        }
+    }, [editingLawsuit?.court, editingLawsuit?.sphere]);
 
     const handleSaveLawsuit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -371,7 +425,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                         <div className="flex items-center justify-between mb-8">
                             <div className="flex items-center gap-6">
                                 <div>
-                                    <h1 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">{t('common.people')}</h1>
+                                    <h1 className="text-3xl font-black text-slate-800 dark:text-white tracking-tighter">{t('management.master.persons.title')}</h1>
                                     <p className="text-slate-500 font-bold">{t('management.users.subtitle')}</p>
                                 </div>
                                 <button
@@ -745,18 +799,18 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                 </div>
 
                                 {/* Tab Switcher - Premium Style */}
-                                <div className="flex bg-slate-100 dark:bg-slate-800/50 p-1.5 rounded-[2rem] w-80">
+                                <div className="flex bg-slate-100 dark:bg-slate-800/50 p-1.5 rounded-[2rem] w-full">
                                     <button
                                         type="button"
                                         onClick={() => setActiveLawsuitTab('basic')}
-                                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all ${activeLawsuitTab === 'basic' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-xl shadow-indigo-600/10' : 'text-slate-500 hover:text-slate-700'}`}
+                                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap ${activeLawsuitTab === 'basic' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-xl shadow-indigo-600/10' : 'text-slate-500 hover:text-slate-700'}`}
                                     >
-                                        <Scale size={14} /> {t('common.basic') || 'Básico'}
+                                        <Zap size={14} /> {t('common.basic') || 'Básico'}
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => setActiveLawsuitTab('advanced')}
-                                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all ${activeLawsuitTab === 'advanced' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-xl shadow-indigo-600/10' : 'text-slate-500 hover:text-slate-700'}`}
+                                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap ${activeLawsuitTab === 'advanced' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-xl shadow-indigo-600/10' : 'text-slate-500 hover:text-slate-700'}`}
                                     >
                                         <Zap size={14} /> {t('common.advanced') || 'Avançado'}
                                     </button>
@@ -963,7 +1017,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                         <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Estado (UF)</label>
                                                         <select
                                                             value={editingLawsuit?.state || ''}
-                                                            onChange={e => setEditingLawsuit({ ...editingLawsuit, state: e.target.value, court: '' })}
+                                                            onChange={e => setEditingLawsuit({ ...editingLawsuit, state: e.target.value, court: '', city: '' })}
                                                             className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 font-black text-center"
                                                         >
                                                             <option value="">UF</option>
@@ -977,7 +1031,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                         <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Tribunal</label>
                                                         <select
                                                             value={editingLawsuit?.court || ''}
-                                                            onChange={e => setEditingLawsuit({ ...editingLawsuit, court: e.target.value })}
+                                                            onChange={e => setEditingLawsuit({ ...editingLawsuit, court: e.target.value, chamber: '' })}
                                                             className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 font-bold"
                                                         >
                                                             <option value="">Selecione o Tribunal...</option>
@@ -1008,19 +1062,24 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                 <div className="grid grid-cols-1 gap-4">
                                                     <div>
                                                         <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Órgão Julgador (Vara/Câmara)</label>
-                                                        <input
+                                                        <PremiumCombobox
                                                             value={editingLawsuit?.chamber || ''}
-                                                            onChange={e => setEditingLawsuit({ ...editingLawsuit, chamber: e.target.value })}
-                                                            className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 font-bold"
+                                                            onChange={val => setEditingLawsuit({ ...editingLawsuit, chamber: val })}
+                                                            options={chambers}
                                                             placeholder="Ex: 12ª Vara"
+                                                            creatable
+                                                            disabled={!editingLawsuit?.court}
                                                         />
                                                     </div>
                                                     <div>
                                                         <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Comarca / Cidade</label>
-                                                        <input
+                                                        <PremiumCombobox
                                                             value={editingLawsuit?.city || ''}
-                                                            onChange={e => setEditingLawsuit({ ...editingLawsuit, city: e.target.value })}
-                                                            className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 font-bold"
+                                                            onChange={val => setEditingLawsuit({ ...editingLawsuit, city: val })}
+                                                            options={cities}
+                                                            placeholder={isLoadingCities ? "Carregando cidades no servidor..." : "Selecione a Comarca..."}
+                                                            disabled={!editingLawsuit?.state}
+                                                            creatable
                                                         />
                                                     </div>
                                                 </div>
@@ -1220,6 +1279,134 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                             </form>
                         </motion.div>
                     </div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+};
+
+// 💎 Premium Combobox Component (Cascading & Searchable)
+const PremiumCombobox: React.FC<{
+    value: string;
+    onChange: (val: string) => void;
+    options: string[];
+    placeholder: string;
+    disabled?: boolean;
+    creatable?: boolean;
+}> = ({ value, onChange, options, placeholder, disabled, creatable }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+    const containerRef = React.useRef<HTMLDivElement>(null);
+
+    // Sync search term with value when closed
+    useEffect(() => {
+        if (!isOpen) setSearchTerm(value);
+    }, [value, isOpen]);
+
+    // Close on click outside
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(e.target as Node)) setIsOpen(false);
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const normalize = (str: string) =>
+        (str || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+    const filteredOptions = options.filter(opt =>
+        normalize(opt).includes(normalize(searchTerm))
+    ).slice(0, 50);
+
+    const showAddOption = creatable && searchTerm && !options.some(opt => opt.toLowerCase() === searchTerm.toLowerCase());
+
+    return (
+        <div ref={containerRef} className="relative w-full">
+            <div className="relative">
+                <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={e => {
+                        setSearchTerm(e.target.value);
+                        if (!isOpen) setIsOpen(true);
+                    }}
+                    onFocus={() => !disabled && setIsOpen(true)}
+                    placeholder={placeholder}
+                    disabled={disabled}
+                    className={`w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 font-bold transition-all ${disabled ? 'opacity-50 grayscale cursor-not-allowed' : 'cursor-text'}`}
+                />
+                <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
+                    {searchTerm && (
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onChange('');
+                                setSearchTerm('');
+                            }}
+                            className="p-1 hover:text-rose-500 transition-colors pointer-events-auto"
+                        >
+                            <XCircle size={14} className="text-slate-300" />
+                        </button>
+                    )}
+                    <ChevronDown size={14} className={`text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                </div>
+            </div>
+
+            <AnimatePresence>
+                {isOpen && !disabled && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="absolute z-[110] w-full mt-2 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden"
+                    >
+                        <div className="max-h-64 overflow-y-auto no-scrollbar">
+                            {showAddOption && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        onChange(searchTerm.toUpperCase());
+                                        setIsOpen(false);
+                                    }}
+                                    className="w-full px-6 py-4 text-left hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all border-b border-slate-50 dark:border-slate-800 group"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-1.5 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 rounded-lg group-hover:scale-110 transition-transform">
+                                            <Plus size={14} />
+                                        </div>
+                                        <div>
+                                            <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest block">Cadastrar Novo</span>
+                                            <span className="text-sm font-black text-slate-800 dark:text-white uppercase">{searchTerm}</span>
+                                        </div>
+                                    </div>
+                                </button>
+                            )}
+
+                            {filteredOptions.length > 0 ? (
+                                filteredOptions.map(opt => (
+                                    <button
+                                        key={opt}
+                                        type="button"
+                                        onClick={() => {
+                                            onChange(opt);
+                                            setIsOpen(false);
+                                        }}
+                                        className={`w-full px-6 py-4 text-left hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-sm font-bold uppercase tracking-tight flex items-center justify-between group ${value === opt ? 'bg-indigo-50/50 dark:bg-indigo-900/10 text-indigo-600' : 'text-slate-600 dark:text-slate-300'}`}
+                                    >
+                                        {opt}
+                                        {value === opt && <CheckCircle2 size={16} className="text-indigo-600" />}
+                                    </button>
+                                ))
+                            ) : !showAddOption && (
+                                <div className="p-8 text-center">
+                                    <Search size={24} className="mx-auto text-slate-200 mb-2" />
+                                    <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Nenhum resultado encontrado</p>
+                                </div>
+                            )}
+                        </div>
+                    </motion.div>
                 )}
             </AnimatePresence>
         </div>

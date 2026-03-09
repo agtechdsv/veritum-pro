@@ -177,6 +177,41 @@ export async function listTeam(targetUserId?: string) {
                 message: 'Database not initialized (Table team_members missing).'
             };
         }
-        throw error;
     }
+}
+
+const UF_TO_ID: Record<string, number> = {
+    'AC': 12, 'AL': 27, 'AP': 16, 'AM': 13, 'BA': 29, 'CE': 23, 'DF': 53, 'ES': 32, 'GO': 52, 'MA': 21,
+    'MT': 51, 'MS': 50, 'MG': 31, 'PA': 15, 'PB': 25, 'PR': 41, 'PE': 26, 'PI': 22, 'RJ': 33, 'RN': 24,
+    'RS': 43, 'RO': 11, 'RR': 14, 'SC': 42, 'SP': 35, 'SE': 28, 'TO': 17
+};
+
+export async function getCitiesByState(uf: string) {
+    const stateId = UF_TO_ID[uf.toUpperCase()];
+    // Try initials first, then numeric ID as fallback
+    const targets = [uf, stateId].filter(Boolean);
+
+    for (const target of targets) {
+        console.log(`[ServerAction] Fetching cities for: ${target}`);
+        try {
+            const res = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${target}/municipios`, {
+                headers: { 'Accept': 'application/json' },
+                next: { revalidate: 86400 } // Cache for 24 hours
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                if (Array.isArray(data)) {
+                    const result = data.map((c: any) => c.nome.toUpperCase()).sort();
+                    console.log(`[ServerAction] Success for ${target}: found ${result.length} cities`);
+                    return result;
+                }
+            } else {
+                console.warn(`[ServerAction] IBGE returned ${res.status} for target ${target}`);
+            }
+        } catch (err) {
+            console.error(`[ServerAction] Fetch error for ${target}:`, err);
+        }
+    }
+    return [];
 }

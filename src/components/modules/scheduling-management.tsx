@@ -15,7 +15,7 @@ import {
     Trash2, Pencil, Mail, Link as LinkIcon
 } from 'lucide-react';
 import { createMasterClient } from '@/lib/supabase/master';
-import { useModule } from '@/app/veritum/layout';
+import { useModule } from '@/app/veritumpro/layout';
 import { useTranslation } from '@/contexts/language-context';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from '@/components/ui/toast';

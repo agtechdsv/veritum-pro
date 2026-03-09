@@ -49,7 +49,7 @@ const SuiteDashboard: React.FC<Props> = ({ items, onModuleChange, currentUser })
                             </div>
                             <div className="flex items-center gap-3 relative z-10">
                                 <Link
-                                    href="/veritum/settings?tab=vip"
+                                    href="/veritumpro/settings?tab=vip"
                                     className="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-black text-sm uppercase tracking-widest rounded-xl transition-all shadow-md flex items-center gap-2"
                                 >
                                     Ativar Benefícios <ArrowRight size={16} />

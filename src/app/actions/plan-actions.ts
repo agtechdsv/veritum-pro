@@ -33,7 +33,7 @@ export async function createPlan(formData: any) {
     }
 
     revalidatePath('/')
-    revalidatePath('/veritum')
+    revalidatePath('/veritumpro')
     return { success: true, plan: data[0] }
 }
 
@@ -68,7 +68,7 @@ export async function updatePlan(planId: string, formData: any) {
     }
 
     revalidatePath('/')
-    revalidatePath('/veritum')
+    revalidatePath('/veritumpro')
     return { success: true, plan: data[0] }
 }
 
@@ -85,7 +85,7 @@ export async function deletePlan(planId: string) {
     }
 
     revalidatePath('/')
-    revalidatePath('/veritum')
+    revalidatePath('/veritumpro')
     return { success: true }
 }
 
@@ -102,7 +102,7 @@ export async function togglePlanActive(planId: string, active: boolean) {
     }
 
     revalidatePath('/')
-    revalidatePath('/veritum')
+    revalidatePath('/veritumpro')
     return { success: true }
 }
 
@@ -118,7 +118,7 @@ export async function updatePlansOrder(plans: { id: string; order_index: number 
     }
 
     revalidatePath('/')
-    revalidatePath('/veritum')
+    revalidatePath('/veritumpro')
     return { success: true }
 }
 

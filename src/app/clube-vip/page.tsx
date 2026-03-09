@@ -124,7 +124,7 @@ export default function ClubeVipPage() {
                         ) : currentUser ? (
                             <div className="flex items-center gap-3">
                                 <Link
-                                    href="/veritum"
+                                    href="/veritumpro"
                                     className="hidden xl:flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-bold text-sm shadow-xl shadow-indigo-600/20 transition-all hover:scale-105"
                                 >
                                     <LayoutDashboard size={18} />
@@ -184,7 +184,7 @@ export default function ClubeVipPage() {
 
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-in slide-in-from-bottom-10 duration-700 delay-300">
                         <Link
-                            href="/veritum/settings?tab=vip"
+                            href="/veritumpro/settings?tab=vip"
                             onClick={handleActivateClick}
                             className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-full font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 shadow-[0_0_40px_rgba(245,158,11,0.3)] hover:shadow-[0_0_60px_rgba(245,158,11,0.5)] hover:scale-105 active:scale-95 transition-all"
                         >
@@ -254,7 +254,7 @@ export default function ClubeVipPage() {
                                         <p className="text-sm text-slate-400 leading-relaxed font-medium mb-auto flex-1 relative">{bDesc}</p>
 
                                         <div className="pt-6 mt-6 border-t border-slate-800 relative">
-                                            <Link href="/veritum/settings?tab=vip" onClick={handleActivateClick} className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-colors">
+                                            <Link href="/veritumpro/settings?tab=vip" onClick={handleActivateClick} className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-colors">
                                                 Acessar Clube VIP <ArrowUpRight size={14} />
                                             </Link>
                                         </div>
@@ -409,7 +409,7 @@ export default function ClubeVipPage() {
                         <span className="text-amber-500">{t('clubeVip.ctaFinal.title2')}</span>
                     </h2>
                     <Link
-                        href="/veritum/settings?tab=vip"
+                        href="/veritumpro/settings?tab=vip"
                         onClick={handleActivateClick}
                         className="inline-flex items-center gap-4 bg-white text-amber-600 px-10 py-5 rounded-full font-black uppercase tracking-widest text-sm shadow-[0_10px_40px_rgba(245,158,11,0.2)] hover:scale-105 transition-all"
                     >

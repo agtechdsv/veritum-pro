@@ -342,7 +342,7 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
     useEffect(() => {
         const segments = pathname.split('/');
         const lastSegment = segments[segments.length - 1];
-        if (lastSegment === 'veritum') {
+        if (lastSegment === 'veritumpro') {
             setActiveModule(ModuleId.DASHBOARD_ROOT);
         } else {
             // Check if it's a valid module ID or needs normalization
@@ -371,7 +371,7 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
 
     const handleModuleChange = (newModule: ModuleId) => {
         setActiveModule(newModule);
-        const target = newModule === ModuleId.DASHBOARD_ROOT ? '/veritum' : `/veritum/${normalizeModuleKey(newModule)}`;
+        const target = newModule === ModuleId.DASHBOARD_ROOT ? '/veritumpro' : `/veritumpro/${normalizeModuleKey(newModule)}`;
         router.push(target);
     };
 

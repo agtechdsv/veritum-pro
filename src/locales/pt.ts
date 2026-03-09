@@ -23,6 +23,13 @@ export const pt = {
         loadingEcosystem: 'Carregando ecossistema...',
         selectLanguage: 'Selecionar Idioma',
         confirm: 'Confirmar',
+        new: 'Nova',
+        person: 'Pessoa',
+        basic: 'Dados Básicos',
+        advanced: 'Dados Avançados',
+        client: 'Cliente',
+        status: 'Status',
+        event: 'Tarefa',
         deleting: 'Excluindo...'
     },
     nav: {
@@ -1945,6 +1952,59 @@ export const pt = {
             },
             footer: {
                 slogan: 'O radar proativo de quem não aceita o risco da revelia.'
+            }
+        },
+        intelligenceHub: {
+            nav: {
+                home: 'Início',
+                vision: 'Visão',
+                features: 'Funcionalidades',
+                ux: 'Ecossistema'
+            },
+            hero: {
+                tag: 'INTELIGÊNCIA PROATIVA',
+                title: 'Pare de reagir aos processos. Comece a antecipar oportunidades.',
+                subtitle: 'Conheça o Intelligence Hub. O "Farol" do Veritum PRO que cruza Inteligência Artificial com os dados do seu escritório para identificar riscos ocultos e novas chances de monetização antes mesmo da judicialização.',
+                cta1: 'Agendar Demonstração',
+                cta2: 'Entenda como funciona'
+            },
+            pain: {
+                title: 'A advocacia tradicional espera a citação chegar. A advocacia do futuro age antes.',
+                description: 'Em um cenário jurídico de alta pressão, advogar de forma reativa não é mais suficiente. O Intelligence Hub atua como um consultor estratégico invisível que trabalha 24 horas por dia. Ele lê as tendências do mercado, analisa as decisões dos tribunais e varre a sua carteira de clientes para entregar respostas a perguntas que você ainda nem fez.'
+            },
+            features: {
+                title: 'Funcionalidades de Elite',
+                subtitle: 'A inteligência que transforma dados em estratégia.',
+                items: {
+                    alerts: {
+                        title: '🚨 Golden Alerts (Alertas de Ouro)',
+                        desc: 'O motor de insights do seu escritório. Receba alertas automáticos e categorizados por Inteligência Artificial sempre que uma mudança jurisprudencial ou notícia de mercado impactar diretamente os processos ou contratos dos seus clientes atuais. Saiba exatamente quando agir.'
+                    },
+                    semantic: {
+                        title: '🧠 Semantic Matcher (Busca Semântica com IA)',
+                        desc: 'Seu acervo transformado em inteligência ativa. O sistema não faz apenas buscas por palavras-chave. Usando bancos de dados vetoriais, a nossa IA entende o contexto das suas teses jurídicas e as cruza de forma inteligente com os acontecimentos do mundo exterior, apontando similaridades com casos de sucesso do passado.'
+                    },
+                    opportunities: {
+                        title: '💡 Identificação de Oportunidades (Upsell Jurídico)',
+                        desc: 'Gere novas receitas sem buscar novos clientes. O Intelligence Hub identifica quais clientes da sua base têm o perfil exato para ingressar com uma nova tese jurídica aprovada pelos Tribunais Superiores, entregando a oportunidade de negócio "mastigada" para a sua equipe comercial ou sócios.'
+                    },
+                    risks: {
+                        title: '🛡️ Mitigação Antecipada de Riscos',
+                        desc: 'Atue na raiz do problema. Ao identificar uma tendência de condenações em massa (ex: uma nova onda de ações trabalhistas contra uma empresa do mesmo setor do seu cliente), o Hub acende um alerta vermelho para que você sugira acordos preventivos ou mudanças operacionais.'
+                    }
+                }
+            },
+            flow: {
+                title: 'Como a Mágica Acontece',
+                subtitle: 'O Poder do Ecossistema Integrado',
+                radar: 'O Radar capta: O Sentinel PRO detecta uma nova decisão ou notícia no mercado.',
+                hub: 'O Hub processa: O Intelligence Hub analisa o impacto disso através de IA Semântica.',
+                profit: 'Você lucra (ou protege): Você recebe um Golden Alert mostrando exatamente qual cliente será afetado e qual peça o Scriptor PRO deve redigir.'
+            },
+            finalCta: {
+                title: 'Transforme seus dados em vantagem competitiva.',
+                subtitle: 'Departamentos jurídicos de ponta não olham apenas para o passado; eles preveem o futuro. Eleve a sua performance jurídica hoje.',
+                button: 'Quero conhecer o Intelligence Hub'
             }
         },
         scriptor: {

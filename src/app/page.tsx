@@ -215,7 +215,7 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                 }
                 setCurrentUser({ ...user, profile: profileData });
             } else {
-                setCurrentUser({ ...user, profile: null });
+                setCurrentUser(null);
             }
         } else {
             setCurrentUser(null);
@@ -320,7 +320,7 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                         ) : currentUser ? (
                             <div className="flex items-center gap-3">
                                 <Link
-                                    href="/veritum"
+                                    href="/veritumpro"
                                     className="hidden xl:flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-bold text-sm shadow-xl shadow-indigo-600/20 transition-all hover:scale-105"
                                 >
                                     <LayoutDashboard size={18} />
@@ -380,7 +380,7 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                                 }
 
                                 if (userToUse) {
-                                    router.push('/veritum');
+                                    router.push('/veritumpro');
                                 } else {
                                     openAuth('register');
                                 }
@@ -485,13 +485,14 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                                             <div className="relative z-10 text-left mt-auto pt-6">
                                                 <button
                                                     onClick={() => {
+                                                        const targetSlug = suiteKey === 'intelligence_hub' || suiteKey === 'intelligence' ? 'intelligence' : suiteKey;
                                                         if (isLocked) {
                                                             setCheckoutData({ type: 'module', moduleName: suiteName });
                                                             setIsCheckoutOpen(true);
                                                         } else if (currentUser) {
-                                                            router.push(`/veritum/${suiteKey}`);
+                                                            router.push(`/veritumpro/${targetSlug}`);
                                                         } else {
-                                                            router.push(`/${suiteKey}`);
+                                                            router.push(`/${targetSlug}`);
                                                         }
                                                     }}
                                                     className="flex items-center gap-2 text-indigo-400 hover:text-indigo-200 font-bold text-sm transition-all group-hover:gap-3 cursor-pointer"

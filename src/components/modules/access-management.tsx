@@ -6,7 +6,7 @@ import { Shield, Plus, Trash2, CheckCircle2, XCircle, Layout, Filter, Scale, Fil
 import { AccessGroup, GroupPermission, User, ModuleId, Suite, Feature, GroupTemplate, Role } from '@/types';
 import { createMasterClient } from '@/lib/supabase/master';
 import { toast } from '../ui/toast';
-import { useModule } from '@/app/veritum/layout';
+import { useModule } from '@/app/veritumpro/layout';
 import { useTranslation } from '@/contexts/language-context';
 import { getTemplates } from '@/app/actions/user-actions';
 

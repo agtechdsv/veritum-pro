@@ -77,7 +77,7 @@ export function LoginModal() {
 
         setLoading(false)
         setIsOpen(false)
-        router.push('/veritum')
+        router.push('/veritumpro')
     }
 
     const handleForgotPassword = async (e: React.FormEvent) => {
@@ -134,7 +134,7 @@ export function LoginModal() {
 
         setLoading(false)
         setIsOpen(false)
-        router.push('/veritum')
+        router.push('/veritumpro')
     }
 
     const isPasswordStrong = (pass: string) => {

@@ -31,6 +31,13 @@ export const es = {
         "loadingEcosystem": "Cargando ecosistema...",
         "selectLanguage": "Seleccionar Idioma",
         "confirm": "Confirmar",
+        "new": "Nueva",
+        "person": "Persona",
+        "basic": "Datos Básicos",
+        "advanced": "Datos Avanzados",
+        "client": "Cliente",
+        "status": "Estado",
+        "event": "Tarea",
         "deleting": "Eliminando..."
     },
     "nav": {
@@ -1954,6 +1961,59 @@ export const es = {
             },
             "footer": {
                 "slogan": "El radar proactivo de quien no acepta el riesgo de la rebeldía."
+            }
+        },
+        "intelligenceHub": {
+            "nav": {
+                "home": "Inicio",
+                "vision": "Visión",
+                "features": "Funcionalidades",
+                "ux": "Ecosistema"
+            },
+            "hero": {
+                "tag": "INTELIGENCIA PROACTIVA",
+                "title": "Deja de reaccionar a los procesos. Empieza a anticipar oportunidades.",
+                "subtitle": "Conoce el Intelligence Hub. El \"Faro\" de Veritum PRO que cruza Inteligencia Artificial con los datos de tu despacho para identificar riesgos ocultos y nuevas oportunidades de monetización incluso antes de la judicialización.",
+                "cta1": "Agendar Demostración",
+                "cta2": "Entiende cómo funciona"
+            },
+            "pain": {
+                "title": "La abogacía tradicional espera a que llegue la citación. La abogacía del futuro actúa antes.",
+                "description": "En un escenario jurídico de alta presión, ejercer la abogacía de forma reactiva ya no es suficiente. El Intelligence Hub actúa como un consultor estratégico invisible que trabaja las 24 horas del día. Lee las tendencias del mercado, analiza las decisiones de los tribunales y escanea tu cartera de clientes para ofrecer respuestas a preguntas que aún ni siquiera has hecho."
+            },
+            "features": {
+                "title": "Funcionalidades de Élite",
+                "subtitle": "La inteligencia que transforma datos en estrategia.",
+                "items": {
+                    "alerts": {
+                        "title": "🚨 Golden Alerts (Alertas de Oro)",
+                        "desc": "El motor de insights de tu despacho. Recibe alertas automáticas y categorizadas por Inteligencia Artificial siempre que un cambio jurisprudencial o noticia de mercado impacte directamente en los procesos o contratos de tus clientes actuales."
+                    },
+                    "semantic": {
+                        "title": "🧠 Semantic Matcher (IA Semántica)",
+                        "desc": "Tu acervo transformado en inteligencia activa. Usando bases de datos vectoriales, nuestra IA entiende el contexto de tus tesis jurídicas y las cruza de forma inteligente con los acontecimientos del mundo exterior."
+                    },
+                    "opportunities": {
+                        "title": "💡 Identificación de Oportunidades",
+                        "desc": "Genera nuevos ingresos sin buscar nuevos clientes. El Intelligence Hub identifica qué clientes de tu base tienen el perfil exacto para ingresar con una nueva tesis jurídica aprobada por los Tribunales Superiores."
+                    },
+                    "risks": {
+                        "title": "🛡️ Mitigación Anticipada de Riesgos",
+                        "desc": "Actúa en la raíz del problema. Al identificar una tendencia de condenas en masa, el Hub activa una alerta roja para que sugieras acuerdos preventivos o cambios operativos."
+                    }
+                }
+            },
+            "flow": {
+                "title": "Cómo Sucede la Magia",
+                "subtitle": "El Poder del Ecosistema Integrado",
+                "radar": "El Radar capta: Sentinel PRO detecta una nueva decisión o noticia en el mercado.",
+                "hub": "El Hub procesa: Intelligence Hub analiza el impacto de esto a través de IA Semántica.",
+                "profit": "Tú lucras (o proteges): Recibes un Golden Alert mostrando exactamente qué cliente será afectado y qué pieza debe redactar Scriptor PRO."
+            },
+            "finalCta": {
+                "title": "Transforma tus datos en una ventaja competitiva.",
+                "subtitle": "Los departamentos jurídicos de vanguardia no miran solo al pasado; prevén el futuro. Eleva tu rendimiento jurídico hoy.",
+                "button": "Quiero conocer el Intelligence Hub"
             }
         },
         "scriptor": {

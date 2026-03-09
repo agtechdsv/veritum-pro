@@ -133,7 +133,7 @@ export async function saveTenantConfig(formData: Partial<TenantConfig>) {
 
     if (error) throw error;
 
-    revalidatePath('/veritum');
+    revalidatePath('/veritumpro');
     return { success: true };
 }
 
@@ -161,7 +161,7 @@ export async function deleteTenantConfig(userId: string) {
 
     if (error) throw error;
 
-    revalidatePath('/veritum');
+    revalidatePath('/veritumpro');
     return { success: true };
 }
 

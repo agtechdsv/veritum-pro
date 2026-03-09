@@ -113,7 +113,7 @@ export default function VoxLanding() {
                         ) : currentUser ? (
                             <div className="flex items-center gap-3">
                                 <Link
-                                    href="/veritum"
+                                    href="/veritumpro"
                                     className="hidden xl:flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-bold text-sm shadow-xl shadow-indigo-600/20 transition-all hover:scale-105"
                                 >
                                     <LayoutDashboard size={18} />

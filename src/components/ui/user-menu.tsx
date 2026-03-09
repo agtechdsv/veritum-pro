@@ -106,7 +106,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, supabase, onPlanClick 
         }
 
         if (isRootAdmin) {
-            router.push('/veritum/settings?tab=plan');
+            router.push('/veritumpro/settings?tab=plan');
         } else {
             toast.error('Acesso restrito. Apenas administradores podem gerenciar o plano.');
         }

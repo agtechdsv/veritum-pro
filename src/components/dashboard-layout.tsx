@@ -36,6 +36,7 @@ import {
 import SuiteManagement from './modules/suite-management';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
+import { useModule } from '@/app/veritumpro/layout';
 import { useRouter } from 'next/navigation';
 import { ToastContainer, toast } from './ui/toast';
 import { useTranslation } from '@/contexts/language-context';
@@ -396,7 +397,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                         {suiteItems.map((item: any) => (
                             <Tooltip key={item.id} content={item.label} enabled={!isSidebarOpen}>
                                 <Link
-                                    href={item.isLocked ? '#' : `/veritum/${normalize(item.id)}`}
+                                    href={item.isLocked ? '#' : `/veritumpro/${normalize(item.id)}`}
                                     onClick={(e) => {
                                         if (item.isLocked) {
                                             e.preventDefault();
@@ -462,7 +463,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                     <Tooltip key={item.id} content={item.label} enabled={!isSidebarOpen}>
                                         <Link
                                             key={item.id}
-                                            href={`/veritum/${normalize(item.id)}`}
+                                            href={`/veritumpro/${normalize(item.id)}`}
                                             className={`w-full flex items-center gap-3 py-2 px-3 rounded-xl transition-all duration-200 cursor-pointer ${normalize(activeModule) === normalize(item.id)
                                                 ? 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white font-bold'
                                                 : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
@@ -513,7 +514,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                 {masterItems.map((item) => (
                                     <Tooltip key={item.id} content={item.label} enabled={!isSidebarOpen}>
                                         <Link
-                                            href={`/veritum/${normalize(item.id)}`}
+                                            href={`/veritumpro/${normalize(item.id)}`}
                                             className={`w-full flex items-center gap-3 py-2 px-3 rounded-xl transition-all duration-200 cursor-pointer ${normalize(activeModule) === normalize(item.id)
                                                 ? 'bg-amber-50 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 font-bold shadow-sm'
                                                 : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white'
@@ -704,7 +705,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                         <div className="flex items-center gap-4 pl-6 border-l border-slate-100 dark:border-slate-800">
                             <div className="text-right hidden sm:block">
                                 <div className="text-sm font-bold text-slate-800 dark:text-white flex items-center justify-end gap-2">
-                                    {typeof user.name === 'object' ? ((user.name as any)[locale as keyof typeof user.name] || (user.name as any).pt || (user.name as any).en || '') : user.name}
+                                    {typeof user.name === 'object' ? ((user.name as any)[locale] || (user.name as any).pt || (user.name as any).en || '') : user.name}
                                     {user.plan_name && (
                                         <Tooltip content="Clique para fazer upgrade ou gerenciar seu plano" enabled={true} side="left">
                                             <button
@@ -756,7 +757,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                                 {t('userMenu.profile')}
                                             </button>
                                             <Link
-                                                href="/veritum/settings?tab=vip"
+                                                href="/veritumpro/settings?tab=vip"
                                                 className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-amber-600 dark:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-all text-left"
                                             >
                                                 <Sparkles size={18} />

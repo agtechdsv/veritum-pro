@@ -91,7 +91,7 @@ export async function createUserDirectly(formData: any, parentUserId: string | n
         })
         .eq('id', data.user.id)
 
-    revalidatePath('/veritum')
+    revalidatePath('/veritumpro')
     return { success: true, user: data.user }
 }
 
@@ -164,7 +164,7 @@ export async function startTrial(userId: string) {
         .update({ plan_id: trialPlan.id })
         .eq('id', userId)
 
-    revalidatePath('/veritum')
+    revalidatePath('/veritumpro')
     return { success: true }
 }
 
@@ -215,7 +215,7 @@ export async function updateUserDirectly(userId: string, formData: any) {
         return { success: false, error: publicError.message }
     }
 
-    revalidatePath('/veritum')
+    revalidatePath('/veritumpro')
     return { success: true, user: authData.user }
 }
 

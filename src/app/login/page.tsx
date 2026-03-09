@@ -110,7 +110,7 @@ export default function LoginPage() {
 
         console.log('Proceeding to dashboard...');
         setLoading(false)
-        router.push('/veritum') // Redirect to dashboard
+        router.push('/veritumpro') // Redirect to dashboard
     }
 
     const handleForgotPassword = async (e: React.FormEvent) => {
@@ -180,7 +180,7 @@ export default function LoginPage() {
         }
 
         setLoading(false)
-        window.location.href = '/veritum';
+        window.location.href = '/veritumpro';
     }
 
     const isPasswordStrong = (pass: string) => {

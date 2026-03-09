@@ -351,11 +351,11 @@ export default function PricingPage() {
                         ) : currentUser ? (
                             <div className="flex items-center gap-3">
                                 <Link
-                                    href="/veritum"
+                                    href="/veritumpro"
                                     className="hidden xl:flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-bold text-sm shadow-xl shadow-indigo-600/20 transition-all hover:scale-105"
                                 >
                                     <LayoutDashboard size={18} />
-                                    {t('pricingPage.nav.painel')}
+                                    Painel Pro
                                 </Link>
                                 <UserMenu
                                     user={currentUser}
@@ -888,9 +888,6 @@ export default function PricingPage() {
                                         <span className="text-4xl font-black text-slate-900 dark:text-white">{t('pricingPage.infrastructure.dbPlans.pro.price')}</span>
                                         <span className="text-slate-400 font-bold text-sm tracking-tight">{t('pricingPage.infrastructure.dbPlans.pro.interval')}</span>
                                     </div>
-                                    <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-black mt-2 uppercase tracking-widest">
-                                        {t('pricingPage.infrastructure.dbPlans.pro.credits')}
-                                    </p>
                                 </div>
                                 <button
                                     onClick={() => {
@@ -949,9 +946,6 @@ export default function PricingPage() {
                                         <span className="text-4xl font-black text-slate-900 dark:text-white">{t('pricingPage.infrastructure.dbPlans.team.price')}</span>
                                         <span className="text-slate-400 dark:text-slate-500 font-bold text-sm tracking-tight">{t('pricingPage.infrastructure.dbPlans.team.interval')}</span>
                                     </div>
-                                    <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-black mt-2 uppercase tracking-widest">
-                                        {t('pricingPage.infrastructure.dbPlans.team.credits')}
-                                    </p>
                                 </div>
                                 <button
                                     onClick={() => {
@@ -1079,7 +1073,7 @@ export default function PricingPage() {
                         <div className="w-48 h-16 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-[2.5rem] mx-auto mt-4" />
                     ) : currentUser ? (
                         <Link
-                            href="/veritum"
+                            href="/veritumpro"
                             className="inline-flex items-center justify-center bg-indigo-600 text-white px-12 py-5 rounded-[2.5rem] font-black text-xl shadow-2xl shadow-indigo-600/40 hover:scale-105 hover:bg-indigo-700 transition-all cursor-pointer uppercase tracking-tight"
                         >
                             {t('pricingPage.finalCta.dashboard')}
