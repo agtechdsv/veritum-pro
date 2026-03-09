@@ -355,7 +355,7 @@ export default function PricingPage() {
                                     className="hidden xl:flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-bold text-sm shadow-xl shadow-indigo-600/20 transition-all hover:scale-105"
                                 >
                                     <LayoutDashboard size={18} />
-                                    Painel Pro
+                                    {t('pricingPage.nav.painel')}
                                 </Link>
                                 <UserMenu
                                     user={currentUser}
@@ -413,25 +413,25 @@ export default function PricingPage() {
                                 onClick={() => setBillingCycle('monthly')}
                                 className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${billingCycle === 'monthly' ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-md translate-y-[-1px]' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                             >
-                                {t('management.settings.plan.monthly') || 'MENSAL'}
+                                {t('pricingPage.billing.monthly')}
                             </button>
                             <button
                                 onClick={() => setBillingCycle('quarterly')}
                                 className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${billingCycle === 'quarterly' ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-md translate-y-[-1px]' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                             >
-                                {t('management.settings.plan.quarterly') || 'TRIMESTRAL'}
+                                {t('pricingPage.billing.quarterly')}
                             </button>
                             <button
                                 onClick={() => setBillingCycle('semiannual')}
                                 className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${billingCycle === 'semiannual' ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-md translate-y-[-1px]' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                             >
-                                {t('management.settings.plan.semiannual') || 'SEMESTRAL'}
+                                {t('pricingPage.billing.semiannual')}
                             </button>
                             <button
                                 onClick={() => setBillingCycle('yearly')}
                                 className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${billingCycle === 'yearly' ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-md translate-y-[-1px]' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                             >
-                                {t('management.settings.plan.yearly') || 'ANUAL'}
+                                {t('pricingPage.billing.yearly')}
                             </button>
                         </div>
                     </div>
@@ -446,24 +446,24 @@ export default function PricingPage() {
                             const basePrice = plan.monthly_price || 0;
                             let months = 1;
                             let discount = 0;
-                            let cycleLabel = '/ mês';
+                            let cycleLabel = t('pricingPage.billing.perMonth');
 
                             if (billingCycle === 'monthly') {
                                 months = 1;
                                 discount = plan.monthly_discount || 0;
-                                cycleLabel = (t('management.settings.plan.perMonth') || '/ mês');
+                                cycleLabel = t('pricingPage.billing.perMonth');
                             } else if (billingCycle === 'quarterly') {
                                 months = 3;
                                 discount = plan.quarterly_discount || 0;
-                                cycleLabel = '/ 3 meses';
+                                cycleLabel = t('pricingPage.billing.perQuarter');
                             } else if (billingCycle === 'semiannual') {
                                 months = 6;
                                 discount = plan.semiannual_discount || 0;
-                                cycleLabel = '/ 6 meses';
+                                cycleLabel = t('pricingPage.billing.perSemiannual');
                             } else if (billingCycle === 'yearly') {
                                 months = 12;
                                 discount = plan.yearly_discount || 0;
-                                cycleLabel = (t('management.settings.plan.perYear') || '/ ano');
+                                cycleLabel = t('pricingPage.billing.perYear');
                             }
 
                             const fullPrice = basePrice * months;
@@ -471,9 +471,20 @@ export default function PricingPage() {
                             const monthlyEquivalentPrice = finalPrice / months;
 
                             const lang = locale as 'pt' | 'en' | 'es';
-                            const planName = typeof plan.name === 'string' ? plan.name : (plan.name?.[lang] || plan.name?.pt || '');
+                            const dbPlanName = typeof plan.name === 'string' ? plan.name : (plan.name?.[lang] || plan.name?.pt || '');
+                            const planKey = `pricingPage.plans.${dbPlanName.toLowerCase()}`;
+                            const localPlanName = t(`${planKey}.name`);
+                            const planName = localPlanName !== `${planKey}.name` ? localPlanName : dbPlanName;
+
                             const rawFeatures = plan.features?.[lang] || plan.features?.pt || plan.features;
-                            const features = Array.isArray(rawFeatures) ? rawFeatures : (typeof rawFeatures === 'object' && rawFeatures !== null ? Object.values(rawFeatures) : []);
+                            const localFeatures = t(`${planKey}.features`);
+                            const features = (localFeatures !== `${planKey}.features` && Array.isArray(localFeatures))
+                                ? localFeatures
+                                : (Array.isArray(rawFeatures) ? rawFeatures : (typeof rawFeatures === 'object' && rawFeatures !== null ? Object.values(rawFeatures) : []));
+
+                            const dbDesc = typeof plan.short_desc === 'object' ? (plan.short_desc?.[lang] || plan.short_desc?.pt) : plan.short_desc;
+                            const localDesc = t(`${planKey}.desc`);
+                            const shortDesc = localDesc !== `${planKey}.desc` ? localDesc : dbDesc;
 
                             return (
                                 <div key={i} className={`relative flex flex-col p-10 rounded-[3rem] border transition-all duration-500 flex-1 ${plan.recommended ? 'bg-white dark:bg-slate-950 border-indigo-500 dark:border-indigo-400 shadow-2xl shadow-indigo-500/20 lg:-mt-4 lg:mb-4 lg:p-12 z-10' : 'bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800'}`}>
@@ -515,7 +526,7 @@ export default function PricingPage() {
                                                 )}
                                             </div>
                                             <p className="text-[12px] text-slate-500 mt-6 font-medium leading-relaxed">
-                                                {typeof plan.short_desc === 'object' ? (plan.short_desc?.[lang] || plan.short_desc?.pt) : plan.short_desc}
+                                                {shortDesc}
                                             </p>
                                         </div>
                                     </div>
@@ -575,8 +586,8 @@ export default function PricingPage() {
                                                 <Crown size={16} />
                                             </div>
                                             <div className="flex-1 text-left relative z-10">
-                                                <p className="text-[10px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-500 group-hover:underline">Clube VIP Veritum</p>
-                                                <p className="text-[9px] font-bold text-slate-500 dark:text-slate-400 mt-0.5 leading-tight">Ganhe acesso ao clube de embaixadores e convites para 100% OFF.</p>
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-500 group-hover:underline">{t('pricingPage.infrastructure.vipBonusTitle') || 'Clube VIP Veritum'}</p>
+                                                <p className="text-[9px] font-bold text-slate-500 dark:text-slate-400 mt-0.5 leading-tight">{t('pricingPage.infrastructure.vipBonusDesc')}</p>
                                             </div>
                                         </Link>
                                     )}
@@ -823,7 +834,7 @@ export default function PricingPage() {
                 <div className="max-w-6xl mx-auto">
                     <div className="text-center mb-16">
                         <span className="text-indigo-600 dark:text-indigo-400 font-bold tracking-[0.3em] uppercase text-xs mb-4 block">
-                            Infraestrutura de Elite
+                            {t('pricingPage.infrastructure.eliteTitle')}
                         </span>
                         <h3 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">
                             {t('pricingPage.infrastructure.dbPlans.title')}
@@ -898,22 +909,22 @@ export default function PricingPage() {
                         </div>
 
                         {/* Team Plan - Cloud Enterprise */}
-                        <div className="relative p-12 rounded-[3.5rem] bg-slate-950 text-white border border-slate-800 flex flex-col hover:border-indigo-400/50 transition-all duration-500 hover:shadow-2xl hover:shadow-indigo-500/10 group">
+                        <div className="relative p-12 rounded-[3.5rem] bg-white dark:bg-slate-950 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 flex flex-col hover:border-indigo-400/50 transition-all duration-500 hover:shadow-2xl hover:shadow-indigo-500/10 group">
                             <div className="absolute -top-4 right-12 bg-white text-slate-900 px-5 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl group-hover:rotate-3 transition-transform">
                                 {t('pricingPage.infrastructure.dbPlans.team.badge')}
                             </div>
 
                             <div className="mb-10">
-                                <h4 className="text-3xl font-black text-white mb-3 tracking-tight">
+                                <h4 className="text-3xl font-black text-slate-900 dark:text-white mb-3 tracking-tight">
                                     {t('pricingPage.infrastructure.dbPlans.team.name')}
                                 </h4>
-                                <p className="text-slate-400 font-medium text-base leading-relaxed">
+                                <p className="text-slate-500 dark:text-slate-400 font-medium text-base leading-relaxed">
                                     {t('pricingPage.infrastructure.dbPlans.team.subtitle')}
                                 </p>
                             </div>
 
                             <div className="flex-grow space-y-6">
-                                <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] mb-6">
+                                <p className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.2em] mb-6">
                                     {t('pricingPage.infrastructure.dbPlans.team.featuresTitle')}
                                 </p>
                                 <div className="space-y-5">
@@ -924,7 +935,7 @@ export default function PricingPage() {
                                                     <ShieldAlert size={12} />
                                                 </div>
                                             )}
-                                            <span className={`text-sm ${feature.isSub ? 'text-slate-500 italic' : 'text-slate-200 font-semibold'}`}>
+                                            <span className={`text-sm ${feature.isSub ? 'text-slate-400 dark:text-slate-500 italic' : 'text-slate-600 dark:text-slate-200 font-semibold'}`}>
                                                 {feature.text}
                                             </span>
                                         </div>
@@ -932,13 +943,13 @@ export default function PricingPage() {
                                 </div>
                             </div>
 
-                            <div className="mt-12 pt-10 border-t border-slate-800">
+                            <div className="mt-12 pt-10 border-t border-slate-100 dark:border-slate-800">
                                 <div className="mb-6 flex flex-col">
                                     <div className="flex items-baseline gap-1">
-                                        <span className="text-4xl font-black text-white">{t('pricingPage.infrastructure.dbPlans.team.price')}</span>
-                                        <span className="text-slate-500 font-bold text-sm tracking-tight">{t('pricingPage.infrastructure.dbPlans.team.interval')}</span>
+                                        <span className="text-4xl font-black text-slate-900 dark:text-white">{t('pricingPage.infrastructure.dbPlans.team.price')}</span>
+                                        <span className="text-slate-400 dark:text-slate-500 font-bold text-sm tracking-tight">{t('pricingPage.infrastructure.dbPlans.team.interval')}</span>
                                     </div>
-                                    <p className="text-[10px] text-indigo-400 font-black mt-2 uppercase tracking-widest">
+                                    <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-black mt-2 uppercase tracking-widest">
                                         {t('pricingPage.infrastructure.dbPlans.team.credits')}
                                     </p>
                                 </div>
@@ -951,7 +962,7 @@ export default function PricingPage() {
                                             openAuth('register');
                                         }
                                     }}
-                                    className="w-full py-5 bg-white text-slate-900 rounded-[1.5rem] font-black text-sm uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-white/5 cursor-pointer"
+                                    className="w-full py-5 bg-indigo-600 text-white dark:bg-white dark:text-slate-900 rounded-[1.5rem] font-black text-sm uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-indigo-600/10 cursor-pointer"
                                 >
                                     {t('pricingPage.infrastructure.dbPlans.team.cta')}
                                 </button>
@@ -978,7 +989,7 @@ export default function PricingPage() {
                         <div className="relative z-10 flex flex-col lg:flex-row items-center gap-16">
                             <div className="lg:w-1/2 space-y-8">
                                 <span className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest">
-                                    Diferencial Veritum
+                                    {t('pricingPage.subscriptionModel.badge')}
                                 </span>
                                 <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white leading-tight tracking-tighter">
                                     {t('pricingPage.subscriptionModel.title')}
@@ -1071,7 +1082,7 @@ export default function PricingPage() {
                             href="/veritum"
                             className="inline-flex items-center justify-center bg-indigo-600 text-white px-12 py-5 rounded-[2.5rem] font-black text-xl shadow-2xl shadow-indigo-600/40 hover:scale-105 hover:bg-indigo-700 transition-all cursor-pointer uppercase tracking-tight"
                         >
-                            {locale === 'pt' ? 'Acessar meu painel' : locale === 'es' ? 'Acceder a mi panel' : 'Access my dashboard'}
+                            {t('pricingPage.finalCta.dashboard')}
                         </Link>
                     ) : (
                         <button

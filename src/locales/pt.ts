@@ -32,7 +32,7 @@ export const pt = {
         story: 'Nossa História',
         login: 'Entrar',
         register: 'Começar Grátis',
-        dashboard: 'Veritum Panel',
+        dashboard: 'Painel Pro',
         admin: 'Administração',
         master: 'Master'
     },
@@ -78,7 +78,8 @@ export const pt = {
             passwordTooShort: 'A senha deve ter pelo menos 6 caracteres.',
             resetError: 'Erro ao redefinir senha. Tente novamente.',
             googleError: 'Erro ao entrar com Google.',
-            inactive: 'Esta conta está inativa. Entre em contato com o administrador.',
+            inactive: 'Sua conta está inativa. Entre em contato com o administrador do seu escritório.',
+            fillField: 'Preencha este campo.',
             default: 'Ocorreu um erro na autenticação.',
             notFound: 'O email não foi localizado. Cadastre-se.',
             genResetSuccess: 'Sua senha provisória foi enviada! Verifique seu e-mail (e a pasta de spam, marcando como "não é spam" se necessário).'
@@ -1519,7 +1520,18 @@ export const pt = {
             byodb: 'Veritum Cloud',
             subscription: 'Assinatura',
             modules: 'Módulos Avulsos',
-            faq: 'Dúvidas'
+            faq: 'Dúvidas',
+            painel: 'Painel Pro'
+        },
+        billing: {
+            monthly: 'Mensal',
+            quarterly: 'Trimestral',
+            semiannual: 'Semestral',
+            yearly: 'Anual',
+            perMonth: '/ mês',
+            perQuarter: '/ 3 meses',
+            perSemiannual: '/ 6 meses',
+            perYear: '/ ano'
         },
         modules: {
             badge: 'Flexibilidade Total',
@@ -1579,11 +1591,14 @@ export const pt = {
         },
         infrastructure: {
             title: 'Sua infraestrutura. Suas regras.',
-            subtitle: 'No Veritum PRO, a liberdade vai além do contrato: ela chega até a raiz dos seus dados. Escolha o modelo de arquitetura que melhor atende à realidade do seu escritório.',
+            subtitle: 'No Veritum PRO, a liberdade vai além do contrato: chega até a raiz dos seus dados. Escolha o modelo de arquitetura que melhor se adapta à realidade da sua banca.',
+            eliteTitle: 'Infraestrutura de Elite',
             byodbTitle: 'Controle Absoluto (BYODB - Incluso)',
             byodbDesc: 'Conecte o Veritum PRO diretamente ao banco de dados do seu escritório. Ideal para bancas com infraestrutura própria de TI ou bases locais (Oracle, Postgres, SQL Server) que exigem soberania total.',
-            cloudTitle: 'Paz Mental Tecnológica (Veritum Cloud Gerenciada)',
-            cloudDesc: 'Quer focar apenas em advogar? Nós cuidamos dos servidores para você. Banco de dados dedicado, backups diários automáticos, criptografia de ponta e zero configuração técnica. O seu escritório na nuvem em 5 minutos.',
+            cloudTitle: 'Paz Mental Tecnológica',
+            cloudDesc: 'Quer focar apenas em advogar? Nós cuidamos dos servidores para você. Banco de dados dedicado, backups diários automáticos, criptografia de ponta e zero configuração técnica.',
+            vipBonusTitle: 'Clube VIP Veritum',
+            vipBonusDesc: 'Ganhe acesso ao clube de embaixadores e convites para 100% OFF.',
             learnMore: 'Saiba Mais...',
             specificationsLink: 'Ver especificações técnicas de infraestrutura',
             dbPlans: {
@@ -1600,29 +1615,29 @@ export const pt = {
                     featuresTitle: 'Recursos Inclusos no Plano:',
                     categories: {
                         compute: 'Poder de Processamento',
-                        storage: 'Armazenamento & Tráfego',
-                        security: 'Segurança & Continuidade'
+                        storage: 'Armazenamento e Tráfego',
+                        security: 'Segurança e Continuidade'
                     },
                     features: [
                         { text: '100.000 Usuários Ativos (MAU)', category: 'compute' },
-                        { text: 'após, R$ 0,05 por MAU', category: 'compute', isSub: true },
+                        { text: 'depois R$ 0,05 por MAU', category: 'compute', isSub: true },
                         { text: '8 GB de Disco Dedicado', category: 'storage' },
-                        { text: 'após, R$ 1,25 por GB', category: 'storage', isSub: true },
-                        { text: '250 GB de Tráfego Egresso', category: 'storage' },
-                        { text: 'após, R$ 0,95 por GB', category: 'storage', isSub: true },
+                        { text: 'depois R$ 1,25 por GB', category: 'storage', isSub: true },
+                        { text: '250 GB de Tráfego de Saída', category: 'storage' },
+                        { text: 'depois R$ 0,95 por GB', category: 'storage', isSub: true },
                         { text: '250 GB de Rede em Cache', category: 'storage' },
-                        { text: 'após, R$ 0,40 por GB', category: 'storage', isSub: true },
-                        { text: '100 GB de Storage de Arquivos', category: 'storage' },
-                        { text: 'após, R$ 0,25 por GB', category: 'storage', isSub: true },
+                        { text: 'depois R$ 0,40 por GB', category: 'storage', isSub: true },
+                        { text: '100 GB de Armazenamento de Arquivos', category: 'storage' },
+                        { text: 'depois R$ 0,25 por GB', category: 'storage', isSub: true },
                         { text: 'Suporte Técnico Prioritário', category: 'security' },
-                        { text: 'Backups Diários (7 dias de retenção)', category: 'security' },
-                        { text: 'Logs de Sistema (7 dias)', category: 'security' }
+                        { text: 'Backups Diários (7 dias)', category: 'security' },
+                        { text: 'Logs do Sistema (7 dias)', category: 'security' }
                     ]
                 },
                 team: {
                     name: 'Cloud Enterprise',
                     badge: 'COMPLIANCE TOTAL',
-                    subtitle: 'Segurança de nível bancário e conformidade rigorosa para grandes corporações.',
+                    subtitle: 'Segurança de nível bancario e conformidade rigorosa para grandes corporações.',
                     cta: 'Ativar Enterprise',
                     price: 'R$ 4.399,90',
                     interval: '/ mês',
@@ -1634,15 +1649,16 @@ export const pt = {
                         { text: 'Acesso Restrito (Read-only / Project-scope)', category: 'security' },
                         { text: 'Compatibilidade HIPAA (Add-on)', category: 'security' },
                         { text: 'Single Sign-On (SSO) para Gestores', category: 'security' },
-                        { text: 'SLAs de Atendimento Prioritário', category: 'security' },
+                        { text: 'SLAs de Suporte Prioritário', category: 'security' },
                         { text: 'Backups Estendidos (14 dias)', category: 'security' },
-                        { text: 'Retenção de Logs em Massa (28 dias)', category: 'security' },
-                        { text: 'Monitoramento de Drenos de Log', category: 'security' },
-                        { text: 'após, R$ 479,90 por dreno extra', category: 'security', isSub: true }
+                        { text: 'Retenção de Logs Massiva (28 dias)', category: 'security' },
+                        { text: 'Monitoramento de Drenagens de Log', category: 'security' },
+                        { text: 'depois R$ 479,90 por dreno extra', category: 'security', isSub: true }
                     ]
                 }
             }
         },
+
         comparison: {
             label: 'Quer analisar cada detalhe técnico?',
             hide: 'Ocultar',
@@ -1706,6 +1722,7 @@ export const pt = {
             }
         },
         subscriptionModel: {
+            badge: 'Diferencial Veritum',
             title: 'Assinatura inteligente vs. parcelamento comum',
             subtitle: 'Entenda por que nosso modelo é o aliado definitivo do seu fluxo de caixa e limite bancário.',
             subscription: {
@@ -1734,6 +1751,7 @@ export const pt = {
             titleAccent: 'não usa planilhas.',
             subtitle: 'Junte-se ao ecossistema Veritum PRO hoje mesmo e transforme seu escritório em uma máquina de performance.',
             button: 'Criar Minha Conta Agora',
+            dashboard: 'Acessar meu painel',
             footer: 'Desenvolvido por AGTech | LegalTech de Alta Performance © 2026'
         },
         demoModal: {
@@ -1766,7 +1784,7 @@ export const pt = {
             },
             submitBtn: 'Confirmar Sugestão',
             submitting: 'Enviando...'
-        }
+        },
     },
     landingPages: {
         nexus: {
@@ -2074,6 +2092,7 @@ export const pt = {
             ux: {
                 title: 'Finanças traduzidas para o seu idioma.',
                 subtitle: 'Você é de humanas, e nós entendemos isso. Em vez de telas repletas de jargões contábeis, o Valorem PRO usa gráficos visuais e ícones intuitivos.',
+                button: 'Aplicar Agora',
                 items: {
                     conciliation: {
                         title: 'Conciliação Visual',
@@ -2301,17 +2320,39 @@ export const pt = {
             subtitle: 'Entendemos que cada escritório possui uma maturidade tecnológica diferente. Por isso, oferecemos dois caminhos para a sua gestão de dados:',
             cloud: {
                 title: 'Veritum Cloud Gerenciada',
-                desc: 'Foco na "Paz Mental Tecnológica". Cada cliente possui um banco de dados exclusivo e isolado. Backups diários automáticos retidos por 7 dias, criptografia de ponta e disponibilidade contínua sem necessidade de equipe de TI interna.'
+                desc: 'Foco na "Paz Mental Tecnológica". Cada cliente possui um banco de dados exclusivo e isolado. Backups diários automáticos retidos por 7 dias, criptografia de ponta e disponibilidade contínua sem necessidade de equipe de TI interna.',
+                features: [
+                    "Database SQL dedicado por cliente",
+                    "Isolamento físico de recursos",
+                    "Backup diário automático (7 dias)",
+                    "Criptografia AES-256 em repouso"
+                ]
             },
             byodb: {
                 title: 'Controle Absoluto (BYODB)',
-                desc: 'Foco no "Controle Absoluto". Conecte o Veritum PRO aos seus próprios servidores (AWS, Google Cloud, Azure) ou bancos de dados locais (Oracle, Postgres, SQL Server). Mantenha a custódia local e soberania total sobre o patrimônio digital do seu escritório.'
+                desc: 'Foco no "Controle Absoluto". Conecte o Veritum PRO aos seus próprios servidores (AWS, Google Cloud, Azure) ou bancos de dados locais (Oracle, Postgres, SQL Server). Mantenha a custódia local e soberania total sobre o patrimônio digital do seu escritório.',
+                features: [
+                    "Conexão com AWS RDS, Azure, Oracle ou Postgres",
+                    "Soberania total sobre os bando de dados locais",
+                    "Custódia local e controle de firewall",
+                    "Zero latência em infraestrutura interna"
+                ]
             }
+        },
+        engineer: {
+            title: 'Fale com um ',
+            accent: 'Engenheiro de Dados',
+            subtitle: 'Dúvidas sobre integração, segurança ou latência? Nosso time técnico está pronto para uma conversa técnica profunda.',
+            cta: 'Ver Planos e Preços'
         },
         enterprise: {
             title: 'Pronto para Grandes Operações Corporativas.',
             subtitle: 'Para clientes do plano STRATEGY, nossa infraestrutura pode ser elevada para certificação SOC2, políticas de SSO (Single Sign-On) e retenção estendida de backups por 14 dias.',
-            label: 'Segurança Nível Enterprise'
+            label: 'Segurança Nível Enterprise',
+            spotlight: 'Destaque de Segurança',
+            sso: 'Single Sign-On (SSO)',
+            soc2: 'Conformidade SOC2',
+            monitoring: 'Monitoramento 24/7'
         },
         faq: {
             title: 'Dúvidas Frequentes',
@@ -2365,7 +2406,8 @@ export const pt = {
         hero: {
             access: 'Acesso Restrito',
             title: 'Bem-vindo à elite da tecnologia jurídica.',
-            subtitle: 'Mais do que uma plataforma de gestão, o Clube VIP Veritum PRO é uma rede exclusiva para assinantes dos planos GROWTH e STRATEGY. Desbloqueie ferramentas premium, blinde a sua comunicação e seja recompensado por trazer novos escritórios para o nosso ecossistema.',
+            subtitle: 'Mais do que uma plataforma de gestão, o [ACCENT] é uma rede exclusiva para assinantes dos planos GROWTH e STRATEGY. Desbloqueie ferramentas premium, blinde a sua comunicação e seja recompensado por trazer novos escritórios para o nosso ecossistema.',
+            subtitleAccent: 'Clube VIP Veritum PRO',
             ctaActivate: 'Ativar Meu Perfil VIP',
             ctaLearn: 'Conhecer Benefícios'
         },
@@ -2420,20 +2462,30 @@ export const pt = {
                 }
             }
         },
-        goal: {
-            title: 'A Grande Meta (100% OFF)',
-            description: 'Acumule 100 Pontos VIP e utilize 100% dos módulos do Veritum PRO totalmente por nossa conta no seu próximo ciclo.',
-            progress: '100% OFF Alcançado',
-            persistenceTitle: 'O seu esforço nunca se perde',
-            persistenceDesc: 'Ultrapassou a meta de 100 pontos? Não se preocupe. Todos os pontos excedentes são contabilizados e transferidos automaticamente para o seu ciclo de faturamento posterior. Mantenha sua rede ativa e garanta a paz mental do ano inteiro.'
+        store: {
+            title: 'Loja de',
+            accent: 'Prêmios',
+            subtitle: 'Troque seus pontos VIP por recompensas exclusivas, upgrades e benefícios automáticos.'
         },
-        ctaFinal: {
-            title1: 'Pronto para assumir O',
-            title2: 'Seu lugar no clube?',
-            button: 'Ativar Benefícios Agora'
-        },
-        footer: {
-            copyright: '© {year} Veritum PRO - Todos os direitos reservados'
+        status: {
+            loading: 'Carregando Benefícios...',
+            empty: 'Nenhum benefício disponível no momento.'
         }
+    },
+    goal: {
+        title: 'A Grande Meta (100% OFF)',
+        description: 'Acumule 100 Pontos VIP e utilize 100% dos módulos do Veritum PRO totalmente por nossa conta no seu próximo ciclo.',
+        progress: '100% OFF Alcançado',
+        persistenceTitle: 'O seu esforço nunca se perde',
+        persistenceDesc: 'Ultrapassou a meta de 100 pontos? Não se preocupe. Todos os pontos excedentes são contabilizados e transferidos automaticamente para o seu ciclo de faturamento posterior. Mantenha sua rede ativa e garanta a paz mental do ano inteiro.'
+    },
+    ctaFinal: {
+        title1: 'Pronto para assumir O',
+        title2: 'Seu lugar no clube?',
+        button: 'Ativar Benefícios Agora'
+    },
+    footer: {
+        copyright: '© {year} Veritum PRO - Todos os direitos reservados'
     }
-};
+}
+export default pt;

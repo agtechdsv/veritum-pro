@@ -324,7 +324,7 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                                     className="hidden xl:flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-bold text-sm shadow-xl shadow-indigo-600/20 transition-all hover:scale-105"
                                 >
                                     <LayoutDashboard size={18} />
-                                    Painel Pro
+                                    {t('nav.dashboard')}
                                 </Link>
                                 <UserMenu
                                     user={currentUser}
@@ -401,15 +401,15 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
             </section>
 
             {/* Specialized Modules Showcase */}
-            <section id="modules" className="py-32 px-6 bg-[#020617] transition-colors duration-300 border-y border-slate-900 relative">
+            <section id="modules" className="py-32 px-6 bg-slate-50 dark:bg-slate-950 transition-colors duration-300 border-y border-slate-100 dark:border-slate-900 relative">
                 <div className="max-w-7xl mx-auto relative z-10">
                     <div className="text-center mb-20">
-                        <h2 className="text-4xl md:text-5xl font-black mb-4 text-white tracking-tighter">
+                        <h2 className="text-4xl md:text-5xl font-black mb-4 text-slate-900 dark:text-white tracking-tighter">
                             {t('modules.title').split('Especializados').map((part: string, i: number) =>
                                 i === 0 ? <React.Fragment key={i}>{part}</React.Fragment> : <span key={i} className="text-branding-gradient">Especializados</span>
                             )}
                         </h2>
-                        <p className="text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed font-medium">
+                        <p className="text-lg text-slate-500 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed font-medium">
                             {t('modules.subtitle')}
                         </p>
                     </div>
@@ -460,14 +460,14 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                                     return (
                                         <div
                                             key={suite.id}
-                                            className={`group relative bg-[#0f172a]/40 backdrop-blur-sm p-10 rounded-[2.5rem] border border-slate-800 transition-all duration-300 flex flex-col hover:bg-[#0f172a]/60 ${isLocked ? 'opacity-75 grayscale-[0.5]' : ''}`}
+                                            className={`group relative bg-white dark:bg-slate-900/40 backdrop-blur-sm p-10 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 transition-all duration-300 flex flex-col shadow-xl shadow-slate-200/50 dark:shadow-none hover:border-indigo-500 ${isLocked ? 'opacity-75 grayscale-[0.5]' : ''}`}
                                         >
                                             <div className={`w-14 h-14 rounded-2xl mb-8 flex items-center justify-center transition-all duration-300 ${isLocked ? 'bg-slate-800 text-slate-400' : `${iconColor.replace('text-', 'bg-')}/10 ${iconColor}`}`}>
                                                 <Icon size={28} />
                                             </div>
 
                                             <div className="space-y-2 mb-8 flex-grow text-left">
-                                                <h3 className="text-2xl font-black text-white leading-none">
+                                                <h3 className="text-2xl font-black text-slate-900 dark:text-white leading-none">
                                                     {suiteName.split(/\b(PRO)\b/i).map((part: string, i: number) =>
                                                         part.toUpperCase() === 'PRO' ? (
                                                             <span key={i} className="text-branding-gradient">{part}</span>
@@ -477,7 +477,7 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                                                 <div className="text-indigo-400 text-sm font-bold">
                                                     {suiteSubtitle}
                                                 </div>
-                                                <p className="text-slate-400 text-sm leading-relaxed font-medium mt-4">
+                                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed font-medium mt-4">
                                                     {suiteDesc}
                                                 </p>
                                             </div>
@@ -523,18 +523,18 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
             />
 
             {/* Pricing Section */}
-            <section id="pricing" className="py-32 px-6 bg-[#020617] transition-colors duration-300 relative border-b border-slate-900">
+            <section id="pricing" className="py-32 px-6 bg-white dark:bg-slate-950 transition-colors duration-300 relative border-b border-slate-100 dark:border-slate-900">
                 <div className="max-w-7xl mx-auto">
                     <div className="text-center mb-20 max-w-3xl mx-auto">
-                        <h2 className="text-4xl md:text-5xl font-black mb-6 text-white tracking-tighter">
+                        <h2 className="text-4xl md:text-5xl font-black mb-6 text-slate-900 dark:text-white tracking-tighter">
                             {t('pricing.title').split('Crescimento').map((part: string, i: number) =>
                                 i === 0 ? <React.Fragment key={i}>{part}</React.Fragment> : <span key={i} className="text-branding-gradient">Crescimento.</span>
                             )}
                         </h2>
-                        <p className="text-xl text-slate-400 font-medium leading-relaxed">
+                        <p className="text-xl text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
                             {t('pricing.subtitle')}
                         </p>
-                        <p className="text-lg text-slate-500 font-medium mt-6 leading-relaxed max-w-2xl mx-auto italic">
+                        <p className="text-lg text-slate-400 dark:text-slate-500 font-medium mt-6 leading-relaxed max-w-2xl mx-auto italic">
                             {t('pricing.cancelGuarantee')}
                         </p>
                     </div>
@@ -563,17 +563,17 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                                 badge: t('pricing.plans.strategy.badge')
                             }
                         ].map((card, i) => (
-                            <div key={i} className="relative p-10 bg-[#0f172a]/40 backdrop-blur-sm rounded-[3rem] border border-slate-800 hover:bg-[#0f172a]/60 hover:border-indigo-500/30 transition-all duration-500 group flex flex-col items-center text-center">
+                            <div key={i} className="relative p-10 bg-slate-50 dark:bg-slate-900/40 backdrop-blur-sm rounded-[3rem] border border-slate-100 dark:border-slate-800 hover:bg-white dark:hover:bg-slate-900/60 hover:border-indigo-500/30 shadow-xl shadow-slate-200/50 dark:shadow-none transition-all duration-500 group flex flex-col items-center text-center">
                                 {card.badge && (
                                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-indigo-600 text-white px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">
                                         {card.badge}
                                     </div>
                                 )}
-                                <div className={`w-16 h-16 rounded-2xl bg-slate-800 shadow-xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform ${card.color}`}>
+                                <div className={`w-16 h-16 rounded-2xl bg-white dark:bg-slate-800 shadow-xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform ${card.color}`}>
                                     <card.icon size={32} />
                                 </div>
-                                <h3 className="text-2xl font-black mb-4 text-white tracking-tight">{card.title}</h3>
-                                <p className="text-slate-400 font-medium leading-relaxed">
+                                <h3 className="text-2xl font-black mb-4 text-slate-900 dark:text-white tracking-tight">{card.title}</h3>
+                                <p className="text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
                                     {card.desc}
                                 </p>
                             </div>
@@ -592,51 +592,51 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
             </section>
 
             {/* Infrastructure Section - Cloud Plans focus */}
-            <section id="infrastructure" className="pb-32 px-6 bg-[#020617] transition-colors duration-300">
+            <section id="infrastructure" className="pb-32 px-6 bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
                 <div className="max-w-6xl mx-auto">
                     <div className="text-center mb-16 max-w-4xl mx-auto">
-                        <span className="text-indigo-400 font-bold tracking-[0.3em] uppercase text-xs mb-4 block">
-                            Infraestrutura de Elite
+                        <span className="text-indigo-600 dark:text-indigo-400 font-bold tracking-[0.3em] uppercase text-xs mb-4 block">
+                            {t('pricingPage.infrastructure.eliteTitle')}
                         </span>
-                        <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter">
+                        <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tighter">
                             {t('pricingPage.infrastructure.subtitle')}
                         </h2>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-5xl mx-auto">
                         {/* BYODB Card */}
-                        <div className="group p-12 rounded-[3.5rem] bg-[#0f172a]/40 backdrop-blur-sm border border-slate-800 hover:border-indigo-500/50 transition-all duration-500 hover:shadow-2xl flex flex-col items-center text-center">
-                            <div className="mb-8 w-20 h-20 bg-white/10 text-white rounded-[2rem] flex items-center justify-center border border-white/20 group-hover:scale-110 transition-transform duration-500">
+                        <div className="group p-12 rounded-[3.5rem] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-indigo-500/50 shadow-xl shadow-slate-200/50 dark:shadow-none transition-all duration-500 flex flex-col items-center text-center">
+                            <div className="mb-8 w-20 h-20 bg-indigo-50 dark:bg-white/10 text-indigo-600 dark:text-white rounded-[2rem] flex items-center justify-center border border-indigo-100 dark:border-white/20 group-hover:scale-110 transition-transform duration-500">
                                 <Database size={40} />
                             </div>
-                            <h4 className="text-2xl font-black text-white mb-4 tracking-tight">
+                            <h4 className="text-2xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">
                                 {t('pricingPage.infrastructure.byodbTitle')}
                             </h4>
-                            <p className="text-slate-400 font-medium leading-relaxed mb-10 text-sm">
+                            <p className="text-slate-500 dark:text-slate-400 font-medium leading-relaxed mb-10 text-sm">
                                 {t('pricingPage.infrastructure.byodbDesc')}
                             </p>
-                            <div className="mt-auto px-8 py-3 bg-emerald-500/10 text-emerald-500 rounded-full font-black text-xs uppercase tracking-widest border border-emerald-500/20">
+                            <div className="mt-auto px-8 py-3 bg-emerald-500/10 text-emerald-600 dark:text-emerald-500 rounded-full font-black text-xs uppercase tracking-widest border border-emerald-500/20">
                                 {t('management.settings.plan.liberated') || 'Liberado'}
                             </div>
                         </div>
 
                         {/* Managed Cloud Card */}
-                        <div className="group p-12 rounded-[3.5rem] bg-slate-950 text-white border border-slate-800 hover:border-indigo-400/50 transition-all duration-500 hover:shadow-2xl hover:shadow-indigo-500/10 relative flex flex-col items-center text-center">
-                            <div className="absolute -top-4 right-10 bg-branding-gradient text-white px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg z-10">
+                        <div className="group p-12 rounded-[3.5rem] bg-indigo-600 dark:bg-slate-900 text-white border border-indigo-500 dark:border-slate-800 hover:bg-indigo-700 dark:hover:bg-slate-800 transition-all duration-500 shadow-3xl relative flex flex-col items-center text-center">
+                            <div className="absolute -top-4 right-10 bg-white dark:bg-branding-gradient text-indigo-600 dark:text-white px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg z-10">
                                 POPULAR 🔥
                             </div>
-                            <div className="mb-8 w-20 h-20 bg-indigo-600 text-white rounded-[2rem] flex items-center justify-center shadow-2xl shadow-indigo-600/40 group-hover:scale-110 transition-transform duration-500">
+                            <div className="mb-8 w-20 h-20 bg-white/20 dark:bg-indigo-600 text-white rounded-[2rem] flex items-center justify-center border border-white/30 dark:border-none shadow-2xl group-hover:scale-110 transition-transform duration-500">
                                 <Cloud size={40} />
                             </div>
                             <h4 className="text-2xl font-black text-white mb-4 tracking-tight">
                                 {t('pricingPage.infrastructure.cloudTitle')}
                             </h4>
-                            <p className="text-slate-400 font-medium leading-relaxed mb-10 text-sm">
+                            <p className="text-indigo-100 dark:text-slate-400 font-medium leading-relaxed mb-10 text-sm">
                                 {t('pricingPage.infrastructure.cloudDesc')}
                             </p>
                             <Link
                                 href="/infrastructure"
-                                className="mt-auto text-indigo-400 hover:text-indigo-200 font-bold text-sm transition-all flex items-center gap-2 group-hover:gap-3"
+                                className="mt-auto text-white dark:text-indigo-400 hover:text-indigo-200 font-bold text-sm transition-all flex items-center gap-2 group-hover:gap-3"
                             >
                                 {t('pricingPage.infrastructure.learnMore')}
                                 <ArrowRight size={16} />

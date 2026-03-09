@@ -583,6 +583,8 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                                         placeholder={t('auth.emailLabel')}
                                         className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 dark:text-white"
                                         value={email}
+                                        onInvalid={e => e.currentTarget.setCustomValidity(t('auth.errors.fillField'))}
+                                        onInput={e => e.currentTarget.setCustomValidity('')}
                                         onChange={e => setEmail(e.target.value)}
                                     />
                                 </div>
@@ -612,6 +614,8 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                                         placeholder={t('auth.newPasswordPlaceholder')}
                                         className="w-full pl-12 pr-12 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 dark:text-white"
                                         value={password}
+                                        onInvalid={e => e.currentTarget.setCustomValidity(t('auth.errors.fillField'))}
+                                        onInput={e => e.currentTarget.setCustomValidity('')}
                                         onChange={e => setPassword(e.target.value)}
                                     />
                                     <button
@@ -631,6 +635,8 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                                         placeholder={t('auth.confirmNewPasswordPlaceholder')}
                                         className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 dark:text-white"
                                         value={confirmPassword}
+                                        onInvalid={e => e.currentTarget.setCustomValidity(t('auth.errors.fillField'))}
+                                        onInput={e => e.currentTarget.setCustomValidity('')}
                                         onChange={e => setConfirmPassword(e.target.value)}
                                     />
                                 </div>
@@ -660,6 +666,8 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                                             placeholder={t('management.users.modal.name')}
                                             className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 dark:text-white"
                                             value={name}
+                                            onInvalid={e => e.currentTarget.setCustomValidity(t('auth.errors.fillField'))}
+                                            onInput={e => e.currentTarget.setCustomValidity('')}
                                             onChange={e => setName(e.target.value)}
                                         />
                                     </div>
@@ -673,6 +681,8 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                                         placeholder={t('auth.emailLabel')}
                                         className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 dark:text-white"
                                         value={email}
+                                        onInvalid={e => e.currentTarget.setCustomValidity(t('auth.errors.fillField'))}
+                                        onInput={e => e.currentTarget.setCustomValidity('')}
                                         onChange={e => setEmail(e.target.value)}
                                     />
                                 </div>
@@ -685,6 +695,8 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                                         placeholder={t('auth.passwordLabel')}
                                         className="w-full pl-12 pr-12 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 dark:text-white"
                                         value={password}
+                                        onInvalid={e => e.currentTarget.setCustomValidity(t('auth.errors.fillField'))}
+                                        onInput={e => e.currentTarget.setCustomValidity('')}
                                         onChange={e => setPassword(e.target.value)}
                                     />
                                     <button
@@ -718,6 +730,8 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                                                 placeholder={t('auth.confirmPasswordLabel')}
                                                 className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 dark:text-white"
                                                 value={confirmPassword}
+                                                onInvalid={e => e.currentTarget.setCustomValidity(t('auth.errors.fillField'))}
+                                                onInput={e => e.currentTarget.setCustomValidity('')}
                                                 onChange={e => setConfirmPassword(e.target.value)}
                                             />
                                         </div>

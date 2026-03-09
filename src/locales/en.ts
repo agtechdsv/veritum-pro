@@ -32,7 +32,7 @@ export const en = {
         story: 'Our Story',
         login: 'Login',
         register: 'Start Free',
-        dashboard: 'Veritum Panel',
+        dashboard: 'Pro Dashboard',
         admin: 'Administration',
         master: 'Master'
     },
@@ -78,7 +78,8 @@ export const en = {
             passwordTooShort: 'Password must be at least 6 characters long.',
             resetError: 'Error resetting password. Please try again.',
             googleError: 'Error signing in with Google.',
-            inactive: 'This account is inactive. Please contact your administrator.',
+            inactive: 'Your account is inactive. Please contact your office administrator.',
+            fillField: 'Please fill in this field.',
             default: 'An error occurred during authentication.',
             notFound: 'Email not found. Please sign up.',
             genResetSuccess: 'Your temporary password has been sent! Check your email (and spam folder, marking as "not spam" if needed).'
@@ -1491,7 +1492,18 @@ export const en = {
             byodb: 'Veritum Cloud',
             subscription: 'Subscription',
             modules: 'Individual Modules',
-            faq: 'FAQ'
+            faq: 'FAQ',
+            painel: 'Pro Dashboard'
+        },
+        billing: {
+            monthly: 'Monthly',
+            quarterly: 'Quarterly',
+            semiannual: 'Semi-annual',
+            yearly: 'Yearly',
+            perMonth: '/ month',
+            perQuarter: '/ 3 months',
+            perSemiannual: '/ 6 months',
+            perYear: '/ year'
         },
         modules: {
             badge: 'Total Flexibility',
@@ -1551,23 +1563,26 @@ export const en = {
         },
         infrastructure: {
             title: 'Your infrastructure. Your rules.',
-            subtitle: 'At Veritum PRO, freedom goes beyond the contract: it reaches the root of your data. Choose the architecture model that best suits your firm\'s reality.',
+            subtitle: 'At Veritum PRO, freedom goes beyond the contract: it reaches the root of your data. Choose the architecture model that best suits your practice\'s reality.',
+            eliteTitle: 'Elite Infrastructure',
             byodbTitle: 'Absolute Control (BYODB - Included)',
-            byodbDesc: 'Connect Veritum PRO directly to your firm\'s own database. Ideal for firms with their own IT infrastructure or local databases (Oracle, Postgres, SQL Server) that demand total sovereignty.',
+            byodbDesc: 'Connect Veritum PRO directly to your firm\'s database. Ideal for firms with their own IT infrastructure or local bases (Oracle, Postgres, SQL Server) that require total sovereignty.',
             cloudTitle: 'Technological Peace of Mind (Veritum Managed Cloud)',
-            cloudDesc: 'Want to focus only on practicing law? We take care of the servers for you. Dedicated database, automatic daily backups, cutting-edge encryption, and zero technical configuration. Your office in the cloud in 5 minutes.',
+            cloudDesc: 'Want to focus only on practicing law? We take care of the servers for you. Dedicated database, automatic daily backups, cutting-edge encryption and zero technical configuration. Your practice in the cloud in 5 minutes.',
+            vipBonusTitle: 'Veritum VIP Club',
+            vipBonusDesc: 'Gain access to the ambassador club and invites for 100% OFF.',
             learnMore: 'Learn More...',
-            specificationsLink: 'See technical infrastructure specifications',
+            specificationsLink: 'View technical infrastructure specifications',
             dbPlans: {
                 title: 'Veritum Cloud Scalability',
                 pro: {
                     name: 'Cloud Professional',
-                    badge: 'MANAGER`S CHOICE',
-                    subtitle: 'High performance and advanced features for firms in the expansion phase.',
+                    badge: 'MANAGER\'S CHOICE',
+                    subtitle: 'High performance and advanced features for expanding firms.',
                     cta: 'Activate Professional',
-                    price: 'R$ 249.90',
+                    price: '$249.90',
                     interval: '/ month',
-                    credits: 'Veritum Credits (R$ 55.00) included',
+                    credits: 'Veritum Credits ($55.00) included',
                     needMore: 'On-demand scalability',
                     featuresTitle: 'Features Included in the Plan:',
                     categories: {
@@ -1576,29 +1591,29 @@ export const en = {
                         security: 'Security & Continuity'
                     },
                     features: [
-                        { text: '100,000 Active Users (MAU)', category: 'compute' },
-                        { text: 'then R$ 0.05 per MAU', category: 'compute', isSub: true },
+                        { text: '100,000 Monthly Active Users (MAU)', category: 'compute' },
+                        { text: 'then $0.05 per MAU', category: 'compute', isSub: true },
                         { text: '8 GB Dedicated Disk', category: 'storage' },
-                        { text: 'then R$ 1.25 per GB', category: 'storage', isSub: true },
-                        { text: '250 GB Egress Traffic', category: 'storage' },
-                        { text: 'then R$ 0.95 per GB', category: 'storage', isSub: true },
+                        { text: 'then $1.25 per GB', category: 'storage', isSub: true },
+                        { text: '250 GB Outbound Traffic', category: 'storage' },
+                        { text: 'then $0.95 per GB', category: 'storage', isSub: true },
                         { text: '250 GB Cached Network', category: 'storage' },
-                        { text: 'then R$ 0.40 per GB', category: 'storage', isSub: true },
+                        { text: 'then $0.40 per GB', category: 'storage', isSub: true },
                         { text: '100 GB File Storage', category: 'storage' },
-                        { text: 'then R$ 0.25 per GB', category: 'storage', isSub: true },
+                        { text: 'then $0.25 per GB', category: 'storage', isSub: true },
                         { text: 'Priority Technical Support', category: 'security' },
-                        { text: 'Daily Backups (7-day retention)', category: 'security' },
+                        { text: 'Daily Backups (7 days)', category: 'security' },
                         { text: 'System Logs (7 days)', category: 'security' }
                     ]
                 },
                 team: {
                     name: 'Cloud Enterprise',
                     badge: 'TOTAL COMPLIANCE',
-                    subtitle: 'Bank-level security and strict compliance for large corporations.',
+                    subtitle: 'Banking-level security and rigorous compliance for large corporations.',
                     cta: 'Activate Enterprise',
-                    price: 'R$ 4,399.90',
+                    price: '$4,399.90',
                     interval: '/ month',
-                    credits: 'Veritum Credits (R$ 55.00) included',
+                    credits: 'Veritum Credits ($55.00) included',
                     needMore: 'Enterprise Solutions',
                     featuresTitle: 'Everything in Professional, plus:',
                     features: [
@@ -1608,13 +1623,15 @@ export const en = {
                         { text: 'Single Sign-On (SSO) for Managers', category: 'security' },
                         { text: 'Priority Support SLAs', category: 'security' },
                         { text: 'Extended Backups (14 days)', category: 'security' },
-                        { text: 'Bulk Log Retention (28 days)', category: 'security' },
+                        { text: 'Massive Log Retention (28 days)', category: 'security' },
                         { text: 'Log Drain Monitoring', category: 'security' },
-                        { text: 'then R$ 479.90 per extra drain', category: 'security', isSub: true }
+                        { text: 'then $479.90 per extra drain', category: 'security', isSub: true }
                     ]
                 }
             }
         },
+
+
         comparison: {
             label: 'Want to analyze every technical detail?',
             hide: 'Hide',
@@ -1678,6 +1695,7 @@ export const en = {
             }
         },
         subscriptionModel: {
+            badge: 'Veritum Advantage',
             title: 'Intelligent subscription vs. common installment',
             subtitle: 'Understand why our model is the ultimate ally for your cash flow and bank limit.',
             subscription: {
@@ -1706,6 +1724,7 @@ export const en = {
             titleAccent: 'doesn\'t use spreadsheets.',
             subtitle: 'Join the Veritum PRO ecosystem today and transform your firm into a performance machine.',
             button: 'Create My Account Now',
+            dashboard: 'Access My Dashboard',
             footer: 'Developed by AGTech | High Performance LegalTech © 2026 All rights reserved.'
         },
         demoModal: {
@@ -1738,7 +1757,7 @@ export const en = {
             },
             submitBtn: 'Confirm Suggestion',
             submitting: 'Sending...'
-        }
+        },
     },
     landingPages: {
         nexus: {
@@ -2046,6 +2065,7 @@ export const en = {
             ux: {
                 title: 'Finance translated into your language.',
                 subtitle: 'You\'re from the humanities, and we understand that. Instead of screens full of accounting jargon, Valorem PRO uses visual charts and intuitive icons.',
+                button: 'Apply Now',
                 items: {
                     conciliation: {
                         title: 'Visual Reconciliation',
@@ -2269,21 +2289,43 @@ export const en = {
             subtitle: 'Discover the data engineering behind Veritum PRO. Designed to meet the most rigorous compliance and GDPR requirements in the legal market.'
         },
         architecture: {
-            title: 'Choice of Architecture',
-            subtitle: 'We understand that each office has a different technological maturity. Therefore, we offer two paths for your data management:',
+            title: 'The Architectural Choice',
+            subtitle: 'We understand that each firm has a different technological maturity. Therefore, we offer two paths for your data management:',
             cloud: {
-                title: 'Managed Veritum Cloud',
-                desc: 'Focus on "Technological Peace of Mind". Each client has an exclusive and isolated database. Automatic daily backups retained for 7 days, state-of-the-art encryption, and continuous availability without the need for an internal IT team.'
+                title: 'Veritum Managed Cloud',
+                desc: 'Focus on "Technological Peace of Mind". Each client has a unique and isolated database. Automatic daily backups retained for 7 days, cutting-edge encryption, and continuous availability without the need for an internal IT team.',
+                features: [
+                    "Dedicated SQL database per client",
+                    "Physical resource isolation",
+                    "Automatic daily backup (7 days)",
+                    "AES-256 encryption at rest"
+                ]
             },
             byodb: {
                 title: 'Absolute Control (BYODB)',
-                desc: 'Focus on "Absolute Control". Connect Veritum PRO to your own servers (AWS, Google Cloud, Azure) or local databases (Oracle, Postgres, SQL Server). Maintain local custody and total sovereignty over your firm\'s digital assets.'
+                desc: 'Focus on "Absolute Control". Connect Veritum PRO to your own servers (AWS, Google Cloud, Azure) or local databases (Oracle, Postgres, SQL Server). Maintain local custody and total sovereignty over your firm\'s digital assets.',
+                features: [
+                    "Connection with AWS RDS, Azure, Oracle or Postgres",
+                    "Total sovereignty over local databases",
+                    "Local custody and firewall control",
+                    "Zero latency in internal infrastructure"
+                ]
             }
+        },
+        engineer: {
+            title: 'Talk to a ',
+            accent: 'Data Engineer',
+            subtitle: 'Questions about integration, security, or latency? Our technical team is ready for a deep technical conversation.',
+            cta: 'See Plans and Prices'
         },
         enterprise: {
             title: 'Ready for Large Corporate Operations.',
             subtitle: 'For STRATEGY plan clients, our infrastructure can be upgraded to SOC2 certification, SSO (Single Sign-On) policies, and extended backup retention for 14 days.',
-            label: 'Enterprise Level Security'
+            label: 'Enterprise Level Security',
+            spotlight: 'Security Spotlight',
+            sso: 'Single Sign-On (SSO)',
+            soc2: 'SOC2 Compliance',
+            monitoring: '24/7 Monitoring'
         },
         faq: {
             title: 'Frequently Asked Questions',
@@ -2315,75 +2357,94 @@ export const en = {
         hero: {
             access: 'Restricted Access',
             title: 'Welcome to the elite of legal technology.',
-            subtitle: 'More than a management platform, the Veritum PRO VIP Club is an exclusive network for GROWTH and STRATEGY plan subscribers. Unlock premium tools, shield your communication, and be rewarded for bringing new firms into our ecosystem.',
+            subtitle: 'More than a management platform, the [ACCENT] is an exclusive network for GROWTH and STRATEGY plan subscribers. Unlock premium tools, shield your communication, and be rewarded for bringing new firms into our ecosystem.',
+            subtitleAccent: 'Veritum PRO VIP Club',
             ctaActivate: 'Activate My VIP Profile',
             ctaLearn: 'Learn Benefits'
         },
-        benefits: {
-            title: 'Your Exclusive Digital Identity',
-            subtitle: 'As a VIP member, you get immediate access to a shielded @veritumpro.com mailbox (exclusive for Growth and Strategy subscribers on semi-annual or annual plans).',
-            description: 'Strategically separate court and system notifications from your personal inbox. Beyond absolute organization, this is your early access channel: receive market updates and beta features before everyone else.',
-            items: [
-                'Professional / Personal Separation',
-                'Automatic Summoning Filter',
-                'Official Veritum Beta Communication'
-            ],
-            webmail: 'Shielded Webmail',
-            military: 'Military Grade Protection',
-            address: 'Your Official Address',
-            smartFilter: 'Smart Filter',
-            smartFilterDesc: 'Automatically redirect court notifications.',
-            earlyAccess: 'Early Access',
-            earlyAccessDesc: 'Be the first to test our new AIs.'
+        earlyAccess: 'Early Access',
+        earlyAccessDesc: 'Be the first to test our new AIs.'
+    },
+    engineer: {
+        title: 'Talk to a Data Engineer',
+        subtitle: 'Questions about integration, security, or latency? Our technical team is ready for a deep technical conversation.',
+        cta: 'See Plans and Prices'
+    },
+    benefits: {
+        title: 'Your Exclusive Digital Identity',
+        subtitle: 'As a VIP member, you get immediate access to a shielded @veritumpro.com mailbox (exclusive for Growth and Strategy subscribers on semi-annual or annual plans).',
+        description: 'Strategically separate court and system notifications from your personal inbox. Beyond absolute organization, this is your early access channel: receive market updates and beta features before everyone else.',
+        items: [
+            'Professional / Personal Separation',
+            'Automatic Summoning Filter',
+            'Official Veritum Beta Communication'
+        ],
+        webmail: 'Shielded Webmail',
+        military: 'Military Grade Protection',
+        address: 'Your Official Address',
+        smartFilter: 'Smart Filter',
+        smartFilterDesc: 'Automatically redirect court notifications.',
+        earlyAccess: 'Early Access',
+        earlyAccessDesc: 'Be the first to test our new AIs.'
+    },
+    rewards: {
+        title: 'Expand the network. Earn points. Zero your subscription.',
+        subtitle: 'Good lawyers walk with good lawyers. At the Veritum VIP Club, your influence funds your firm\'s technology.',
+        detail: 'For every colleague you bring into our ecosystem, you accumulate VIP Points that turn into real discounts on your next invoice (1 Point = 1% OFF).',
+        accelerators: 'How to accelerate your earnings:',
+        cycles: {
+            monthly: 'Monthly',
+            quarterly: 'Quarterly',
+            semiannually: 'Semi-annually',
+            annually: 'Annually',
+            point: 'Point',
+            points: 'Points'
         },
-        rewards: {
-            title: 'Expand the network. Earn points. Zero your subscription.',
-            subtitle: 'Good lawyers walk with good lawyers. At the Veritum VIP Club, your influence funds your firm\'s technology.',
-            detail: 'For every colleague you bring into our ecosystem, you accumulate VIP Points that turn into real discounts on your next invoice (1 Point = 1% OFF).',
-            accelerators: 'How to accelerate your earnings:',
-            cycles: {
-                monthly: 'Monthly',
-                quarterly: 'Quarterly',
-                semiannually: 'Semi-annually',
-                annually: 'Annually',
-                point: 'Point',
-                points: 'Points'
+        plans: {
+            start: {
+                name: 'START Plan',
+                desc: 'Ideal for new firms',
+                points: '1 to 5',
+                label: 'VIP Points'
             },
-            plans: {
-                start: {
-                    name: 'START Plan',
-                    desc: 'Ideal for new firms',
-                    points: '1 to 5',
-                    label: 'VIP Points'
-                },
-                growth: {
-                    name: 'GROWTH Plan',
-                    desc: 'Accelerated growth',
-                    points: '2 to 10',
-                    label: 'VIP Points'
-                },
-                strategy: {
-                    name: 'STRATEGY Plan',
-                    desc: 'Your fastest shortcut',
-                    points: '3 to 15',
-                    label: 'VIP Points!'
-                }
+            growth: {
+                name: 'GROWTH Plan',
+                desc: 'Accelerated growth',
+                points: '2 to 10',
+                label: 'VIP Points'
+            },
+            strategy: {
+                name: 'STRATEGY Plan',
+                desc: 'Your fastest shortcut',
+                points: '3 to 15',
+                label: 'VIP Points!'
             }
         },
-        goal: {
-            title: 'The Grand Goal (100% OFF)',
-            description: 'Accumulate 100 VIP Points and use 100% of Veritum PRO modules entirely on us in your next cycle.',
-            progress: '100% OFF Achieved',
-            persistenceTitle: 'Your effort is never lost',
-            persistenceDesc: 'Exceeded the 100-point goal? Don\'t worry. All excess points are counted and automatically transferred to your subsequent billing cycle. Keep your network active and ensure year-round peace of mind.'
+        store: {
+            title: 'Rewards',
+            accent: 'Shop',
+            subtitle: 'Exchange your VIP points for exclusive rewards, upgrades, and automatic benefits.'
         },
-        ctaFinal: {
-            title1: 'Ready allowed to take',
-            title2: 'Your place in the club?',
-            button: 'Activate Benefits Now'
-        },
-        footer: {
-            copyright: '© {year} Veritum PRO - All rights reserved'
+        status: {
+            loading: 'Loading Benefits...',
+            empty: 'No benefits available at the moment.'
         }
+    },
+    goal: {
+        title: 'The Grand Goal (100% OFF)',
+        description: 'Accumulate 100 VIP Points and use 100% of Veritum PRO modules entirely on us in your next cycle.',
+        progress: '100% OFF Achieved',
+        persistenceTitle: 'Your effort is never lost',
+        persistenceDesc: 'Exceeded the 100-point goal? Don\'t worry. All excess points are counted and automatically transferred to your subsequent billing cycle. Keep your network active and ensure year-round peace of mind.'
+    },
+    ctaFinal: {
+        title1: 'Ready allowed to take',
+        title2: 'Your place in the club?',
+        button: 'Activate Benefits Now'
+    },
+    footer: {
+        copyright: '© {year} Veritum PRO - All rights reserved'
     }
 };
+
+export default en;

@@ -107,7 +107,7 @@ export default function InfrastructurePage() {
                                     className="hidden xl:flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-bold text-sm shadow-xl shadow-indigo-600/20 transition-all hover:scale-105"
                                 >
                                     <LayoutDashboard size={18} />
-                                    Painel Pro
+                                    {t('nav.dashboard')}
                                 </Link>
                                 <UserMenu user={currentUser} supabase={createMasterClient()} />
                             </div>
@@ -182,12 +182,7 @@ export default function InfrastructurePage() {
                                 {sections.architecture.cloud.desc}
                             </p>
                             <div className="space-y-4">
-                                {[
-                                    "Database SQL dedicado por cliente",
-                                    "Isolamento físico de recursos",
-                                    "Backup diário automático (7 dias)",
-                                    "Criptografia AES-256 em repouso"
-                                ].map((item, i) => (
+                                {(sections.architecture.cloud.features || []).map((item: string, i: number) => (
                                     <div key={i} className="flex items-center gap-3 text-sm font-bold text-slate-600 dark:text-slate-300">
                                         <div className="w-5 h-5 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
                                             <Check size={12} strokeWidth={4} />
@@ -199,24 +194,19 @@ export default function InfrastructurePage() {
                         </div>
 
                         {/* BYODB */}
-                        <div className="group p-12 rounded-[3.5rem] bg-slate-900 text-white border border-slate-800 hover:border-indigo-400 transition-all duration-500 shadow-3xl">
-                            <div className="mb-10 w-20 h-20 bg-white/10 text-white rounded-3xl flex items-center justify-center border border-white/20 group-hover:scale-110 transition-transform duration-500">
+                        <div className="group p-12 rounded-[3.5rem] bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 hover:border-indigo-400 transition-all duration-500 shadow-3xl">
+                            <div className="mb-10 w-20 h-20 bg-indigo-600/10 dark:bg-white/10 text-indigo-600 dark:text-white rounded-3xl flex items-center justify-center border border-indigo-600/20 dark:border-white/20 group-hover:scale-110 transition-transform duration-500">
                                 <Database size={40} />
                             </div>
-                            <h3 className="text-3xl font-black text-white mb-6 uppercase">
+                            <h3 className="text-3xl font-black text-slate-900 dark:text-white mb-6 uppercase">
                                 {sections.architecture.byodb.title}
                             </h3>
-                            <p className="text-lg text-slate-400 font-medium leading-relaxed mb-10">
+                            <p className="text-lg text-slate-500 dark:text-slate-400 font-medium leading-relaxed mb-10">
                                 {sections.architecture.byodb.desc}
                             </p>
                             <div className="space-y-4">
-                                {[
-                                    "Conexão com AWS RDS, Azure, Oracle ou Postgres",
-                                    "Soberania total sobre os bando de dados locais",
-                                    "Custódia local e controle de firewall",
-                                    "Zero latência em infraestrutura interna"
-                                ].map((item, i) => (
-                                    <div key={i} className="flex items-center gap-3 text-sm font-bold text-slate-300">
+                                {(sections.architecture.byodb.features || []).map((item: string, i: number) => (
+                                    <div key={i} className="flex items-center gap-3 text-sm font-bold text-slate-600 dark:text-slate-300">
                                         <div className="w-5 h-5 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
                                             <Check size={12} strokeWidth={4} />
                                         </div>
@@ -234,7 +224,7 @@ export default function InfrastructurePage() {
                 <div className="max-w-7xl mx-auto rounded-[4rem] bg-indigo-600 p-12 md:p-24 relative overflow-hidden shadow-3xl animate-fade-in text-white">
                     <div className="relative z-10 max-w-3xl">
                         <span className="inline-block px-4 py-1.5 bg-white/20 rounded-full text-[10px] font-black uppercase tracking-widest mb-8 border border-white/30 backdrop-blur-md">
-                            Security Spotlight
+                            {sections.enterprise.spotlight}
                         </span>
                         <h2 className="text-4xl md:text-5xl font-black mb-8 leading-tight tracking-tighter">
                             {sections.enterprise.title}
@@ -244,9 +234,9 @@ export default function InfrastructurePage() {
                         </p>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                             {[
-                                { icon: Lock, label: "Single Sign-On (SSO)" },
-                                { icon: Server, label: "SOC2 Compliance" },
-                                { icon: Activity, label: "24/7 Monitoring" }
+                                { icon: Lock, label: sections.enterprise.sso },
+                                { icon: Server, label: sections.enterprise.soc2 },
+                                { icon: Activity, label: sections.enterprise.monitoring }
                             ].map((item, i) => (
                                 <div key={i} className="flex flex-col gap-4 p-6 bg-white/10 rounded-3xl border border-white/10 backdrop-blur-sm">
                                     <item.icon size={32} />
@@ -290,16 +280,16 @@ export default function InfrastructurePage() {
             <section className="py-32 px-6 text-center bg-white dark:bg-slate-950">
                 <div className="max-w-4xl mx-auto">
                     <h2 className="text-4xl md:text-5xl font-black mb-8 text-slate-900 dark:text-white leading-tight tracking-tighter">
-                        Fale com um <span className="text-branding-gradient">Engenheiro de Dados</span>
+                        {t('infrastructurePage.engineer.title')} <span className="text-branding-gradient">{t('infrastructurePage.engineer.accent')}</span>
                     </h2>
                     <p className="text-xl text-slate-500 dark:text-slate-400 mb-12 font-medium">
-                        Dúvidas sobre integração, segurança ou latência? Nosso time técnico está pronto para uma conversa técnica profunda.
+                        {t('infrastructurePage.engineer.subtitle')}
                     </p>
                     <Link
                         href="/pricing#infrastructure"
                         className="inline-flex items-center gap-3 bg-indigo-600 text-white px-10 py-5 rounded-[2rem] font-black text-lg shadow-2xl shadow-indigo-600/40 hover:scale-105 hover:bg-indigo-700 transition-all uppercase tracking-tight"
                     >
-                        Ver Planos e Preços <ArrowRight size={20} />
+                        {t('infrastructurePage.engineer.cta')} <ArrowRight size={20} />
                     </Link>
                 </div>
             </section>

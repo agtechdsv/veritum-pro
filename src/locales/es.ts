@@ -40,7 +40,7 @@ export const es = {
         "story": "Nuestra Historia",
         "login": "Entrar",
         "register": "Comenzar Gratis",
-        "dashboard": "Panel Veritum",
+        "dashboard": "Panel Pro",
         "admin": "Administración",
         "master": "Maestro"
     },
@@ -87,6 +87,7 @@ export const es = {
             "resetError": "Error al restablecer la contraseña. Intente nuevamente.",
             "googleError": "Error al entrar con Google.",
             "inactive": "Esta cuenta está inactiva. Contacte al administrador.",
+            "fillField": "Complete este campo.",
             "default": "Ocurrió un error en la autenticación.",
             notFound: 'El email no fue localizado. Regístrese.',
             genResetSuccess: '¡Su contraseña provisional ha sido enviada! Revise seu correo electrónico (y la carpeta de spam, marcándola como "no es spam" si es necesario).'
@@ -1499,7 +1500,18 @@ export const es = {
             "byodb": "Veritum Cloud",
             "subscription": "Suscripción",
             "modules": "Módulos Sueltos",
-            "faq": "Dudas"
+            "faq": "Dudas",
+            "painel": "Panel Pro"
+        },
+        "billing": {
+            "monthly": "Mensual",
+            "quarterly": "Trimestral",
+            "semiannual": "Semestral",
+            "yearly": "Anual",
+            "perMonth": "/ mes",
+            "perQuarter": "/ 3 meses",
+            "perSemiannual": "/ 6 meses",
+            "perYear": "/ año"
         },
         "modules": {
             "badge": "Flexibilidad Total",
@@ -1563,7 +1575,10 @@ export const es = {
             "byodbTitle": "Control Absoluto (BYODB - Incluido)",
             "byodbDesc": "Conecte Veritum PRO directamente a la base de datos de su despacho. Ideal para firmas con infraestructura propia de TI o bases locales (Oracle, Postgres, SQL Server) que exigen soberanía total.",
             "cloudTitle": "Paz Mental Tecnológica (Veritum Cloud Gestionada)",
-            "cloudDesc": "¿Quiere enfocarse solo en abogar? Nosotros cuidamos los servidores por usted. Base de datos dedicada, copias de seguridad diarias automáticas, cifrado de punta e cifrado de punta y cero configuración técnica. Su oficina en la nube en 5 minutos.",
+            "cloudDesc": "¿Quiere enfocarse solo en abogar? Nosotros cuidamos los servidores por usted. Base de datos dedicada, copias de seguridad diarias automáticas, cifrado de punta y cero configuración técnica. Su oficina en la nube en 5 minutos.",
+            "eliteTitle": "Infraestructura de Élite",
+            "vipBonusTitle": "Club VIP Veritum",
+            "vipBonusDesc": "Obtenga acceso al club de embajadores e invitaciones para 100% OFF.",
             "learnMore": "Más Información...",
             "specificationsLink": "Ver especificaciones técnicas de infraestructura",
             "dbPlans": {
@@ -1573,9 +1588,9 @@ export const es = {
                     "badge": "ELECCIÓN DEL GESTOR",
                     "subtitle": "Alto rendimiento y funciones avanzadas para despachos en fase de expansión.",
                     "cta": "Activar Professional",
-                    "price": "R$ 249,90",
+                    "price": "$249.90",
                     "interval": "/ mes",
-                    "credits": "Créditos Veritum (R$ 55,00) incluidos",
+                    "credits": "Créditos Veritum ($55.00) incluidos",
                     "needMore": "Escalabilidad bajo demanda",
                     "featuresTitle": "Funciones Incluidas en el Plan:",
                     "categories": {
@@ -1603,10 +1618,10 @@ export const es = {
                     "name": "Cloud Enterprise",
                     "badge": "COMPLIANCE TOTAL",
                     "subtitle": "Seguridad de nivel bancario y cumplimiento riguroso para grandes corporaciones.",
-                    "cta": "Ativar Enterprise",
-                    "price": "R$ 4.399,90",
+                    "cta": "Activar Enterprise",
+                    "price": "$4,399.90",
                     "interval": "/ mes",
-                    "credits": "Créditos Veritum (R$ 55,00) incluidos",
+                    "credits": "Créditos Veritum ($55.00) incluidos",
                     "needMore": "Soluciones Enterprise",
                     "featuresTitle": "Todo lo del Professional, más:",
                     "features": [
@@ -1698,6 +1713,7 @@ export const es = {
             }
         },
         "subscriptionModel": {
+            "badge": "Diferencial Veritum",
             "title": "Suscripción inteligente vs. cuotas comunes",
             "subtitle": "Entienda por qué nuestro modelo es el aliado definitivo de su flujo de caja y límite bancario.",
             "subscription": {
@@ -1744,6 +1760,7 @@ export const es = {
             "titleAccent": "no usa planillas.",
             "subtitle": "Únase al ecosistema Veritum PRO hoy mismo y transforme su despacho en una máquina de performance.",
             "button": "Crear Mi Cuenta Ahora",
+            "dashboard": "Acceder a mi panel",
             "footer": "Desarrollado por AGTech | LegalTech de Alta Performance © 2026"
         },
         "demoModal": {
@@ -2084,6 +2101,7 @@ export const es = {
             "ux": {
                 "title": "Finanzas traducidas a su idioma.",
                 "subtitle": "Usted es de letras (humanidades), y nosotros lo entendemos. En lugar de pantallas repletas de tecnicismos contables, Valorem PRO usa gráficos visuales e iconos intuitivos.",
+                "button": "Aplicar Ahora",
                 "items": {
                     "conciliation": {
                         "title": "Conciliación Visual",
@@ -2311,17 +2329,39 @@ export const es = {
             "subtitle": "Entendemos que cada despacho tiene una madurez tecnológica diferente. Por eso, ofrecemos dos caminos para su gestión de datos:",
             "cloud": {
                 "title": "Veritum Cloud Gestionada",
-                "desc": "Enfoque en la \"Paz Mental Tecnológica\". Cada cliente tiene una base de datos exclusiva y aislada. Copias de seguridad diarias automáticas retenidas por 7 días, cifrado de punta y disponibilidad continua sin necesidad de equipo de TI interno."
+                "desc": "Enfoque en la \"Paz Mental Tecnológica\". Cada cliente tiene una base de datos exclusiva y aislada. Copias de seguridad diarias automáticas retenidas por 7 días, cifrado de punta y disponibilidad continua sin necesidad de equipo de TI interno.",
+                "features": [
+                    "Base de datos SQL dedicada por cliente",
+                    "Aislamiento físico de recursos",
+                    "Copia de seguridad diaria automática (7 días)",
+                    "Cifrado AES-256 en reposo"
+                ]
             },
             "byodb": {
                 "title": "Control Absoluto (BYODB)",
-                "desc": "Enfoque en el \"Control Absoluto\". Conecte Veritum PRO a sus propios servidores (AWS, Google Cloud, Azure) o bases locales (Oracle, Postgres, SQL Server). Mantenga la custodia local y soberanía total sobre el patrimonio digital de su despacho."
+                "desc": "Enfoque en el \"Control Absoluto\". Conecte Veritum PRO a sus propios servidores (AWS, Google Cloud, Azure) o bases locales (Oracle, Postgres, SQL Server). Mantenga la custodia local y soberanía total sobre el patrimonio digital de su despacho.",
+                "features": [
+                    "Conexión con AWS RDS, Azure, Oracle o Postgres",
+                    "Soberanía total sobre las bases de datos locales",
+                    "Custodia local y control de firewall",
+                    "Cero latencia en infraestructura interna"
+                ]
             }
+        },
+        "engineer": {
+            "title": "Hable con un ",
+            "accent": "Ingeniero de Datos",
+            "subtitle": "¿Dudas sobre integración, seguridad o latencia? Nuestro equipo técnico está listo para una conversación técnica profunda.",
+            "cta": "Ver Planes y Precios"
         },
         "enterprise": {
             "title": "Listo para Grandes Operaciones Corporativas.",
             "subtitle": "Para clientes del plano STRATEGY, nuestra infraestructura puede elevarse a la certificación SOC2, políticas de SSO (Single Sign-On) y retención extendida de copias de seguridad por 14 días.",
-            "label": "Seguridad Nivel Enterprise"
+            "label": "Seguridad Nivel Enterprise",
+            "spotlight": "Foco en Seguridad",
+            "sso": "Single Sign-On (SSO)",
+            "soc2": "Cumplimiento SOC2",
+            "monitoring": "Monitoreo 24/7"
         },
         "faq": {
             "title": "Dudas Frecuentes",
@@ -2353,7 +2393,8 @@ export const es = {
         "hero": {
             "access": "Acceso Restringido",
             "title": "Bienvenido a la élite de la tecnología jurídica.",
-            "subtitle": "Más que una plataforma de gestión, el Club VIP Veritum PRO es una red exclusiva para suscriptores de los planes GROWTH y STRATEGY. Desbloquee herramientas premium, proteja su comunicación y sea recompensado por traer nuevos despachos a nuestro ecosistema.",
+            "subtitle": "Más que una plataforma de gestión, el [ACCENT] es una red exclusiva para suscriptores de los planes GROWTH y STRATEGY. Desbloquee herramientas premium, proteja su comunicación y sea recompensado por traer nuevos despachos a nuestro ecosistema.",
+            "subtitleAccent": "Club VIP Veritum PRO",
             "ctaActivate": "Activar Mi Perfil VIP",
             "ctaLearn": "Conocer Beneficios"
         },
@@ -2407,6 +2448,15 @@ export const es = {
                     "label": "¡Puntos VIP!"
                 }
             }
+        },
+        "store": {
+            "title": "Tienda de",
+            "accent": "Premios",
+            "subtitle": "Cambie sus puntos VIP por recompensas exclusivas, mejoras y beneficios automáticos."
+        },
+        "status": {
+            "loading": "Cargando Beneficios...",
+            "empty": "Ningún beneficio disponible en este momento."
         },
         "goal": {
             "title": "La Gran Meta (100% OFF)",

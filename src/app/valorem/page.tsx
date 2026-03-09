@@ -221,9 +221,9 @@ export default function ValoremLanding() {
                                             <div className="text-[8px] font-black uppercase text-emerald-500 mb-1">{t('landingPages.valorem.mockup.pix')}</div>
                                             <div className="text-xs font-black text-slate-900 dark:text-white">R$ 2.450,00</div>
                                         </div>
-                                        <div className="w-full h-8 bg-emerald-500 rounded-xl flex items-center justify-center text-[10px] font-bold text-white shadow-lg shadow-emerald-500/20">
-                                            {t('landingPages.valorem.mockup.pay')}
-                                        </div>
+                                        <button className="w-full py-2.5 bg-indigo-600 text-white rounded-lg text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-600/20">
+                                            {t('landingPages.valorem.ux.button')}
+                                        </button>
                                     </div>
                                 </div>
                             </div>

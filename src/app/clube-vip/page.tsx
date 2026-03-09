@@ -177,9 +177,9 @@ export default function ClubeVipPage() {
                     </h1>
 
                     <p className="text-lg md:text-xl font-medium text-slate-400 leading-relaxed max-w-2xl mx-auto mb-12 animate-in slide-in-from-bottom-8 duration-700 delay-200">
-                        {t('clubeVip.hero.subtitle').split('Clube VIP Veritum PRO')[0]}
-                        <strong className="text-white font-black">Clube VIP Veritum PRO</strong>
-                        {t('clubeVip.hero.subtitle').split('Clube VIP Veritum PRO')[1]}
+                        {t('clubeVip.hero.subtitle').split('[ACCENT]')[0]}
+                        <strong className="text-white font-black">{t('clubeVip.hero.subtitleAccent')}</strong>
+                        {t('clubeVip.hero.subtitle').split('[ACCENT]')[1]}
                     </p>
 
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-in slide-in-from-bottom-10 duration-700 delay-300">
@@ -206,21 +206,21 @@ export default function ClubeVipPage() {
                             <Sparkles size={32} className="text-amber-400" />
                         </div>
                         <h2 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter leading-[0.9] mb-6">
-                            Loja de <span className="text-amber-400">Prêmios</span>
+                            {t('clubeVip.store.title')} <span className="text-amber-400">{t('clubeVip.store.accent')}</span>
                         </h2>
                         <p className="text-lg text-slate-400 leading-relaxed font-medium">
-                            Troque seus pontos VIP por recompensas exclusivas, upgrades e benefícios automáticos.
+                            {t('clubeVip.store.subtitle')}
                         </p>
                     </div>
 
                     {isLoading ? (
                         <div className="flex justify-center flex-col items-center gap-4 py-20">
                             <div className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
-                            <p className="text-slate-500 font-medium uppercase tracking-widest text-xs">Carregando Benefícios...</p>
+                            <p className="text-slate-500 font-medium uppercase tracking-widest text-xs">{t('clubeVip.status.loading')}</p>
                         </div>
                     ) : benefits.length === 0 ? (
                         <div className="text-center py-20 border border-slate-800 rounded-3xl bg-slate-900/50">
-                            <p className="text-slate-500 font-medium uppercase tracking-widest text-xs">Nenhum benefício disponível no momento.</p>
+                            <p className="text-slate-500 font-medium uppercase tracking-widest text-xs">{t('clubeVip.status.empty')}</p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
@@ -245,7 +245,7 @@ export default function ClubeVipPage() {
                                                     {bCost === 'Automático' ? (
                                                         <span className="text-emerald-400 flex items-center gap-1"><CheckCircle2 size={12} /> {bCost}</span>
                                                     ) : (
-                                                        <span className="text-amber-400 flex items-center gap-1"><Trophy size={12} /> {bCost} Pontos VIP</span>
+                                                        <span className="text-amber-400 flex items-center gap-1"><Trophy size={12} /> {t('dashboard.vipPoints', { count: bCost })}</span>
                                                     )}
                                                 </div>
                                             </div>
