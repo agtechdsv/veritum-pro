@@ -340,6 +340,18 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
             for (let i = 0; i < 8; i++) {
                 doc.line(15, finalY + 25 + (i * 10), 195, finalY + 25 + (i * 10));
             }
+        } else if (templateKey === 'declaracao') {
+            doc.text(qual, 15, 70, { align: 'justify', maxWidth: 180 });
+            doc.setFont('helvetica', 'bold');
+            doc.text('DECLARAÇÃO:', 15, 110);
+            doc.setFont('helvetica', 'normal');
+            doc.text('Declaro, para os devidos fins de direito, notadamente para fins de obtenção do benefício da assistência judiciária gratuita, sob as penas da lei (Lei 1.060/50 e CPC/2015), que não possuo condições financeiras de arcar com as custas processuais e honorários advocatícios, sem prejuízo do meu próprio sustento e de minha família.', 15, 120, { align: 'justify', maxWidth: 180 });
+        } else if (templateKey === 'lgpd') {
+            doc.text(qual, 15, 70, { align: 'justify', maxWidth: 180 });
+            doc.setFont('helvetica', 'bold');
+            doc.text('TERMO DE CONSENTIMENTO:', 15, 110);
+            doc.setFont('helvetica', 'normal');
+            doc.text('Com base na Lei Geral de Proteção de Dados (Lei 13.709/18), autorizo expressamente este escritório a realizar o tratamento de meus dados pessoais e documentos compartilhados, exclusivamente para a finalidade de prestação de serviços jurídicos e defesa de meus interesses junto ao Judiciário e órgãos administrativos.', 15, 120, { align: 'justify', maxWidth: 180 });
         } else if (templateKey === 'residencia') {
             doc.text(qual, 15, 70, { align: 'justify', maxWidth: 180 });
             doc.text('DECLARAÇÃO:', 15, 110);

@@ -60,7 +60,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
 
     useEffect(() => {
         fetchAll();
-    }, [activeTab, selectedUserId]); // Only fetch on tab change or master user change
+    }, [selectedUserId]); // Fetch only when the selected context (client) changes
 
     const fetchClients = async () => {
         const supMaster = createMasterClient();
@@ -176,12 +176,22 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     const handleCreateLawsuitFromCRM = (personId: string) => {
         // Switch to lawsuits tab
         setActiveTab('processos');
-        // Initialize new lawsuit with the author pre-filled
+        // SMART DEFAULT: Try to find the logged-in user in the team first (by ID or Email)
+        const currentMember = team.find(m => m.master_user_id === user.id || (user.email && m.email === user.email));
+
+        // FALLBACK: If not found, try to find the first member who has a lawyer-related role
+        const firstLawyer = team.find(m =>
+            m.role?.toLowerCase().includes('advogado') ||
+            m.role?.toLowerCase().includes('sócio') ||
+            m.role?.toLowerCase().includes('socio') ||
+            m.specialty // If they have a specialty, they are likely a lawyer
+        );
+
         setEditingLawsuit({
             author_id: personId,
             status: 'Ativo',
             sphere: 'Cível', // Default
-            responsible_lawyer_id: team.find(m => m.master_user_id === user.id)?.id || team[0]?.id || ''
+            responsible_lawyer_id: currentMember?.id || firstLawyer?.id || team[0]?.id || ''
         });
         // Open modal with a small delay to allow tab transition animation to feel smooth
         setTimeout(() => {

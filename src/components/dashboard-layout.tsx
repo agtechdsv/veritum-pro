@@ -756,13 +756,15 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
                                                 <UserIcon size={18} className="text-indigo-600" />
                                                 {t('userMenu.profile')}
                                             </button>
-                                            <Link
-                                                href="/veritumpro/settings?tab=vip"
-                                                className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-amber-600 dark:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-all text-left"
-                                            >
-                                                <Sparkles size={18} />
-                                                Clube VIP
-                                            </Link>
+                                            {isSuperAdmin && (
+                                                <Link
+                                                    href="/veritumpro/settings?tab=vip"
+                                                    className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-amber-600 dark:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-all text-left"
+                                                >
+                                                    <Sparkles size={18} />
+                                                    Clube VIP
+                                                </Link>
+                                            )}
                                             <div className="h-px bg-slate-100 dark:bg-slate-800 mx-2 my-1" />
                                             <button
                                                 onClick={onLogout}

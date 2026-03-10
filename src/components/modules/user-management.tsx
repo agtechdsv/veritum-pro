@@ -626,21 +626,7 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                 </div>
             </div>
 
-            {/* Main Tabs */}
-            <div className="flex bg-slate-100 dark:bg-slate-800/50 p-1.5 rounded-[2rem] w-fit">
-                <button
-                    onClick={() => setActiveMainTab('members')}
-                    className={`px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all ${activeMainTab === 'members' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-xl shadow-indigo-600/10' : 'text-slate-500 hover:text-slate-700'}`}
-                >
-                    Membros da Equipe
-                </button>
-                <button
-                    onClick={() => setActiveMainTab('users')}
-                    className={`px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all ${activeMainTab === 'users' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-xl shadow-indigo-600/10' : 'text-slate-500 hover:text-slate-700'}`}
-                >
-                    Usuários do Sistema
-                </button>
-            </div>
+            {/* Removed Tab Switcher for unified view */}
 
             {/* Filters */}
             <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-wrap gap-6 items-end">
@@ -713,8 +699,6 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                 <input
                                     type="checkbox"
                                     className="w-5 h-5 rounded-lg border-slate-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer"
-                                    checked={selectedUserIds.length === paginatedUsers.length && paginatedUsers.length > 0}
-                                    onChange={handleSelectAll}
                                 />
                             </th>
                             <th className="px-4 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer group" onClick={() => handleSort('name')}>
@@ -722,17 +706,8 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                     {t('management.users.table.member')} {sortConfig?.key === 'name' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                                 </div>
                             </th>
-                            {activeMainTab === 'users' ? (
-                                <>
-                                    <th className="px-4 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('management.users.table.accessGroup')}</th>
-                                    <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center" onClick={() => handleSort('role')}>{t('management.users.table.role')}</th>
-                                </>
-                            ) : (
-                                <>
-                                    <th className="px-4 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Especialidade / OAB</th>
-                                    <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Telefone</th>
-                                </>
-                            )}
+                            <th className="px-4 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Cargo / Especialidade</th>
+                            <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Contato</th>
                             <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">{t('management.users.table.status')}</th>
                             <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">{t('management.users.table.controls')}</th>
                         </tr>
@@ -740,87 +715,6 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
                         {loading ? (
                             <tr><td colSpan={6} className="py-20 text-center text-slate-300 font-bold uppercase tracking-widest opacity-50">{t('management.users.table.syncing')}</td></tr>
-                        ) : activeMainTab === 'users' ? (
-                            paginatedUsers.length === 0 ? (
-                                <tr><td colSpan={6} className="py-20 text-center text-slate-400 font-bold italic opacity-30">{t('management.users.table.noUser')}</td></tr>
-                            ) : paginatedUsers.map(u => (
-                                <tr key={u.id} className={`hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-all ${selectedUserIds.includes(u.id) ? 'bg-indigo-50/30 dark:bg-indigo-950/10' : ''}`}>
-                                    <td className="px-8 py-6 text-center">
-                                        <input
-                                            type="checkbox"
-                                            className="w-5 h-5 rounded-lg border-slate-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer"
-                                            checked={selectedUserIds.includes(u.id)}
-                                            onChange={() => handleSelectUser(u.id)}
-                                        />
-                                    </td>
-                                    <td className="px-4 py-6">
-                                        <div className="flex items-center gap-4">
-                                            <div className="relative group/avatar">
-                                                <img src={u.avatar_url || `https://ui-avatars.com/api/?name=${u.name}&background=6366f1&color=fff&bold=true`} className="w-12 h-12 rounded-2xl shadow-sm group-hover/avatar:scale-105 transition-transform" />
-                                                {u.active && <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full" />}
-                                            </div>
-                                            <div>
-                                                <p className="font-black text-slate-800 dark:text-white leading-tight uppercase tracking-tight">
-                                                    {typeof u.name === 'object' ? ((u.name as any)[locale] || (u.name as any).pt || '') : (u.name || '')}
-                                                </p>
-                                                <p className="text-xs text-slate-400 font-medium">{u.email}</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-4 py-6">
-                                        {u.access_group_id ? (
-                                            <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800 rounded-xl w-fit">
-                                                <Shield size={12} className="text-indigo-600 dark:text-indigo-400" />
-                                                <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase">
-                                                    {(() => {
-                                                        const group = accessGroups.find(g => g.id === u.access_group_id);
-                                                        if (!group) return loading ? t('common.loading') : 'Não Encontrado';
-                                                        return (group.name && typeof group.name === 'object')
-                                                            ? ((group.name as any)[locale] || (group.name as any).pt || '')
-                                                            : (group.name || '');
-                                                    })()}
-                                                </span>
-                                            </div>
-                                        ) : (
-                                            <span className="text-[10px] text-slate-300 font-bold uppercase tracking-widest italic opacity-50">{t('management.users.table.noGroup')}</span>
-                                        )}
-                                    </td>
-                                    <td className="px-8 py-6 text-center">
-                                        <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tight ${u.role === 'Master' ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/40' :
-                                            u.role?.includes('Sócio') || u.role?.includes('Administrador') ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40' :
-                                                u.role?.includes('Coordenador') || u.role?.includes('Sênior') ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/40' :
-                                                    u.role?.includes('Estagiário') || u.role?.includes('Paralegal') ? 'bg-violet-100 text-violet-600 dark:bg-violet-900/40' :
-                                                        u.role?.includes('Financeiro') ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40' :
-                                                            'bg-slate-100 text-slate-500 dark:bg-slate-800'
-                                            }`}>
-                                            {getRoleTranslation(u.role)}
-                                        </span>
-                                    </td>
-                                    <td className="px-8 py-6 text-center">
-                                        <div className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase inline-flex items-center gap-1.5 ${u.active ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20' : 'bg-slate-100 text-slate-400 dark:bg-slate-800'}`}>
-                                            <div className={`w-1.5 h-1.5 rounded-full ${u.active ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
-                                            {u.active ? t('management.users.active') : t('management.users.inactive')}
-                                        </div>
-                                    </td>
-                                    <td className="px-8 py-6 text-right">
-                                        <div className="flex items-center justify-end gap-1">
-                                            {isSuperAdmin || currentUser.id === u.id ? (
-                                                <>
-                                                    {isSuperAdmin && (
-                                                        <button onClick={() => handleToggleStatus(u)} className={`p-2 rounded-xl transition-all ${u.active ? 'text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20' : 'text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}`} title={t('management.users.table.tooltips.toggleStatus')}><Radio size={20} /></button>
-                                                    )}
-                                                    <button onClick={() => openEditModal(u)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all" title={t('management.users.table.tooltips.edit')}><FileEdit size={20} /></button>
-                                                    {currentUser.id !== u.id && isSuperAdmin && (
-                                                        <button onClick={() => setUserToDelete(u)} className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all" title={t('management.users.table.tooltips.delete')}><Trash2 size={20} /></button>
-                                                    )}
-                                                </>
-                                            ) : (
-                                                <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest italic flex items-center justify-end px-2">{t('management.users.table.readOnly')}</div>
-                                            )}
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))
                         ) : (
                             paginatedMembers.length === 0 ? (
                                 <tr><td colSpan={6} className="py-20 text-center text-slate-400 font-bold italic opacity-30">Nenhum membro da equipe cadastrado.</td></tr>
@@ -843,8 +737,8 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                                             />
                                                             {linkedUser && (
                                                                 <div
-                                                                    className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full shadow-sm"
-                                                                    title="Usuário do Sistema Ativo"
+                                                                    className={`absolute -top-1 -right-1 w-3.5 h-3.5 ${linkedUser.active ? 'bg-emerald-500' : 'bg-slate-400'} border-2 border-white dark:border-slate-900 rounded-full shadow-sm`}
+                                                                    title={linkedUser.active ? "Usuário do Sistema ativo" : "Acesso ao Sistema suspenso"}
                                                                 />
                                                             )}
                                                         </div>
@@ -859,16 +753,16 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                     </td>
                                     <td className="px-4 py-6">
                                         <div className="flex flex-col gap-1">
-                                            <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
-                                                {m.specialty || 'Geral'}
+                                            <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest leading-none">
+                                                {getRoleTranslation(m.role) || 'Geral'}
                                             </span>
-                                            <span className="text-[10px] text-slate-400 font-bold">
-                                                OAB: {m.oab_number ? `${m.oab_number}/${m.oab_uf}` : 'Não Inf.'}
+                                            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter italic">
+                                                {m.specialty} {m.oab_number ? `| OAB: ${m.oab_number}/${m.oab_uf}` : ''}
                                             </span>
                                         </div>
                                     </td>
                                     <td className="px-8 py-6 text-center">
-                                        <p className="text-xs font-bold text-slate-500">{m.phone || '-'}</p>
+                                        <p className="text-[10px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-tighter">{m.phone || '-'}</p>
                                     </td>
                                     <td className="px-8 py-6 text-center">
                                         <div className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase inline-flex items-center gap-1.5 ${m.is_active ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20' : 'bg-slate-100 text-slate-400 dark:bg-slate-800'}`}>
@@ -878,8 +772,8 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                                     </td>
                                     <td className="px-8 py-6 text-right">
                                         <div className="flex items-center justify-end gap-1">
-                                            <button onClick={() => openEditMemberModal(m)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all"><FileEdit size={20} /></button>
-                                            <button onClick={() => setMemberToDelete(m)} className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all"><Trash2 size={20} /></button>
+                                            <button onClick={() => openEditMemberModal(m)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all" title="Editar"><FileEdit size={20} /></button>
+                                            <button onClick={() => setMemberToDelete(m)} className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all" title="Excluir"><Trash2 size={20} /></button>
                                         </div>
                                     </td>
                                 </tr>
