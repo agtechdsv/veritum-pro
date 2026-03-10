@@ -1,11 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Person, Credentials, UserPreferences, User as AppUser } from '@/types';
-import { Plus, Search, User, Mail, Phone, MapPin, Briefcase, FileText, ChevronDown, ChevronUp, ChevronRight, Zap, Save, Trash2, Key, Info, Pencil, XCircle, Database as DbIcon, ShieldCheck, MessageCircle, ExternalLink, Scale, FileDown, ArrowUpRight, Filter } from 'lucide-react';
+import { Person, Credentials, UserPreferences, User as AppUser, Organization } from '@/types';
+import {
+    Plus, Search, User, Mail, Phone, MapPin, Briefcase, FileText,
+    ChevronDown, ChevronUp, ChevronRight, Zap, Save, Trash2, Key, Info,
+    Pencil, XCircle, Database as DbIcon, ShieldCheck, MessageCircle,
+    ExternalLink, Scale, FileDown, ArrowUpRight, Filter, FileCheck,
+    ScrollText, CheckCircle2
+} from 'lucide-react';
 import { useTranslation } from '@/contexts/language-context';
 import { toast } from '@/components/ui/toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { listPersons, savePerson, deletePerson } from '@/app/actions/crm-actions';
 import { createMasterClient } from '@/lib/supabase/master';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface Props {
     credentials: Credentials;
@@ -15,9 +23,11 @@ interface Props {
     externalPersons?: Person[];
     externalLoading?: boolean;
     masterSelectedUserId?: string;
+    onRefresh?: () => void;
+    onNewLawsuit?: (personId: string) => void;
 }
 
-const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUser, isEmbedded, externalPersons, externalLoading, masterSelectedUserId }) => {
+const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUser, isEmbedded, externalPersons, externalLoading, masterSelectedUserId, onRefresh, onNewLawsuit }) => {
     const { t } = useTranslation();
     const [searchTerm, setSearchTerm] = useState('');
     const [localPersons, setLocalPersons] = useState<Person[]>([]);
@@ -33,6 +43,9 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
     // Deletion states
     const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
     const [deleteConfirmName, setDeleteConfirmName] = useState<string | null>(null);
+    const [isDocModalOpen, setIsDocModalOpen] = useState(false);
+    const [selectedPersonForDoc, setSelectedPersonForDoc] = useState<Person | null>(null);
+    const [orgData, setOrgData] = useState<Organization | null>(null);
 
     // Master Selection States
     const isMaster = currentUser.role === 'Master';
@@ -197,11 +210,159 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
         window.location.href = `mailto:${email}`;
     };
 
-    const handleGenerateDocs = (person: any) => {
-        toast.info(`Gerando documentos para ${person.full_name || '...'}...`);
-        setTimeout(() => {
-            toast.success(`Documentos gerados com sucesso! Verifique sua pasta de downloads.`);
-        }, 1500);
+    // Fetch Organization Data for PDF Header
+    useEffect(() => {
+        if (isDocModalOpen && !orgData && currentUser.id) {
+            const fetchOrg = async () => {
+                const masterSupabase = createMasterClient();
+                const { data } = await masterSupabase
+                    .from('organizations')
+                    .select('*')
+                    .eq('admin_id', currentUser.id)
+                    .single();
+                if (data) setOrgData(data);
+            };
+            fetchOrg();
+        }
+    }, [isDocModalOpen, orgData, currentUser.id]);
+
+    const handleGenerateDocs = (person: Person) => {
+        setSelectedPersonForDoc(person);
+        setIsDocModalOpen(true);
+    };
+
+    const generatePDF = (templateKey: string) => {
+        if (!selectedPersonForDoc) return;
+
+        const doc = new jsPDF();
+        const p = selectedPersonForDoc;
+        const org = orgData;
+        const today = new Date().toLocaleDateString('pt-BR');
+
+        // Professional Header
+        if (org?.logo_url) {
+            try {
+                doc.addImage(org.logo_url, 'PNG', 10, 10, 30, 30);
+            } catch (e) {
+                console.error('Error adding logo to PDF', e);
+            }
+        }
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(14);
+        doc.text(org?.company_name || 'VERITUM PRO - OFFICE', 45, 20);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        const orgAddress = `${org?.address_street || ''}, ${org?.address_number || ''} ${org?.address_complement ? '- ' + org.address_complement : ''}`;
+        const cityState = `${org?.address_neighborhood || ''} - ${org?.address_city || ''}/${org?.address_state || ''} - CEP: ${org?.address_zip || ''}`;
+        const contact = `Email: ${org?.email || ''} | Tel: ${org?.phone || ''} | Site: ${org?.website || ''}`;
+
+        doc.text(orgAddress, 45, 26);
+        doc.text(cityState, 45, 30);
+        doc.text(contact, 45, 34);
+
+        doc.setLineWidth(0.5);
+        doc.line(10, 42, 200, 42);
+
+        // Content
+        const titleMap: any = {
+            procuracao: 'PROCURAÇÃO AD JUDICIA ET EXTRA',
+            contrato: 'CONTRATO DE PRESTAÇÃO DE SERVIÇOS JURÍDICOS',
+            declaracao: 'DECLARAÇÃO DE HIPOSSUFICIÊNCIA ECONÔMICA',
+            lgpd: 'TERMO DE CONSENTIMENTO - LGPD',
+            substabelecimento: 'SUBSTABELECIMENTO',
+            entrevista: 'FICHA DE ENTREVISTA E QUALIFICAÇÃO INTEGRAL',
+            residencia: 'DECLARAÇÃO DE RESIDÊNCIA SOB AS PENAS DA LEI',
+            recibo: 'RECIBO DE PAGAMENTO DE HONORÁRIOS'
+        };
+
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        const title = titleMap[templateKey] || 'DOCUMENTO';
+        const titleWidth = doc.getTextWidth(title);
+        doc.text(title, (210 - titleWidth) / 2, 55);
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+
+        const qual = `OUTORGANTE: ${p.full_name}, ${p.legal_data?.marital_status || 'Estado Civil não informado'}, ${p.legal_data?.profession || 'Profissão não informada'}, portador(a) do RG nº ${p.rg || '______'}, inscrito(a) no CPF/MF sob o nº ${p.document || '______'}, residente e domiciliado(a) na ${p.address?.street || '______'}, nº ${p.address?.number || '______'}, ${p.address?.complement || ''}, Bairro ${p.address?.neighborhood || '______'}, em ${p.address?.city || '______'}/${p.address?.state || ''}, CEP: ${p.address?.cep || '______'}.`;
+
+        if (templateKey === 'procuracao') {
+            doc.text(qual, 15, 70, { align: 'justify', maxWidth: 180 });
+            doc.setFont('helvetica', 'bold');
+            doc.text('PODERES:', 15, 100);
+            doc.setFont('helvetica', 'normal');
+            doc.text('Pelo presente instrumento, o outorgante nomeia e constitui seus procuradores os advogados deste escritório, conferindo-lhes os amplos poderes da cláusula ad judicia et extra, para o foro em geral, em qualquer Juízo, Instância ou Tribunal, podendo propor ações e defendê-lo nas que lhe forem propostas, seguindo umas e outras até final decisão...', 15, 105, { align: 'justify', maxWidth: 180 });
+        } else if (templateKey === 'contrato') {
+            doc.text(qual, 15, 70, { align: 'justify', maxWidth: 180 });
+            doc.setFont('helvetica', 'bold');
+            doc.text('CLÁUSULA PRIMEIRA - DO OBJETO:', 15, 105);
+            doc.setFont('helvetica', 'normal');
+            doc.text('O presente contrato tem como objeto a prestação de serviços jurídicos pelo CONTRATADO em favor do CONTRATANTE, para fins de acompanhamento de demandas judiciais e extrajudiciais, bem como consultoria e assessoria jurídica especializada na área de atuação solicitada...', 15, 110, { align: 'justify', maxWidth: 180 });
+            doc.setFont('helvetica', 'bold');
+            doc.text('CLÁUSULA SEGUNDA - DOS HONORÁRIOS:', 15, 140);
+            doc.setFont('helvetica', 'normal');
+            doc.text('Pelos serviços prestados, o CONTRATANTE pagará ao CONTRATADO os honorários advocatícios conforme pactuado verbalmente ou em anexo financeiro, observando-se a tabela da OAB e a complexidade da causa...', 15, 145, { align: 'justify', maxWidth: 180 });
+        } else if (templateKey === 'substabelecimento') {
+            doc.text('SUBSTABELECENTE: Os advogados integrantes deste escritório profissional.', 15, 70);
+            doc.text(`SUBSTABELECIDO: Dra. _________________________________________, OAB/SP nº __________, com endereço na Rua ____________________, nº ____, ________________.`, 15, 80, { maxWidth: 180 });
+            doc.text('PODERES: Pelo presente instrumento, substabeleço, COM RESERVA DE IGUAIS PODERES, na pessoa do substabelecido, os poderes que me foram conferidos por:', 15, 100);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`CLIENTE: ${p.full_name}`, 15, 110);
+            doc.setFont('helvetica', 'normal');
+            doc.text('O presente substabelecimento é válido para atuar em conjunto ou separadamente em todos os atos processuais necessários ao bom andamento da causa.', 15, 120, { align: 'justify', maxWidth: 180 });
+        } else if (templateKey === 'entrevista') {
+            doc.text('DADOS DO CLIENTE:', 15, 70);
+            const clientAddress = `${p.address?.street || ''}, ${p.address?.number || ''} ${p.address?.complement ? '- ' + p.address.complement : ''}, ${p.address?.neighborhood || ''}, ${p.address?.city || ''}/${p.address?.state || ''}`;
+            const dataRows = [
+                ['Nome Completo', p.full_name],
+                ['CPF/CNPJ', p.document || ''],
+                ['RG', p.rg || ''],
+                ['Estado Civil', p.legal_data?.marital_status || ''],
+                ['Profissão', p.legal_data?.profession || ''],
+                ['Endereço', clientAddress],
+                ['Telefone', p.phone || ''],
+                ['PIS/NIT', p.pis || ''],
+                ['CTPS', p.ctps || ''],
+            ];
+            autoTable(doc, {
+                startY: 75,
+                head: [['Campo', 'Valor']],
+                body: dataRows,
+                theme: 'grid',
+                headStyles: { fillColor: [79, 70, 229] },
+                styles: { fontSize: 9 }
+            });
+            const finalY = (doc as any).lastAutoTable?.finalY || 150;
+            doc.text('ANOTAÇÕES DA ENTREVISTA:', 15, finalY + 15);
+            doc.setLineWidth(0.1);
+            for (let i = 0; i < 8; i++) {
+                doc.line(15, finalY + 25 + (i * 10), 195, finalY + 25 + (i * 10));
+            }
+        } else if (templateKey === 'residencia') {
+            doc.text(qual, 15, 70, { align: 'justify', maxWidth: 180 });
+            doc.text('DECLARAÇÃO:', 15, 110);
+            doc.text('Declaro, para os devidos fins de direito, sob as penas da Lei Civil e Penal, que resido no endereço acima mencionado, sendo este meu domicílio habitual e verdadeiro.', 15, 120, { align: 'justify', maxWidth: 180 });
+            doc.text('Por ser expressão da verdade, firmo a presente declaração.', 15, 140);
+        } else if (templateKey === 'recibo') {
+            doc.text(`RECEBEMOS de ${p.full_name}, CPF nº ${p.document}, a quantia de R$ _______,_______ (____________________________________________________________________), referente a honorários advocatícios relativos a __________________________________________________.`, 15, 80, { align: 'justify', maxWidth: 180 });
+            doc.text('Damos plena e geral quitação pelo valor recebido.', 15, 110);
+            doc.text(`Local e Data: ${org?.address_city || '______'}/${org?.address_state || ''}, ${today}`, 15, 130);
+        } else {
+            doc.text(qual, 15, 70, { align: 'justify', maxWidth: 180 });
+            doc.text('Texto jurídico padrão para este modelo em fase de finalização pela Scriptor PRO Engine...', 15, 110, { align: 'justify', maxWidth: 180 });
+        }
+
+        // Signature
+        const footerY = 250;
+        doc.line(60, footerY, 150, footerY);
+        doc.setFont('helvetica', 'bold');
+        doc.text(p.full_name, (210 - doc.getTextWidth(p.full_name)) / 2, footerY + 5);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Local e Data: ${org?.address_city || '______'}/${org?.address_state || ''}, ${today}`, (210 - doc.getTextWidth(`Local e Data: ${org?.address_city || '______'}/${org?.address_state || ''}, ${today}`)) / 2, footerY + 15);
+
+        doc.save(`${templateKey}_${p.full_name.replace(/\s+/g, '_')}.pdf`);
     };
 
     const handleSave = async (e: React.FormEvent) => {
@@ -228,7 +389,11 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
             setIsModalOpen(false);
             setEditingPerson(null);
             setActiveTab('basic');
-            fetchPersons();
+            if (onRefresh) {
+                onRefresh();
+            } else {
+                fetchPersons();
+            }
         } catch (error) {
             console.error('Error saving person:', error);
             toast.error(t('management.master.persons.toasts.saveError'));
@@ -251,7 +416,11 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
             toast.success(t('management.master.persons.toasts.deleteSuccess'));
             setDeleteConfirmId(null);
             setDeleteConfirmName(null);
-            fetchPersons();
+            if (onRefresh) {
+                onRefresh();
+            } else {
+                fetchPersons();
+            }
         } catch (err) {
             console.error('Error deleting person:', err);
             toast.error(t('management.master.persons.toasts.deleteError'));
@@ -417,6 +586,7 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                                     <FileDown size={18} />
                                 </button>
                                 <button
+                                    onClick={() => onNewLawsuit?.(person.id)}
                                     className="p-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-indigo-600/20 cursor-pointer"
                                     title={t('management.master.persons.actions.newLawsuit')}
                                 >
@@ -762,7 +932,223 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                     </div>
                 )
             }
-        </div >
+            {/* Document Generation Modal */}
+            <AnimatePresence>
+                {isDocModalOpen && (
+                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setIsDocModalOpen(false)}
+                            className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
+                        />
+
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                            className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800"
+                        >
+                            <div className="p-8 pb-4 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
+                                <div className="flex items-center gap-4">
+                                    <div className="p-3 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-2xl">
+                                        <FileCheck size={24} />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">
+                                            {t('management.master.persons.docGen.title')}
+                                        </h2>
+                                        <p className="text-slate-500 font-medium text-xs">
+                                            {t('management.master.persons.docGen.subtitle')}
+                                        </p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setIsDocModalOpen(false)}
+                                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+                                >
+                                    <XCircle size={24} className="text-slate-400" />
+                                </button>
+                            </div>
+
+                            <div className="p-8 max-h-[60vh] overflow-y-auto no-scrollbar">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {/* Template Option: Procuração */}
+                                    <button
+                                        onClick={() => {
+                                            toast.info(`${t('management.master.persons.docGen.templates.procuracao')}...`);
+                                            generatePDF('procuracao');
+                                            setTimeout(() => setIsDocModalOpen(false), 1000);
+                                        }}
+                                        className="flex flex-col items-start p-6 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl hover:border-indigo-500 hover:ring-4 hover:ring-indigo-500/10 transition-all group text-left"
+                                    >
+                                        <div className="p-3 bg-white dark:bg-slate-900 rounded-2xl shadow-sm mb-4 group-hover:scale-110 transition-transform">
+                                            <ScrollText size={20} className="text-indigo-600" />
+                                        </div>
+                                        <span className="font-black text-slate-800 dark:text-white text-sm uppercase tracking-tight mb-1">
+                                            {t('management.master.persons.docGen.templates.procuracao')}
+                                        </span>
+                                        <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">
+                                            {selectedPersonForDoc?.person_type === 'Cliente' ? 'Polo Ativo' : 'Geral'}
+                                        </span>
+                                    </button>
+
+                                    {/* Template Option: Contrato */}
+                                    <button
+                                        onClick={() => {
+                                            toast.info(`${t('management.master.persons.docGen.templates.contrato')}...`);
+                                            generatePDF('contrato');
+                                            setTimeout(() => setIsDocModalOpen(false), 1000);
+                                        }}
+                                        className="flex flex-col items-start p-6 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl hover:border-emerald-500 hover:ring-4 hover:ring-emerald-500/10 transition-all group text-left"
+                                    >
+                                        <div className="p-3 bg-white dark:bg-slate-900 rounded-2xl shadow-sm mb-4 group-hover:scale-110 transition-transform">
+                                            <Scale size={20} className="text-emerald-600" />
+                                        </div>
+                                        <span className="font-black text-slate-800 dark:text-white text-sm uppercase tracking-tight mb-1">
+                                            {t('management.master.persons.docGen.templates.contrato')}
+                                        </span>
+                                        <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">
+                                            Pacto de Honorários
+                                        </span>
+                                    </button>
+
+                                    {/* Template Option: Declaração Justiça Gratuita */}
+                                    <button
+                                        onClick={() => {
+                                            toast.info(`${t('management.master.persons.docGen.templates.declaracao')}...`);
+                                            generatePDF('declaracao');
+                                            setTimeout(() => setIsDocModalOpen(false), 1000);
+                                        }}
+                                        className="flex flex-col items-start p-6 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl hover:border-amber-500 hover:ring-4 hover:ring-amber-500/10 transition-all group text-left"
+                                    >
+                                        <div className="p-3 bg-white dark:bg-slate-900 rounded-2xl shadow-sm mb-4 group-hover:scale-110 transition-transform">
+                                            <FileText size={20} className="text-amber-600" />
+                                        </div>
+                                        <span className="font-black text-slate-800 dark:text-white text-sm uppercase tracking-tight mb-1">
+                                            {t('management.master.persons.docGen.templates.declaracao')}
+                                        </span>
+                                        <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">
+                                            Hipossuficiência
+                                        </span>
+                                    </button>
+
+                                    {/* Template Option: LGPD */}
+                                    <button
+                                        onClick={() => {
+                                            toast.info(`${t('management.master.persons.docGen.templates.lgpd')}...`);
+                                            generatePDF('lgpd');
+                                            setTimeout(() => setIsDocModalOpen(false), 1000);
+                                        }}
+                                        className="flex flex-col items-start p-6 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl hover:border-blue-500 hover:ring-4 hover:ring-blue-500/10 transition-all group text-left"
+                                    >
+                                        <div className="p-3 bg-white dark:bg-slate-900 rounded-2xl shadow-sm mb-4 group-hover:scale-110 transition-transform">
+                                            <ShieldCheck size={20} className="text-blue-600" />
+                                        </div>
+                                        <span className="font-black text-slate-800 dark:text-white text-sm uppercase tracking-tight mb-1">
+                                            {t('management.master.persons.docGen.templates.lgpd')}
+                                        </span>
+                                        <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">
+                                            Proteção de Dados
+                                        </span>
+                                    </button>
+
+                                    {/* Template Option: Substabelecimento */}
+                                    <button
+                                        onClick={() => {
+                                            toast.info(`${t('management.master.persons.docGen.templates.substabelecimento')}...`);
+                                            generatePDF('substabelecimento');
+                                            setTimeout(() => setIsDocModalOpen(false), 1000);
+                                        }}
+                                        className="flex flex-col items-start p-6 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl hover:border-violet-500 hover:ring-4 hover:ring-violet-500/10 transition-all group text-left"
+                                    >
+                                        <div className="p-3 bg-white dark:bg-slate-900 rounded-2xl shadow-sm mb-4 group-hover:scale-110 transition-transform">
+                                            <ArrowUpRight size={20} className="text-violet-600" />
+                                        </div>
+                                        <span className="font-black text-slate-800 dark:text-white text-sm uppercase tracking-tight mb-1">
+                                            {t('management.master.persons.docGen.templates.substabelecimento')}
+                                        </span>
+                                        <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">
+                                            Repasse de Poderes
+                                        </span>
+                                    </button>
+
+                                    {/* Template Option: Ficha de Entrevista */}
+                                    <button
+                                        onClick={() => {
+                                            toast.info(`${t('management.master.persons.docGen.templates.entrevista')}...`);
+                                            generatePDF('entrevista');
+                                            setTimeout(() => setIsDocModalOpen(false), 1000);
+                                        }}
+                                        className="flex flex-col items-start p-6 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl hover:border-pink-500 hover:ring-4 hover:ring-pink-500/10 transition-all group text-left"
+                                    >
+                                        <div className="p-3 bg-white dark:bg-slate-900 rounded-2xl shadow-sm mb-4 group-hover:scale-110 transition-transform">
+                                            <Briefcase size={20} className="text-pink-600" />
+                                        </div>
+                                        <span className="font-black text-slate-800 dark:text-white text-sm uppercase tracking-tight mb-1">
+                                            {t('management.master.persons.docGen.templates.entrevista')}
+                                        </span>
+                                        <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">
+                                            Qualificação e Notas
+                                        </span>
+                                    </button>
+
+                                    {/* Template Option: Declaração de Residência */}
+                                    <button
+                                        onClick={() => {
+                                            toast.info(`${t('management.master.persons.docGen.templates.residencia')}...`);
+                                            generatePDF('residencia');
+                                            setTimeout(() => setIsDocModalOpen(false), 1000);
+                                        }}
+                                        className="flex flex-col items-start p-6 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl hover:border-cyan-500 hover:ring-4 hover:ring-cyan-500/10 transition-all group text-left"
+                                    >
+                                        <div className="p-3 bg-white dark:bg-slate-900 rounded-2xl shadow-sm mb-4 group-hover:scale-110 transition-transform">
+                                            <MapPin size={20} className="text-cyan-600" />
+                                        </div>
+                                        <span className="font-black text-slate-800 dark:text-white text-sm uppercase tracking-tight mb-1">
+                                            {t('management.master.persons.docGen.templates.residencia')}
+                                        </span>
+                                        <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">
+                                            Comprovante Sob Fé
+                                        </span>
+                                    </button>
+
+                                    {/* Template Option: Recibo */}
+                                    <button
+                                        onClick={() => {
+                                            toast.info(`${t('management.master.persons.docGen.templates.recibo')}...`);
+                                            generatePDF('recibo');
+                                            setTimeout(() => setIsDocModalOpen(false), 1000);
+                                        }}
+                                        className="flex flex-col items-start p-6 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl hover:border-emerald-600 hover:ring-4 hover:ring-emerald-600/10 transition-all group text-left"
+                                    >
+                                        <div className="p-3 bg-white dark:bg-slate-900 rounded-2xl shadow-sm mb-4 group-hover:scale-110 transition-transform">
+                                            <Zap size={20} className="text-emerald-700" />
+                                        </div>
+                                        <span className="font-black text-slate-800 dark:text-white text-sm uppercase tracking-tight mb-1">
+                                            {t('management.master.persons.docGen.templates.recibo')}
+                                        </span>
+                                        <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">
+                                            Quitação de Parcelas
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="p-8 bg-slate-50 dark:bg-slate-950/50 border-t border-slate-100 dark:border-slate-800">
+                                <div className="flex items-center gap-3 text-slate-500 text-xs font-bold bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-4 rounded-2xl">
+                                    <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+                                    <span>
+                                        Os dados de <strong>{selectedPersonForDoc?.full_name}</strong> ({selectedPersonForDoc?.document || 'S/ Doc'}) serão inseridos automaticamente nos campos variáveis do modelo.
+                                    </span>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+        </div>
     );
 };
 

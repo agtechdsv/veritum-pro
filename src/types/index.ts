@@ -451,6 +451,7 @@ export interface TeamMember {
     notes?: string;
     is_active: boolean;
     workspace_id?: string;
+    master_user_id?: string;
     created_at?: string;
     updated_at?: string;
 }

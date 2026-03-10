@@ -173,6 +173,23 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         }
     }, [editingLawsuit?.court, editingLawsuit?.sphere]);
 
+    const handleCreateLawsuitFromCRM = (personId: string) => {
+        // Switch to lawsuits tab
+        setActiveTab('processos');
+        // Initialize new lawsuit with the author pre-filled
+        setEditingLawsuit({
+            author_id: personId,
+            status: 'Ativo',
+            sphere: 'Cível', // Default
+            responsible_lawyer_id: team.find(m => m.master_user_id === user.id)?.id || team[0]?.id || ''
+        });
+        // Open modal with a small delay to allow tab transition animation to feel smooth
+        setTimeout(() => {
+            setIsLawsuitModalOpen(true);
+            setActiveLawsuitTab('basic');
+        }, 300);
+    };
+
     const handleSaveLawsuit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -446,6 +463,8 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                             externalPersons={persons}
                             externalLoading={loading}
                             masterSelectedUserId={selectedUserId}
+                            onRefresh={fetchAll}
+                            onNewLawsuit={handleCreateLawsuitFromCRM}
                         />
                     </div>
                 )}

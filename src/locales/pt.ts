@@ -324,6 +324,7 @@ export const pt = {
                     placeholderValue: '0,00',
                     cancel: 'Cancelar',
                     save: 'Salvar no Nexus',
+                    success: 'Processo salvo com sucesso!',
                     validation: {
                         cnj: 'Número CNJ Inválido! Use o formato: 0000000-00.0000.0.00.0000'
                     }
@@ -1489,6 +1490,25 @@ export const pt = {
                         cancel: 'Cancelar',
                         update: 'Atualizar Registro',
                         save: 'Salvar no CRM'
+                    }
+                },
+                docGen: {
+                    title: 'Hub de Documentos',
+                    subtitle: 'Selecione o modelo para preenchimento automático.',
+                    templates: {
+                        procuracao: 'Procuração Ad Judicia',
+                        contrato: 'Contrato de Honorários',
+                        declaracao: 'Justiça Gratuita',
+                        lgpd: 'Termo de Consentimento LGPD',
+                        substabelecimento: 'Substabelecimento',
+                        entrevista: 'Ficha de Entrevista',
+                        residencia: 'Declaração de Residência',
+                        recibo: 'Recibo de Honorários'
+                    },
+                    actions: {
+                        generate: 'Gerar Documento',
+                        download: 'Fazer Download (PDF)',
+                        preview: 'Visualizar Rascunho'
                     }
                 },
                 validations: {

@@ -291,6 +291,7 @@ export const es = {
                     "placeholderValue": "0,00",
                     "cancel": "Cancelar",
                     "save": "Guardar Proceso en Nexus",
+                    "success": "¡Proceso guardado con éxito!",
                     "validation": {
                         "cnj": "¡Número CNJ Inválido! Use el formato: 0000000-00.0000.0.00.0000"
                     }
@@ -1473,6 +1474,25 @@ export const es = {
                         "cancel": "Cancelar",
                         "update": "Actualizar Registro",
                         "save": "Guardar en el CRM"
+                    }
+                },
+                "docGen": {
+                    "title": "Hub de Documentos",
+                    "subtitle": "Seleccione el modelo para el autocompletado.",
+                    "templates": {
+                        "procuracao": "Poder Ad Judicia",
+                        "contrato": "Contrato de Honorarios",
+                        "declaracao": "Declaración de Indigencia",
+                        "lgpd": "Consentimiento LGPD",
+                        "substabelecimento": "Substitución de Poder",
+                        "entrevista": "Ficha de Entrevista",
+                        "residencia": "Certificado de Residencia",
+                        "recibo": "Recibo de Honorarios"
+                    },
+                    "actions": {
+                        "generate": "Generar Documento",
+                        "download": "Descargar (PDF)",
+                        "preview": "Visualizar Borrador"
                     }
                 },
                 "actions": {

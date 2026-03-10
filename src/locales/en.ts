@@ -283,6 +283,7 @@ export const en = {
                     placeholderValue: '0.00',
                     cancel: 'Cancel',
                     save: 'Save Case in Nexus',
+                    success: 'Case saved successfully!',
                     validation: {
                         cnj: 'Invalid CNJ Number! Use the format: 0000000-00.0000.0.00.0000'
                     }
@@ -1465,6 +1466,25 @@ export const en = {
                         cancel: 'Cancel',
                         update: 'Update Record',
                         save: 'Save to CRM'
+                    }
+                },
+                docGen: {
+                    title: 'Document Hub',
+                    subtitle: 'Select a template for automatic generation.',
+                    templates: {
+                        procuracao: 'Power of Attorney',
+                        contrato: 'Fee Agreement',
+                        declaracao: 'Indigency Declaration',
+                        lgpd: 'LGPD/GDPR Consent',
+                        substabelecimento: 'Sub-Attorney Appointment',
+                        entrevista: 'Intake/Interview Form',
+                        residencia: 'Proof of Residence',
+                        recibo: 'Fee Receipt'
+                    },
+                    actions: {
+                        generate: 'Generate Document',
+                        download: 'Download PDF',
+                        preview: 'Preview Draft'
                     }
                 },
                 actions: {
