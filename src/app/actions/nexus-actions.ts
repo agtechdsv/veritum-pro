@@ -1,6 +1,6 @@
 'use server';
 
-import { Lawsuit, Task, Credentials, UserPreferences } from '@/types';
+import { Lawsuit, Task, CalendarEvent, Credentials, UserPreferences } from '@/types';
 import { RepositoryFactory } from '@/lib/db/repositories/repository-factory';
 import { createMasterServerClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -158,6 +158,49 @@ export async function deleteTask(id: string, targetUserId?: string) {
         return await repo.delete(id);
     } catch (error: any) {
         console.error('Server Action Error (deleteTask):', error.message);
+        throw error;
+    }
+}
+
+/* Events Actions */
+export async function listEvents(searchTerm?: string, targetUserId?: string) {
+    try {
+        const { credentials, preferences } = await resolveSecurityContext(targetUserId);
+        const repo = RepositoryFactory.getEventRepository(credentials, preferences);
+        const data = await repo.list(searchTerm);
+        return { data, credentialsUsed: credentials.supabaseUrl, solvedId: preferences.user_id };
+    } catch (error: any) {
+        const errorMsg = error.message || '';
+        console.error('Server Action Error (listEvents):', errorMsg);
+        if (errorMsg.includes("Could not find the table") || errorMsg.includes("relation \"events\" does not exist")) {
+            return {
+                data: [],
+                error: 'TABLE_NOT_FOUND',
+                message: 'Database not initialized (Table events missing).'
+            };
+        }
+        throw error;
+    }
+}
+
+export async function saveEvent(event: Partial<CalendarEvent>, targetUserId?: string) {
+    try {
+        const { credentials, preferences } = await resolveSecurityContext(targetUserId);
+        const repo = RepositoryFactory.getEventRepository(credentials, preferences);
+        return await repo.save(event);
+    } catch (error: any) {
+        console.error('Server Action Error (saveEvent):', error.message);
+        throw error;
+    }
+}
+
+export async function deleteEvent(id: string, targetUserId?: string) {
+    try {
+        const { credentials, preferences } = await resolveSecurityContext(targetUserId);
+        const repo = RepositoryFactory.getEventRepository(credentials, preferences);
+        return await repo.delete(id);
+    } catch (error: any) {
+        console.error('Server Action Error (deleteEvent):', error.message);
         throw error;
     }
 }

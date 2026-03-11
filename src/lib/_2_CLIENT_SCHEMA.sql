@@ -136,6 +136,22 @@ CREATE TABLE public.tasks (
   deleted_at TIMESTAMPTZ
 );
 
+CREATE TABLE public.events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title TEXT NOT NULL,
+  description TEXT,
+  event_type TEXT CHECK (event_type IN ('Audiência', 'Reunião', 'Despacho', 'Diligência', 'Outro')) DEFAULT 'Outro',
+  start_date TIMESTAMPTZ NOT NULL,
+  end_date TIMESTAMPTZ,
+  location TEXT,
+  meeting_url TEXT,
+  lawsuit_id UUID REFERENCES public.lawsuits(id) ON DELETE CASCADE,
+  responsible_id UUID REFERENCES public.team_members(id),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ
+);
+
 CREATE TABLE public.movements (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   lawsuit_id UUID REFERENCES public.lawsuits(id) ON DELETE CASCADE,
@@ -302,6 +318,7 @@ CREATE TRIGGER tr_team_upd BEFORE UPDATE ON public.team_members FOR EACH ROW EXE
 CREATE TRIGGER tr_persons_upd BEFORE UPDATE ON public.persons FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 CREATE TRIGGER tr_law_upd BEFORE UPDATE ON public.lawsuits FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 CREATE TRIGGER tr_task_upd BEFORE UPDATE ON public.tasks FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+CREATE TRIGGER tr_event_upd BEFORE UPDATE ON public.events FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 CREATE TRIGGER tr_alerts_upd BEFORE UPDATE ON public.monitoring_alerts FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 CREATE TRIGGER tr_fin_upd BEFORE UPDATE ON public.financial_transactions FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 CREATE TRIGGER tr_kb_upd BEFORE UPDATE ON public.knowledge_articles FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
@@ -316,6 +333,7 @@ ALTER TABLE public.team_members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.persons ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.lawsuits ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tasks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.movements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.monitoring_alerts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.clippings ENABLE ROW LEVEL SECURITY;
@@ -335,6 +353,7 @@ CREATE POLICY "Tenant Session: Full Access" ON public.team_members FOR ALL USING
 CREATE POLICY "Tenant Session: Full Access" ON public.persons FOR ALL USING (TRUE);
 CREATE POLICY "Tenant Session: Full Access" ON public.lawsuits FOR ALL USING (TRUE);
 CREATE POLICY "Tenant Session: Full Access" ON public.tasks FOR ALL USING (TRUE);
+CREATE POLICY "Tenant Session: Full Access" ON public.events FOR ALL USING (TRUE);
 CREATE POLICY "Tenant Session: Full Access" ON public.movements FOR ALL USING (TRUE);
 CREATE POLICY "Tenant Session: Full Access" ON public.monitoring_alerts FOR ALL USING (TRUE);
 CREATE POLICY "Tenant Session: Full Access" ON public.clippings FOR ALL USING (TRUE);
@@ -352,6 +371,7 @@ CREATE POLICY "Tenant Session: Full Access" ON public.historical_outcomes FOR AL
 DROP PUBLICATION IF EXISTS supabase_realtime;
 CREATE PUBLICATION supabase_realtime FOR TABLE 
     public.tasks, 
+    public.events,
     public.lawsuits, 
     public.financial_transactions, 
     public.golden_alerts,

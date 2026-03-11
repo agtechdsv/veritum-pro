@@ -338,6 +338,7 @@ export const pt = {
                     selectLawsuit: 'Selecione um processo...',
                     labelResponsible: 'Responsável (Equipe)',
                     selectTeam: 'Selecione da Equipe...',
+                    selectResponsible: 'Selecione o Responsável...',
                     labelDueDate: 'Prazo (Due Date)',
                     labelPriority: 'Prioridade',
                     priorities: {
@@ -347,7 +348,32 @@ export const pt = {
                         Urgent: 'Urgente'
                     },
                     cancel: 'Cancelar',
+                    labelStatus: 'Status',
                     save: 'Criar Tarefa'
+                },
+                event: {
+                    title: 'Agendar Evento',
+                    subtitle: 'Vinculação estrita: Equipe & Processos.',
+                    labelTitle: 'Título do Evento',
+                    placeholderTitle: 'Ex: Protocolar Petição Inicial',
+                    labelLawsuit: 'Vincular a Processo (Nexus)',
+                    selectLawsuit: 'Selecione um processo...',
+                    labelResponsible: 'Responsável (Equipe)',
+                    selectTeam: 'Selecione da Equipe...',
+                    selectResponsible: 'Selecione o Responsável...',
+                    labelDueDate: 'Prazo (Due Date)',
+                    labelPriority: 'Prioridade',
+                    priorities: {
+                        Low: 'Baixa',
+                        Medium: 'Média',
+                        High: 'Alta',
+                        Urgent: 'Urgente'
+                    },
+                    cancel: 'Cancelar',
+                    labelStatus: 'Status',
+                    success: 'Evento criado com sucesso!',
+                    titleEdit: 'Editar Evento',
+                    save: 'Criar Evento'
                 }
             },
             tabs: {

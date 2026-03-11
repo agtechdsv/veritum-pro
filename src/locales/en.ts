@@ -297,6 +297,7 @@ export const en = {
                     selectLawsuit: 'Select a case...',
                     labelResponsible: 'Responsible (Team)',
                     selectTeam: 'Select from Team...',
+                    selectResponsible: 'Select Responsible...',
                     labelDueDate: 'Deadline (Due Date)',
                     labelPriority: 'Priority',
                     priorities: {
@@ -306,7 +307,32 @@ export const en = {
                         Urgent: 'Urgent'
                     },
                     cancel: 'Cancel',
+                    labelStatus: 'Status',
                     save: 'Create Task'
+                },
+                event: {
+                    title: 'Schedule Event',
+                    subtitle: 'Strict linking: Team & Cases.',
+                    labelTitle: 'Event Title',
+                    placeholderTitle: 'Ex: File Initial Petition',
+                    labelLawsuit: 'Link to Case (Nexus)',
+                    selectLawsuit: 'Select a case...',
+                    labelResponsible: 'Responsible (Team)',
+                    selectTeam: 'Select from Team...',
+                    selectResponsible: 'Select Responsible...',
+                    labelDueDate: 'Deadline (Due Date)',
+                    labelPriority: 'Priority',
+                    priorities: {
+                        Low: 'Low',
+                        Medium: 'Medium',
+                        High: 'High',
+                        Urgent: 'Urgent'
+                    },
+                    cancel: 'Cancel',
+                    labelStatus: 'Status',
+                    success: 'Event created successfully!',
+                    titleEdit: 'Edit Event',
+                    save: 'Create Event'
                 }
             },
             tabs: {

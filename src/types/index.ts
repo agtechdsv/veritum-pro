@@ -308,6 +308,21 @@ export interface Task {
     due_date: string;
 }
 
+export interface CalendarEvent {
+    id: string;
+    title: string;
+    description?: string;
+    event_type: 'Audiência' | 'Reunião' | 'Despacho' | 'Diligência' | 'Outro';
+    start_date: string;
+    end_date?: string;
+    location?: string;
+    meeting_url?: string;
+    lawsuit_id?: string;
+    responsible_id?: string;
+    created_at?: string;
+    updated_at?: string;
+}
+
 export interface MonitoringAlert {
     id: string;
     user_id?: string;

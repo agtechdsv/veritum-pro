@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Credentials, Lawsuit, Task, User, Person, TeamMember } from '@/types';
-import { Plus, MoreHorizontal, Calendar, Scale, Search, Filter, ArrowRight, AlertTriangle, CheckCircle2, Clock, MapPin, Shield, User as UserIcon, Users, Save, XCircle, Pencil, ChevronRight, ChevronDown, Zap, Lock as LockIcon } from 'lucide-react';
+import { Credentials, Lawsuit, Task, CalendarEvent, User, Person, TeamMember } from '@/types';
+import { Plus, MoreHorizontal, Calendar, Scale, Search, Filter, ArrowRight, AlertTriangle, CheckCircle2, Clock, MapPin, Shield, User as UserIcon, Users, Save, XCircle, Pencil, ChevronRight, ChevronLeft, ChevronDown, Zap, Lock as LockIcon, Trash2 } from 'lucide-react';
 import { createDynamicClient } from '@/utils/supabase/client';
 import IntelligenceWidget from '../shared/intelligence-widget';
 import { useTranslation } from '@/contexts/language-context';
 import PersonManagement from './person-management';
 import { useModule } from '@/app/veritumpro/layout';
 import { listPersons } from '@/app/actions/crm-actions';
-import { listLawsuits, saveLawsuit, deleteLawsuit, listTasks, saveTask, deleteTask, listTeam, getCitiesByState } from '@/app/actions/nexus-actions';
+import { listLawsuits, saveLawsuit, deleteLawsuit, listTasks, saveTask, deleteTask, listEvents, saveEvent, deleteEvent, listTeam, getCitiesByState } from '@/app/actions/nexus-actions';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from '@/components/ui/toast';
 import { createMasterClient } from '@/lib/supabase/master';
@@ -15,8 +15,11 @@ import { createMasterClient } from '@/lib/supabase/master';
 const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }> = ({ credentials, user, permissions }) => {
     const { t } = useTranslation();
     const [view, setView] = useState<'kanban' | 'list'>('kanban');
+    const [eventView, setEventView] = useState<'calendar' | 'list'>('calendar');
+    const [currentDate, setCurrentDate] = useState(new Date());
     const [lawsuits, setLawsuits] = useState<Lawsuit[]>([]);
     const [tasks, setTasks] = useState<Task[]>([]);
+    const [events, setEvents] = useState<CalendarEvent[]>([]);
     const [team, setTeam] = useState<TeamMember[]>([]);
     const [persons, setPersons] = useState<Person[]>([]);
     const [loading, setLoading] = useState(true);
@@ -26,6 +29,8 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
     const [editingLawsuit, setEditingLawsuit] = useState<Partial<Lawsuit> | null>(null);
     const [editingTask, setEditingTask] = useState<Partial<Task> | null>(null);
+    const [editingEvent, setEditingEvent] = useState<Partial<CalendarEvent> | null>(null);
+    const [isEventModalOpen, setIsEventModalOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<'pessoas' | 'processos' | 'tarefas' | 'agenda' | 'ativos' | 'societario'>('pessoas');
     const [searchTerm, setSearchTerm] = useState('');
     const [activeLawsuitTab, setActiveLawsuitTab] = useState<'basic' | 'advanced'>('basic');
@@ -69,37 +74,36 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     const fetchAll = async () => {
         if (isMaster && !selectedUserId) {
             setLawsuits([]);
-            setTasks([]);
-            setPersons([]);
-            setTeam([]);
+        setEvents([]);
             setLoading(false);
             return;
         }
         setLoading(true);
         // Clear previous state to avoid "piscada" (flicker) with old data
         setLawsuits([]);
-        setTasks([]);
-        setPersons([]);
-        setTeam([]);
+        setEvents([]);
 
         try {
             const targetUserId = selectedUserId;
 
             // Centralized fetching for all nexus-related data
-            const [lawResult, taskResult, personResult, teamResult] = await Promise.all([
+            const [lawResult, taskResult, eventResult, personResult, teamResult] = await Promise.all([
                 listLawsuits('', targetUserId),
                 listTasks('', targetUserId),
+                listEvents('', targetUserId),
                 listPersons('', targetUserId),
                 listTeam(targetUserId)
             ]);
 
             if (lawResult.data) setLawsuits(lawResult.data);
             if (taskResult.data) setTasks(taskResult.data);
+            if (eventResult.data) setEvents(eventResult.data);
             if (personResult.data) setPersons(personResult.data);
             if (teamResult?.data) setTeam(teamResult.data);
 
             const hasTableError = lawResult.error === 'TABLE_NOT_FOUND' ||
                 taskResult.error === 'TABLE_NOT_FOUND' ||
+                eventResult.error === 'TABLE_NOT_FOUND' ||
                 personResult.error === 'TABLE_NOT_FOUND' ||
                 teamResult?.error === 'TABLE_NOT_FOUND';
 
@@ -236,6 +240,52 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         }
     };
 
+    const handleSaveEvent = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            const targetUserId = selectedUserId;
+            await saveEvent(editingEvent!, targetUserId);
+
+            setIsEventModalOpen(false);
+            setEditingEvent(null);
+            toast.success(t('modules.nexus.modals.event.success') || 'Evento salvo com sucesso!');
+            fetchAll();
+        } catch (err) {
+            console.error('Error saving event:', err);
+            toast.error(t('modules.nexus.modals.event.error') || 'Erro ao salvar evento');
+        }
+    };
+
+    const handleDragStartTask = (e: React.DragEvent, taskId: string) => {
+        e.dataTransfer.setData('taskId', taskId);
+        const img = new Image();
+        img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+        e.dataTransfer.setDragImage(img, 0, 0); // Hide default ghost image to keep it clean
+    };
+
+    const handleDropTask = async (e: React.DragEvent, newStatus: string) => {
+        e.preventDefault();
+        const taskId = e.dataTransfer.getData('taskId');
+        if (!taskId) return;
+        
+        const taskToUpdate = tasks.find(t => t.id === taskId);
+        if (!taskToUpdate || taskToUpdate.status === newStatus) return;
+
+        // Optimistic update
+        const previousTasks = [...tasks];
+        setTasks(tasks.map(t => t.id === taskId ? { ...t, status: newStatus as any } : t));
+
+        try {
+            const updatedTask = { ...taskToUpdate, status: newStatus as any };
+            await saveTask(updatedTask, selectedUserId);
+            // Background sync is recommended later, but optimistic UI holds it
+        } catch (err) {
+            console.error('Error dragging task:', err);
+            toast.error('Erro ao mover a tarefa.');
+            setTasks(previousTasks); // Rollback
+        }
+    };
+
     const handleSoftDeleteLawsuit = async (id: string) => {
         if (!window.confirm(t('modules.nexus.kanban.deleteConfirm'))) return;
         try {
@@ -246,6 +296,19 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         } catch (err) {
             console.error('Error deleting lawsuit:', err);
             toast.error(t('modules.nexus.kanban.deleteError') || 'Erro ao excluir processo');
+        }
+    };
+
+    const handleSoftDeleteEvent = async (id: string) => {
+        if (!window.confirm('Tem certeza que deseja excluir este evento?')) return;
+        try {
+            const targetUserId = selectedUserId;
+            await deleteEvent(id, targetUserId);
+            toast.success('Evento excluído!');
+            fetchAll();
+        } catch (err) {
+            console.error('Error deleting event:', err);
+            toast.error('Erro ao excluir evento');
         }
     };
 
@@ -558,13 +621,36 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(law.value || 0)}
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-4 text-right">
-                                                    <button
-                                                        onClick={() => { setEditingLawsuit(law); setIsLawsuitModalOpen(true); setActiveLawsuitTab('basic'); }}
-                                                        className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
-                                                    >
-                                                        <Pencil size={18} />
-                                                    </button>
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center justify-end gap-1">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setActiveTab('tarefas');
+                                                                setEditingTask({ 
+                                                                    status: 'A Fazer', 
+                                                                    lawsuit_id: law.id,
+                                                                    responsible_id: law.responsible_lawyer_id || '',
+                                                                    title: `${law.author_id ? (persons.find(p => p.id === law.author_id)?.full_name + ' - ') : ''}Andamento de Processo`,
+                                                                    priority: 'Média'
+                                                                });
+                                                                setTimeout(() => {
+                                                                    setIsTaskModalOpen(true);
+                                                                    setActiveTaskTab('basic');
+                                                                }, 300);
+                                                            }}
+                                                            className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-all"
+                                                            title={t('modules.nexus.newTask')}
+                                                        >
+                                                            <Zap size={18} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => { setEditingLawsuit(law); setIsLawsuitModalOpen(true); setActiveLawsuitTab('basic'); }}
+                                                            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
+                                                        >
+                                                            <Pencil size={18} />
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))}
@@ -591,16 +677,16 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         >
                                             <Plus size={14} /> {t('modules.nexus.newTask')}
                                         </button>
-                                        <div className="flex bg-white dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800">
+                                        <div className="flex w-72 bg-slate-100 dark:bg-slate-900 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-inner">
                                             <button
                                                 onClick={() => setView('kanban')}
-                                                className={`px-3 py-1 rounded-lg text-[10px] font-bold transition-all ${view === 'kanban' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-600'}`}
+                                                className={`flex-1 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${view === 'kanban' ? 'bg-white dark:bg-indigo-600 text-indigo-600 dark:text-white shadow-md scale-[1.02]' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                                             >
                                                 Kanban
                                             </button>
                                             <button
                                                 onClick={() => setView('list')}
-                                                className={`px-3 py-1 rounded-lg text-[10px] font-bold transition-all ${view === 'list' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-600'}`}
+                                                className={`flex-1 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${view === 'list' ? 'bg-white dark:bg-indigo-600 text-indigo-600 dark:text-white shadow-md scale-[1.02]' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                                             >
                                                 Lista
                                             </button>
@@ -645,66 +731,148 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                             </div>
                         </div>
 
-                        {/* Main Content: Kanban Board */}
-                        <div className="flex-1 flex gap-6 overflow-x-auto p-8 pt-0 no-scrollbar animate-in fade-in slide-in-from-bottom-4 duration-700">
-                            {columns.map((column) => (
-                                <div key={column} className="flex-shrink-0 w-80 bg-slate-100/40 dark:bg-slate-950/40 rounded-3xl p-4 border border-slate-200 dark:border-slate-900 flex flex-col gap-4">
-                                    <div className="flex items-center justify-between px-2">
-                                        <h3 className="font-black text-xs text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                            <div className={`w-2 h-2 rounded-full ${column === 'Atrasado' ? 'bg-rose-500' :
-                                                column === 'Concluído' ? 'bg-emerald-500' : 'bg-slate-400'
-                                                }`} />
-                                            {getColumnTranslation(column)}
-                                            <span className="ml-2 px-2 py-0.5 bg-white dark:bg-slate-800 rounded-lg text-[10px] border border-slate-200 dark:border-slate-800 font-bold">
-                                                {tasks.filter(t => t.status === column).length}
-                                            </span>
-                                        </h3>
-                                        <button className="text-slate-400 hover:text-slate-600"><Plus size={16} /></button>
-                                    </div>
+                        {/* Main Content */}
+                        {view === 'kanban' ? (
+                            <div className="flex-1 flex gap-6 overflow-x-auto p-8 pt-0 no-scrollbar animate-in fade-in slide-in-from-bottom-4 duration-700">
+                                {columns.map((column) => (
+                                    <div 
+                                        key={column} 
+                                        className="flex-shrink-0 w-80 bg-slate-100/40 dark:bg-slate-950/40 rounded-[2rem] p-4 border border-slate-200 dark:border-slate-900 flex flex-col gap-4"
+                                        onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('bg-indigo-50/50', 'dark:bg-indigo-900/10', 'border-indigo-300', 'dark:border-indigo-800/50'); }}
+                                        onDragLeave={(e) => { e.currentTarget.classList.remove('bg-indigo-50/50', 'dark:bg-indigo-900/10', 'border-indigo-300', 'dark:border-indigo-800/50'); }}
+                                        onDrop={(e) => { e.preventDefault(); e.currentTarget.classList.remove('bg-indigo-50/50', 'dark:bg-indigo-900/10', 'border-indigo-300', 'dark:border-indigo-800/50'); handleDropTask(e, column); }}
+                                    >
+                                        <div className="flex items-center justify-between px-2 mb-2">
+                                            <h3 className="font-black text-xs text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                                <div className={`w-2 h-2 rounded-full ${column === 'Atrasado' ? 'bg-rose-500' :
+                                                    column === 'Concluído' ? 'bg-emerald-500' : 'bg-slate-400'
+                                                    }`} />
+                                                {getColumnTranslation(column)}
+                                                <span className="ml-2 px-2 py-0.5 bg-white dark:bg-slate-800 rounded-lg text-[10px] border border-slate-200 dark:border-slate-800 font-bold">
+                                                    {tasks.filter(t => t.status === column).length}
+                                                </span>
+                                            </h3>
+                                        </div>
 
-                                    <div className="flex-1 space-y-4 overflow-y-auto no-scrollbar">
-                                        {loading ? (
-                                            <div className="py-8 text-center text-slate-400 text-xs font-bold animate-pulse">{t('modules.nexus.empty.syncing')}</div>
-                                        ) : tasks.filter(t => t.status === column).map((task) => {
-                                            const law = lawsuits.find(l => l.id === task.lawsuit_id);
-                                            const resp = team.find(t_ => t_.id === task.responsible_id);
-                                            return (
-                                                <div key={task.id} className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700 transition-all cursor-grab active:cursor-grabbing group">
-                                                    <div className="flex justify-between items-start mb-2">
-                                                        <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md border ${getSeverityColor(task.due_date, task.status)}`}>
-                                                            {getPriorityTranslation(task.priority || 'Média')}
-                                                        </span>
-                                                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            <button
-                                                                onClick={() => { setEditingTask(task); setIsTaskModalOpen(true); setActiveTaskTab('basic'); }}
-                                                                className="p-1 text-slate-400 hover:text-indigo-600"
-                                                            >
-                                                                <Pencil size={12} />
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                    <h4 className="font-bold text-slate-800 dark:text-white text-sm leading-tight mb-2">{task.title}</h4>
-                                                    {law && <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 mb-3 flex items-center gap-1"><Scale size={10} /> {law.cnj_number}</p>}
-
-                                                    <div className="flex items-center justify-between mt-auto pt-3 border-t border-slate-50 dark:border-slate-800">
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[8px] font-black border border-slate-200 dark:border-slate-700" title={resp?.full_name}>
-                                                                {resp?.full_name?.charAt(0) || <UserIcon size={10} />}
+                                        <div className="flex-1 space-y-4 overflow-y-auto no-scrollbar pb-6 rounded-xl">
+                                            {loading ? (
+                                                <div className="py-8 text-center text-slate-400 text-xs font-bold animate-pulse">{t('modules.nexus.empty.syncing')}</div>
+                                            ) : tasks.filter(t => t.status === column).map((task) => {
+                                                const law = lawsuits.find(l => l.id === task.lawsuit_id);
+                                                const resp = team.find(t_ => t_.id === task.responsible_id);
+                                                return (
+                                                    <div 
+                                                        key={task.id} 
+                                                        draggable
+                                                        onDragStart={(e) => {
+                                                            handleDragStartTask(e, task.id);
+                                                            e.currentTarget.classList.add('opacity-50');
+                                                        }}
+                                                        onDragEnd={(e) => {
+                                                            e.currentTarget.classList.remove('opacity-50');
+                                                        }}
+                                                        className="bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 hover:shadow-lg hover:border-indigo-300 dark:hover:border-indigo-700 transition-all cursor-grab active:cursor-grabbing group"
+                                                    >
+                                                        <div className="flex justify-between items-start mb-3">
+                                                            <span className={`text-[9px] font-black uppercase px-2 py-1 rounded-md border ${getSeverityColor(task.due_date, task.status)}`}>
+                                                                {getPriorityTranslation(task.priority || 'Média')}
+                                                            </span>
+                                                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                <button
+                                                                    onClick={() => { setEditingTask(task); setIsTaskModalOpen(true); setActiveTaskTab('basic'); }}
+                                                                    className="p-1 text-slate-400 hover:text-indigo-600 bg-slate-50 dark:bg-slate-800 rounded cursor-pointer"
+                                                                >
+                                                                    <Pencil size={12} />
+                                                                </button>
                                                             </div>
-                                                            <span className="text-[10px] font-bold text-slate-400">{resp?.full_name?.split(' ')[0]}</span>
                                                         </div>
-                                                        <div className="flex items-center gap-1 text-slate-400">
-                                                            <Calendar size={10} />
-                                                            <span className="text-[10px] font-bold">{new Date(task.due_date).toLocaleDateString(t('locale') === 'en' ? 'en-US' : 'pt-BR', { day: '2-digit', month: 'short' })}</span>
+                                                        <h4 className="font-bold text-slate-800 dark:text-white text-sm leading-tight mb-3">{task.title}</h4>
+                                                        {law && <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 mb-4 flex items-center gap-1"><Scale size={10} /> {law.cnj_number}</p>}
+
+                                                        <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-50 dark:border-slate-800/50">
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[8px] font-black border border-slate-200 dark:border-slate-700" title={resp?.full_name}>
+                                                                    {resp?.full_name?.charAt(0) || <UserIcon size={10} />}
+                                                                </div>
+                                                                <span className="text-[10px] font-bold text-slate-400 truncate max-w-[80px]">{resp?.full_name?.split(' ')[0]}</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-1 text-slate-400">
+                                                                <Calendar size={10} />
+                                                                <span className="text-[10px] font-bold">{new Date(task.due_date).toLocaleDateString(t('locale') === 'en' ? 'en-US' : 'pt-BR', { day: '2-digit', month: 'short' })}</span>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            );
-                                        })}
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="flex-1 flex flex-col p-8 pt-0 overflow-y-auto no-scrollbar animate-in fade-in slide-in-from-bottom-4 duration-700">
+                                <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden flex flex-col">
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-left border-collapse">
+                                            <thead>
+                                                <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
+                                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.modals.task.labelTitle')}</th>
+                                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('common.status')}</th>
+                                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Prioridade</th>
+                                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.modals.task.labelDueDate')}</th>
+                                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.modals.task.labelResponsible')}</th>
+                                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">{t('modules.nexus.table.headers.actions')}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+                                                {tasks.length === 0 ? (
+                                                    <tr>
+                                                        <td colSpan={6} className="px-6 py-20 text-center text-slate-500 font-bold text-sm">Nenhuma tarefa encontrada.</td>
+                                                    </tr>
+                                                ) : tasks.map((task) => {
+                                                    const resp = team.find(t_ => t_.id === task.responsible_id);
+                                                    return (
+                                                        <tr key={task.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors group">
+                                                            <td className="px-6 py-4">
+                                                                <div className="font-bold text-slate-700 dark:text-slate-200 text-sm whitespace-nowrap">{task.title}</div>
+                                                            </td>
+                                                            <td className="px-6 py-4">
+                                                                <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-[10px] font-black uppercase text-slate-600 dark:text-slate-300">
+                                                                    {getColumnTranslation(task.status)}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-6 py-4">
+                                                                <span className={`text-[10px] font-black uppercase text-slate-500`}>
+                                                                    {getPriorityTranslation(task.priority || 'Média')}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-6 py-4 text-xs font-bold text-slate-500">
+                                                                {new Date(task.due_date).toLocaleDateString()}
+                                                            </td>
+                                                            <td className="px-6 py-4">
+                                                                <div className="flex items-center gap-2">
+                                                                    <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[8px] font-black border border-slate-200 dark:border-slate-700">
+                                                                        {resp?.full_name?.charAt(0) || <UserIcon size={10} />}
+                                                                    </div>
+                                                                    <span className="text-xs font-bold text-slate-600 dark:text-slate-300">{resp?.full_name || '-'}</span>
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-6 py-4 text-right">
+                                                                <button
+                                                                    onClick={() => { setEditingTask(task); setIsTaskModalOpen(true); setActiveTaskTab('basic'); }}
+                                                                    className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
+                                                                >
+                                                                    <Pencil size={18} />
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    )
+                                                })}
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </div>
-                            ))}
-                        </div>
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -716,44 +884,182 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                     <h1 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">{t('modules.nexus.tabs.calendar')}</h1>
                                     <p className="text-slate-500 font-bold">Visualização cronológica de compromissos</p>
                                 </div>
-                                <button
-                                    onClick={() => { setEditingTask({ status: 'A Fazer' }); setIsTaskModalOpen(true); setActiveTaskTab('basic'); }}
-                                    className="bg-slate-800 text-white px-6 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-slate-900 transition-all shadow-lg active:scale-95"
-                                >
-                                    <Plus size={14} /> {t('common.new')} {t('common.event') || 'Evento'}
-                                </button>
+                                <div className="flex items-center gap-3">
+                                    <div className="flex w-72 bg-slate-100 dark:bg-slate-900 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-inner">
+                                        <button
+                                            onClick={() => setEventView('calendar')}
+                                            className={`flex-1 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${eventView === 'calendar' ? 'bg-white dark:bg-indigo-600 text-indigo-600 dark:text-white shadow-md scale-[1.02]' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                        >
+                                            Calendário
+                                        </button>
+                                        <button
+                                            onClick={() => setEventView('list')}
+                                            className={`flex-1 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${eventView === 'list' ? 'bg-white dark:bg-indigo-600 text-indigo-600 dark:text-white shadow-md scale-[1.02]' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                        >
+                                            Lista
+                                        </button>
+                                    </div>
+                                    <button
+                                        onClick={() => { setEditingEvent({ event_type: 'Audiência' }); setIsEventModalOpen(true); }}
+                                        className="bg-slate-800 text-white px-6 py-2 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-slate-900 transition-all shadow-lg active:scale-95"
+                                    >
+                                        <Plus size={14} /> {t('modules.nexus.modals.event.title')}
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
-                        <div className="flex-1 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl overflow-y-auto p-6">
-                            <div className="grid grid-cols-7 gap-4 mb-4">
-                                {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(d => (
-                                    <div key={d} className="text-center text-[10px] font-black text-slate-400 uppercase tracking-widest py-2 border-b border-slate-100 dark:border-slate-800">{d}</div>
-                                ))}
+                        {eventView === 'list' ? (
+                            <div className="flex-1 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden flex flex-col p-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                                <div className="overflow-x-auto h-full pr-2">
+                                    <table className="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
+                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Data</th>
+                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.modals.event.labelTitle')}</th>
+                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Tipo</th>
+                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.modals.event.labelResponsible')}</th>
+                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">{t('modules.nexus.table.headers.actions')}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-50 dark:divide-slate-800 overflow-y-auto">
+                                            {events.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan={5} className="px-6 py-20 text-center text-slate-500 font-bold text-sm">Nenhum evento encontrado.</td>
+                                                </tr>
+                                            ) : events.map((event) => {
+                                                const resp = team.find(t_ => t_.id === event.responsible_id);
+                                                const startDate = new Date(event.start_date);
+                                                return (
+                                                    <tr key={event.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors group">
+                                                        <td className="px-6 py-4">
+                                                            <div className="font-bold text-slate-700 dark:text-slate-200">{startDate.toLocaleDateString(t('locale') === 'en' ? 'en-US' : 'pt-BR', { day: '2-digit', month: 'short' })}</div>
+                                                            <div className="text-[10px] text-slate-400 font-bold">{startDate.toLocaleTimeString(t('locale') === 'en' ? 'en-US' : 'pt-BR', { hour: '2-digit', minute: '2-digit' })}</div>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <div className="font-bold text-slate-700 dark:text-slate-200">{event.title}</div>
+                                                            {event.location && <div className="text-[10px] text-slate-400 font-bold flex items-center gap-1"><MapPin size={10} /> {event.location}</div>}
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <span className="px-3 py-1 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 rounded-lg text-[10px] font-black uppercase border border-indigo-100">
+                                                                {event.event_type}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <div className="font-bold text-slate-700 dark:text-slate-200">{resp?.full_name || '-'}</div>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <div className="flex items-center justify-end gap-1 opacity-100 transition-opacity">
+                                                                <button
+                                                                    onClick={(e) => { e.stopPropagation(); setEditingEvent(event); setIsEventModalOpen(true); }}
+                                                                    className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
+                                                                >
+                                                                    <Pencil size={18} />
+                                                                </button>
+                                                                <button
+                                                                    onClick={(e) => { e.stopPropagation(); handleSoftDeleteEvent(event.id); }}
+                                                                    className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-all"
+                                                                >
+                                                                    <XCircle size={18} />
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
-                            <div className="grid grid-cols-7 gap-4 h-full">
-                                {Array.from({ length: 31 }).map((_, i) => {
-                                    const day = i + 1;
-                                    const dayTasks = tasks.filter(t => new Date(t.due_date).getDate() === day);
-                                    return (
-                                        <div key={i} className={`min-h-[140px] p-3 rounded-2xl border transition-all ${dayTasks.length > 0 ? 'bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 hover:border-indigo-300' : 'border-slate-100 dark:border-slate-800/20'}`}>
-                                            <div className="flex justify-between items-start mb-2">
-                                                <span className={`text-xs font-black ${dayTasks.length > 0 ? 'text-indigo-600' : 'text-slate-400'}`}>{day}</span>
+                        ) : (
+                            <div className="flex-1 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden flex flex-col p-8 animate-in fade-in zoom-in-95 duration-700">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h2 className="text-xl font-black text-slate-800 dark:text-white capitalize">
+                                        {currentDate.toLocaleDateString(t('locale') === 'en' ? 'en-US' : 'pt-BR', { month: 'long', year: 'numeric' })}
+                                    </h2>
+                                    <div className="flex items-center gap-2">
+                                        <button 
+                                            onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))}
+                                            className="p-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all font-bold group"
+                                        >
+                                            <ChevronLeft size={16} className="group-active:-translate-x-1 transition-transform" />
+                                        </button>
+                                        <button 
+                                            onClick={() => setCurrentDate(new Date())}
+                                            className="px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-xs font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all active:scale-95"
+                                        >
+                                            Hoje
+                                        </button>
+                                        <button 
+                                            onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))}
+                                            className="p-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all font-bold group"
+                                        >
+                                            <ChevronRight size={16} className="group-active:translate-x-1 transition-transform" />
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar pb-4 pr-2">
+                                    <div className="grid grid-cols-7 gap-4 h-full">
+                                        {['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'].map(d => (
+                                            <div key={d} className="text-center text-[10px] font-black text-slate-400 uppercase tracking-widest pb-4">
+                                                {d}
                                             </div>
-                                            <div className="space-y-1">
-                                                {dayTasks.slice(0, 3).map(task => (
-                                                    <div key={task.id} className="text-[9px] font-bold p-1.5 bg-white dark:bg-slate-900 rounded-lg border border-slate-100 dark:border-slate-800 truncate text-slate-600 dark:text-slate-300 shadow-sm flex items-center gap-1">
-                                                        <div className={`w-1 h-1 rounded-full ${task.priority === 'Urgente' ? 'bg-rose-500' : 'bg-indigo-400'}`} />
-                                                        {task.title}
+                                        ))}
+                                        {(() => {
+                                            const today = new Date();
+                                            const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+                                            const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+                                            
+                                            const days = [];
+                                            for (let i = 0; i < firstDay.getDay(); i++) days.push(null);
+                                            for (let i = 1; i <= lastDay.getDate(); i++) days.push(new Date(currentDate.getFullYear(), currentDate.getMonth(), i));
+                                            
+                                            return days.map((day, idx) => {
+                                                if (!day) return <div key={`empty-${idx}`} className="min-h-[140px] rounded-2xl bg-slate-50/50 dark:bg-slate-800/10 border border-transparent" />;
+                                                
+                                                const dayEvents = events.filter(e => {
+                                                const eDate = new Date(e.start_date);
+                                                return eDate.getDate() === day.getDate() && eDate.getMonth() === day.getMonth() && eDate.getFullYear() === day.getFullYear();
+                                            });
+                                            const isToday = day.getDate() === today.getDate() && day.getMonth() === today.getMonth() && day.getFullYear() === today.getFullYear();
+
+                                            return (
+                                                <div key={`day-${idx}`} className={`min-h-[140px] rounded-3xl border transition-all p-3 flex flex-col gap-2 relative ${isToday ? 'bg-indigo-50/50 dark:bg-indigo-900/10 border-indigo-200 dark:border-indigo-800 shadow-sm' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-indigo-200 dark:hover:border-indigo-800'}`}>
+                                                    <div className="flex justify-between items-center px-1">
+                                                        <span className={`text-sm font-black ${isToday ? 'text-indigo-600 dark:text-indigo-400 scale-110 origin-left' : 'text-slate-400 dark:text-slate-500'}`}>
+                                                            {day.getDate()}
+                                                        </span>
+                                                        {dayEvents.length > 0 && <span className="w-2 h-2 rounded-full bg-indigo-500" />}
                                                     </div>
-                                                ))}
-                                                {dayTasks.length > 3 && <div className="text-[8px] font-black text-indigo-500 text-center">+{dayTasks.length - 3} itens</div>}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
+                                                    <div className="flex-1 flex flex-col gap-1.5 overflow-y-auto no-scrollbar">
+                                                        {dayEvents.sort((a,b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime()).map(ev => {
+                                                            const isPastEvent = new Date(ev.start_date) < new Date();
+                                                            return (
+                                                                <div
+                                                                    key={ev.id}
+                                                                    onClick={(e) => { e.stopPropagation(); setEditingEvent(ev); setIsEventModalOpen(true); }}
+                                                                    className={`rounded-xl p-2 text-[10px] font-bold cursor-pointer hover:scale-[1.02] transition-all group ${
+                                                                        isPastEvent 
+                                                                        ? 'bg-slate-50 dark:bg-slate-800/50 text-slate-400 border border-slate-200 dark:border-slate-800 opacity-70 hover:opacity-100' 
+                                                                        : 'bg-indigo-600 text-white shadow-md hover:bg-indigo-700'
+                                                                    }`}
+                                                                >
+                                                                    <div className={`truncate ${isPastEvent ? 'line-through decoration-slate-300 dark:decoration-slate-600' : ''}`}>{ev.title}</div>
+                                                                    <div className={`${isPastEvent ? 'text-slate-400 dark:text-slate-500' : 'text-indigo-200'} font-medium mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity`}>
+                                                                        {new Date(ev.start_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {ev.event_type}
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            );
+                                        });
+                                    })()}
+                                    </div>
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
                 )}
 
@@ -1301,6 +1607,150 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         className="flex-[2] px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-600/30 transition-all flex items-center justify-center gap-2 text-xs"
                                     >
                                         <Save size={20} /> {t('modules.nexus.modals.task.save')}
+                                    </button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* Event Drawer */}
+            <AnimatePresence>
+                {isEventModalOpen && (
+                    <div className="fixed inset-0 z-[100] flex justify-end overflow-hidden">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm"
+                            onClick={() => { setIsEventModalOpen(false); }}
+                        />
+
+                        <motion.div
+                            initial={{ x: '100%' }}
+                            animate={{ x: 0 }}
+                            exit={{ x: '100%' }}
+                            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+                            className="relative w-full max-w-xl bg-white dark:bg-slate-900 shadow-[-20px_0_50px_-10px_rgba(0,0,0,0.1)] h-full flex flex-col border-l border-slate-200 dark:border-slate-800"
+                        >
+                            <div className="p-8 border-b border-slate-100 dark:border-slate-800 shrink-0 bg-slate-50/50 dark:bg-slate-800/50">
+                                <div className="flex items-center justify-between mb-2">
+                                    <div>
+                                        <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">
+                                            {editingEvent?.id ? t('modules.nexus.modals.event.titleEdit') || 'Editar Evento' : t('modules.nexus.modals.event.title') || 'Novo Evento'}
+                                        </h3>
+                                        <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-1">
+                                            Agenda de Consultas e Prazos
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={() => { setIsEventModalOpen(false); }}
+                                        className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all"
+                                    >
+                                        <XCircle size={28} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            <form onSubmit={handleSaveEvent} className="flex-1 flex flex-col overflow-hidden">
+                                <div className="flex-1 overflow-y-auto p-8 no-scrollbar">
+                                    <div className="space-y-6">
+                                        <div>
+                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Tipo de Evento</label>
+                                            <select
+                                                required
+                                                value={editingEvent?.event_type || 'Outro'}
+                                                onChange={e => setEditingEvent({ ...editingEvent, event_type: e.target.value as any })}
+                                                className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white font-bold"
+                                            >
+                                                {['Audiência', 'Reunião', 'Despacho', 'Diligência', 'Outro'].map(t => <option key={t} value={t}>{t}</option>)}
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">{t('modules.nexus.modals.event.labelTitle')}</label>
+                                            <input
+                                                required
+                                                value={editingEvent?.title || ''}
+                                                onChange={e => setEditingEvent({ ...editingEvent, title: e.target.value })}
+                                                className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white font-bold"
+                                                placeholder={t('modules.nexus.modals.event.placeholderTitle')}
+                                            />
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Início</label>
+                                                <input
+                                                    required
+                                                    type="datetime-local"
+                                                    value={editingEvent?.start_date ? new Date(editingEvent.start_date).toISOString().slice(0, 16) : ''}
+                                                    onChange={e => setEditingEvent({ ...editingEvent, start_date: e.target.value })}
+                                                    className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white font-bold text-xs"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Fim (Opcional)</label>
+                                                <input
+                                                    type="datetime-local"
+                                                    value={editingEvent?.end_date ? new Date(editingEvent.end_date).toISOString().slice(0, 16) : ''}
+                                                    onChange={e => setEditingEvent({ ...editingEvent, end_date: e.target.value })}
+                                                    className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white font-bold text-xs"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Localização (Física ou Link)</label>
+                                            <input
+                                                value={editingEvent?.location || ''}
+                                                onChange={e => setEditingEvent({ ...editingEvent, location: e.target.value })}
+                                                className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white font-bold"
+                                                placeholder="Ex: Fórum Central ou Zoom Link"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">{t('modules.nexus.modals.event.labelLawsuit')} (Opcional)</label>
+                                            <select
+                                                value={editingEvent?.lawsuit_id || ''}
+                                                onChange={e => setEditingEvent({ ...editingEvent, lawsuit_id: e.target.value })}
+                                                className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white font-bold"
+                                            >
+                                                <option value="">{t('modules.nexus.modals.event.selectLawsuit')}</option>
+                                                {lawsuits.map(law => <option key={law.id} value={law.id}>{law.cnj_number} - {law.case_title}</option>)}
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">{t('modules.nexus.modals.event.labelResponsible')}</label>
+                                            <select
+                                                required
+                                                value={editingEvent?.responsible_id || ''}
+                                                onChange={e => setEditingEvent({ ...editingEvent, responsible_id: e.target.value })}
+                                                className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white font-bold"
+                                            >
+                                                <option value="">{t('modules.nexus.modals.event.selectResponsible')}</option>
+                                                {team.map(t => <option key={t.id} value={t.id}>{t.full_name}</option>)}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="p-8 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0 flex gap-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => { setIsEventModalOpen(false); }}
+                                        className="flex-1 px-8 py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-200 transition-all text-xs"
+                                    >
+                                        {t('modules.nexus.modals.event.cancel')}
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="flex-[2] px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-600/30 transition-all flex items-center justify-center gap-2 text-xs"
+                                    >
+                                        <Save size={20} /> Salvar Evento
                                     </button>
                                 </div>
                             </form>
