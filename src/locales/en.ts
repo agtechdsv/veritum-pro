@@ -346,7 +346,9 @@ export const en = {
             empty: {
                 processes: 'No processes found.',
                 tasks: 'No tasks found.',
-                syncing: 'Syncing processes...'
+                assets: 'No assets found.',
+                syncing: 'Syncing processes...',
+                assetsSyncing: 'Syncing assets...'
             },
             comingSoon: {
                 title: 'Coming Soon to Nexus Pro',

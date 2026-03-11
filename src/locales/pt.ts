@@ -387,7 +387,9 @@ export const pt = {
             empty: {
                 processes: 'Nenhum processo localizado.',
                 tasks: 'Nenhuma tarefa localizada.',
-                syncing: 'Sincronizando processos...'
+                assets: 'Nenhum ativo localizado.',
+                syncing: 'Sincronizando processos...',
+                assetsSyncing: 'Sincronizando ativos...'
             },
             comingSoon: {
                 title: 'Em Breve no Nexus Pro',

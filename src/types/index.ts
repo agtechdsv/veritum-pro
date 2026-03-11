@@ -471,3 +471,19 @@ export interface TeamMember {
     created_at?: string;
     updated_at?: string;
 }
+
+export type AssetType = 'Imóvel' | 'Veículo' | 'Conta Bancária' | 'Ação Judicial' | 'Empresa / Quotas' | 'Outros';
+
+export interface Asset {
+    id: string;
+    title: string;
+    description?: string;
+    asset_type: AssetType;
+    value?: number;
+    registration_number?: string; // Matrícula, Renavam, CNPJ, etc.
+    person_id?: string;
+    lawsuit_id?: string;
+    status: 'Ativo' | 'Bloqueado' | 'Vendido' | 'Em Garantia' | 'Alienado';
+    created_at?: string;
+    updated_at?: string;
+}

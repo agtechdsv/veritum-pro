@@ -5,7 +5,7 @@ import {
     ChevronDown, ChevronUp, ChevronRight, Zap, Save, Trash2, Key, Info,
     Pencil, XCircle, Database as DbIcon, ShieldCheck, MessageCircle,
     ExternalLink, Scale, FileDown, ArrowUpRight, Filter, FileCheck,
-    ScrollText, CheckCircle2
+    ScrollText, CheckCircle2, LayoutGrid, List
 } from 'lucide-react';
 import { useTranslation } from '@/contexts/language-context';
 import { toast } from '@/components/ui/toast';
@@ -25,13 +25,15 @@ interface Props {
     masterSelectedUserId?: string;
     onRefresh?: () => void;
     onNewLawsuit?: (personId: string) => void;
+    onNewAsset?: (personId: string) => void;
 }
 
-const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUser, isEmbedded, externalPersons, externalLoading, masterSelectedUserId, onRefresh, onNewLawsuit }) => {
+const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUser, isEmbedded, externalPersons, externalLoading, masterSelectedUserId, onRefresh, onNewLawsuit, onNewAsset }) => {
     const { t } = useTranslation();
     const [searchTerm, setSearchTerm] = useState('');
     const [localPersons, setLocalPersons] = useState<Person[]>([]);
     const [loading, setLoading] = useState(false);
+    const [viewStyle, setViewStyle] = useState<'grid' | 'list'>('grid');
 
     // Source of truth: external props take precedence when provided and no active local search
     const persons = (externalPersons && !searchTerm) ? externalPersons : localPersons;
@@ -728,20 +730,37 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                         className="w-full pl-10 pr-4 py-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white font-medium"
                     />
                 </div>
+                <div className="flex bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl self-end md:self-auto border border-slate-200 dark:border-slate-800">
+                    <button
+                        onClick={() => setViewStyle('grid')}
+                        className={`p-2 rounded-lg transition-all ${viewStyle === 'grid' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                        title="Visualização em Cards"
+                    >
+                        <LayoutGrid size={18} />
+                    </button>
+                    <button
+                        onClick={() => setViewStyle('list')}
+                        className={`p-2 rounded-lg transition-all ${viewStyle === 'list' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                        title="Visualização em Lista"
+                    >
+                        <List size={18} />
+                    </button>
+                </div>
                 <div className="bg-white dark:bg-slate-950 px-5 py-2.5 rounded-[1.25rem] border border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-sm min-w-[160px] self-end md:self-auto">
                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em] mr-6">{t('management.master.persons.stats.label')}</span>
                     <span className="text-xl font-black text-indigo-600">{persons.length}</span>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {isLoading ? (
-                    <div className="col-span-full py-12 text-center text-slate-400">{t('management.master.persons.table.loading')}</div>
-                ) : filteredPersons.length === 0 ? (
-                    <div className="col-span-full py-12 text-center text-slate-400">{t('management.master.persons.table.empty')}</div>
-                ) : filteredPersons.map(person => (
-                    <div key={person.id} className="bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden flex flex-col justify-between h-full">
-                        <div>
+            {viewStyle === 'grid' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {isLoading ? (
+                        <div className="col-span-full py-12 text-center text-slate-400">{t('management.master.persons.table.loading')}</div>
+                    ) : filteredPersons.length === 0 ? (
+                        <div className="col-span-full py-12 text-center text-slate-400">{t('management.master.persons.table.empty')}</div>
+                    ) : filteredPersons.map(person => (
+                        <div key={person.id} className="bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden flex flex-col justify-between h-full">
+                            <div>
                             <div className="flex items-start justify-between mb-5">
                                 <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${person.person_type === 'Cliente' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 border border-emerald-100 dark:border-emerald-800' :
                                     person.person_type === 'Advogado Adverso' ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 border border-rose-100 dark:border-rose-800' :
@@ -824,6 +843,15 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                                 >
                                     <FileDown size={18} />
                                 </button>
+                                {onNewAsset && (
+                                    <button
+                                        onClick={() => onNewAsset(person.id)}
+                                        className="p-2.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-xl hover:bg-emerald-600 hover:text-white transition-all shadow-sm cursor-pointer"
+                                        title="Registrar Novo Ativo/Garantia"
+                                    >
+                                        <Zap size={18} />
+                                    </button>
+                                )}
                                 <button
                                     onClick={() => onNewLawsuit?.(person.id)}
                                     className="p-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-indigo-600/20 cursor-pointer"
@@ -838,6 +866,90 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                     </div>
                 ))}
             </div>
+            ) : (
+                <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Pessoa</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Documento</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Contato</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Classificação</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+                                {isLoading ? (
+                                    <tr><td colSpan={5} className="p-8 text-center text-slate-400">Carregando...</td></tr>
+                                ) : filteredPersons.length === 0 ? (
+                                    <tr><td colSpan={5} className="p-8 text-center text-slate-400">Nenhum registro encontrado.</td></tr>
+                                ) : filteredPersons.map(person => (
+                                    <tr key={person.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors group">
+                                        <td className="px-6 py-4">
+                                            <div className="font-bold text-slate-800 dark:text-white capitalize truncate max-w-[200px]">{person.full_name}</div>
+                                            {person.email && <div className="text-[10px] text-slate-400 font-bold truncate max-w-[150px]">{person.email}</div>}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="font-mono text-sm font-bold text-slate-600 dark:text-slate-300">{person.document}</div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="text-sm font-medium text-slate-600 dark:text-slate-300">{person.phone || '-'}</div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase border ${person.person_type === 'Cliente' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 border-emerald-100 dark:border-emerald-800' :
+                                                person.person_type === 'Advogado Adverso' ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 border border-rose-100 dark:border-rose-800' :
+                                                    'bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700'
+                                                }`}>
+                                                {person.person_type || 'Geral'}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button
+                                                    onClick={() => handleGenerateDocs(person)}
+                                                    className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all"
+                                                    title="Gerar Documento"
+                                                >
+                                                    <FileDown size={16} />
+                                                </button>
+                                                {onNewAsset && (
+                                                    <button
+                                                        onClick={() => onNewAsset(person.id)}
+                                                        className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-all"
+                                                        title="Novo Ativo/Garantia"
+                                                    >
+                                                        <Zap size={16} />
+                                                    </button>
+                                                )}
+                                                <button
+                                                    onClick={() => onNewLawsuit?.(person.id)}
+                                                    className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
+                                                    title="Novo Processo"
+                                                >
+                                                    <ArrowUpRight size={16} />
+                                                </button>
+                                                <button
+                                                    onClick={() => { setEditingPerson(person); setIsModalOpen(true); setActiveTab('basic'); }}
+                                                    className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
+                                                >
+                                                    <Pencil size={16} />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleSoftDelete(person.id)}
+                                                    className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-all"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
 
             {/* Person Drawer (Slide-over Pattern) */}
             <AnimatePresence>

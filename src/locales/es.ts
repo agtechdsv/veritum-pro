@@ -355,7 +355,9 @@ export const es = {
             "empty": {
                 "processes": "No se encontraron procesos.",
                 "tasks": "No se encontraron tareas.",
-                "syncing": "Sincronizando procesos..."
+                "assets": "No se encontraron activos.",
+                "syncing": "Sincronizando procesos...",
+                "assetsSyncing": "Sincronizando activos..."
             },
             "comingSoon": {
                 "title": "Próximamente en Nexus Pro",

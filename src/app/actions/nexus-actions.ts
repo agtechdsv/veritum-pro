@@ -1,6 +1,6 @@
 'use server';
 
-import { Lawsuit, Task, CalendarEvent, Credentials, UserPreferences } from '@/types';
+import { Lawsuit, Task, CalendarEvent, Credentials, UserPreferences, Asset } from '@/types';
 import { RepositoryFactory } from '@/lib/db/repositories/repository-factory';
 import { createMasterServerClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -257,4 +257,48 @@ export async function getCitiesByState(uf: string) {
         }
     }
     return [];
+}
+
+/* Asset Actions */
+export async function listAssets(personId?: string, lawsuitId?: string, targetUserId?: string) {
+    try {
+        const { credentials, preferences } = await resolveSecurityContext(targetUserId);
+        const repo = RepositoryFactory.getAssetRepository(credentials, preferences);
+        const data = await repo.list(personId, lawsuitId);
+        return { data };
+    } catch (error: any) {
+        const errorMsg = error.message || '';
+        console.error('Server Action Error (listAssets):', error);
+        // Supabase error code 42P01 is "undefined_table"
+        if (error?.code === '42P01' || errorMsg.includes("relation") || errorMsg.includes("does not exist") || errorMsg.includes("assets")) {
+            return {
+                data: [],
+                error: 'TABLE_NOT_FOUND',
+                message: 'Database not initialized (Table assets missing).'
+            };
+        }
+        throw error;
+    }
+}
+
+export async function saveAsset(asset: Partial<Asset>, targetUserId?: string) {
+    try {
+        const { credentials, preferences } = await resolveSecurityContext(targetUserId);
+        const repo = RepositoryFactory.getAssetRepository(credentials, preferences);
+        return await repo.save(asset);
+    } catch (error: any) {
+        console.error('Server Action Error (saveAsset):', error.message);
+        throw error;
+    }
+}
+
+export async function deleteAsset(id: string, targetUserId?: string) {
+    try {
+        const { credentials, preferences } = await resolveSecurityContext(targetUserId);
+        const repo = RepositoryFactory.getAssetRepository(credentials, preferences);
+        return await repo.delete(id);
+    } catch (error: any) {
+        console.error('Server Action Error (deleteAsset):', error.message);
+        throw error;
+    }
 }
