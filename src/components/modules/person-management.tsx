@@ -46,6 +46,13 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
     const [isDocModalOpen, setIsDocModalOpen] = useState(false);
     const [selectedPersonForDoc, setSelectedPersonForDoc] = useState<Person | null>(null);
     const [orgData, setOrgData] = useState<Organization | null>(null);
+    const [dbTemplates, setDbTemplates] = useState<any[]>([]);
+    const [loadingTemplates, setLoadingTemplates] = useState(false);
+    const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
+    const [processedContent, setProcessedContent] = useState('');
+    const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
+    const [viewMode, setViewMode] = useState<'list' | 'preview'>('list');
+    const [docActiveTab, setDocActiveTab] = useState<'master' | 'office'>('master');
 
     // Master Selection States
     const isMaster = currentUser.role === 'Master';
@@ -119,6 +126,56 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
             setLoading(false);
         }
     };
+
+    const fetchTemplates = async () => {
+        if (!selectedUserId) return;
+        setLoadingTemplates(true);
+        try {
+            const masterSupabase = createMasterClient();
+            // Try to get credentials for the selected context
+            const { data: creds } = await masterSupabase
+                .from('user_preferences')
+                .select('custom_supabase_url, custom_supabase_key')
+                .eq('user_id', selectedUserId)
+                .single();
+
+            const targetUrl = creds?.custom_supabase_url || credentials.supabaseUrl;
+            const targetKey = creds?.custom_supabase_key || credentials.supabaseAnonKey;
+
+            const { createClient } = await import('@supabase/supabase-js');
+            const supabase = createClient(targetUrl, targetKey);
+
+            const { data: standardData, error: standardError } = await masterSupabase
+                .from('veritum_standard_templates')
+                .select('*')
+                .order('title', { ascending: true });
+
+            const { data: customData, error: customError } = await supabase
+                .from('document_templates')
+                .select('*')
+                .is('deleted_at', null)
+                .order('title', { ascending: true });
+
+            let combined: any[] = [];
+            if (standardData) combined = [...combined, ...standardData.map((t: any) => ({ ...t, is_standard: true }))];
+            if (customData) combined = [...combined, ...customData.map((t: any) => ({ ...t, is_standard: false }))];
+
+            setDbTemplates(combined);
+        } catch (err) {
+            console.error('Error fetching templates:', err);
+        } finally {
+            setLoadingTemplates(false);
+        }
+    };
+
+    useEffect(() => {
+        if (isDocModalOpen) {
+            fetchTemplates();
+            setViewMode('list');
+            setSelectedTemplate(null);
+            setPdfPreviewUrl(null);
+        }
+    }, [isDocModalOpen, selectedUserId]);
 
     const formatDocument = (value: string) => {
         const numbers = value.replace(/\D/g, '');
@@ -231,7 +288,93 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
         setIsDocModalOpen(true);
     };
 
-    const generatePDF = (templateKey: string) => {
+    const replaceTags = (content: string, person: Person, org: any) => {
+        let result = content;
+        const today = new Date().toLocaleDateString('pt-BR');
+        
+        const tags: Record<string, string> = {
+            '{{nome_cliente}}': person.full_name || '',
+            '{{cpf}}': person.document || '',
+            '{{documento}}': person.document || '',
+            '{{rg}}': person.rg || '',
+            '{{nacionalidade}}': person.legal_data?.nationality || 'Brasileira',
+            '{{estado_civil}}': person.legal_data?.marital_status || 'Solteiro(a)',
+            '{{profissao}}': person.legal_data?.profession || 'Autônomo(a)',
+            '{{endereco_completo}}': `${person.address?.street || ''}, ${person.address?.number || ''} ${person.address?.complement || ''} - ${person.address?.neighborhood || ''} - ${person.address?.city || ''}/${person.address?.state || ''}`,
+            '{{cidade_cliente}}': person.address?.city || '',
+            '{{estado_cliente}}': person.address?.state || '',
+            '{{email_cliente}}': person.email || '',
+            '{{telefone_cliente}}': person.phone || '',
+            '{{data_hoje}}': today,
+            '{{cidade_escritorio}}': org?.address_city || 'Sua Cidade',
+            '{{nome_advogado}}': currentUser.name || org?.company_name || '',
+            '{{oab_number}}': '____',
+            '{{oab_uf}}': org?.address_state || 'UF',
+            '{{nome_escritorio}}': org?.company_name || 'Veritum Pro Office'
+        };
+
+        Object.entries(tags).forEach(([tag, value]) => {
+            const regex = new RegExp(tag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+            result = result.replace(regex, value);
+        });
+
+        return result;
+    };
+
+    const handleSelectTemplate = (template: any) => {
+        setSelectedTemplate(template);
+        if (selectedPersonForDoc) {
+            const processed = replaceTags(template.content, selectedPersonForDoc, orgData);
+            setProcessedContent(processed);
+        }
+        setViewMode('preview');
+    };
+
+    const printDocument = () => {
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>${selectedTemplate?.title || 'Documento'}</title>
+                        <style>
+                            body { font-family: "Times New Roman", Times, serif; padding: 50px; line-height: 1.5; color: #000; }
+                            h1, h2, h3 { text-align: center; text-transform: uppercase; }
+                            pre { white-space: pre-wrap; word-wrap: break-word; font-family: inherit; }
+                            .header { text-align: center; margin-bottom: 40px; border-bottom: 2px solid #000; padding-bottom: 20px; }
+                            .content { text-align: justify; }
+                            .footer { margin-top: 60px; text-align: center; }
+                            @media print {
+                                body { padding: 0; }
+                                .no-print { display: none; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="header">
+                            <h2>${orgData?.company_name || 'VERITUM PRO OFFICE'}</h2>
+                            <p>${orgData?.address_street || ''}, ${orgData?.address_number || ''} - ${orgData?.address_city || ''}/${orgData?.address_state || ''}</p>
+                            <p>${orgData?.email || ''} | ${orgData?.phone || ''}</p>
+                        </div>
+                        <div class="content">
+                            ${processedContent}
+                        </div>
+                        <div class="footer">
+                            <p>__________________________________________</p>
+                            <p><strong>${selectedPersonForDoc?.full_name}</strong></p>
+                            <p>Documento gerado em ${new Date().toLocaleDateString('pt-BR')}</p>
+                        </div>
+                        <script>
+                            window.onload = () => { window.print(); };
+                        </script>
+                    </body>
+                </html>
+            `);
+            printWindow.document.close();
+        }
+    };
+
+    const generatePDF = (templateKey: string, returnBlob: boolean = false) => {
         if (!selectedPersonForDoc) return;
 
         const doc = new jsPDF();
@@ -374,7 +517,91 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
         doc.setFont('helvetica', 'normal');
         doc.text(`Local e Data: ${org?.address_city || '______'}/${org?.address_state || ''}, ${today}`, (210 - doc.getTextWidth(`Local e Data: ${org?.address_city || '______'}/${org?.address_state || ''}, ${today}`)) / 2, footerY + 15);
 
+        if (returnBlob) {
+            return doc.output('bloburl');
+        }
+
         doc.save(`${templateKey}_${p.full_name.replace(/\s+/g, '_')}.pdf`);
+    };
+
+    const downloadDBTemplateAsPDF = (template: any, returnBlob: boolean = false) => {
+        if (!selectedPersonForDoc) return;
+        const doc = new jsPDF();
+        const p = selectedPersonForDoc;
+        const org = orgData;
+        const today = new Date().toLocaleDateString('pt-BR');
+
+        // Professional Header
+        if (org?.logo_url) {
+            try {
+                doc.addImage(org.logo_url, 'PNG', 10, 10, 30, 30);
+            } catch (e) {
+                console.error('Error adding logo to PDF', e);
+            }
+        }
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(14);
+        doc.text(org?.company_name || 'VERITUM PRO - OFFICE', 45, 20);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        const orgAddress = `${org?.address_street || ''}, ${org?.address_number || ''} ${org?.address_complement ? '- ' + org.address_complement : ''}`;
+        const cityState = `${org?.address_neighborhood || ''} - ${org?.address_city || ''}/${org?.address_state || ''} - CEP: ${org?.address_zip || ''}`;
+        const contact = `Email: ${org?.email || ''} | Tel: ${org?.phone || ''} | Site: ${org?.website || ''}`;
+
+        doc.text(orgAddress, 45, 26);
+        doc.text(cityState, 45, 30);
+        doc.text(contact, 45, 34);
+
+        doc.setLineWidth(0.5);
+        doc.line(10, 42, 200, 42);
+
+        // Title
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        const titleText = template.title || 'DOCUMENTO';
+        const titleWidth = doc.getTextWidth(titleText.toUpperCase());
+        doc.text(titleText.toUpperCase(), (210 - titleWidth) / 2, 55);
+
+        // Content
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        
+        const contentStr = template.content || '';
+        const processed = replaceTags(contentStr, selectedPersonForDoc as Person, orgData);
+        const cleanContent = processed.replace(/<br\s*[\/]?>/gi, '\n').replace(/<[^>]+>/g, '');
+        
+        const lines = doc.splitTextToSize(cleanContent, 180);
+        
+        let yPos = 70;
+        lines.forEach((line: string) => {
+            if (yPos > 270) {
+                doc.addPage();
+                yPos = 20; 
+            }
+            doc.text(line, 15, yPos, { align: 'justify', maxWidth: 180 });
+            yPos += 5;
+        });
+
+        // Signature
+        let footerY = yPos + 30;
+        if (footerY > 270) {
+            doc.addPage();
+            footerY = 40;
+        }
+        
+        doc.line(60, footerY, 150, footerY);
+        doc.setFont('helvetica', 'bold');
+        doc.text(p.full_name, (210 - doc.getTextWidth(p.full_name)) / 2, footerY + 5);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Local e Data: ${org?.address_city || '______'}/${org?.address_state || ''}, ${today}`, (210 - doc.getTextWidth(`Local e Data: ${org?.address_city || '______'}/${org?.address_state || ''}, ${today}`)) / 2, footerY + 15);
+
+        if (returnBlob) {
+            return doc.output('bloburl');
+        }
+
+        doc.save(`${titleText.replace(/\s+/g, '_')}_${p.full_name.replace(/\s+/g, '_')}.pdf`);
     };
 
     const handleSave = async (e: React.FormEvent) => {
@@ -969,193 +1196,175 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                                     </div>
                                     <div>
                                         <h2 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">
-                                            {t('management.master.persons.docGen.title')}
+                                            {viewMode === 'list' ? t('management.master.persons.docGen.title') : selectedTemplate?.title || 'Preview de Documento'}
                                         </h2>
                                         <p className="text-slate-500 font-medium text-xs">
-                                            {t('management.master.persons.docGen.subtitle')}
+                                            {viewMode === 'list' ? t('management.master.persons.docGen.subtitle') : 'Revise o conteúdo gerado para este documento.'}
                                         </p>
                                     </div>
                                 </div>
-                                <button
-                                    onClick={() => setIsDocModalOpen(false)}
-                                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
-                                >
-                                    <XCircle size={24} className="text-slate-400" />
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    {viewMode === 'preview' && (
+                                        <button
+                                            onClick={() => { setViewMode('list'); setPdfPreviewUrl(null); }}
+                                            className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-full text-xs font-bold uppercase tracking-widest hover:bg-slate-200"
+                                        >
+                                            Voltar
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={() => setIsDocModalOpen(false)}
+                                        className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+                                    >
+                                        <XCircle size={24} className="text-slate-400" />
+                                    </button>
+                                </div>
                             </div>
+
+                            {viewMode === 'list' && (
+                                <div className="bg-slate-50 dark:bg-slate-900/50 p-2 mx-8 mt-4 rounded-xl flex gap-2 border border-slate-100 dark:border-slate-800">
+                                    <button
+                                        onClick={() => setDocActiveTab('master')}
+                                        className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${docActiveTab === 'master' ? 'bg-white dark:bg-slate-800 text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                    >
+                                        Modelos Master
+                                    </button>
+                                    <button
+                                        onClick={() => setDocActiveTab('office')}
+                                        className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${docActiveTab === 'office' ? 'bg-white dark:bg-slate-800 text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                    >
+                                        Modelos do Escritório
+                                    </button>
+                                </div>
+                            )}
 
                             <div className="p-8 max-h-[60vh] overflow-y-auto no-scrollbar">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {/* Template Option: Procuração */}
-                                    <button
-                                        onClick={() => {
-                                            toast.info(`${t('management.master.persons.docGen.templates.procuracao')}...`);
-                                            generatePDF('procuracao');
-                                            setTimeout(() => setIsDocModalOpen(false), 1000);
-                                        }}
-                                        className="flex flex-col items-start p-6 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl hover:border-indigo-500 hover:ring-4 hover:ring-indigo-500/10 transition-all group text-left"
-                                    >
-                                        <div className="p-3 bg-white dark:bg-slate-900 rounded-2xl shadow-sm mb-4 group-hover:scale-110 transition-transform">
-                                            <ScrollText size={20} className="text-indigo-600" />
-                                        </div>
-                                        <span className="font-black text-slate-800 dark:text-white text-sm uppercase tracking-tight mb-1">
-                                            {t('management.master.persons.docGen.templates.procuracao')}
-                                        </span>
-                                        <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">
-                                            {selectedPersonForDoc?.person_type === 'Cliente' ? 'Polo Ativo' : 'Geral'}
-                                        </span>
-                                    </button>
+                                {viewMode === 'list' ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {docActiveTab === 'master' && (
+                                            <>
+                                                {[ 
+                                                    { key: 'procuracao', icon: ScrollText, color: 'indigo', title: t('management.master.persons.docGen.templates.procuracao'), sub: selectedPersonForDoc?.person_type === 'Cliente' ? 'Polo Ativo' : 'Geral' },
+                                                    { key: 'contrato', icon: Scale, color: 'emerald', title: t('management.master.persons.docGen.templates.contrato'), sub: 'Pacto de Honorários' },
+                                                    { key: 'declaracao', icon: FileText, color: 'amber', title: t('management.master.persons.docGen.templates.declaracao'), sub: 'Hipossuficiência' },
+                                                    { key: 'lgpd', icon: ShieldCheck, color: 'blue', title: t('management.master.persons.docGen.templates.lgpd'), sub: 'Proteção de Dados' },
+                                                    { key: 'substabelecimento', icon: ArrowUpRight, color: 'violet', title: t('management.master.persons.docGen.templates.substabelecimento'), sub: 'Repasse de Poderes' },
+                                                    { key: 'entrevista', icon: Briefcase, color: 'pink', title: t('management.master.persons.docGen.templates.entrevista'), sub: 'Qualificação e Notas' },
+                                                    { key: 'residencia', icon: MapPin, color: 'cyan', title: t('management.master.persons.docGen.templates.residencia'), sub: 'Comprovante Sob Fé' },
+                                                    { key: 'recibo', icon: Zap, color: 'emerald', title: t('management.master.persons.docGen.templates.recibo'), sub: 'Quitação de Parcelas' }
+                                                ].map((nt) => {
+                                                    const colorClasses: Record<string, string> = {
+                                                        indigo: 'text-indigo-600 border-indigo-500 hover:ring-indigo-500/10',
+                                                        emerald: 'text-emerald-600 border-emerald-500 hover:ring-emerald-500/10',
+                                                        amber: 'text-amber-600 border-amber-500 hover:ring-amber-500/10',
+                                                        blue: 'text-blue-600 border-blue-500 hover:ring-blue-500/10',
+                                                        violet: 'text-violet-600 border-violet-500 hover:ring-violet-500/10',
+                                                        pink: 'text-pink-600 border-pink-500 hover:ring-pink-500/10',
+                                                        cyan: 'text-cyan-600 border-cyan-500 hover:ring-cyan-500/10',
+                                                    };
+                                                    return (
+                                                        <div key={nt.key} className="relative group">
+                                                            <div className={`flex flex-col items-start p-6 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl h-full transition-all group-hover:scale-[1.02] group-hover:shadow-lg`}> 
+                                                                <div className="p-3 bg-white dark:bg-slate-900 rounded-2xl shadow-sm mb-4"><nt.icon size={20} className={colorClasses[nt.color]?.split(' ')[0]} /></div>
+                                                                <span className="font-black text-slate-800 dark:text-white text-sm uppercase tracking-tight mb-1">{nt.title}</span>
+                                                                <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">{nt.sub}</span>
+                                                            </div>
+                                                            {/* Overlay */}
+                                                            <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px] rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 p-4 z-10">
+                                                                <button onClick={() => { generatePDF(nt.key); setTimeout(() => setIsDocModalOpen(false), 1000); }} className="w-full py-2.5 bg-white text-slate-900 rounded-xl text-xs font-black uppercase tracking-widest shadow-xl hover:bg-slate-100 transition-colors">
+                                                                    Baixar PDF
+                                                                </button>
+                                                                <button onClick={() => { 
+                                                                    const blobUrl = (generatePDF(nt.key, true) as any).toString();
+                                                                    setSelectedTemplate({title: nt.title});
+                                                                    setPdfPreviewUrl(blobUrl);
+                                                                    setViewMode('preview');
+                                                                }} className="w-full py-2.5 bg-slate-800/80 backdrop-blur-md text-white border border-white/10 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-colors">
+                                                                    Preview PDF
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </>
+                                        )}
+                                        
+                                        {/* Dynamic Templates matching the active tab */}
+                                        {dbTemplates.filter(t => (docActiveTab === 'master' ? t.is_standard : !t.is_standard)).map((template) => (
+                                            <div key={template.id} className="relative group">
+                                                <div className="flex flex-col items-start p-6 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl h-full transition-all group-hover:scale-[1.02] group-hover:shadow-lg">
+                                                    <div className="p-3 bg-white dark:bg-slate-900 rounded-2xl shadow-sm mb-4">
+                                                        {template.is_standard ? <CheckCircle2 size={20} className="text-amber-500" /> : <FileText size={20} className="text-indigo-600" />}
+                                                    </div>
+                                                    <span className="font-black text-slate-800 dark:text-white text-sm uppercase tracking-tight mb-1 line-clamp-1">
+                                                        {template.title}
+                                                    </span>
+                                                    <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">
+                                                        {template.category || 'Geral'}
+                                                    </span>
+                                                </div>
+                                                {/* Overlay */}
+                                                <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px] rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 p-4 z-10">
+                                                    <button onClick={() => {
+                                                        downloadDBTemplateAsPDF(template);
+                                                        setTimeout(() => setIsDocModalOpen(false), 1000);
+                                                    }} className="w-full py-2.5 bg-white text-slate-900 rounded-xl text-xs font-black uppercase tracking-widest shadow-xl hover:bg-slate-100 transition-colors">
+                                                        Baixar PDF
+                                                    </button>
+                                                    <button onClick={() => {
+                                                        const processed = replaceTags(template.content, selectedPersonForDoc as Person, orgData);
+                                                        setProcessedContent(processed);
+                                                        setSelectedTemplate(template);
+                                                        
+                                                        const blobUrl = (downloadDBTemplateAsPDF(template, true) as any).toString();
+                                                        setPdfPreviewUrl(blobUrl);
+                                                        setViewMode('preview');
+                                                    }} className="w-full py-2.5 bg-slate-800/80 backdrop-blur-md text-white border border-white/10 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-colors">
+                                                        Preview PDF
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
 
-                                    {/* Template Option: Contrato */}
-                                    <button
-                                        onClick={() => {
-                                            toast.info(`${t('management.master.persons.docGen.templates.contrato')}...`);
-                                            generatePDF('contrato');
-                                            setTimeout(() => setIsDocModalOpen(false), 1000);
-                                        }}
-                                        className="flex flex-col items-start p-6 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl hover:border-emerald-500 hover:ring-4 hover:ring-emerald-500/10 transition-all group text-left"
-                                    >
-                                        <div className="p-3 bg-white dark:bg-slate-900 rounded-2xl shadow-sm mb-4 group-hover:scale-110 transition-transform">
-                                            <Scale size={20} className="text-emerald-600" />
-                                        </div>
-                                        <span className="font-black text-slate-800 dark:text-white text-sm uppercase tracking-tight mb-1">
-                                            {t('management.master.persons.docGen.templates.contrato')}
-                                        </span>
-                                        <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">
-                                            Pacto de Honorários
-                                        </span>
-                                    </button>
-
-                                    {/* Template Option: Declaração Justiça Gratuita */}
-                                    <button
-                                        onClick={() => {
-                                            toast.info(`${t('management.master.persons.docGen.templates.declaracao')}...`);
-                                            generatePDF('declaracao');
-                                            setTimeout(() => setIsDocModalOpen(false), 1000);
-                                        }}
-                                        className="flex flex-col items-start p-6 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl hover:border-amber-500 hover:ring-4 hover:ring-amber-500/10 transition-all group text-left"
-                                    >
-                                        <div className="p-3 bg-white dark:bg-slate-900 rounded-2xl shadow-sm mb-4 group-hover:scale-110 transition-transform">
-                                            <FileText size={20} className="text-amber-600" />
-                                        </div>
-                                        <span className="font-black text-slate-800 dark:text-white text-sm uppercase tracking-tight mb-1">
-                                            {t('management.master.persons.docGen.templates.declaracao')}
-                                        </span>
-                                        <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">
-                                            Hipossuficiência
-                                        </span>
-                                    </button>
-
-                                    {/* Template Option: LGPD */}
-                                    <button
-                                        onClick={() => {
-                                            toast.info(`${t('management.master.persons.docGen.templates.lgpd')}...`);
-                                            generatePDF('lgpd');
-                                            setTimeout(() => setIsDocModalOpen(false), 1000);
-                                        }}
-                                        className="flex flex-col items-start p-6 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl hover:border-blue-500 hover:ring-4 hover:ring-blue-500/10 transition-all group text-left"
-                                    >
-                                        <div className="p-3 bg-white dark:bg-slate-900 rounded-2xl shadow-sm mb-4 group-hover:scale-110 transition-transform">
-                                            <ShieldCheck size={20} className="text-blue-600" />
-                                        </div>
-                                        <span className="font-black text-slate-800 dark:text-white text-sm uppercase tracking-tight mb-1">
-                                            {t('management.master.persons.docGen.templates.lgpd')}
-                                        </span>
-                                        <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">
-                                            Proteção de Dados
-                                        </span>
-                                    </button>
-
-                                    {/* Template Option: Substabelecimento */}
-                                    <button
-                                        onClick={() => {
-                                            toast.info(`${t('management.master.persons.docGen.templates.substabelecimento')}...`);
-                                            generatePDF('substabelecimento');
-                                            setTimeout(() => setIsDocModalOpen(false), 1000);
-                                        }}
-                                        className="flex flex-col items-start p-6 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl hover:border-violet-500 hover:ring-4 hover:ring-violet-500/10 transition-all group text-left"
-                                    >
-                                        <div className="p-3 bg-white dark:bg-slate-900 rounded-2xl shadow-sm mb-4 group-hover:scale-110 transition-transform">
-                                            <ArrowUpRight size={20} className="text-violet-600" />
-                                        </div>
-                                        <span className="font-black text-slate-800 dark:text-white text-sm uppercase tracking-tight mb-1">
-                                            {t('management.master.persons.docGen.templates.substabelecimento')}
-                                        </span>
-                                        <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">
-                                            Repasse de Poderes
-                                        </span>
-                                    </button>
-
-                                    {/* Template Option: Ficha de Entrevista */}
-                                    <button
-                                        onClick={() => {
-                                            toast.info(`${t('management.master.persons.docGen.templates.entrevista')}...`);
-                                            generatePDF('entrevista');
-                                            setTimeout(() => setIsDocModalOpen(false), 1000);
-                                        }}
-                                        className="flex flex-col items-start p-6 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl hover:border-pink-500 hover:ring-4 hover:ring-pink-500/10 transition-all group text-left"
-                                    >
-                                        <div className="p-3 bg-white dark:bg-slate-900 rounded-2xl shadow-sm mb-4 group-hover:scale-110 transition-transform">
-                                            <Briefcase size={20} className="text-pink-600" />
-                                        </div>
-                                        <span className="font-black text-slate-800 dark:text-white text-sm uppercase tracking-tight mb-1">
-                                            {t('management.master.persons.docGen.templates.entrevista')}
-                                        </span>
-                                        <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">
-                                            Qualificação e Notas
-                                        </span>
-                                    </button>
-
-                                    {/* Template Option: Declaração de Residência */}
-                                    <button
-                                        onClick={() => {
-                                            toast.info(`${t('management.master.persons.docGen.templates.residencia')}...`);
-                                            generatePDF('residencia');
-                                            setTimeout(() => setIsDocModalOpen(false), 1000);
-                                        }}
-                                        className="flex flex-col items-start p-6 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl hover:border-cyan-500 hover:ring-4 hover:ring-cyan-500/10 transition-all group text-left"
-                                    >
-                                        <div className="p-3 bg-white dark:bg-slate-900 rounded-2xl shadow-sm mb-4 group-hover:scale-110 transition-transform">
-                                            <MapPin size={20} className="text-cyan-600" />
-                                        </div>
-                                        <span className="font-black text-slate-800 dark:text-white text-sm uppercase tracking-tight mb-1">
-                                            {t('management.master.persons.docGen.templates.residencia')}
-                                        </span>
-                                        <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">
-                                            Comprovante Sob Fé
-                                        </span>
-                                    </button>
-
-                                    {/* Template Option: Recibo */}
-                                    <button
-                                        onClick={() => {
-                                            toast.info(`${t('management.master.persons.docGen.templates.recibo')}...`);
-                                            generatePDF('recibo');
-                                            setTimeout(() => setIsDocModalOpen(false), 1000);
-                                        }}
-                                        className="flex flex-col items-start p-6 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl hover:border-emerald-600 hover:ring-4 hover:ring-emerald-600/10 transition-all group text-left"
-                                    >
-                                        <div className="p-3 bg-white dark:bg-slate-900 rounded-2xl shadow-sm mb-4 group-hover:scale-110 transition-transform">
-                                            <Zap size={20} className="text-emerald-700" />
-                                        </div>
-                                        <span className="font-black text-slate-800 dark:text-white text-sm uppercase tracking-tight mb-1">
-                                            {t('management.master.persons.docGen.templates.recibo')}
-                                        </span>
-                                        <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">
-                                            Quitação de Parcelas
-                                        </span>
-                                    </button>
-                                </div>
+                                        {docActiveTab === 'office' && dbTemplates.filter(t => !t.is_standard).length === 0 && (
+                                            <div className="col-span-2 text-center p-8 bg-slate-50 dark:bg-slate-900/50 rounded-3xl border border-dashed border-slate-200 dark:border-slate-800">
+                                                <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Nenhum modelo customizado neste escritório.</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="space-y-6">
+                                        {pdfPreviewUrl ? (
+                                            <div className="w-full h-[60vh] rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 relative z-50">
+                                                <iframe src={pdfPreviewUrl} className="w-full h-full border-0" />
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <div className="p-6 bg-slate-50 dark:bg-slate-800/30 rounded-3xl border border-slate-100 dark:border-slate-800">
+                                                    <div className="prose dark:prose-invert max-w-none text-sm font-serif" dangerouslySetInnerHTML={{ __html: processedContent }} />
+                                                </div>
+                                                <button 
+                                                    onClick={printDocument}
+                                                    className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-indigo-700 transition shadow-xl shadow-indigo-600/20"
+                                                >
+                                                    Imprimir / Gerar PDF deste Preview
+                                                </button>
+                                            </>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
-                            <div className="p-8 bg-slate-50 dark:bg-slate-950/50 border-t border-slate-100 dark:border-slate-800">
-                                <div className="flex items-center gap-3 text-slate-500 text-xs font-bold bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-4 rounded-2xl">
-                                    <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
-                                    <span>
-                                        Os dados de <strong>{selectedPersonForDoc?.full_name}</strong> ({selectedPersonForDoc?.document || 'S/ Doc'}) serão inseridos automaticamente nos campos variáveis do modelo.
-                                    </span>
+                            {viewMode === 'list' && (
+                                <div className="p-8 bg-slate-50 dark:bg-slate-950/50 border-t border-slate-100 dark:border-slate-800">
+                                    <div className="flex items-center gap-3 text-slate-500 text-xs font-bold bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-4 rounded-2xl">
+                                        <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+                                        <span>
+                                            Os dados de <strong>{selectedPersonForDoc?.full_name}</strong> ({selectedPersonForDoc?.document || 'S/ Doc'}) serão inseridos automaticamente nos campos variáveis do modelo.
+                                        </span>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </motion.div>
                     </div>
                 )}

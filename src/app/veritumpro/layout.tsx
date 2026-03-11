@@ -7,6 +7,7 @@ import { User, UserPreferences, ModuleId, Credentials } from '@/types';
 import { createMasterClient } from '@/lib/supabase/master';
 import { useTranslation, Locale } from '@/contexts/language-context';
 import { useTheme } from 'next-themes';
+import { getTenantCredentials } from '@/app/actions/tenant-actions';
 
 interface ModuleContextType {
     user: User | null;
@@ -19,6 +20,9 @@ interface ModuleContextType {
     activeSuites: any[];
     groupPermissions: any[];
     allFeatures: any[];
+    onSelectClient: (clientId: string) => Promise<void>;
+    allClients: any[];
+    selectedClientId: string | null;
 }
 
 const ModuleContext = React.createContext<ModuleContextType | undefined>(undefined);
@@ -42,6 +46,13 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
     const [planPermissions, setPlanPermissions] = useState<any[]>([]);
     const [groupPermissions, setGroupPermissions] = useState<any[]>([]);
     const [allFeatures, setAllFeatures] = useState<any[]>([]);
+    const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+    const [allClients, setAllClients] = useState<any[]>([]);
+    const [credentials, setCredentials] = useState<Credentials>({
+        supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+        supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
+        geminiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY || ''
+    });
     const [loading, setLoading] = useState(true);
     const hasFetchedInitialRef = React.useRef(false);
     const router = useRouter();
@@ -63,7 +74,7 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
         }
 
         // 1. Parallelize initial critical data fetching
-        const [profileRes, referralsRes, subRes] = await Promise.all([
+        const [profileRes, referralsRes, subRes, tenantCreds] = await Promise.all([
             supabaseClient
                 .from('users')
                 .select('*, access_groups(name), plans:plan_id(name)')
@@ -78,8 +89,13 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
                 .from('user_subscriptions')
                 .select('billing_cycle')
                 .eq('user_id', authUser.id)
-                .maybeSingle()
+                .maybeSingle(),
+            getTenantCredentials(selectedClientId || undefined)
         ]);
+
+        if (tenantCreds) {
+            setCredentials(tenantCreds);
+        }
 
 
         const profile = profileRes.data;
@@ -227,6 +243,16 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
         if (suitesRes.data) setActiveSuites(suitesRes.data);
         if (featuresRes.data) setAllFeatures(featuresRes.data);
 
+        // Fetch Clients for Master
+        if (profile?.role === 'Master') {
+            const { data: clients } = await supabaseClient
+                .from('users')
+                .select('id, name, email, role')
+                .in('role', ['Sócio-Administrador', 'Sócio Administrador'])
+                .order('name');
+            if (clients) setAllClients(clients);
+        }
+
         if (planPermsRes?.data) {
             const suiteMap = new Map<string, any>();
             planPermsRes.data.forEach((p: any) => {
@@ -252,7 +278,7 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
 
         setLoading(false);
         hasFetchedInitialRef.current = true;
-    }, [supabaseClient, router]); // Removed locale to prevent refetching on language change
+    }, [supabaseClient, router, selectedClientId]); // Added selectedClientId to persist context on re-fetch
 
     // EFFECT 1: Initial Data Fetch
     useEffect(() => {
@@ -375,6 +401,15 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
         router.push(target);
     };
 
+    const handleSelectClient = async (clientId: string) => {
+        setSelectedClientId(clientId);
+        // Instant refresh of credentials for the target client
+        const newCreds = await getTenantCredentials(clientId);
+        if (newCreds) {
+            setCredentials(newCreds);
+        }
+    };
+
     if (loading) {
         return (
             <div className="h-screen w-full flex items-center justify-center bg-white dark:bg-slate-950 transition-colors duration-500">
@@ -386,24 +421,22 @@ export default function VeritumLayout({ children }: { children: React.ReactNode 
         );
     }
 
-    const creds: Credentials = {
-        supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-        supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
-        geminiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY || '',
-    };
 
     return (
         <ModuleContext.Provider value={{
             user,
             preferences,
             planPermissions,
-            credentials: creds,
+            credentials,
             onUpdateUser: setUser,
             onUpdatePrefs: (p) => setPreferences(p),
             onModuleChange: handleModuleChange,
             activeSuites,
             groupPermissions,
-            allFeatures
+            allFeatures,
+            onSelectClient: handleSelectClient,
+            allClients,
+            selectedClientId
         }}>
             <DashboardLayout
                 user={user!}

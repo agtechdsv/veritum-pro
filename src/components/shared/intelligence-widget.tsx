@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { createDynamicClient } from '@/utils/supabase/client';
 import { Credentials, GoldenAlert, Clipping, KnowledgeArticle } from '@/types';
 import {
     Zap, Sparkles, Brain, ChevronDown, ChevronUp,
@@ -22,7 +22,7 @@ const IntelligenceWidget: React.FC<Props> = ({ credentials, limit = 3, moduleCon
     // Defensive check: If no credentials provided (BYODB not set), don't crash
     if (!credentials?.supabaseUrl) return null;
 
-    const supabase = createClient(credentials.supabaseUrl, credentials.supabaseAnonKey);
+    const supabase = createDynamicClient(credentials.supabaseUrl, credentials.supabaseAnonKey);
 
     useEffect(() => {
         fetchTopAlerts();

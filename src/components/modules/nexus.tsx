@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Credentials, Lawsuit, Task, User, Person, TeamMember } from '@/types';
 import { Plus, MoreHorizontal, Calendar, Scale, Search, Filter, ArrowRight, AlertTriangle, CheckCircle2, Clock, MapPin, Shield, User as UserIcon, Users, Save, XCircle, Pencil, ChevronRight, ChevronDown, Zap, Lock as LockIcon } from 'lucide-react';
-import { createClient } from '@supabase/supabase-js';
+import { createDynamicClient } from '@/utils/supabase/client';
 import IntelligenceWidget from '../shared/intelligence-widget';
 import { useTranslation } from '@/contexts/language-context';
 import PersonManagement from './person-management';
@@ -36,13 +36,18 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     const [defendantSearch, setDefendantSearch] = useState('');
     const [isAuthorDropdownOpen, setIsAuthorDropdownOpen] = useState(false);
     const [isDefendantDropdownOpen, setIsDefendantDropdownOpen] = useState(false);
-
-    const { preferences } = useModule();
+    const { preferences, onSelectClient, allClients, selectedClientId, credentials: contextCreds } = useModule();
 
     // Master Selection States
     const isMaster = user.role === 'Master';
-    const [selectedUserId, setSelectedUserId] = useState<string>(isMaster ? '' : user.id);
-    const [allUsers, setAllUsers] = useState<any[]>([]);
+    const [selectedUserId, setSelectedUserId] = useState<string>(selectedClientId || (isMaster ? '' : user.id));
+    
+    // Sync with global selection
+    useEffect(() => {
+        if (selectedClientId && selectedClientId !== selectedUserId) {
+            setSelectedUserId(selectedClientId);
+        }
+    }, [selectedClientId]);
 
     // Cascading & Searchable States
     const [cities, setCities] = useState<string[]>([]);
@@ -50,27 +55,16 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     const [chambers, setChambers] = useState<string[]>([]);
     const [isLoadingChambers, setIsLoadingChambers] = useState(false);
 
-    const supabase = createClient(credentials.supabaseUrl, credentials.supabaseAnonKey);
-
-    useEffect(() => {
-        if (isMaster) {
-            fetchClients();
-        }
-    }, [isMaster]);
+    const supabase = React.useMemo(() => 
+        createDynamicClient(contextCreds.supabaseUrl, contextCreds.supabaseAnonKey),
+        [contextCreds.supabaseUrl, contextCreds.supabaseAnonKey]
+    );
 
     useEffect(() => {
         fetchAll();
     }, [selectedUserId]); // Fetch only when the selected context (client) changes
 
-    const fetchClients = async () => {
-        const supMaster = createMasterClient();
-        const { data } = await supMaster
-            .from('users')
-            .select('id, name, email, role')
-            .in('role', ['Sócio-Administrador', 'Sócio Administrador'])
-            .order('name');
-        if (data) setAllUsers(data);
-    };
+
 
     const fetchAll = async () => {
         if (isMaster && !selectedUserId) {
@@ -422,11 +416,15 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                 <select
                                     className="bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-6 py-3 text-xs font-black tracking-widest text-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-600 outline-none transition-all cursor-pointer min-w-[260px] appearance-none pr-10"
                                     value={selectedUserId}
-                                    onChange={e => setSelectedUserId(e.target.value)}
+                                    onChange={e => {
+                                        const newId = e.target.value;
+                                        setSelectedUserId(newId);
+                                        if (isMaster) onSelectClient(newId);
+                                    }}
                                 >
                                     <option value="">--- {t('management.users.masterFilter.selectClient') || 'Selecione um Cliente'} ---</option>
                                     <optgroup label={t('management.users.masterFilter.clients')?.toUpperCase() || 'CLIENTES (SÓCIOS ADM)'}>
-                                        {allUsers.filter(u => u.id !== user.id).map(c => {
+                                        {allClients.filter(u => u.id !== user.id).map(c => {
                                             const rawName = typeof c.name === 'object' ? ((c.name as any).pt || (c.name as any).en || '') : (c.name || '');
                                             const formattedName = rawName.toLowerCase().split(' ').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
                                             const formattedEmail = (c.email || '').toLowerCase();

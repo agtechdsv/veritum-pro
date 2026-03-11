@@ -282,6 +282,7 @@ export interface Person {
     legal_data?: {
         marital_status?: string;
         profession?: string;
+        nationality?: string;
         history?: string;
     };
     address?: {

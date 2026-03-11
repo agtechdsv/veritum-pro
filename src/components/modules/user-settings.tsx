@@ -15,6 +15,7 @@ import { getFeatures, getPlanPermissions } from '@/app/actions/plan-actions';
 import { CheckoutModal } from './checkout-modal';
 import { Filter, ChevronDown, Sparkles } from 'lucide-react';
 import ClubeVIP from './clube-vip';
+import { useModule } from '@/app/veritumpro/layout';
 
 interface Props {
     user: User;
@@ -26,6 +27,7 @@ interface Props {
 
 const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initialTab, onUpdateUser }) => {
     const { t, locale } = useTranslation();
+    const { onSelectClient } = useModule();
     const isSubscriptionAdmin = user.role === 'Master' ||
         ['Sócio-Administrador', 'Sócio Administrador', 'Administrador'].includes(user.role);
 
@@ -216,7 +218,11 @@ const UserSettings: React.FC<Props> = ({ user, preferences, onUpdatePrefs, initi
                             <select
                                 className="bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-6 py-3 text-xs font-black tracking-widest text-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-600 outline-none transition-all cursor-pointer min-w-[260px] appearance-none pr-10"
                                 value={selectedUserId}
-                                onChange={e => setSelectedUserId(e.target.value)}
+                                onChange={e => {
+                                    const newId = e.target.value;
+                                    setSelectedUserId(newId);
+                                    if (isMaster) onSelectClient(newId);
+                                }}
                             >
                                 <option value="">--- {t('management.users.masterFilter.selectClient')} ---</option>
                                 <option value={user.id}>{t('management.users.masterFilter.self')}</option>

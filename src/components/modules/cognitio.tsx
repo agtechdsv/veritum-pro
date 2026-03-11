@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { createClient } from '@supabase/supabase-js';
+import { createMasterClient } from '@/lib/supabase/master';
 import IntelligenceWidget from '../shared/intelligence-widget';
 import { useTranslation } from '@/contexts/language-context';
 
@@ -34,6 +35,7 @@ const Cognitio: React.FC<{ credentials: Credentials; user: User; permissions: an
     const [editingArticle, setEditingArticle] = useState<Partial<KnowledgeArticle> | null>(null);
 
     const supabase = createClient(credentials.supabaseUrl, credentials.supabaseAnonKey);
+    const masterSupabase = createMasterClient();
     const gemini = new GeminiService(credentials.geminiKey);
 
     useEffect(() => {
@@ -51,12 +53,26 @@ const Cognitio: React.FC<{ credentials: Credentials; user: User; permissions: an
                 conditions.push(`parent_user_id.eq.${user.parent_user_id}`);
             }
 
+            const safeQuery = async (query: any) => {
+                try {
+                    const res = await query;
+                    return res;
+                } catch (err) {
+                    return { data: [], error: err as any };
+                }
+            };
+
             const [artRes, outRes, teamRes, lawRes] = await Promise.all([
-                supabase.from('knowledge_articles').select('*').order('created_at', { ascending: false }),
-                supabase.from('historical_outcomes').select('*'),
-                supabase.from('users').select('*').or(conditions.join(',')).eq('active', true),
-                supabase.from('lawsuits').select('*')
+                safeQuery(supabase.from('knowledge_articles').select('*').order('created_at', { ascending: false })),
+                safeQuery(supabase.from('historical_outcomes').select('*')),
+                safeQuery(supabase.from('team_members').select('*')),
+                safeQuery(supabase.from('lawsuits').select('*'))
             ]);
+
+            if (artRes.error && artRes.error.code !== 'PGRST116') console.warn('Articles error:', artRes.error);
+            if (outRes.error && outRes.error.code !== 'PGRST116') console.warn('Outcomes error:', outRes.error);
+            if (lawRes.error && lawRes.error.code !== 'PGRST116') console.warn('Lawsuits error:', lawRes.error);
+
             setArticles(artRes.data || []);
             setOutcomes(outRes.data || []);
             setTeam(teamRes.data || []);

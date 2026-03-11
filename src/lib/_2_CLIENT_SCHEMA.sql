@@ -207,8 +207,10 @@ CREATE TABLE public.document_templates (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title TEXT NOT NULL,
   category TEXT,
-  base_prompt TEXT NOT NULL,
+  content TEXT NOT NULL,      -- Modelo em HTML/Markdown
+  base_prompt TEXT,           -- Instruções para IA (Caminho C)
   created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
   deleted_at TIMESTAMPTZ
 );
 
@@ -306,6 +308,7 @@ CREATE TRIGGER tr_kb_upd BEFORE UPDATE ON public.knowledge_articles FOR EACH ROW
 CREATE TRIGGER tr_golden_upd BEFORE UPDATE ON public.golden_alerts FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 CREATE TRIGGER tr_legal_docs_upd BEFORE UPDATE ON public.legal_documents FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 CREATE TRIGGER tr_chats_upd BEFORE UPDATE ON public.chats FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+CREATE TRIGGER tr_doc_templates_upd BEFORE UPDATE ON public.document_templates FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
 -- Habilitar RLS em tudo
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;

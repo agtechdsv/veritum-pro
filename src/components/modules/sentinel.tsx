@@ -5,11 +5,13 @@ import {
     Search, Plus, AlertCircle, TrendingUp, TrendingDown, Minus,
     Shield, Activity, Bell, Filter, MoreHorizontal, ExternalLink,
     CheckCircle2, XCircle, Clock, Database, Brain, Sparkles, Pencil,
-    ToggleLeft, ToggleRight, Trash2, Link as LinkIcon, ArrowRight
+    ToggleLeft, ToggleRight, Trash2, Link as LinkIcon, ArrowRight, AlertTriangle
 } from 'lucide-react';
-import { createClient } from '@supabase/supabase-js';
+import { createDynamicClient } from '@/utils/supabase/client';
 import { GeminiService } from '@/services/gemini';
 import { useTranslation } from '@/contexts/language-context';
+import { useModule } from '@/app/veritumpro/layout';
+import { ChevronDown } from 'lucide-react';
 
 const Sentinel: React.FC<{ credentials: Credentials; user: User; permissions: any }> = ({ credentials, user, permissions }) => {
     const { t } = useTranslation();
@@ -19,6 +21,14 @@ const Sentinel: React.FC<{ credentials: Credentials; user: User; permissions: an
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
 
+    const { preferences, allClients, selectedClientId, onSelectClient, credentials: contextCreds, user: contextUser } = useModule();
+    
+    // Explicitly check role without OR to avoid confusion between current context and original prop
+    const currentUserRole = contextUser?.role || user.role;
+    const isMaster = currentUserRole?.toLowerCase() === 'master';
+    
+    const [localSelectedUserId, setLocalSelectedUserId] = useState<string>(selectedClientId || (isMaster ? '' : user.id));
+
     // UI State
     const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
     const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
@@ -27,13 +37,33 @@ const Sentinel: React.FC<{ credentials: Credentials; user: User; permissions: an
     const [analyzingId, setAnalyzingId] = useState<string | null>(null);
     const [matchingId, setMatchingId] = useState<string | null>(null);
 
-    const supabase = createClient(credentials.supabaseUrl, credentials.supabaseAnonKey);
+    // Sync with global selection
+    useEffect(() => {
+        if (selectedClientId && selectedClientId !== localSelectedUserId) {
+            setLocalSelectedUserId(selectedClientId);
+        }
+    }, [selectedClientId]);
+
+
+    // Stabilize Supabase instance
+    const supabase = React.useMemo(() => 
+        createDynamicClient(contextCreds.supabaseUrl, contextCreds.supabaseAnonKey),
+        [contextCreds.supabaseUrl, contextCreds.supabaseAnonKey]
+    );
 
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [supabase]);
 
     const fetchData = async () => {
+        if (isMaster && !selectedClientId) {
+            setAlerts([]);
+            setClippings([]);
+            setLawsuits([]);
+            setLoading(false);
+            return;
+        }
+
         setLoading(true);
         try {
             const safeQuery = async (query: any) => {
@@ -87,7 +117,7 @@ const Sentinel: React.FC<{ credentials: Credentials; user: User; permissions: an
     const handleRunAI = async (clipping: Clipping) => {
         setAnalyzingId(clipping.id);
         try {
-            const gemini = new GeminiService(credentials.geminiKey);
+            const gemini = new GeminiService(contextCreds.geminiKey);
             const result = await gemini.analyzeSentiment(clipping.content);
 
             if (result.sentiment) {
@@ -176,15 +206,48 @@ const Sentinel: React.FC<{ credentials: Credentials; user: User; permissions: an
         <div className="flex flex-col h-full space-y-6 high-density">
             {/* Header */}
             <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <div className="bg-rose-600 text-white p-3 rounded-2xl shadow-lg shadow-rose-200 dark:shadow-rose-900/40">
-                        <Shield size={24} />
+                <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-4">
+                        <div className="bg-rose-600 text-white p-3 rounded-2xl shadow-lg shadow-rose-200 dark:shadow-rose-900/40">
+                            <Shield size={24} />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-bold text-slate-800 dark:text-white transition-colors text-gradient">SENTINEL PRO</h1>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">{t('modules.sentinel.subtitle')}</p>
+                        </div>
                     </div>
-                    <div>
-                        <h1 className="text-2xl font-bold text-slate-800 dark:text-white transition-colors text-gradient">SENTINEL PRO</h1>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">{t('modules.sentinel.subtitle')}</p>
-                    </div>
+
+                    {isMaster && (
+                        <div className="flex items-center gap-4 bg-amber-50 dark:bg-slate-900 border-2 border-amber-200 p-2 pl-6 rounded-full shadow-lg shrink-0">
+                            <div className="flex flex-col items-end">
+                                <span className="text-[10px] font-black text-amber-600 uppercase tracking-widest">Master Context</span>
+                                <span className="text-[10px] font-bold text-slate-500 uppercase">Selecione o Escritório</span>
+                            </div>
+                            <div className="relative">
+                                <select
+                                    className="bg-white dark:bg-slate-800 rounded-xl px-4 py-3 text-xs font-black min-w-[280px] appearance-none"
+                                    value={localSelectedUserId}
+                                    onChange={e => {
+                                        const newId = e.target.value;
+                                        setLocalSelectedUserId(newId);
+                                        onSelectClient(newId);
+                                    }}
+                                >
+                                    <option value="">--- Selecione um Escritório ---</option>
+                                    {allClients.map(c => (
+                                        <option key={c.id} value={c.id}>🏢 {String(c.name || '').toUpperCase()}</option>
+                                    ))}
+                                </select>
+                                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
+                            </div>
+
+                            <div className={`px-4 py-2 rounded-full border text-[10px] font-black ${contextCreds.supabaseUrl.includes('rmcjxcxmzsinkjnolfek') ? 'bg-amber-100 border-amber-300 text-amber-700' : 'bg-emerald-100 border-emerald-300 text-emerald-700'}`}>
+                                {contextCreds.supabaseUrl.includes('rmcjxcxmzsinkjnolfek') ? 'MASTER DB' : 'TENANT DB'}
+                            </div>
+                        </div>
+                    )}
                 </div>
+
                 <button
                     onClick={() => { setEditingAlert({ is_active: true, alert_type: 'Keyword' }); setIsAlertModalOpen(true); }}
                     className="bg-rose-600 text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-rose-700 transition-all shadow-lg shadow-rose-600/20 active:scale-95"
@@ -192,6 +255,20 @@ const Sentinel: React.FC<{ credentials: Credentials; user: User; permissions: an
                     <Plus size={18} /> {t('modules.sentinel.newMonitor')}
                 </button>
             </div>
+
+            {!isMaster && contextCreds.supabaseUrl.includes('rmcjxcxmzsinkjnolfek') && (
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4 rounded-2xl flex items-start gap-3">
+                    <AlertTriangle className="text-red-500 shrink-0 mt-0.5" size={20} />
+                    <div>
+                        <h4 className="text-red-800 dark:text-red-400 font-bold text-sm">Alerta de Conexão BYODB!</h4>
+                        <p className="text-red-600 dark:text-red-300 text-xs mt-1 leading-relaxed">
+                            O sistema não encontrou as credenciais do seu banco de dados exclusivo (Tenant DB) na tabela <code className="font-mono bg-red-100 dark:bg-red-900 px-1 py-0.5 rounded">tenant_configs</code>. Como medida de segurança, você foi reconectado ao Banco Master (que não possui as tabelas exclusivas), causando estes erros (404 Not Found).
+                            <br/><br/>
+                            <strong>Ação Necessária:</strong> Um usuário Master precisa registrar as chaves do seu banco na Dashboard (menu Master Hub &gt; BYODB / Clientes).
+                        </p>
+                    </div>
+                </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-sm">

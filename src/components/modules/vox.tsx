@@ -8,8 +8,9 @@ import {
     CheckCircle2, AlertCircle, FileText, Sparkles,
     ChevronLeft, Scale, Info, Archive, Trash2, XCircle
 } from 'lucide-react';
-import { createClient } from '@supabase/supabase-js';
+import { createDynamicClient } from '@/utils/supabase/client';
 import { useTranslation } from '@/contexts/language-context';
+import { useModule } from '@/app/veritumpro/layout';
 
 const Vox: React.FC<{ credentials: Credentials; user: User; permissions: any }> = ({ credentials, user, permissions }) => {
     // Data State
@@ -25,9 +26,15 @@ const Vox: React.FC<{ credentials: Credentials; user: User; permissions: any }> 
     const [isTranslating, setIsTranslating] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const { t, locale } = useTranslation();
+    const { credentials: contextCreds, selectedClientId, user: contextUser } = useModule();
+    const currentUserRole = contextUser?.role || user.role;
+    const isMaster = currentUserRole?.toLowerCase() === 'master';
 
-    const supabase = createClient(credentials.supabaseUrl, credentials.supabaseAnonKey);
-    const gemini = new GeminiService(credentials.geminiKey);
+    const supabase = React.useMemo(() => 
+        createDynamicClient(contextCreds.supabaseUrl, contextCreds.supabaseAnonKey),
+        [contextCreds.supabaseUrl, contextCreds.supabaseAnonKey]
+    );
+    const gemini = new GeminiService(contextCreds.geminiKey);
     const scrollRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -47,7 +54,7 @@ const Vox: React.FC<{ credentials: Credentials; user: User; permissions: any }> 
         return () => {
             supabase.removeChannel(subscription);
         };
-    }, [activeChat]);
+    }, [activeChat, supabase]);
 
     useEffect(() => {
         if (scrollRef.current) {
@@ -56,13 +63,34 @@ const Vox: React.FC<{ credentials: Credentials; user: User; permissions: any }> 
     }, [messages]);
 
     const fetchData = async () => {
+        if (isMaster && !selectedClientId) {
+            setChats([]);
+            setPersons([]);
+            setLawsuits([]);
+            setLoading(false);
+            return;
+        }
         setLoading(true);
         try {
+            const safeQuery = async (query: any) => {
+                try {
+                    const res = await query;
+                    return res;
+                } catch (err) {
+                    return { data: [], error: err as any };
+                }
+            };
+
             const [chatRes, personRes, lawRes] = await Promise.all([
-                supabase.from('chats').select('*').order('updated_at', { ascending: false }),
-                supabase.from('persons').select('*'),
-                supabase.from('lawsuits').select('*')
+                safeQuery(supabase.from('chats').select('*').order('updated_at', { ascending: false })),
+                safeQuery(supabase.from('persons').select('*')),
+                safeQuery(supabase.from('lawsuits').select('*'))
             ]);
+
+            if (chatRes.error && chatRes.error.code !== 'PGRST116') console.warn('Chats fetch error:', chatRes.error);
+            if (personRes.error && personRes.error.code !== 'PGRST116') console.warn('Persons fetch error:', personRes.error);
+            if (lawRes.error && lawRes.error.code !== 'PGRST116') console.warn('Lawsuits fetch error:', lawRes.error);
+
             setChats(chatRes.data || []);
             setPersons(personRes.data || []);
             setLawsuits(lawRes.data || []);
