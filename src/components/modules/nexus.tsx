@@ -35,6 +35,11 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     const [searchTerm, setSearchTerm] = useState('');
     const [activeLawsuitTab, setActiveLawsuitTab] = useState<'basic' | 'advanced'>('basic');
     const [activeTaskTab, setActiveTaskTab] = useState<'basic' | 'advanced'>('basic');
+    
+    // Filters
+    const [filterSearchTerm, setFilterSearchTerm] = useState('');
+    const [filterResponsibleId, setFilterResponsibleId] = useState('');
+    const [filterLawsuitId, setFilterLawsuitId] = useState('');
 
     // Searchable Select States
     const [authorSearch, setAuthorSearch] = useState('');
@@ -428,6 +433,67 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     TRIBUNAIS['Eleitoral'] = Object.fromEntries(UFS.map(uf => [uf, [`TRE-${uf}`]]));
     TRIBUNAIS['Militar'] = { 'default': ['STM - Superior Tribunal Militar', 'TJM (Estadual)'] };
 
+    const filteredTasks = tasks.filter(t => {
+        const matchSearch = filterSearchTerm ? t.title.toLowerCase().includes(filterSearchTerm.toLowerCase()) : true;
+        const matchResponsible = filterResponsibleId ? t.responsible_id === filterResponsibleId : true;
+        const matchLawsuit = filterLawsuitId ? t.lawsuit_id === filterLawsuitId : true;
+        return matchSearch && matchResponsible && matchLawsuit;
+    });
+
+    const filteredEvents = events.filter(e => {
+        const matchSearch = filterSearchTerm ? e.title.toLowerCase().includes(filterSearchTerm.toLowerCase()) || e.event_type?.toLowerCase().includes(filterSearchTerm.toLowerCase()) : true;
+        const matchResponsible = filterResponsibleId ? e.responsible_id === filterResponsibleId : true;
+        const matchLawsuit = filterLawsuitId ? e.lawsuit_id === filterLawsuitId : true;
+        return matchSearch && matchResponsible && matchLawsuit;
+    });
+
+    const renderFilterBar = () => (
+        <div className="flex gap-4 mb-6 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in slide-in-from-top-2">
+            <div className="flex-1">
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                    <input
+                        type="text"
+                        placeholder="Buscar por título..."
+                        value={filterSearchTerm}
+                        onChange={e => setFilterSearchTerm(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
+                    />
+                </div>
+            </div>
+            <div className="w-48">
+                <select 
+                    value={filterResponsibleId} 
+                    onChange={e => setFilterResponsibleId(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
+                >
+                    <option value="">👤 Todos os Membros</option>
+                    {team.map(t => <option key={t.id} value={t.id}>{t.full_name}</option>)}
+                </select>
+            </div>
+            <div className="w-64">
+                <select 
+                    value={filterLawsuitId} 
+                    onChange={e => setFilterLawsuitId(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
+                >
+                    <option value="">⚖️ Todos os Processos</option>
+                    {lawsuits.map(law => <option key={law.id} value={law.id}>{law.cnj_number || law.case_title}</option>)}
+                </select>
+            </div>
+            {(filterSearchTerm || filterResponsibleId || filterLawsuitId) && (
+                <button
+                    onClick={() => { setFilterSearchTerm(''); setFilterResponsibleId(''); setFilterLawsuitId(''); }}
+                    className="px-4 py-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all flex items-center gap-2 border border-transparent hover:border-rose-200 dark:hover:border-rose-800"
+                    title="Limpar Filtros"
+                >
+                    <Filter size={16} className="relative z-10" />
+                    <XCircle size={14} className="relative z-10 -ml-1" />
+                </button>
+            )}
+        </div>
+    );
+
     return (
         <div className="flex flex-col h-full space-y-6 high-density">
             {/* Top Bar / Header */}
@@ -696,6 +762,10 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                             </div>
                             <IntelligenceWidget credentials={credentials} moduleContext="Operacional / Nexus" limit={3} />
                         </div>
+                        
+                        <div className="px-8 mt-4">
+                            {renderFilterBar()}
+                        </div>
 
                         {/* KPIs Top Area */}
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-8 animate-in fade-in slide-in-from-top-4 duration-500">
@@ -709,14 +779,14 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                             <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
                                 <div>
                                     <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest">{t('modules.nexus.metrics.deadlines')}</p>
-                                    <p className="text-2xl font-black text-rose-600">{tasks.filter(t => t.status !== 'Concluído' && (new Date(t.due_date).getTime() - new Date().getTime()) < 86400000).length}</p>
+                                    <p className="text-2xl font-black text-rose-600">{filteredTasks.filter(t => t.status !== 'Concluído' && (new Date(t.due_date).getTime() - new Date().getTime()) < 86400000).length}</p>
                                 </div>
                                 <div className="p-2 bg-rose-50 dark:bg-rose-900/20 text-rose-600 rounded-lg"><Clock size={20} /></div>
                             </div>
                             <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
                                 <div>
                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.metrics.pending')}</p>
-                                    <p className="text-2xl font-black text-slate-800 dark:text-white">{tasks.filter(t => t.status !== 'Concluído').length}</p>
+                                    <p className="text-2xl font-black text-slate-800 dark:text-white">{filteredTasks.filter(t => t.status !== 'Concluído').length}</p>
                                 </div>
                                 <div className="p-2 bg-slate-50 dark:bg-slate-800 text-slate-400 rounded-lg"><CheckCircle2 size={20} /></div>
                             </div>
@@ -724,7 +794,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                 <div>
                                     <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">{t('modules.nexus.metrics.completion')}</p>
                                     <p className="text-2xl font-black text-emerald-600">
-                                        {tasks.length > 0 ? Math.round((tasks.filter(t => t.status === 'Concluído').length / tasks.length) * 100) : 0}%
+                                        {filteredTasks.length > 0 ? Math.round((filteredTasks.filter(t => t.status === 'Concluído').length / filteredTasks.length) * 100) : 0}%
                                     </p>
                                 </div>
                                 <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-lg"><TrendingUp size={20} /></div>
@@ -749,7 +819,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                     }`} />
                                                 {getColumnTranslation(column)}
                                                 <span className="ml-2 px-2 py-0.5 bg-white dark:bg-slate-800 rounded-lg text-[10px] border border-slate-200 dark:border-slate-800 font-bold">
-                                                    {tasks.filter(t => t.status === column).length}
+                                                    {filteredTasks.filter(t => t.status === column).length}
                                                 </span>
                                             </h3>
                                         </div>
@@ -757,7 +827,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         <div className="flex-1 space-y-4 overflow-y-auto no-scrollbar pb-6 rounded-xl">
                                             {loading ? (
                                                 <div className="py-8 text-center text-slate-400 text-xs font-bold animate-pulse">{t('modules.nexus.empty.syncing')}</div>
-                                            ) : tasks.filter(t => t.status === column).map((task) => {
+                                            ) : filteredTasks.filter(t => t.status === column).map((task) => {
                                                 const law = lawsuits.find(l => l.id === task.lawsuit_id);
                                                 const resp = team.find(t_ => t_.id === task.responsible_id);
                                                 return (
@@ -824,11 +894,11 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
-                                                {tasks.length === 0 ? (
+                                                {filteredTasks.length === 0 ? (
                                                     <tr>
                                                         <td colSpan={6} className="px-6 py-20 text-center text-slate-500 font-bold text-sm">Nenhuma tarefa encontrada.</td>
                                                     </tr>
-                                                ) : tasks.map((task) => {
+                                                ) : filteredTasks.map((task) => {
                                                     const resp = team.find(t_ => t_.id === task.responsible_id);
                                                     return (
                                                         <tr key={task.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors group">
@@ -907,6 +977,10 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                     </button>
                                 </div>
                             </div>
+                            
+                            <div className="mt-4">
+                                {renderFilterBar()}
+                            </div>
                         </div>
 
                         {eventView === 'list' ? (
@@ -923,11 +997,11 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-50 dark:divide-slate-800 overflow-y-auto">
-                                            {events.length === 0 ? (
+                                            {filteredEvents.length === 0 ? (
                                                 <tr>
                                                     <td colSpan={5} className="px-6 py-20 text-center text-slate-500 font-bold text-sm">Nenhum evento encontrado.</td>
                                                 </tr>
-                                            ) : events.map((event) => {
+                                            ) : filteredEvents.sort((a,b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime()).map((event) => {
                                                 const resp = team.find(t_ => t_.id === event.responsible_id);
                                                 const startDate = new Date(event.start_date);
                                                 return (
@@ -1017,14 +1091,23 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                             return days.map((day, idx) => {
                                                 if (!day) return <div key={`empty-${idx}`} className="min-h-[140px] rounded-2xl bg-slate-50/50 dark:bg-slate-800/10 border border-transparent" />;
                                                 
-                                                const dayEvents = events.filter(e => {
+                                                const dayEvents = filteredEvents.filter(e => {
                                                 const eDate = new Date(e.start_date);
                                                 return eDate.getDate() === day.getDate() && eDate.getMonth() === day.getMonth() && eDate.getFullYear() === day.getFullYear();
                                             });
                                             const isToday = day.getDate() === today.getDate() && day.getMonth() === today.getMonth() && day.getFullYear() === today.getFullYear();
 
                                             return (
-                                                <div key={`day-${idx}`} className={`min-h-[140px] rounded-3xl border transition-all p-3 flex flex-col gap-2 relative ${isToday ? 'bg-indigo-50/50 dark:bg-indigo-900/10 border-indigo-200 dark:border-indigo-800 shadow-sm' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-indigo-200 dark:hover:border-indigo-800'}`}>
+                                                <div 
+                                                    key={`day-${idx}`} 
+                                                    className={`min-h-[140px] rounded-3xl border transition-all p-3 flex flex-col gap-2 relative cursor-pointer ${isToday ? 'bg-indigo-50/50 dark:bg-indigo-900/10 border-indigo-200 dark:border-indigo-800 shadow-sm' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-indigo-200 dark:hover:border-indigo-800'}`}
+                                                    onClick={() => {
+                                                        const eventDate = new Date(day);
+                                                        eventDate.setHours(9, 0, 0, 0); // Default to 09:00 AM
+                                                        setEditingEvent({ start_date: eventDate.toISOString() });
+                                                        setIsEventModalOpen(true);
+                                                    }}
+                                                >
                                                     <div className="flex justify-between items-center px-1">
                                                         <span className={`text-sm font-black ${isToday ? 'text-indigo-600 dark:text-indigo-400 scale-110 origin-left' : 'text-slate-400 dark:text-slate-500'}`}>
                                                             {day.getDate()}
