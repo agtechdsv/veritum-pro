@@ -26,9 +26,10 @@ interface Props {
     onRefresh?: () => void;
     onNewLawsuit?: (personId: string) => void;
     onNewAsset?: (personId: string) => void;
+    onNewCorporateEntity?: (person: Person) => void;
 }
 
-const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUser, isEmbedded, externalPersons, externalLoading, masterSelectedUserId, onRefresh, onNewLawsuit, onNewAsset }) => {
+const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUser, isEmbedded, externalPersons, externalLoading, masterSelectedUserId, onRefresh, onNewLawsuit, onNewAsset, onNewCorporateEntity }) => {
     const { t } = useTranslation();
     const [searchTerm, setSearchTerm] = useState('');
     const [localPersons, setLocalPersons] = useState<Person[]>([]);
@@ -852,6 +853,15 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                                         <Zap size={18} />
                                     </button>
                                 )}
+                                {onNewCorporateEntity && (
+                                    <button
+                                        onClick={() => onNewCorporateEntity(person)}
+                                        className="p-2.5 bg-amber-50 dark:bg-amber-900/20 text-amber-600 rounded-xl hover:bg-amber-600 hover:text-white transition-all shadow-sm cursor-pointer"
+                                        title="Registrar como Entidade Societária"
+                                    >
+                                        <Briefcase size={18} />
+                                    </button>
+                                )}
                                 <button
                                     onClick={() => onNewLawsuit?.(person.id)}
                                     className="p-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-indigo-600/20 cursor-pointer"
@@ -920,6 +930,15 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                                                         title="Novo Ativo/Garantia"
                                                     >
                                                         <Zap size={16} />
+                                                    </button>
+                                                )}
+                                                {onNewCorporateEntity && (
+                                                    <button
+                                                        onClick={() => onNewCorporateEntity(person)}
+                                                        className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-all"
+                                                        title="Nova Entidade Societária"
+                                                    >
+                                                        <Briefcase size={16} />
                                                     </button>
                                                 )}
                                                 <button

@@ -389,45 +389,12 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                 is_active: unifiedFormData.is_active
             };
 
-            // 1. Payload para Equipe (Banco do Cliente - CRM)
-            // Buscar ID do integrante se ele já existir (evita duplicidade ao salvar vindo da lista de Usuários)
-            let finalMemberId = editingMember?.id;
-            if (!finalMemberId) {
-                const foundMember = teamMembers.find(m => m.email?.toLowerCase() === commonData.email.toLowerCase());
-                if (foundMember) finalMemberId = foundMember.id;
-            }
-
-            const teamPayload = {
-                id: finalMemberId,
-                full_name: commonData.name,
-                email: commonData.email,
-                role: commonData.role,
-                phone: commonData.phone,
-                cpf: commonData.cpf_cnpj,
-                is_active: commonData.is_active,
-                specialty: unifiedFormData.specialty,
-                oab_number: unifiedFormData.oab_number,
-                oab_uf: unifiedFormData.oab_uf,
-                city: unifiedFormData.city,
-                state: unifiedFormData.state,
-                pix_key: unifiedFormData.pix_key,
-                notes: unifiedFormData.notes
-            };
-
-            const memberResult = await saveTeamMember(
-                teamPayload,
-                currentUser.role === 'Master' ? selectedClientId : undefined
-            );
-
-            if (!memberResult.success) throw new Error('Erro ao salvar integrante na equipe');
-
-            // 2. Orquestração com o Banco Master (Usuário do Sistema)
+            // 1. Orquestração com o Banco Master (Usuário do Sistema)
             const existingUser = users.find(u => u.email && u.email.toLowerCase() === commonData.email.toLowerCase());
+            let masterUserId: string | undefined = existingUser?.id;
 
             if (unifiedFormData.isSystemUser) {
                 // Determinar o plan_id do "Pai" (Sócio Administrativo)
-                // Se for Master, pega do cliente selecionado. Se for Admin, pega do próprio currentUser.
-                // Fallback robusto: se não achar no currentUser, tenta achar na lista de usuários o registro do pai
                 const parentPlanId = currentUser.role === 'Master'
                     ? clients.find(c => c.id === selectedClientId)?.plan_id
                     : (currentUser.plan_id || users.find(u => u.id === currentUser.id)?.plan_id || users.find(u => u.id === currentUser.parent_user_id)?.plan_id);
@@ -447,9 +414,12 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
 
                 if (existingUser) {
                     await updateUserDirectly(existingUser.id, userPayload);
+                    masterUserId = existingUser.id;
                 } else {
                     if (!unifiedFormData.password) throw new Error('Senha é obrigatória para novos usuários');
-                    await createUserDirectly(userPayload, parentId);
+                    const createResult = await createUserDirectly(userPayload, parentId);
+                    if (!createResult.success) throw new Error(createResult.error || 'Erro ao salvar usuário no sistema');
+                    masterUserId = createResult.user?.id;
                 }
             } else if (existingUser && existingUser.active) {
                 // Se o acesso foi removido mas o usuário existe e está ativo, desativamos no Master
@@ -457,6 +427,50 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                     ...existingUser,
                     active: false
                 });
+            }
+
+            // 2. Payload para Equipe (Banco do Cliente - CRM)
+            // Buscar ID do integrante se ele já existir (evita duplicidade ao salvar vindo da lista de Usuários)
+            let finalMemberId = editingMember?.id;
+            if (!finalMemberId) {
+                const foundMember = teamMembers.find(m => m.email?.toLowerCase() === commonData.email.toLowerCase());
+                if (foundMember) finalMemberId = foundMember.id;
+            }
+
+            // Se for um NOVO membro de equipe E tivermos um masterUserId da criação no Master, herdamos esse ID!
+            if (!finalMemberId && masterUserId) {
+                finalMemberId = masterUserId;
+            }
+
+            const teamPayload = {
+                id: finalMemberId,
+                full_name: commonData.name,
+                email: commonData.email,
+                role: commonData.role,
+                phone: commonData.phone || undefined,
+                cpf: commonData.cpf_cnpj || undefined,
+                is_active: commonData.is_active,
+                specialty: unifiedFormData.specialty || undefined,
+                oab_number: unifiedFormData.oab_number || undefined,
+                oab_uf: unifiedFormData.oab_uf || undefined,
+                city: unifiedFormData.city || undefined,
+                state: unifiedFormData.state || undefined,
+                pix_key: unifiedFormData.pix_key || undefined,
+                notes: unifiedFormData.notes || undefined,
+                master_user_id: parentId || undefined
+            };
+
+            // Remove any undefined explicitly just to be 100% safe
+            const cleanTeamPayload = Object.fromEntries(Object.entries(teamPayload).filter(([_, v]) => v !== undefined));
+
+            const memberResult = await saveTeamMember(
+                cleanTeamPayload,
+                currentUser.role === 'Master' ? selectedClientId : undefined
+            );
+
+            if (!memberResult.success) {
+                console.error("[TeamMember Error Details]:", memberResult.error);
+                throw new Error(typeof memberResult.error === 'string' ? memberResult.error : 'Erro ao salvar integrante na equipe no banco do cliente');
             }
 
             toast.success('Integrante salvo com sucesso!');

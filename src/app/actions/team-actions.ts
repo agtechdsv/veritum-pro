@@ -101,7 +101,15 @@ export async function saveTeamMember(member: Partial<TeamMember>, targetUserId?:
         const repo = RepositoryFactory.getTeamRepository(credentials, preferences);
 
         let result;
+        
+        // Verifica se é uma edição real ou uma inserção com ID forçado (vindo da Master)
+        let isUpdate = false;
         if (member.id) {
+            const existing = await repo.getById(member.id);
+            if (existing) isUpdate = true;
+        }
+
+        if (isUpdate && member.id) {
             result = await repo.update(member.id, member);
         } else {
             // Tenta salvar com workspace_id, mas se falhar por coluna inexistente, tenta sem ela
@@ -109,7 +117,8 @@ export async function saveTeamMember(member: Partial<TeamMember>, targetUserId?:
                 // @ts-ignore
                 result = await repo.create({ ...member, workspace_id: preferences.user_id } as any);
             } catch (err: any) {
-                if (err.code === '42703') { // Column does not exist
+                // PostgREST return code for column not found is often PGRST204 instead of 42703
+                if (err.code === '42703' || err.code === 'PGRST204') {
                     // @ts-ignore
                     result = await repo.create(member);
                 } else {
@@ -121,8 +130,14 @@ export async function saveTeamMember(member: Partial<TeamMember>, targetUserId?:
         revalidatePath('/veritumpro/users');
         return { success: true, data: result };
     } catch (error: any) {
-        console.error('Server Action Error (saveTeamMember):', error.message);
-        return { success: false, error: error.message };
+        console.error('Server Action Error (saveTeamMember):', error);
+        
+        // Retorna o JSON completo do erro para depuração no Frontend
+        const errorDetail = error.message 
+            ? `${error.message} (Code: ${error.code || 'N/A'}, Details: ${error.details || 'N/A'})` 
+            : JSON.stringify(error);
+            
+        return { success: false, error: errorDetail };
     }
 }
 

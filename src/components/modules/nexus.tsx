@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { Credentials, Lawsuit, Task, CalendarEvent, User, Person, TeamMember, Asset } from '@/types';
-import { Plus, MoreHorizontal, Calendar, Scale, Search, Filter, ArrowRight, AlertTriangle, CheckCircle2, Clock, MapPin, Shield, User as UserIcon, Users, Save, XCircle, Pencil, ChevronRight, ChevronLeft, ChevronDown, Zap, Lock as LockIcon, Trash2, LayoutGrid, List } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Credentials, Lawsuit, Task, CalendarEvent, User, Person, TeamMember, Asset, CorporateEntity, Shareholder, CorporateDocument, TaxRegime, EntityStatus, EntityType } from '@/types';
+import { Plus, MoreHorizontal, Calendar, Scale, Search, Filter, ArrowRight, AlertTriangle, CheckCircle2, Clock, MapPin, Shield, User as UserIcon, Users, Save, XCircle, Pencil, ChevronRight, ChevronLeft, ChevronDown, Zap, Lock as LockIcon, Trash2, LayoutGrid, List, Building2, FileText, PieChart, Briefcase } from 'lucide-react';
 import { createDynamicClient } from '@/utils/supabase/client';
 import IntelligenceWidget from '../shared/intelligence-widget';
 import { useTranslation } from '@/contexts/language-context';
 import PersonManagement from './person-management';
 import { useModule } from '@/app/veritumpro/layout';
 import { listPersons } from '@/app/actions/crm-actions';
-import { listLawsuits, saveLawsuit, deleteLawsuit, listTasks, saveTask, deleteTask, listEvents, saveEvent, deleteEvent, listTeam, getCitiesByState, listAssets, saveAsset, deleteAsset } from '@/app/actions/nexus-actions';
+import { listLawsuits, saveLawsuit, deleteLawsuit, listTasks, saveTask, deleteTask, listEvents, saveEvent, deleteEvent, listTeam, getCitiesByState, listAssets, saveAsset, deleteAsset, listCorporateEntities, saveCorporateEntity, deleteCorporateEntity, listShareholders, saveShareholder, deleteShareholder, listCorporateDocuments, saveCorporateDocument, deleteCorporateDocument } from '@/app/actions/nexus-actions';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from '@/components/ui/toast';
 import { createMasterClient } from '@/lib/supabase/master';
@@ -154,6 +154,9 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     const [tasks, setTasks] = useState<Task[]>([]);
     const [events, setEvents] = useState<CalendarEvent[]>([]);
     const [assets, setAssets] = useState<Asset[]>([]);
+    const [corporateEntities, setCorporateEntities] = useState<CorporateEntity[]>([]);
+    const [shareholders, setShareholders] = useState<Shareholder[]>([]);
+    const [corporateDocuments, setCorporateDocuments] = useState<CorporateDocument[]>([]);
     const [team, setTeam] = useState<TeamMember[]>([]);
     const [persons, setPersons] = useState<Person[]>([]);
     const [loading, setLoading] = useState(true);
@@ -174,6 +177,22 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     const [activeTaskTab, setActiveTaskTab] = useState<'basic' | 'advanced'>('basic');
     const [processViewStyle, setProcessViewStyle] = useState<'grid' | 'list'>('grid');
     const [assetViewStyle, setAssetViewStyle] = useState<'grid' | 'list'>('grid');
+    const [corporateViewStyle, setCorporateViewStyle] = useState<'grid' | 'list'>('grid');
+    const [isEntityModalOpen, setIsEntityModalOpen] = useState(false);
+    const [editingEntity, setEditingEntity] = useState<Partial<CorporateEntity> | null>(null);
+    const [activeEntityTab, setActiveEntityTab] = useState<'basic' | 'qsa' | 'docs'>('basic');
+    const [corporateSearchTerm, setCorporateSearchTerm] = useState('');
+    const [isShareholderModalOpen, setIsShareholderModalOpen] = useState(false);
+    const [editingShareholder, setEditingShareholder] = useState<Partial<Shareholder> | null>(null);
+    const [isDocumentModalOpen, setIsDocumentModalOpen] = useState(false);
+    const [editingDocument, setEditingDocument] = useState<Partial<CorporateDocument> | null>(null);
+    const personForQSARef = useRef<Person | null>(null);
+
+    const filteredEntities = corporateEntities.filter(e => 
+        e.legal_name.toLowerCase().includes(corporateSearchTerm.toLowerCase()) ||
+        e.trading_name?.toLowerCase().includes(corporateSearchTerm.toLowerCase()) ||
+        e.cnpj?.includes(corporateSearchTerm)
+    );
 
     // Filters
     const [filterSearchTerm, setFilterSearchTerm] = useState('');
@@ -232,13 +251,14 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             const targetUserId = selectedUserId;
 
             // Centralized fetching for all nexus-related data
-            const [lawResult, taskResult, eventResult, personResult, teamResult, assetResult] = await Promise.all([
+            const [lawResult, taskResult, eventResult, personResult, teamResult, assetResult, corpResult] = await Promise.all([
                 listLawsuits('', targetUserId),
                 listTasks('', targetUserId),
                 listEvents('', targetUserId),
                 listPersons('', targetUserId),
                 listTeam(targetUserId),
-                listAssets(undefined, undefined, targetUserId)
+                listAssets(undefined, undefined, targetUserId),
+                listCorporateEntities('', targetUserId)
             ]);
 
             if (lawResult.data) setLawsuits(lawResult.data);
@@ -247,13 +267,15 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             if (personResult.data) setPersons(personResult.data);
             if (teamResult?.data) setTeam(teamResult.data);
             if (assetResult?.data) setAssets(assetResult.data);
+            if (corpResult?.data) setCorporateEntities(corpResult.data);
 
             const hasTableError = lawResult.error === 'TABLE_NOT_FOUND' ||
                 taskResult.error === 'TABLE_NOT_FOUND' ||
                 eventResult.error === 'TABLE_NOT_FOUND' ||
                 personResult.error === 'TABLE_NOT_FOUND' ||
                 teamResult?.error === 'TABLE_NOT_FOUND' ||
-                assetResult?.error === 'TABLE_NOT_FOUND';
+                assetResult?.error === 'TABLE_NOT_FOUND' ||
+                corpResult?.error === 'TABLE_NOT_FOUND';
 
             if (hasTableError) {
                 toast.error(t('modules.nexus.errors.notMigrated') || 'O banco de dados do cliente selecionado ainda não foi migrado (tabelas Nexus/Team faltantes).');
@@ -319,6 +341,26 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         }
     }, [editingLawsuit?.court, editingLawsuit?.sphere]);
 
+    // Fetch Shareholders & Documents when Entity is selected
+    useEffect(() => {
+        if (editingEntity?.id) {
+            const fetchSubs = async () => {
+                const [sResult, dResult] = await Promise.all([
+                    listShareholders(editingEntity.id!, selectedUserId),
+                    listCorporateDocuments(editingEntity.id!, selectedUserId)
+                ]);
+                if (sResult.data) setShareholders(sResult.data);
+                if (dResult.data) setCorporateDocuments(dResult.data);
+            };
+            fetchSubs();
+        } else if (!editingEntity) {
+            // Só limpamos se o modal estiver fechado (editingEntity === null)
+            // Isso preserva os sócios "virtuais" injetados pelo CRM
+            setShareholders([]);
+            setCorporateDocuments([]);
+        }
+    }, [editingEntity?.id, !editingEntity, selectedUserId]);
+
     const handleCreateLawsuitFromCRM = (personId: string) => {
         // Switch to lawsuits tab
         setActiveTab('processos');
@@ -343,6 +385,49 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         setTimeout(() => {
             setIsLawsuitModalOpen(true);
             setActiveLawsuitTab('basic');
+        }, 300);
+    };
+
+    const handleCreateCorporateEntityFromCRM = (person: Person) => {
+        // Switch to societario tab
+        setActiveTab('societario');
+        // Smart Default for Entity Type based on document length
+        const isCNPJ = person.document?.replace(/\D/g, '').length === 14;
+        
+        setEditingEntity({
+            legal_name: person.full_name,
+            cnpj: person.document,
+            address: person.address,
+            status: 'Ativa',
+            entity_type: isCNPJ ? 'LTDA' : 'MEI'
+        });
+
+        // Se for CPF, guarda a pessoa na Ref e já popula a UI para visualização imediata
+        if (!isCNPJ) {
+            personForQSARef.current = person;
+            setShareholders([{
+                id: 'temp-' + Date.now(),
+                entity_id: 'pending',
+                person_shareholder_id: person.id,
+                share_type: 'Quotas',
+                shares_count: 100,
+                ownership_percentage: 100,
+                is_admin: true,
+                position: 'Sócio-Administrador',
+                shareholder_name: person.full_name,
+                shareholder_type: 'Person'
+            } as Shareholder]);
+            console.log('[NEXUS] Sócio preparado e enviado para a UI:', person.full_name);
+        } else {
+            personForQSARef.current = null;
+            setShareholders([]);
+        }
+        setCorporateDocuments([]);
+
+        // Open modal with a small delay to allow tab transition animation to feel smooth
+        setTimeout(() => {
+            setIsEntityModalOpen(true);
+            setActiveEntityTab('basic');
         }, 300);
     };
 
@@ -442,6 +527,175 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         } catch (err) {
             console.error('Error saving asset:', err);
             toast.error('Erro ao salvar ativo');
+        }
+    };
+
+    const handleSaveEntity = async (e: React.FormEvent) => {
+        e.preventDefault();
+        
+        // Captura imediata
+        const isNew = !editingEntity?.id;
+        const personToLink = personForQSARef.current;
+        const targetUserId = selectedUserId;
+        
+        console.log('[NEXUS-DEBUG] Executando handleSaveEntity', { isNew, hasPerson: !!personToLink });
+
+        try {
+            const savedEntity = await saveCorporateEntity(editingEntity!, targetUserId);
+
+            // Vínculo automático de sócio se for criação via CRM
+            if (isNew && personToLink) {
+                try {
+                    console.log('[NEXUS-DEBUG] Criando vínculo societário para:', personToLink.full_name);
+                    await saveShareholder({
+                        entity_id: savedEntity.id,
+                        person_shareholder_id: personToLink.id,
+                        ownership_percentage: 100,
+                        share_type: 'Quotas',
+                        shares_count: 100,
+                        is_admin: true,
+                        position: 'Sócio-Administrador'
+                    } as any, targetUserId);
+                    
+                    toast.success(`${personToLink.full_name} vinculado como sócio 100%`);
+                } catch (shErr: any) {
+                    console.error('[NEXUS-DEBUG] Erro ao vincular sócio:', shErr);
+                    toast.error(`Atenção: A empresa foi salva, mas o QSA falhou: ${shErr.message}`);
+                } finally {
+                    personForQSARef.current = null;
+                }
+            }
+
+            setIsEntityModalOpen(false);
+            setEditingEntity(null);
+            setActiveEntityTab('basic');
+            toast.success('Entidade salva com sucesso!');
+            
+            // State mutation
+            if (!isNew) {
+                setCorporateEntities(prev => prev.map(c => c.id === savedEntity.id ? savedEntity : c));
+            } else {
+                setCorporateEntities(prev => [savedEntity, ...prev]);
+            }
+            
+            // Refresh geral para garantir que o QSA apareça na próxima abertura
+            if (isNew && personToLink) {
+                fetchAll();
+            }
+        } catch (err: any) {
+            console.error('[NEXUS-DEBUG] Erro geral ao salvar entidade:', err);
+            toast.error(`Erro ao salvar entidade: ${err.message}`);
+        }
+    };
+
+    const handleSaveShareholder = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            const targetUserId = selectedUserId;
+            if (!editingEntity?.id) return;
+            
+            const shareholderData = {
+                ...editingShareholder,
+                entity_id: editingEntity.id
+            } as Shareholder;
+
+            const savedShareholder = await saveShareholder(shareholderData, targetUserId);
+
+            setIsShareholderModalOpen(false);
+            setEditingShareholder(null);
+            toast.success('Sócio salvo com sucesso!');
+            
+            if (editingShareholder?.id) {
+                setShareholders(prev => prev.map(s => s.id === savedShareholder.id ? savedShareholder : s));
+            } else {
+                setShareholders(prev => [savedShareholder, ...prev]);
+            }
+        } catch (err) {
+            console.error('Error saving shareholder:', err);
+            toast.error('Erro ao salvar sócio');
+        }
+    };
+
+    const handleDeleteShareholder = async (id: string) => {
+        if (!window.confirm('Excluir este sócio?')) return;
+        try {
+            await deleteShareholder(id, selectedUserId);
+            setShareholders(prev => prev.filter(s => s.id !== id));
+            toast.success('Sócio removido');
+        } catch (err) {
+            console.error('Error deleting shareholder:', err);
+            toast.error('Erro ao remover sócio');
+        }
+    };
+
+    const handleSaveDocument = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            const targetUserId = selectedUserId;
+            if (!editingEntity?.id) return;
+
+            const docData = {
+                ...editingDocument,
+                entity_id: editingEntity.id
+            } as CorporateDocument;
+
+            const savedDoc = await saveCorporateDocument(docData, targetUserId);
+
+            setIsDocumentModalOpen(false);
+            setEditingDocument(null);
+            toast.success('Documento salvo com sucesso!');
+            
+            if (editingDocument?.id) {
+                setCorporateDocuments(prev => prev.map(d => d.id === savedDoc.id ? savedDoc : d));
+            } else {
+                setCorporateDocuments(prev => [savedDoc, ...prev]);
+            }
+        } catch (err) {
+            console.error('Error saving document:', err);
+            toast.error('Erro ao salvar documento');
+        }
+    };
+
+    const handleEditEntity = async (entity: CorporateEntity, initialTab: 'basic' | 'qsa' | 'docs' = 'basic') => {
+        setEditingEntity(entity);
+        setIsEntityModalOpen(true);
+        setActiveEntityTab(initialTab);
+        
+        // Fetch related data
+        try {
+            const [sh, docs] = await Promise.all([
+                listShareholders(entity.id, selectedUserId),
+                listCorporateDocuments(entity.id, selectedUserId)
+            ]);
+            if (sh.data) setShareholders(sh.data);
+            if (docs.data) setCorporateDocuments(docs.data);
+        } catch (err) {
+            console.error('Error fetching entity details:', err);
+        }
+    };
+
+    const handleDeleteDocument = async (id: string) => {
+        if (!window.confirm('Excluir este documento?')) return;
+        try {
+            await deleteCorporateDocument(id, selectedUserId);
+            setCorporateDocuments(prev => prev.filter(d => d.id !== id));
+            toast.success('Documento removido');
+        } catch (err) {
+            console.error('Error deleting document:', err);
+            toast.error('Erro ao remover documento');
+        }
+    };
+
+    const handleSoftDeleteEntity = async (id: string) => {
+        if (!window.confirm('Deseja excluir esta entidade corporativa? Isso removerá o vínculo com QSA e Documentos.')) return;
+        try {
+            const targetUserId = selectedUserId;
+            await deleteCorporateEntity(id, targetUserId);
+            toast.success('Entidade excluída!');
+            setCorporateEntities(prev => prev.filter(c => c.id !== id));
+        } catch (err) {
+            console.error('Error deleting entity:', err);
+            toast.error('Erro ao excluir entidade');
         }
     };
 
@@ -577,6 +831,10 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         'Criminal': ['Ordinário', 'Sumário', 'Sumaríssimo', 'Tribunal do Júri', 'Execução Penal'],
         'default': ['Procedimento Comum', 'Especial', 'Mandado de Segurança']
     };
+
+    const TAX_REGIMES: TaxRegime[] = ['Simples Nacional', 'Lucro Presumido', 'Lucro Real', 'Isenta'];
+    const ENTITY_STATUSES: EntityStatus[] = ['Ativa', 'Baixada', 'Inativa', 'Em Liquidação'];
+    const ENTITY_TYPES: EntityType[] = ['LTDA', 'SA', 'EIRELI', 'MEI', 'Holding', 'Associação', 'Outros'];
 
     const TRIBUNAIS: Record<string, Record<string, string[]>> = {
         'Trabalhista': {
@@ -793,6 +1051,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                 masterSelectedUserId={selectedUserId}
                                 onRefresh={fetchAll}
                                 onNewLawsuit={handleCreateLawsuitFromCRM}
+                                onNewCorporateEntity={handleCreateCorporateEntityFromCRM}
                             />
                         </div>
                     </div>
@@ -1014,17 +1273,44 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                     <button
                                                                         onClick={() => {
                                                                             setActiveTab('tarefas');
-                                                                            setEditingTask({ lawsuit_id: law.id, status: 'A Fazer' });
-                                                                            setTimeout(() => setIsTaskModalOpen(true), 300);
+                                                                            setEditingTask({
+                                                                                status: 'A Fazer',
+                                                                                lawsuit_id: law.id,
+                                                                                responsible_id: law.responsible_lawyer_id || '',
+                                                                                title: `${law.author_id ? (persons.find(p => p.id === law.author_id)?.full_name + ' - ') : ''}Andamento de Processo`,
+                                                                                priority: 'Média'
+                                                                            });
+                                                                            setTimeout(() => {
+                                                                                setIsTaskModalOpen(true);
+                                                                                setActiveTaskTab('basic');
+                                                                            }, 300);
                                                                         }}
-                                                                        className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
-                                                                        title="Nova Tarefa"
+                                                                        className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-all"
+                                                                        title={t('modules.nexus.newTask')}
                                                                     >
                                                                         <Zap size={16} />
                                                                     </button>
                                                                     <button
-                                                                        onClick={() => { setEditingLawsuit(law); setIsLawsuitModalOpen(true); }}
-                                                                        className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                                                                        onClick={() => {
+                                                                            setActiveTab('ativos');
+                                                                            setEditingAsset({
+                                                                                status: 'Ativo',
+                                                                                lawsuit_id: law.id,
+                                                                                person_id: law.author_id || '',
+                                                                                asset_type: 'Outros'
+                                                                            });
+                                                                            setTimeout(() => {
+                                                                                setIsAssetModalOpen(true);
+                                                                            }, 300);
+                                                                        }}
+                                                                        className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
+                                                                        title="Vincular Novo Ativo/Garantia"
+                                                                    >
+                                                                        <Shield size={16} />
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => { setEditingLawsuit(law); setIsLawsuitModalOpen(true); setActiveLawsuitTab('basic'); }}
+                                                                        className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
                                                                     >
                                                                         <Pencil size={16} />
                                                                     </button>
@@ -1664,28 +1950,208 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 )}
 
                 {activeTab === 'societario' && (
-                    <div className="flex-1 flex flex-col p-8 overflow-hidden animate-in fade-in zoom-in-95 duration-500">
-                        <div className="flex items-center justify-between mb-8">
-                            <div>
-                                <h1 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">
-                                    {t('modules.nexus.tabs.corporate')}
-                                </h1>
-                                <p className="text-slate-500 font-bold">
-                                    {t('modules.nexus.comingSoon.corporateSubtitle')}
-                                </p>
-                            </div>
-                        </div>
+                    <div className="flex-1 flex flex-col pt-0 overflow-y-auto no-scrollbar animate-in fade-in slide-in-from-bottom-4 duration-700">
+                        <div className="flex flex-col h-full space-y-6">
+                            {/* Header Societário */}
+                            <div className="flex flex-col md:flex-row pb-6 mb-2 mt-4 px-8 border-b-4 border-slate-100 dark:border-slate-800">
+                                <div className="flex-1">
+                                    <h1 className="text-4xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">
+                                        Entidades & Holdings
+                                    </h1>
+                                    <p className="text-slate-500 font-bold tracking-wide mt-1">
+                                        Gestão de pessoas jurídicas, participações e governança
+                                    </p>
+                                </div>
+                                <div className="mt-4 md:mt-0 flex items-center gap-4">
+                                    <div className="relative group">
+                                        <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
+                                        <input 
+                                            type="text"
+                                            placeholder="Buscar entidade..."
+                                            value={corporateSearchTerm}
+                                            onChange={(e) => setCorporateSearchTerm(e.target.value)}
+                                            className="pl-12 pr-6 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-64 outline-none focus:ring-4 focus:ring-indigo-600/10 font-bold transition-all shadow-sm"
+                                        />
+                                    </div>
 
-                        <div className="flex-1 flex flex-col items-center justify-center text-center p-20">
-                            <div className="w-32 h-32 bg-indigo-50 dark:bg-indigo-900/20 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-8 animate-pulse">
-                                <LockIcon size={64} />
+                                    <div className="flex bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl border border-slate-200 dark:border-slate-800">
+                                        <button
+                                            onClick={() => setCorporateViewStyle('grid')}
+                                            className={`p-2 rounded-lg transition-all ${corporateViewStyle === 'grid' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                                            title="Visualização em Cards"
+                                        >
+                                            <LayoutGrid size={18} />
+                                        </button>
+                                        <button
+                                            onClick={() => setCorporateViewStyle('list')}
+                                            className={`p-2 rounded-lg transition-all ${corporateViewStyle === 'list' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                                            title="Visualização em Lista"
+                                        >
+                                            <List size={18} />
+                                        </button>
+                                    </div>
+                                    <button
+                                        onClick={() => { 
+                                            setEditingEntity({ status: 'Ativa', entity_type: 'LTDA' }); 
+                                            personForQSARef.current = null;
+                                            setShareholders([]); // Limpa manualmente para nova entidade em branco
+                                            setCorporateDocuments([]);
+                                            setIsEntityModalOpen(true); 
+                                            setActiveEntityTab('basic'); 
+                                        }}
+                                        className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white font-black uppercase tracking-widest text-[10px] px-6 py-3 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-xl hover:shadow-indigo-500/30 hover:-translate-y-1"
+                                    >
+                                        <Plus size={14} /> Nova Entidade
+                                    </button>
+                                </div>
                             </div>
-                            <h2 className="text-4xl font-black text-slate-800 dark:text-white uppercase tracking-tighter mb-4">
-                                {t('modules.nexus.comingSoon.title')}
-                            </h2>
-                            <p className="max-w-md text-slate-500 font-bold text-lg">
-                                Esta aba está sendo preparada para o seu ecossistema. A gestão societária e de contratos de longo prazo será centralizada aqui.
-                            </p>
+
+                            {/* Tabela/Grade Societário */}
+                            <div className="flex-1 px-8 pb-8">
+                                <AnimatePresence mode="wait">
+                                    {corporateViewStyle === 'list' ? (
+                                        <motion.div 
+                                            key="corporate-list"
+                                            initial={{ opacity: 0, scale: 0.98 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            exit={{ opacity: 0, scale: 0.98 }}
+                                            className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden"
+                                        >
+                                            <table className="w-full text-left border-collapse">
+                                                <thead>
+                                                    <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
+                                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Empresa</th>
+                                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">CNPJ</th>
+                                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Tipo</th>
+                                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Capital</th>
+                                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
+                                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Ações</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+                                                    {filteredEntities.length === 0 ? (
+                                                        <tr>
+                                                            <td colSpan={6} className="px-6 py-20 text-center text-slate-500 font-bold text-sm">Nenhuma entidade encontrada.</td>
+                                                        </tr>
+                                                    ) : filteredEntities.map((entity: CorporateEntity) => (
+                                                        <tr key={entity.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors group">
+                                                            <td className="px-6 py-4">
+                                                                <div className="font-bold text-slate-700 dark:text-slate-200 text-sm whitespace-nowrap">{entity.legal_name}</div>
+                                                                <div className="text-[10px] text-slate-400 font-bold">{entity.trading_name || 'Sem nome fantasia'}</div>
+                                                            </td>
+                                                            <td className="px-6 py-4 text-xs font-bold text-slate-500">{entity.cnpj || '-'}</td>
+                                                            <td className="px-6 py-4">
+                                                                <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg text-[10px] font-black uppercase">
+                                                                    {entity.entity_type}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-6 py-4 font-bold text-slate-600 dark:text-slate-300">
+                                                                {entity.total_capital ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(entity.total_capital) : '-'}
+                                                            </td>
+                                                            <td className="px-6 py-4">
+                                                                <span className={`px-2 py-1 text-[9px] font-black uppercase rounded-lg border ${entity.status === 'Ativa' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-rose-50 text-rose-600 border-rose-200'}`}>
+                                                                    {entity.status}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-6 py-4 text-right">
+                                                                <div className="flex items-center justify-end gap-1 opacity-100">
+                                                                    <button
+                                                                        onClick={() => handleEditEntity(entity)}
+                                                                        className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
+                                                                        title="Editar Dados"
+                                                                    >
+                                                                        <Pencil size={18} />
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => { setEditingEntity(entity); setIsEntityModalOpen(true); setActiveEntityTab('qsa'); }}
+                                                                        className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-all"
+                                                                        title="Quadro Societário (QSA)"
+                                                                    >
+                                                                        <Users size={18} />
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => handleSoftDeleteEntity(entity.id)}
+                                                                        className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-all"
+                                                                        title="Remover"
+                                                                    >
+                                                                        <XCircle size={18} />
+                                                                    </button>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </motion.div>
+                                    ) : (
+                                        <motion.div
+                                            key="corporate-grid"
+                                            initial={{ opacity: 0, scale: 0.98 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            exit={{ opacity: 0, scale: 0.98 }}
+                                            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                                        >
+                                            {filteredEntities.length === 0 ? (
+                                                <div className="col-span-full py-20 text-center text-slate-400 font-bold italic">Nenhuma entidade encontrada.</div>
+                                            ) : filteredEntities.map((entity: CorporateEntity) => (
+                                                <div key={entity.id} className="bg-white dark:bg-slate-900 p-8 rounded-[3rem] border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-2xl transition-all group relative overflow-hidden flex flex-col h-[400px] border-b-8 border-b-indigo-500">
+                                                    <div className="flex justify-between items-start mb-6">
+                                                        <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 rounded-3xl group-hover:scale-110 transition-transform">
+                                                            <Building2 size={24} />
+                                                        </div>
+                                                        <span className={`px-3 py-1 text-[10px] font-black uppercase rounded-xl border-2 ${entity.status === 'Ativa' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'}`}>
+                                                            {entity.status}
+                                                        </span>
+                                                    </div>
+
+                                                    <h3 className="font-black text-slate-800 dark:text-white text-xl mb-1 line-clamp-1 truncate uppercase tracking-tighter leading-tight">
+                                                        {entity.legal_name}
+                                                    </h3>
+                                                    <p className="text-xs font-bold text-slate-400 mb-6 uppercase tracking-widest">{entity.cnpj || 'CNPJ NÃO INFORMADO'}</p>
+
+                                                    <div className="grid grid-cols-2 gap-3 mb-8">
+                                                        <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl">
+                                                            <span className="text-[9px] font-black text-slate-400 uppercase block mb-1">Tipo</span>
+                                                            <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200">{entity.entity_type}</span>
+                                                        </div>
+                                                        <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl">
+                                                            <span className="text-[9px] font-black text-slate-400 uppercase block mb-1">Regime</span>
+                                                            <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200 truncate">{entity.tax_regime || 'N/I'}</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="bg-indigo-50/50 dark:bg-indigo-900/10 p-4 rounded-[2rem] mb-6 flex items-center justify-between border border-indigo-100 dark:border-indigo-800/50">
+                                                        <div>
+                                                            <span className="text-[8px] font-black text-indigo-600 uppercase block mb-0.5">Capital Social</span>
+                                                            <span className="text-sm font-black text-slate-800 dark:text-white">
+                                                                {entity.total_capital ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(entity.total_capital) : 'R$ 0,00'}
+                                                            </span>
+                                                        </div>
+                                                        <div className="w-10 h-10 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-sm">
+                                                            <PieChart size={18} className="text-indigo-600" />
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="mt-auto flex items-center gap-2">
+                                                        <button 
+                                                            onClick={() => handleEditEntity(entity, 'qsa')}
+                                                            className="flex-1 bg-slate-900 dark:bg-white dark:text-slate-900 text-white py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-slate-100 transition-all active:scale-95 shadow-lg"
+                                                        >
+                                                            Gerenciar QSA
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => handleEditEntity(entity)}
+                                                            className="p-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-2xl hover:bg-indigo-600 hover:text-white transition-all active:scale-95"
+                                                        >
+                                                            <Pencil size={18} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -2564,6 +3030,479 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         className="flex-[2] px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-600/30 transition-all flex items-center justify-center gap-2 text-xs"
                                     >
                                         <Save size={20} /> Salvar Ativo
+                                    </button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+
+                {/* Corporate Entity Modal (The "Big One") */}
+                {isEntityModalOpen && (
+                    <div className="fixed inset-0 z-[100] flex justify-end overflow-hidden">
+                        <motion.div
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm"
+                            onClick={() => { setIsEntityModalOpen(false); setActiveEntityTab('basic'); }}
+                        />
+                        <motion.div
+                            initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
+                            transition={{ type: 'spring', damping: 35, stiffness: 350 }}
+                            className="relative w-full max-w-3xl bg-white dark:bg-slate-900 shadow-2xl h-full flex flex-col border-l border-slate-200 dark:border-slate-800"
+                        >
+                            {/* Header */}
+                            <div className="p-10 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
+                                <div className="flex items-center justify-between mb-8">
+                                    <div>
+                                        <h3 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">
+                                            {editingEntity?.id ? 'Gestão Corporativa' : 'Nova Entidade'}
+                                        </h3>
+                                        <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-1 flex items-center gap-2">
+                                            <Shield size={12} className="text-indigo-600" /> Governança & Estrutura Societária
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={() => { setIsEntityModalOpen(false); setActiveEntityTab('basic'); }}
+                                        className="p-3 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-2xl transition-all"
+                                    >
+                                        <XCircle size={32} />
+                                    </button>
+                                </div>
+
+                                {/* Premium Tabs */}
+                                <div className="flex bg-slate-100 dark:bg-slate-800/80 p-1.5 rounded-[2.5rem] w-full max-w-xl">
+                                    {[
+                                        { id: 'basic', label: 'Dados Gerais', icon: Building2 },
+                                        { id: 'qsa', label: 'Quadro Societário', icon: Users },
+                                        { id: 'docs', label: 'Documentos', icon: FileText },
+                                    ].map(tab => (
+                                        <button
+                                            key={tab.id}
+                                            onClick={() => setActiveEntityTab(tab.id as any)}
+                                            className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-3xl text-[10px] font-black uppercase tracking-widest transition-all ${activeEntityTab === tab.id ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-xl' : 'text-slate-500 hover:text-slate-700'}`}
+                                        >
+                                            <tab.icon size={16} /> {tab.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <form onSubmit={handleSaveEntity} className="flex-1 flex flex-col overflow-hidden">
+                                <div className="flex-1 overflow-y-auto no-scrollbar p-10">
+                                    {activeEntityTab === 'basic' && (
+                                        <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
+                                            <div className="grid grid-cols-1 gap-6">
+                                                <div>
+                                                    <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Razão Social *</label>
+                                                    <input
+                                                        required value={editingEntity?.legal_name || ''}
+                                                        onChange={e => setEditingEntity({ ...editingEntity, legal_name: e.target.value })}
+                                                        className="w-full px-8 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl outline-none focus:ring-4 focus:ring-indigo-600/10 font-black transition-all text-lg"
+                                                        placeholder="Ex: HOLDING PATRIMONIAL LTDA"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Nome Fantasia</label>
+                                                    <input
+                                                        value={editingEntity?.trading_name || ''}
+                                                        onChange={e => setEditingEntity({ ...editingEntity, trading_name: e.target.value })}
+                                                        className="w-full px-8 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl outline-none focus:ring-4 focus:ring-indigo-600/10 font-bold"
+                                                        placeholder="Ex: NOME DO GRUPO"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-6">
+                                                <div>
+                                                    <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">CNPJ</label>
+                                                    <input
+                                                        value={editingEntity?.cnpj || ''}
+                                                        onChange={e => setEditingEntity({ ...editingEntity, cnpj: e.target.value })}
+                                                        className="w-full px-8 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl outline-none font-black text-indigo-600"
+                                                        placeholder="00.000.000/0000-00"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Inscrição Estadual</label>
+                                                    <input
+                                                        value={editingEntity?.state_registration || ''}
+                                                        onChange={e => setEditingEntity({ ...editingEntity, state_registration: e.target.value })}
+                                                        className="w-full px-8 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl outline-none"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-3 gap-6">
+                                                <div>
+                                                    <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Tipo</label>
+                                                    <select
+                                                        value={editingEntity?.entity_type || 'LTDA'}
+                                                        onChange={e => setEditingEntity({ ...editingEntity, entity_type: e.target.value as any })}
+                                                        className="w-full px-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl outline-none font-bold"
+                                                    >
+                                                        {ENTITY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Regime Tributário</label>
+                                                    <select
+                                                        value={editingEntity?.tax_regime || ''}
+                                                        onChange={e => setEditingEntity({ ...editingEntity, tax_regime: e.target.value as any })}
+                                                        className="w-full px-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl outline-none font-bold"
+                                                    >
+                                                        <option value="">Selecione...</option>
+                                                        {TAX_REGIMES.map(r => <option key={r} value={r}>{r}</option>)}
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Status</label>
+                                                    <select
+                                                        value={editingEntity?.status || 'Ativa'}
+                                                        onChange={e => setEditingEntity({ ...editingEntity, status: e.target.value as any })}
+                                                        className="w-full px-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl outline-none font-bold"
+                                                    >
+                                                        {ENTITY_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Capital Social Total (R$)</label>
+                                                <div className="relative">
+                                                    <div className="absolute left-8 top-1/2 -translate-y-1/2 text-slate-400 font-bold">R$</div>
+                                                    <input
+                                                        type="text"
+                                                        value={editingEntity?.total_capital ? formatCurrency(editingEntity.total_capital) : ''}
+                                                        onChange={e => {
+                                                            const raw = e.target.value.replace(/\D/g, '');
+                                                            setEditingEntity({ ...editingEntity, total_capital: raw ? parseInt(raw, 10) / 100 : 0 });
+                                                        }}
+                                                        className="w-full pl-16 pr-8 py-5 bg-indigo-50/50 dark:bg-indigo-950/20 border-2 border-indigo-100 dark:border-indigo-900/50 rounded-3xl outline-none font-black text-xl text-indigo-600"
+                                                        placeholder="0,00"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {activeEntityTab === 'qsa' && (
+                                        <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <h4 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Composição do Capital</h4>
+                                                    <p className="text-xs text-slate-500 font-bold">Sócios, acionistas e participações diretas</p>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => { setEditingShareholder({ shareholder_type: 'Person', ownership_percentage: 0 }); setIsShareholderModalOpen(true); }}
+                                                    className="p-4 bg-slate-900 text-white dark:bg-white dark:text-slate-900 rounded-2xl flex items-center gap-2 hover:scale-105 transition-all shadow-lg active:scale-95"
+                                                    title="Adicionar Sócio"
+                                                >
+                                                    <Plus size={20} />
+                                                </button>
+                                            </div>
+
+                                            <div className="bg-slate-50 dark:bg-slate-800/30 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 overflow-hidden">
+                                                <table className="w-full text-left">
+                                                    <thead>
+                                                        <tr className="bg-slate-100/50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
+                                                            <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Sócio</th>
+                                                            <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Participação (%)</th>
+                                                            <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Cotas/Ações</th>
+                                                            <th className="px-8 py-5 text-right"></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                                        {shareholders.length === 0 ? (
+                                                            <tr>
+                                                                <td colSpan={4} className="px-8 py-12 text-center text-slate-400 font-bold italic">Nenhum sócio vinculado a esta entidade.</td>
+                                                            </tr>
+                                                        ) : shareholders.map(s => (
+                                                            <tr key={s.id} className="group hover:bg-white dark:hover:bg-slate-800/50 transition-all">
+                                                                <td className="px-8 py-6 font-bold text-slate-700 dark:text-slate-200">
+                                                                    <div className="flex items-center gap-3">
+                                                                        <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 rounded-xl flex items-center justify-center font-black">
+                                                                            {s.shareholder_name?.charAt(0)}
+                                                                        </div>
+                                                                        <div>
+                                                                            <span className="block">{s.shareholder_name}</span>
+                                                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{s.shareholder_type === 'Person' ? 'Pessoa Física' : 'Holding / PJ'}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-8 py-6">
+                                                                    <div className="flex items-center gap-3">
+                                                                        <div className="flex-1 h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden w-24">
+                                                                            <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${s.ownership_percentage}%` }} />
+                                                                        </div>
+                                                                        <span className="font-black text-indigo-600">{s.ownership_percentage}%</span>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-8 py-6 font-bold text-slate-600 dark:text-slate-400">
+                                                                    {new Intl.NumberFormat('pt-BR').format(s.shares_count || 0)}
+                                                                </td>
+                                                                <td className="px-8 py-6 text-right">
+                                                                    <div className="flex items-center justify-end gap-1">
+                                                                        <button 
+                                                                            type="button"
+                                                                            onClick={() => { setEditingShareholder(s); setIsShareholderModalOpen(true); }}
+                                                                            className="p-2 text-slate-300 hover:text-indigo-500 transition-colors"
+                                                                        >
+                                                                            <Pencil size={16} />
+                                                                        </button>
+                                                                        <button 
+                                                                            type="button"
+                                                                            onClick={() => handleDeleteShareholder(s.id)}
+                                                                            className="p-2 text-slate-300 hover:text-rose-500 transition-colors"
+                                                                        >
+                                                                            <Trash2 size={16} />
+                                                                        </button>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {activeEntityTab === 'docs' && (
+                                        <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <h4 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Atos & Contratos</h4>
+                                                    <p className="text-xs text-slate-500 font-bold">Atas, Estatutos e Documentos de Governança</p>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => { setEditingDocument({ document_type: 'Contrato Social', event_date: new Date().toISOString() }); setIsDocumentModalOpen(true); }}
+                                                    className="p-4 bg-indigo-600 text-white rounded-2xl flex items-center gap-2 hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20"
+                                                >
+                                                    <Plus size={20} /> Novo Documento
+                                                </button>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-4">
+                                                {corporateDocuments.length === 0 ? (
+                                                    <div className="col-span-full py-20 text-center text-slate-400 font-bold italic border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-[2.5rem]">
+                                                        Nenhum documento anexado.
+                                                    </div>
+                                                ) : corporateDocuments.map(doc => (
+                                                    <div key={doc.id} className="bg-slate-50 dark:bg-slate-800/30 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 hover:border-indigo-200 transition-all group">
+                                                        <div className="flex justify-between items-start mb-4">
+                                                            <div className="p-3 bg-white dark:bg-slate-800 rounded-2xl text-indigo-600 shadow-sm">
+                                                                <FileText size={20} />
+                                                            </div>
+                                                            <span className="text-[9px] font-black text-slate-400 capitalize bg-white dark:bg-slate-800 px-3 py-1 rounded-full border border-slate-100 dark:border-slate-700">
+                                                                {doc.document_type}
+                                                            </span>
+                                                        </div>
+                                                        <h5 className="font-bold text-slate-800 dark:text-white text-sm mb-1 line-clamp-1">{doc.title}</h5>
+                                                        <p className="text-[10px] text-slate-500 font-bold mb-4">Referência: {doc.event_date ? new Date(doc.event_date).toLocaleDateString() : 'N/I'}</p>
+                                                        
+                                                        <div className="flex items-center justify-between gap-2 mt-auto">
+                                                             <button 
+                                                                 type="button"
+                                                                 onClick={() => { setEditingDocument(doc); setIsDocumentModalOpen(true); }}
+                                                                 className="text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:underline"
+                                                             >
+                                                                 Editar
+                                                             </button>
+                                                             <button 
+                                                                 type="button"
+                                                                 onClick={() => handleDeleteDocument(doc.id)}
+                                                                 className="p-2 text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                             >
+                                                                 <Trash2 size={16} />
+                                                             </button>
+                                                         </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="p-10 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0 flex gap-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => { setIsEntityModalOpen(false); setActiveEntityTab('basic'); }}
+                                        className="flex-1 px-8 py-5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-3xl font-black uppercase tracking-widest hover:bg-slate-200 transition-all text-xs"
+                                    >
+                                        Fechar
+                                    </button>
+                                    {activeEntityTab === 'basic' && (
+                                        <button
+                                            type="submit"
+                                            className="flex-[2] px-8 py-5 bg-indigo-600 text-white rounded-3xl font-black uppercase tracking-widest hover:bg-indigo-700 shadow-2xl shadow-indigo-600/30 transition-all flex items-center justify-center gap-2 text-xs"
+                                        >
+                                            <Save size={20} /> Salvar Alterações
+                                        </button>
+                                    )}
+                                </div>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* Shareholder Modal */}
+            <AnimatePresence>
+                {isShareholderModalOpen && (
+                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
+                            onClick={() => setIsShareholderModalOpen(false)}
+                        />
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+                            className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800"
+                        >
+                            <form onSubmit={handleSaveShareholder}>
+                                <div className="p-8 border-b border-slate-100 dark:border-slate-800">
+                                    <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">
+                                        Dados do Sócio
+                                    </h3>
+                                </div>
+                                <div className="p-8 space-y-6">
+                                    <div>
+                                        <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Nome do Sócio / Empresa *</label>
+                                        <input
+                                            required value={editingShareholder?.shareholder_name || ''}
+                                            onChange={e => setEditingShareholder({ ...editingShareholder, shareholder_name: e.target.value })}
+                                            className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-600/10 font-bold"
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Tipo de Sócio</label>
+                                            <select
+                                                value={editingShareholder?.shareholder_type || 'Person'}
+                                                onChange={e => setEditingShareholder({ ...editingShareholder, shareholder_type: e.target.value as any })}
+                                                className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none font-bold"
+                                            >
+                                                <option value="Person">Pessoa Física</option>
+                                                <option value="Entity">Holding / Pessoa Jurídica</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Participação (%)</label>
+                                            <input
+                                                type="number" step="0.01"
+                                                value={editingShareholder?.ownership_percentage || ''}
+                                                onChange={e => setEditingShareholder({ ...editingShareholder, ownership_percentage: parseFloat(e.target.value) })}
+                                                className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none font-black text-indigo-600"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Quantidade de Cotas/Ações</label>
+                                        <input
+                                            type="number"
+                                            value={editingShareholder?.shares_count || ''}
+                                            onChange={e => setEditingShareholder({ ...editingShareholder, shares_count: e.target.value ? parseInt(e.target.value) : 0 })}
+                                            className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="p-8 bg-slate-50 dark:bg-slate-800/50 flex gap-4">
+                                    <button
+                                        type="button" onClick={() => setIsShareholderModalOpen(false)}
+                                        className="flex-1 py-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-[10px] font-black uppercase tracking-widest"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="flex-[2] py-4 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-600/20"
+                                    >
+                                        Confirmar Sócio
+                                    </button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* Document Modal */}
+            <AnimatePresence>
+                {isDocumentModalOpen && (
+                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
+                            onClick={() => setIsDocumentModalOpen(false)}
+                        />
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+                            className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800"
+                        >
+                            <form onSubmit={handleSaveDocument}>
+                                <div className="p-8 border-b border-slate-100 dark:border-slate-800">
+                                    <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">
+                                        Novo Documento
+                                    </h3>
+                                </div>
+                                <div className="p-8 space-y-6">
+                                    <div>
+                                        <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Título do Documento *</label>
+                                        <input
+                                            required value={editingDocument?.title || ''}
+                                            onChange={e => setEditingDocument({ ...editingDocument, title: e.target.value })}
+                                            className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-600/10 font-bold"
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Tipo</label>
+                                            <select
+                                                value={editingDocument?.document_type || 'Contrato Social'}
+                                                onChange={e => setEditingDocument({ ...editingDocument, document_type: e.target.value as any })}
+                                                className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none font-bold"
+                                            >
+                                                <option value="Contrato Social">Contrato Social</option>
+                                                <option value="Ata">Ata</option>
+                                                <option value="Estatuto">Estatuto</option>
+                                                <option value="Acordo de Sócios">Acordo de Sócios</option>
+                                                <option value="Planilha">Planilha</option>
+                                                <option value="Outros">Outros</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Data de Referência</label>
+                                            <input
+                                                type="date"
+                                                value={editingDocument?.event_date ? new Date(editingDocument.event_date).toISOString().split('T')[0] : ''}
+                                                onChange={e => setEditingDocument({ ...editingDocument, event_date: e.target.value })}
+                                                className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none font-bold"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Link do Arquivo (URL)</label>
+                                        <input
+                                            value={editingDocument?.file_url || ''}
+                                            onChange={e => setEditingDocument({ ...editingDocument, file_url: e.target.value })}
+                                            className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none font-mono text-[10px]"
+                                            placeholder="https://supabase.co/..."
+                                        />
+                                    </div>
+                                </div>
+                                <div className="p-8 bg-slate-50 dark:bg-slate-800/50 flex gap-4">
+                                    <button
+                                        type="button" onClick={() => setIsDocumentModalOpen(false)}
+                                        className="flex-1 py-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-[10px] font-black uppercase tracking-widest"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="flex-[2] py-4 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-600/20"
+                                    >
+                                        Salvar Documento
                                     </button>
                                 </div>
                             </form>

@@ -14,6 +14,8 @@ import { IEventRepository } from './event-repository.interface';
 import { SupabaseEventRepository } from './supabase-event-repository';
 import { IAssetRepository } from './asset-repository.interface';
 import { SupabaseAssetRepository } from './supabase-asset-repository';
+import { ICorporateRepository } from './corporate-repository.interface';
+import { SupabaseCorporateRepository } from './supabase-corporate-repository';
 
 /**
  * RepositoryFactory implements the "Brain" logic.
@@ -67,5 +69,13 @@ export class RepositoryFactory {
     static getAssetRepository(credentials: Credentials, preferences: UserPreferences): IAssetRepository {
         const client = DatabaseService.getClient(credentials);
         return new SupabaseAssetRepository(client);
+    }
+
+    /**
+     * Resolves the Corporate Repository.
+     */
+    static getCorporateRepository(credentials: Credentials, preferences: UserPreferences): ICorporateRepository {
+        const client = DatabaseService.getClient(credentials);
+        return new SupabaseCorporateRepository(client);
     }
 }

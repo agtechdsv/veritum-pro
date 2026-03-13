@@ -133,6 +133,59 @@ export async function saveTenantConfig(formData: Partial<TenantConfig>) {
 
     if (error) throw error;
 
+    // === INÍCIO DA LÓGICA DE AUTO-INSERT NA TEAM_MEMBERS DO CLIENTE ===
+    try {
+        // 1. Busca os dados do Sócio na Master para ter Nome e Email
+        const { data: userProfile } = await supabase
+            .from('users')
+            .select('name, email')
+            .eq('id', targetOwnerId)
+            .single();
+
+        if (userProfile) {
+            // 2. Busca a config atualizada do tenant recém-salva já descriptografada
+            const { data: savedConfig } = await adminSupabase
+                .from('tenant_configs')
+                .select('*')
+                .eq('owner_id', targetOwnerId)
+                .single();
+
+            const decryptedConfig = decryptConfig(savedConfig);
+
+            // 3. Verifica se tem as credenciais válidas do BYODB
+            if (decryptedConfig?.custom_supabase_url && decryptedConfig?.custom_supabase_key_encrypted) {
+                const { createClient } = await import('@supabase/supabase-js');
+                const tenantClient = createClient(
+                    decryptedConfig.custom_supabase_url,
+                    decryptedConfig.custom_supabase_key_encrypted
+                );
+
+                // 4. Checa se ele já existe lá
+                const { data: existingMember } = await tenantClient
+                    .from('team_members')
+                    .select('id')
+                    .eq('id', targetOwnerId)
+                    .maybeSingle();
+
+                // 5. Se não existir, insere silenciosamente
+                if (!existingMember) {
+                    await tenantClient.from('team_members').insert({
+                        id: targetOwnerId,
+                        full_name: userProfile.name,
+                        email: userProfile.email,
+                        role: 'Sócio Administrativo',
+                        is_active: true
+                    });
+                    console.log(`[BYODB] Auto-inserted owner ${targetOwnerId} into team_members of tenant database.`);
+                }
+            }
+        }
+    } catch (insertErr) {
+        console.error('[BYODB] Auto-insert into team_members failed:', insertErr);
+        // Não damos throw para não quebrar o salvamento da configuração que já deu certo
+    }
+    // === FIM DA LÓGICA ===
+
     revalidatePath('/veritumpro');
     return { success: true };
 }

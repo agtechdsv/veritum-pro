@@ -1,6 +1,6 @@
 'use server';
 
-import { Lawsuit, Task, CalendarEvent, Credentials, UserPreferences, Asset } from '@/types';
+import { Lawsuit, Task, CalendarEvent, Credentials, UserPreferences, Asset, CorporateEntity, Shareholder, CorporateDocument } from '@/types';
 import { RepositoryFactory } from '@/lib/db/repositories/repository-factory';
 import { createMasterServerClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -299,6 +299,112 @@ export async function deleteAsset(id: string, targetUserId?: string) {
         return await repo.delete(id);
     } catch (error: any) {
         console.error('Server Action Error (deleteAsset):', error.message);
+        throw error;
+    }
+}
+
+/* Corporate / Societário Actions */
+export async function listCorporateEntities(searchTerm?: string, targetUserId?: string) {
+    try {
+        const { credentials, preferences } = await resolveSecurityContext(targetUserId);
+        const repo = RepositoryFactory.getCorporateRepository(credentials, preferences);
+        const data = await repo.listEntities(searchTerm);
+        return { data };
+    } catch (error: any) {
+        console.error('Server Action Error (listCorporateEntities):', error);
+        if (error?.code === '42P01') {
+            return { data: [], error: 'TABLE_NOT_FOUND' };
+        }
+        throw error;
+    }
+}
+
+export async function saveCorporateEntity(entity: Partial<CorporateEntity>, targetUserId?: string) {
+    try {
+        const { credentials, preferences } = await resolveSecurityContext(targetUserId);
+        const repo = RepositoryFactory.getCorporateRepository(credentials, preferences);
+        return await repo.saveEntity(entity);
+    } catch (error: any) {
+        console.error('Server Action Error (saveCorporateEntity):', error);
+        throw error;
+    }
+}
+
+export async function deleteCorporateEntity(id: string, targetUserId?: string) {
+    try {
+        const { credentials, preferences } = await resolveSecurityContext(targetUserId);
+        const repo = RepositoryFactory.getCorporateRepository(credentials, preferences);
+        return await repo.deleteEntity(id);
+    } catch (error: any) {
+        console.error('Server Action Error (deleteCorporateEntity):', error);
+        throw error;
+    }
+}
+
+export async function listShareholders(entityId: string, targetUserId?: string) {
+    try {
+        const { credentials, preferences } = await resolveSecurityContext(targetUserId);
+        const repo = RepositoryFactory.getCorporateRepository(credentials, preferences);
+        const data = await repo.listShareholders(entityId);
+        return { data };
+    } catch (error: any) {
+        console.error('Server Action Error (listShareholders):', error);
+        throw error;
+    }
+}
+
+export async function saveShareholder(shareholder: Partial<Shareholder>, targetUserId?: string) {
+    try {
+        const { credentials, preferences } = await resolveSecurityContext(targetUserId);
+        const repo = RepositoryFactory.getCorporateRepository(credentials, preferences);
+        return await repo.saveShareholder(shareholder);
+    } catch (error: any) {
+        console.error('Server Action Error (saveShareholder):', error);
+        throw error;
+    }
+}
+
+export async function deleteShareholder(id: string, targetUserId?: string) {
+    try {
+        const { credentials, preferences } = await resolveSecurityContext(targetUserId);
+        const repo = RepositoryFactory.getCorporateRepository(credentials, preferences);
+        return await repo.deleteShareholder(id);
+    } catch (error: any) {
+        console.error('Server Action Error (deleteShareholder):', error);
+        throw error;
+    }
+}
+
+export async function listCorporateDocuments(entityId: string, targetUserId?: string) {
+    try {
+        const { credentials, preferences } = await resolveSecurityContext(targetUserId);
+        const repo = RepositoryFactory.getCorporateRepository(credentials, preferences);
+        const data = await repo.listDocuments(entityId);
+        return { data };
+    } catch (error: any) {
+        console.error('Server Action Error (listCorporateDocuments):', error);
+        throw error;
+    }
+}
+
+export async function saveCorporateDocument(doc: Partial<CorporateDocument>, targetUserId?: string) {
+    try {
+        const { credentials, preferences } = await resolveSecurityContext(targetUserId);
+        const repo = RepositoryFactory.getCorporateRepository(credentials, preferences);
+        return await repo.saveDocument(doc);
+    } catch (error: any) {
+        console.error('Server Action Error (saveCorporateDocument):', error);
+        throw error;
+    }
+}
+
+export async function deleteCorporateDocument(id: string, targetUserId?: string) {
+    try {
+        const { credentials, preferences } = await resolveSecurityContext(targetUserId);
+        const repo = RepositoryFactory.getCorporateRepository(credentials, preferences);
+        return await repo.deleteDocument(id);
+    } catch (error: any) {
+        console.error('Server Action Error (deleteCorporateDocument):', error);
         throw error;
     }
 }

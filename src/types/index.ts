@@ -487,3 +487,71 @@ export interface Asset {
     created_at?: string;
     updated_at?: string;
 }
+
+// 🏢 Corporate / Societário Module Types
+export type EntityType = 'LTDA' | 'SA' | 'EIRELI' | 'MEI' | 'Holding' | 'Associação' | 'Outros';
+export type EntityStatus = 'Ativa' | 'Baixada' | 'Inativa' | 'Em Liquidação';
+export type TaxRegime = 'Simples Nacional' | 'Lucro Presumido' | 'Lucro Real' | 'Isenta';
+export type ShareType = 'Ordinária' | 'Preferencial' | 'Quotas';
+export type CorpDocType = 'Ata' | 'Estatuto' | 'Contrato Social' | 'Alteração Contratual' | 'Procuração' | 'Outros';
+
+export interface CorporateEntity {
+    id: string;
+    legal_name: string;
+    trading_name?: string;
+    cnpj?: string;
+    state_registration?: string;
+    municipal_registration?: string;
+    foundation_date?: string;
+    entity_type: EntityType;
+    status: EntityStatus;
+    tax_regime?: TaxRegime;
+    address?: {
+        cep?: string;
+        street?: string;
+        number?: string;
+        complement?: string;
+        neighborhood?: string;
+        city?: string;
+        state?: string;
+    };
+    total_capital?: number;
+    total_shares?: number;
+    notes?: string;
+    created_at?: string;
+    updated_at?: string;
+}
+
+export interface Shareholder {
+    id: string;
+    entity_id: string;
+    person_shareholder_id?: string;
+    corporate_shareholder_id?: string;
+    share_type: ShareType;
+    shares_count: number;
+    ownership_percentage?: number;
+    capital_contribution?: number;
+    position?: string;
+    start_date?: string;
+    end_date?: string;
+    is_admin: boolean;
+    created_at?: string;
+    updated_at?: string;
+    // Helper fields for UI
+    shareholder_name?: string; 
+    shareholder_type?: 'Person' | 'Entity';
+}
+
+export interface CorporateDocument {
+    id: string;
+    entity_id: string;
+    title: string;
+    document_type: CorpDocType;
+    event_date?: string;
+    expiry_date?: string;
+    file_url?: string;
+    status: string;
+    notes?: string;
+    created_at?: string;
+    updated_at?: string;
+}

@@ -38,23 +38,33 @@ export class SupabaseTeamRepository implements ITeamRepository {
     }
 
     async create(data: Omit<TeamMember, 'id' | 'created_at' | 'updated_at'>): Promise<TeamMember> {
+        // Remove undefined values to prevent Supabase errors
+        const cleanData = Object.fromEntries(
+            Object.entries(data).filter(([_, v]) => v !== undefined)
+        );
+
         const { data: result, error } = await this.client
             .from('team_members')
-            .insert(data)
+            .insert(cleanData)
             .select()
-            .single();
+            .maybeSingle();
 
         if (error) throw error;
         return result as TeamMember;
     }
 
     async update(id: string, data: Partial<TeamMember>): Promise<TeamMember> {
+        // Remove undefined values to prevent Supabase errors
+        const cleanData = Object.fromEntries(
+            Object.entries(data).filter(([_, v]) => v !== undefined)
+        );
+
         const { data: result, error } = await this.client
             .from('team_members')
-            .update({ ...data, updated_at: new Date().toISOString() })
+            .update({ ...cleanData, updated_at: new Date().toISOString() })
             .eq('id', id)
             .select()
-            .single();
+            .maybeSingle();
 
         if (error) throw error;
         return result as TeamMember;
