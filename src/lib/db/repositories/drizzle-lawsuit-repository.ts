@@ -1,7 +1,7 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import { eq, ilike, or, and, isNull } from 'drizzle-orm';
-import { Lawsuit } from '@/types';
+import { Lawsuit, LawsuitDocument } from '@/types';
 import { ILawsuitRepository } from './lawsuit-repository.interface';
 import { lawsuits } from '../schema/lawsuits';
 
@@ -53,5 +53,18 @@ export class DrizzleLawsuitRepository implements ILawsuitRepository {
         await this.db.update(lawsuits)
             .set({ deleted_at: new Date() })
             .where(eq(lawsuits.id, id));
+    }
+
+    // Documents (Stubs to fix build)
+    async listDocuments(lawsuitId: string): Promise<LawsuitDocument[]> {
+        return [];
+    }
+
+    async saveDocument(doc: Partial<LawsuitDocument>): Promise<LawsuitDocument> {
+        throw new Error("Method not implemented for Drizzle.");
+    }
+
+    async deleteDocument(id: string): Promise<void> {
+        throw new Error("Method not implemented for Drizzle.");
     }
 }

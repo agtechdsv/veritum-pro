@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Credentials, Lawsuit, LawsuitDocument, Task, CalendarEvent, User, Person, TeamMember, Asset, CorporateEntity, Shareholder, CorporateDocument, TaxRegime, EntityStatus, EntityType, AssetDocument } from '@/types';
-import { Plus, MoreHorizontal, Calendar, Scale, Search, Filter, LayoutDashboard, ArrowRight, AlertTriangle, CheckCircle2, Clock, MapPin, Shield, User as UserIcon, Users, Save, XCircle, Pencil, ChevronRight, ChevronLeft, ChevronDown, Zap, Lock as LockIcon, Trash2, LayoutGrid, List, Building2, FileText, PieChart, Briefcase, Upload, Check, Loader2, Download } from 'lucide-react';
+import { Plus, MoreHorizontal, Calendar, Scale, Search, Filter, LayoutDashboard, ArrowRight, AlertTriangle, CheckCircle2, Clock, MapPin, Shield, User as UserIcon, Users, Save, XCircle, Pencil, ChevronRight, ChevronLeft, ChevronDown, Zap, Lock as LockIcon, Trash2, LayoutGrid, List, Building2, FileText, PieChart, Briefcase, Upload, Check, Loader2, Download, Trello } from 'lucide-react';
 import { createDynamicClient } from '@/utils/supabase/client';
 import IntelligenceWidget from '../shared/intelligence-widget';
 import { useTranslation } from '@/contexts/language-context';
@@ -310,9 +310,9 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     const [activeAssetTab, setActiveAssetTab] = useState<'basic' | 'advanced' | 'docs'>('basic');
     const [activeLawsuitTab, setActiveLawsuitTab] = useState<'basic' | 'advanced' | 'docs'>('basic');
     const [activeTaskTab, setActiveTaskTab] = useState<'basic' | 'advanced'>('basic');
-    const [processViewStyle, setProcessViewStyle] = useState<'grid' | 'list'>('grid');
-    const [assetViewStyle, setAssetViewStyle] = useState<'grid' | 'list'>('grid');
-    const [corporateViewStyle, setCorporateViewStyle] = useState<'grid' | 'list'>('grid');
+    const [processViewStyle, setProcessViewStyle] = useState<'grid' | 'list' | 'kanban'>('grid');
+    const [assetViewStyle, setAssetViewStyle] = useState<'grid' | 'list' | 'kanban'>('grid');
+    const [corporateViewStyle, setCorporateViewStyle] = useState<'grid' | 'list' | 'kanban'>('grid');
     const [isEntityModalOpen, setIsEntityModalOpen] = useState(false);
     const [editingEntity, setEditingEntity] = useState<Partial<CorporateEntity> | null>(null);
     const [activeEntityTab, setActiveEntityTab] = useState<'basic' | 'qsa' | 'docs'>('basic');
@@ -1169,6 +1169,91 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         }
     };
 
+    const handleDragStartLawsuit = (e: React.DragEvent, lawsuitId: string) => {
+        e.dataTransfer.setData('lawsuitId', lawsuitId);
+        const img = new Image();
+        img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+        e.dataTransfer.setDragImage(img, 0, 0);
+    };
+
+    const handleDropLawsuit = async (e: React.DragEvent, newStatus: string) => {
+        e.preventDefault();
+        const lawsuitId = e.dataTransfer.getData('lawsuitId');
+        if (!lawsuitId) return;
+
+        const lawsuitToUpdate = lawsuits.find(l => l.id === lawsuitId);
+        if (!lawsuitToUpdate || lawsuitToUpdate.status === newStatus) return;
+
+        // Optimistic update
+        const previousLawsuits = [...lawsuits];
+        setLawsuits(lawsuits.map(l => l.id === lawsuitId ? { ...l, status: newStatus as any } : l));
+
+        try {
+            const updatedLawsuit = { ...lawsuitToUpdate, status: newStatus as any };
+            await saveLawsuit(updatedLawsuit, selectedUserId);
+        } catch (err) {
+            console.error('Error dragging lawsuit:', err);
+            toast.error('Erro ao mover o processo.');
+            setLawsuits(previousLawsuits);
+        }
+    };
+
+    const handleDragStartAsset = (e: React.DragEvent, assetId: string) => {
+        e.dataTransfer.setData('assetId', assetId);
+        const img = new Image();
+        img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+        e.dataTransfer.setDragImage(img, 0, 0);
+    };
+
+    const handleDropAsset = async (e: React.DragEvent, newStatus: string) => {
+        e.preventDefault();
+        const assetId = e.dataTransfer.getData('assetId');
+        if (!assetId) return;
+
+        const assetToUpdate = assets.find(a => a.id === assetId);
+        if (!assetToUpdate || assetToUpdate.status === newStatus) return;
+
+        const previousAssets = [...assets];
+        setAssets(assets.map(a => a.id === assetId ? { ...a, status: newStatus as any } : a));
+
+        try {
+            const updatedAsset = { ...assetToUpdate, status: newStatus as any };
+            await saveAsset(updatedAsset, selectedUserId);
+        } catch (err) {
+            console.error('Error dragging asset:', err);
+            toast.error('Erro ao mover o ativo.');
+            setAssets(previousAssets);
+        }
+    };
+
+    const handleDragStartEntity = (e: React.DragEvent, entityId: string) => {
+        e.dataTransfer.setData('entityId', entityId);
+        const img = new Image();
+        img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+        e.dataTransfer.setDragImage(img, 0, 0);
+    };
+
+    const handleDropEntity = async (e: React.DragEvent, newStatus: string) => {
+        e.preventDefault();
+        const entityId = e.dataTransfer.getData('entityId');
+        if (!entityId) return;
+
+        const entityToUpdate = corporateEntities.find(e => e.id === entityId);
+        if (!entityToUpdate || entityToUpdate.status === newStatus) return;
+
+        const previousEntities = [...corporateEntities];
+        setCorporateEntities(corporateEntities.map(ent => ent.id === entityId ? { ...ent, status: newStatus as any } : ent));
+
+        try {
+            const updatedEntity = { ...entityToUpdate, status: newStatus as any };
+            await saveCorporateEntity(updatedEntity, selectedUserId);
+        } catch (err) {
+            console.error('Error dragging entity:', err);
+            toast.error('Erro ao mover a entidade.');
+            setCorporateEntities(previousEntities);
+        }
+    };
+
     const handleSoftDeleteLawsuit = async (id: string) => {
         if (!window.confirm(t('modules.nexus.kanban.deleteConfirm'))) return;
         try {
@@ -1692,6 +1777,13 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         >
                                             <List size={18} />
                                         </button>
+                                        <button
+                                            onClick={() => setProcessViewStyle('kanban')}
+                                            className={`p-2 rounded-lg transition-all ${processViewStyle === 'kanban' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                                            title="Visualização em Kanban"
+                                        >
+                                            <Trello size={18} />
+                                        </button>
                                     </div>
                                     <button
                                         onClick={() => { setEditingLawsuit({ status: 'Ativo' }); setIsLawsuitModalOpen(true); setActiveLawsuitTab('basic'); }}
@@ -1702,9 +1794,93 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                 </div>
                             </div>
 
-                            <div className="flex-1 px-8 pb-8">
+                            <div className="flex-1 px-8 pb-8 h-[calc(100vh-280px)]">
                                 <AnimatePresence mode="wait">
-                                    {processViewStyle === 'list' ? (
+                                    {processViewStyle === 'kanban' ? (
+                                        <motion.div
+                                            key="process-kanban"
+                                            initial={{ opacity: 0, x: 20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: -20 }}
+                                            className="h-full flex gap-6 overflow-x-auto no-scrollbar pb-4"
+                                        >
+                                            {LAWSUIT_STATUSES.map(status => (
+                                                <div 
+                                                    key={status} 
+                                                    className="flex-shrink-0 w-80 bg-slate-100/40 dark:bg-slate-950/40 rounded-[2rem] p-4 border border-slate-200 dark:border-slate-900 flex flex-col gap-4"
+                                                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('bg-indigo-50/50', 'dark:bg-indigo-900/10', 'border-indigo-300', 'dark:border-indigo-800/50'); }}
+                                                    onDragLeave={(e) => { e.currentTarget.classList.remove('bg-indigo-50/50', 'dark:bg-indigo-900/10', 'border-indigo-300', 'dark:border-indigo-800/50'); }}
+                                                    onDrop={(e) => { e.preventDefault(); e.currentTarget.classList.remove('bg-indigo-50/50', 'dark:bg-indigo-900/10', 'border-indigo-300', 'dark:border-indigo-800/50'); handleDropLawsuit(e, status); }}
+                                                >
+                                                    <div className="flex items-center justify-between px-2 mb-2">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className={`w-2 h-2 rounded-full ${
+                                                                status === 'Ativo' ? 'bg-emerald-500' :
+                                                                status === 'Encerrado' ? 'bg-rose-500' :
+                                                                status === 'Arquivado' ? 'bg-slate-400' : 'bg-amber-500'
+                                                            }`} />
+                                                            <h3 className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">{status}</h3>
+                                                            <span className="ml-2 px-2 py-0.5 bg-white dark:bg-slate-800 rounded-lg text-[10px] border border-slate-200 dark:border-slate-800 font-bold">
+                                                                {lawsuits.filter(l => l.status === status).length}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex-1 overflow-y-auto no-scrollbar space-y-4 px-1 pb-6">
+                                                        {lawsuits.filter(l => l.status === status).length === 0 ? (
+                                                            <div className="py-20 text-center text-[10px] font-bold text-slate-300 italic uppercase tracking-widest">Vazio</div>
+                                                        ) : (
+                                                            lawsuits.filter(l => l.status === status).map(law => (
+                                                                <div 
+                                                                    key={law.id} 
+                                                                    draggable
+                                                                    onDragStart={(e) => {
+                                                                        handleDragStartLawsuit(e, law.id);
+                                                                        e.currentTarget.classList.add('opacity-50');
+                                                                    }}
+                                                                    onDragEnd={(e) => {
+                                                                        e.currentTarget.classList.remove('opacity-50');
+                                                                    }}
+                                                                    className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group cursor-pointer"
+                                                                    onClick={() => { setEditingLawsuit(law); setIsLawsuitModalOpen(true); setActiveLawsuitTab('basic'); }}
+                                                                >
+                                                                    <div className="flex justify-between items-start mb-2">
+                                                                        <div className="text-[8px] font-mono font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-tight truncate">{law.cnj_number || 'Sem CNJ'}</div>
+                                                                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                            <button
+                                                                                onClick={(e) => { e.stopPropagation(); setEditingLawsuit(law); setIsLawsuitModalOpen(true); setActiveLawsuitTab('basic'); }}
+                                                                                className="p-1 text-slate-400 hover:text-indigo-600 bg-slate-50 dark:bg-slate-800 rounded cursor-pointer"
+                                                                            >
+                                                                                <Pencil size={12} />
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                    <h4 className="font-bold text-slate-800 dark:text-white text-xs mb-3 line-clamp-2 leading-snug uppercase tracking-tight">{law.case_title}</h4>
+                                                                    
+                                                                    <div className="flex items-center gap-2 mb-4">
+                                                                        <div className="w-6 h-6 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 flex items-center justify-center font-black text-[9px]">
+                                                                            {persons.find(p => p.id === law.author_id)?.full_name?.charAt(0) || 'C'}
+                                                                        </div>
+                                                                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 truncate">
+                                                                            {persons.find(p => p.id === law.author_id)?.full_name || 'Contestação'}
+                                                                        </span>
+                                                                    </div>
+
+                                                                    <div className="flex items-center justify-between pt-3 border-t border-slate-50 dark:border-slate-800">
+                                                                        <div className="text-[9px] font-black text-emerald-600 dark:text-emerald-400">
+                                                                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(law.value || 0)}
+                                                                        </div>
+                                                                        <div className="flex items-center gap-1">
+                                                                             {renderStatusBadge(law.id, law.status, 'lawsuit', LAWSUIT_STATUSES)}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            ))
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </motion.div>
+                                    ) : processViewStyle === 'list' ? (
                                         <motion.div 
                                             key="process-list"
                                             initial={{ opacity: 0, scale: 0.98 }}
@@ -2406,6 +2582,13 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         >
                                             <List size={18} />
                                         </button>
+                                        <button
+                                            onClick={() => setAssetViewStyle('kanban')}
+                                            className={`p-2 rounded-lg transition-all ${assetViewStyle === 'kanban' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                                            title="Visualização em Kanban"
+                                        >
+                                            <Trello size={18} />
+                                        </button>
                                     </div>
                                     <button
                                         onClick={() => { setEditingAsset({ status: 'Ativo', asset_type: 'Imóvel' }); setIsAssetModalOpen(true); }}
@@ -2417,9 +2600,101 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                             </div>
 
                             {/* Tabela Ativos */}
-                            <div className="flex-1 px-8 pb-8">
-                            <AnimatePresence mode="wait">
-                                {assetViewStyle === 'list' ? (
+                            <div className="flex-1 px-8 pb-8 h-[calc(100vh-280px)]">
+                             <AnimatePresence mode="wait">
+                                {assetViewStyle === 'kanban' ? (
+                                    <motion.div
+                                        key="asset-kanban"
+                                        initial={{ opacity: 0, x: 20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: -20 }}
+                                        className="h-full flex gap-6 overflow-x-auto no-scrollbar pb-4"
+                                    >
+                                        {ASSET_STATUSES.map(status => (
+                                            <div 
+                                                key={status} 
+                                                className="flex-shrink-0 w-80 bg-slate-100/40 dark:bg-slate-950/40 rounded-[2rem] p-4 border border-slate-200 dark:border-slate-900 flex flex-col gap-4"
+                                                onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('bg-indigo-50/50', 'dark:bg-indigo-900/10', 'border-indigo-300', 'dark:border-indigo-800/50'); }}
+                                                onDragLeave={(e) => { e.currentTarget.classList.remove('bg-indigo-50/50', 'dark:bg-indigo-900/10', 'border-indigo-300', 'dark:border-indigo-800/50'); }}
+                                                onDrop={(e) => { e.preventDefault(); e.currentTarget.classList.remove('bg-indigo-50/50', 'dark:bg-indigo-900/10', 'border-indigo-300', 'dark:border-indigo-800/50'); handleDropAsset(e, status); }}
+                                            >
+                                                <div className="flex items-center justify-between px-2 mb-2">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`w-2 h-2 rounded-full ${
+                                                            status === 'Ativo' ? 'bg-emerald-500' :
+                                                            status === 'Vendido' ? 'bg-rose-500' :
+                                                            status === 'Bloqueado' ? 'bg-rose-600' : 'bg-amber-500'
+                                                        }`} />
+                                                        <h3 className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">{status}</h3>
+                                                        <span className="ml-2 px-2 py-0.5 bg-white dark:bg-slate-900 rounded-lg text-[10px] border border-slate-200 dark:border-slate-800 font-bold">
+                                                            {assets.filter(a => a.status === status).length}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div className="flex-1 overflow-y-auto no-scrollbar space-y-4 px-1 pb-6">
+                                                    {assets.filter(a => a.status === status).length === 0 ? (
+                                                        <div className="py-20 text-center text-[10px] font-bold text-slate-300 italic uppercase tracking-widest">Vazio</div>
+                                                    ) : (
+                                                        assets.filter(a => a.status === status).map(asset => {
+                                                            const person = persons.find(p => p.id === asset.person_id);
+                                                            const lawsuit = lawsuits.find(l => l.id === asset.lawsuit_id);
+                                                            return (
+                                                                <div 
+                                                                    key={asset.id} 
+                                                                    draggable
+                                                                    onDragStart={(e) => {
+                                                                        handleDragStartAsset(e, asset.id);
+                                                                        e.currentTarget.classList.add('opacity-50');
+                                                                    }}
+                                                                    onDragEnd={(e) => {
+                                                                        e.currentTarget.classList.remove('opacity-50');
+                                                                    }}
+                                                                    className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group cursor-pointer"
+                                                                    onClick={() => { setEditingAsset(asset); setIsAssetModalOpen(true); }}
+                                                                >
+                                                                    <div className="flex justify-between items-start mb-2">
+                                                                        <div className="text-[8px] font-black text-slate-400 uppercase tracking-widest truncate">{asset.asset_type}</div>
+                                                                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                            <button
+                                                                                onClick={(e) => { e.stopPropagation(); setEditingAsset(asset); setIsAssetModalOpen(true); }}
+                                                                                className="p-1 text-slate-400 hover:text-indigo-600 bg-slate-50 dark:bg-slate-800 rounded cursor-pointer"
+                                                                            >
+                                                                                <Pencil size={12} />
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                    <h4 className="font-bold text-slate-800 dark:text-white text-xs mb-3 line-clamp-2 leading-snug uppercase tracking-tight">{asset.title}</h4>
+                                                                    
+                                                                    <div className="flex flex-col gap-2 mb-4">
+                                                                        {person && (
+                                                                            <div className="flex items-center gap-2 text-[10px] font-bold text-indigo-600 dark:text-indigo-400">
+                                                                                <UserIcon size={10} /> <span className="truncate">{person.full_name}</span>
+                                                                            </div>
+                                                                        )}
+                                                                        {lawsuit && (
+                                                                            <div className="flex items-center gap-2 text-[9px] font-bold text-slate-400">
+                                                                                <Scale size={10} /> <span className="truncate">{lawsuit.cnj_number || lawsuit.case_title}</span>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+
+                                                                    <div className="flex items-center justify-between pt-3 border-t border-slate-50 dark:border-slate-800">
+                                                                        <div className="text-[10px] font-black text-emerald-600 dark:text-emerald-400">
+                                                                            {asset.value ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(asset.value) : '-'}
+                                                                        </div>
+                                                                        <div className="flex items-center gap-1">
+                                                                            {renderStatusBadge(asset.id, asset.status, 'asset', ASSET_STATUSES)}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </motion.div>
+                                ) : assetViewStyle === 'list' ? (
                                     <motion.div 
                                         key="asset-list"
                                         initial={{ opacity: 0, scale: 0.98 }}
@@ -2646,6 +2921,13 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         >
                                             <List size={18} />
                                         </button>
+                                        <button
+                                            onClick={() => setCorporateViewStyle('kanban')}
+                                            className={`p-2 rounded-lg transition-all ${corporateViewStyle === 'kanban' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                                            title="Visualização em Kanban"
+                                        >
+                                            <Trello size={18} />
+                                        </button>
                                     </div>
                                     <button
                                         onClick={() => { 
@@ -2664,9 +2946,90 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                             </div>
 
                             {/* Tabela/Grade Societário */}
-                            <div className="flex-1 px-8 pb-8">
+                            <div className="flex-1 px-8 pb-8 h-[calc(100vh-280px)]">
                                 <AnimatePresence mode="wait">
-                                    {corporateViewStyle === 'list' ? (
+                                    {corporateViewStyle === 'kanban' ? (
+                                        <motion.div
+                                            key="corporate-kanban"
+                                            initial={{ opacity: 0, x: 20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: -20 }}
+                                            className="h-full flex gap-6 overflow-x-auto no-scrollbar pb-4"
+                                        >
+                                            {ENTITY_STATUSES_LIST.map(status => (
+                                                <div 
+                                                    key={status} 
+                                                    className="flex-shrink-0 w-80 bg-slate-100/40 dark:bg-slate-950/40 rounded-[2rem] p-4 border border-slate-200 dark:border-slate-900 flex flex-col gap-4"
+                                                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('bg-indigo-50/50', 'dark:bg-indigo-900/10', 'border-indigo-300', 'dark:border-indigo-800/50'); }}
+                                                    onDragLeave={(e) => { e.currentTarget.classList.remove('bg-indigo-50/50', 'dark:bg-indigo-900/10', 'border-indigo-300', 'dark:border-indigo-800/50'); }}
+                                                    onDrop={(e) => { e.preventDefault(); e.currentTarget.classList.remove('bg-indigo-50/50', 'dark:bg-indigo-900/10', 'border-indigo-300', 'dark:border-indigo-800/50'); handleDropEntity(e, status); }}
+                                                >
+                                                    <div className="flex items-center justify-between px-2 mb-2">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className={`w-2 h-2 rounded-full ${
+                                                                status === 'Ativa' ? 'bg-emerald-500' :
+                                                                status === 'Baixada' ? 'bg-rose-500' :
+                                                                status === 'Inativa' ? 'bg-slate-400' : 'bg-amber-500'
+                                                            }`} />
+                                                            <h3 className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">{status}</h3>
+                                                            <span className="ml-2 px-2 py-0.5 bg-white dark:bg-slate-900 rounded-lg text-[10px] border border-slate-200 dark:border-slate-800 font-bold">
+                                                                {filteredEntities.filter(e => e.status === status).length}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex-1 overflow-y-auto no-scrollbar space-y-4 px-1 pb-6">
+                                                        {filteredEntities.filter(e => e.status === status).length === 0 ? (
+                                                            <div className="py-20 text-center text-[10px] font-bold text-slate-300 italic uppercase tracking-widest">Vazio</div>
+                                                        ) : (
+                                                            filteredEntities.filter(e => e.status === status).map(entity => (
+                                                                <div 
+                                                                    key={entity.id} 
+                                                                    draggable
+                                                                    onDragStart={(e) => {
+                                                                        handleDragStartEntity(e, entity.id);
+                                                                        e.currentTarget.classList.add('opacity-50');
+                                                                    }}
+                                                                    onDragEnd={(e) => {
+                                                                        e.currentTarget.classList.remove('opacity-50');
+                                                                    }}
+                                                                    className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group cursor-pointer"
+                                                                    onClick={() => handleEditEntity(entity)}
+                                                                >
+                                                                    <div className="flex justify-between items-start mb-2">
+                                                                        <div className="text-[8px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest truncate">{entity.entity_type}</div>
+                                                                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                            <button
+                                                                                onClick={(e) => { e.stopPropagation(); handleEditEntity(entity); }}
+                                                                                className="p-1 text-slate-400 hover:text-indigo-600 bg-slate-50 dark:bg-slate-800 rounded cursor-pointer"
+                                                                            >
+                                                                                <Pencil size={12} />
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                    <h4 className="font-bold text-slate-800 dark:text-white text-xs mb-3 line-clamp-2 leading-snug uppercase tracking-tight">{entity.legal_name}</h4>
+                                                                    
+                                                                    <div className="flex flex-col gap-2 mb-4">
+                                                                        <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                                                                            {entity.cnpj || 'CNPJ NÃO INFORMADO'}
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div className="flex items-center justify-between pt-3 border-t border-slate-50 dark:border-slate-800">
+                                                                        <div className="text-[10px] font-black text-emerald-600 dark:text-emerald-400">
+                                                                            {entity.total_capital ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(entity.total_capital) : '-'}
+                                                                        </div>
+                                                                        <div className="flex items-center gap-1">
+                                                                            {renderStatusBadge(entity.id, entity.status, 'corporate', ENTITY_STATUSES_LIST)}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            ))
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </motion.div>
+                                    ) : corporateViewStyle === 'list' ? (
                                         <motion.div 
                                             key="corporate-list"
                                             initial={{ opacity: 0, scale: 0.98 }}
