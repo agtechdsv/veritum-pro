@@ -30,6 +30,7 @@ export const pt = {
         client: 'Cliente',
         status: 'Status',
         event: 'Tarefa',
+        processes: 'Processos',
         deleting: 'Excluindo...'
     },
     nav: {
@@ -377,6 +378,7 @@ export const pt = {
                 }
             },
             tabs: {
+                overview: 'Visão Geral',
                 people: 'Pessoas',
                 processes: 'Processos',
                 tasks: 'Tarefas',

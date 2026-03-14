@@ -268,6 +268,29 @@ export interface Lawsuit {
     value: number;
 }
 
+export interface LawsuitDocument {
+    id: string;
+    lawsuit_id: string;
+    title: string;
+    document_type: string;
+    file_url?: string;
+    event_date?: string;
+    notes?: string;
+    created_at?: string;
+    updated_at?: string;
+}
+
+export interface AssetDocument {
+    id: string;
+    asset_id: string;
+    title: string;
+    document_type: string;
+    file_url?: string;
+    event_date?: string;
+    notes?: string;
+    created_at?: string;
+    updated_at?: string;
+}
 
 export interface Person {
     id: string;
@@ -360,6 +383,10 @@ export interface LegalDocument {
     lawsuit_id?: string;
     author_id?: string;
     template_id?: string;
+    document_type?: string;
+    file_url?: string;
+    event_date?: string;
+    notes?: string;
     version: number;
     created_at?: string;
     updated_at?: string;

@@ -30,6 +30,7 @@ export const en = {
         client: 'Client',
         status: 'Status',
         event: 'Task',
+        processes: 'Processes',
         deleting: 'Deleting...'
     },
     nav: {

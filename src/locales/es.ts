@@ -38,6 +38,7 @@ export const es = {
         "client": "Cliente",
         "status": "Estado",
         "event": "Tarea",
+        "processes": "Procesos",
         "deleting": "Eliminando..."
     },
     "nav": {

@@ -1,18 +1,151 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Credentials, Lawsuit, Task, CalendarEvent, User, Person, TeamMember, Asset, CorporateEntity, Shareholder, CorporateDocument, TaxRegime, EntityStatus, EntityType } from '@/types';
-import { Plus, MoreHorizontal, Calendar, Scale, Search, Filter, ArrowRight, AlertTriangle, CheckCircle2, Clock, MapPin, Shield, User as UserIcon, Users, Save, XCircle, Pencil, ChevronRight, ChevronLeft, ChevronDown, Zap, Lock as LockIcon, Trash2, LayoutGrid, List, Building2, FileText, PieChart, Briefcase } from 'lucide-react';
+import { Credentials, Lawsuit, LawsuitDocument, Task, CalendarEvent, User, Person, TeamMember, Asset, CorporateEntity, Shareholder, CorporateDocument, TaxRegime, EntityStatus, EntityType, AssetDocument } from '@/types';
+import { Plus, MoreHorizontal, Calendar, Scale, Search, Filter, LayoutDashboard, ArrowRight, AlertTriangle, CheckCircle2, Clock, MapPin, Shield, User as UserIcon, Users, Save, XCircle, Pencil, ChevronRight, ChevronLeft, ChevronDown, Zap, Lock as LockIcon, Trash2, LayoutGrid, List, Building2, FileText, PieChart, Briefcase, Upload, Check, Loader2, Download } from 'lucide-react';
 import { createDynamicClient } from '@/utils/supabase/client';
 import IntelligenceWidget from '../shared/intelligence-widget';
 import { useTranslation } from '@/contexts/language-context';
 import PersonManagement from './person-management';
 import { useModule } from '@/app/veritumpro/layout';
 import { listPersons } from '@/app/actions/crm-actions';
-import { listLawsuits, saveLawsuit, deleteLawsuit, listTasks, saveTask, deleteTask, listEvents, saveEvent, deleteEvent, listTeam, getCitiesByState, listAssets, saveAsset, deleteAsset, listCorporateEntities, saveCorporateEntity, deleteCorporateEntity, listShareholders, saveShareholder, deleteShareholder, listCorporateDocuments, saveCorporateDocument, deleteCorporateDocument } from '@/app/actions/nexus-actions';
+import { listLawsuits, saveLawsuit, deleteLawsuit, listTasks, saveTask, deleteTask, listEvents, saveEvent, deleteEvent, listTeam, getCitiesByState, listAssets, saveAsset, deleteAsset, listCorporateEntities, saveCorporateEntity, deleteCorporateEntity, listShareholders, saveShareholder, deleteShareholder, listCorporateDocuments, saveCorporateDocument, deleteCorporateDocument, listLawsuitDocuments, saveLawsuitDocument, deleteLawsuitDocument, listAssetDocuments, saveAssetDocument, deleteAssetDocument } from '@/app/actions/nexus-actions';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from '@/components/ui/toast';
 import { createMasterClient } from '@/lib/supabase/master';
+import Link from 'next/link';
 
-// 💎 Premium Combobox Component (Cascading & Searchable)
+// 💎 Premium File Upload Component
+const PremiumFileUpload = React.forwardRef<{ upload: () => Promise<string | null> }, {
+    onUploadComplete?: (url: string) => void;
+    onFileSelect?: (file: File | null) => void;
+    bucket: string;
+    path: string;
+    label: string;
+    accept?: string;
+    isManual?: boolean;
+}>(({ onUploadComplete, onFileSelect, bucket, path, label, accept = "*", isManual }, ref) => {
+    const [uploading, setUploading] = useState(false);
+    const [progress, setProgress] = useState(0);
+    const [dragActive, setDragActive] = useState(false);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const { credentials } = useModule();
+
+    const handleUpload = async (file: File): Promise<string | null> => {
+        if (!file) return null;
+        setUploading(true);
+        setProgress(10);
+
+        try {
+            const supabase = createDynamicClient(credentials.supabaseUrl, credentials.supabaseAnonKey);
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+            const filePath = `${path}/${fileName}`;
+
+            setProgress(30);
+            const { error: uploadError } = await supabase.storage
+                .from(bucket)
+                .upload(filePath, file);
+
+            if (uploadError) throw uploadError;
+
+            setProgress(70);
+            const { data: { publicUrl } } = supabase.storage
+                .from(bucket)
+                .getPublicUrl(filePath);
+
+            setProgress(100);
+            if (onUploadComplete) onUploadComplete(publicUrl);
+            return publicUrl;
+        } catch (error: any) {
+            console.error('Upload error:', error);
+            toast.error('Erro ao carregar arquivo: ' + error.message);
+            return null;
+        } finally {
+            setTimeout(() => {
+                setUploading(false);
+                setProgress(0);
+            }, 1000);
+        }
+    };
+
+    React.useImperativeHandle(ref, () => ({
+        upload: async () => {
+            if (selectedFile) {
+                return await handleUpload(selectedFile);
+            }
+            return null;
+        }
+    }));
+
+    const onSelect = (file: File) => {
+        if (isManual) {
+            setSelectedFile(file);
+            if (onFileSelect) onFileSelect(file);
+        } else {
+            handleUpload(file);
+        }
+    };
+
+    return (
+        <div 
+            className={`relative border-2 border-dashed rounded-3xl p-8 transition-all flex flex-col items-center justify-center gap-4 ${
+                dragActive ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/10' : 'border-slate-200 dark:border-slate-800'
+            } ${uploading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-indigo-400'} ${selectedFile ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/10' : ''}`}
+            onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
+            onDragLeave={() => setDragActive(false)}
+            onDrop={(e) => {
+                e.preventDefault();
+                setDragActive(false);
+                if (e.dataTransfer.files?.[0]) onSelect(e.dataTransfer.files[0]);
+            }}
+            onClick={() => {
+                if (!uploading) {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = accept;
+                    input.onchange = (e) => {
+                        const file = (e.target as HTMLInputElement).files?.[0];
+                        if (file) onSelect(file);
+                    };
+                    input.click();
+                }
+            }}
+        >
+            {uploading ? (
+                <div className="flex flex-col items-center gap-3">
+                    <Loader2 className="animate-spin text-indigo-600" size={32} />
+                    <div className="w-48 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                        <motion.div 
+                            className="h-full bg-indigo-600"
+                            initial={{ width: 0 }}
+                            animate={{ width: `${progress}%` }}
+                        />
+                    </div>
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{progress}% Carregando...</span>
+                </div>
+            ) : selectedFile ? (
+                <div className="flex flex-col items-center gap-2">
+                    <div className="p-4 bg-emerald-100 dark:bg-emerald-900/20 text-emerald-600 rounded-2xl">
+                        <Check size={24} />
+                    </div>
+                    <div className="text-center">
+                        <p className="text-sm font-black text-slate-700 dark:text-slate-200 uppercase tracking-tight truncate max-w-[200px]">{selectedFile.name}</p>
+                        <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest mt-1">Clique para trocar o arquivo</p>
+                    </div>
+                </div>
+            ) : (
+                <>
+                    <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 rounded-2xl">
+                        <Upload size={24} />
+                    </div>
+                    <div className="text-center">
+                        <p className="text-sm font-black text-slate-700 dark:text-slate-200 uppercase tracking-tight">{label}</p>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Arraste ou clique para selecionar</p>
+                    </div>
+                </>
+            )}
+        </div>
+    );
+});
 const PremiumCombobox: React.FC<{
     value: string;
     onChange: (val: string) => void;
@@ -157,6 +290,8 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     const [corporateEntities, setCorporateEntities] = useState<CorporateEntity[]>([]);
     const [shareholders, setShareholders] = useState<Shareholder[]>([]);
     const [corporateDocuments, setCorporateDocuments] = useState<CorporateDocument[]>([]);
+    const [lawsuitDocuments, setLawsuitDocuments] = useState<LawsuitDocument[]>([]);
+    const [assetDocuments, setAssetDocuments] = useState<AssetDocument[]>([]);
     const [team, setTeam] = useState<TeamMember[]>([]);
     const [persons, setPersons] = useState<Person[]>([]);
     const [loading, setLoading] = useState(true);
@@ -170,10 +305,10 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     const [isEventModalOpen, setIsEventModalOpen] = useState(false);
     const [isAssetModalOpen, setIsAssetModalOpen] = useState(false);
     const [editingAsset, setEditingAsset] = useState<Partial<Asset> | null>(null);
-    const [activeTab, setActiveTab] = useState<'pessoas' | 'processos' | 'tarefas' | 'agenda' | 'ativos' | 'societario'>('pessoas');
+    const [activeTab, setActiveTab] = useState<'overview' | 'pessoas' | 'processos' | 'tarefas' | 'agenda' | 'ativos' | 'societario'>('overview');
     const [searchTerm, setSearchTerm] = useState('');
-    const [activeAssetTab, setActiveAssetTab] = useState<'basic' | 'advanced'>('basic');
-    const [activeLawsuitTab, setActiveLawsuitTab] = useState<'basic' | 'advanced'>('basic');
+    const [activeAssetTab, setActiveAssetTab] = useState<'basic' | 'advanced' | 'docs'>('basic');
+    const [activeLawsuitTab, setActiveLawsuitTab] = useState<'basic' | 'advanced' | 'docs'>('basic');
     const [activeTaskTab, setActiveTaskTab] = useState<'basic' | 'advanced'>('basic');
     const [processViewStyle, setProcessViewStyle] = useState<'grid' | 'list'>('grid');
     const [assetViewStyle, setAssetViewStyle] = useState<'grid' | 'list'>('grid');
@@ -186,7 +321,116 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     const [editingShareholder, setEditingShareholder] = useState<Partial<Shareholder> | null>(null);
     const [isDocumentModalOpen, setIsDocumentModalOpen] = useState(false);
     const [editingDocument, setEditingDocument] = useState<Partial<CorporateDocument> | null>(null);
+    const [isLawsuitDocModalOpen, setIsLawsuitDocModalOpen] = useState(false);
+    const [editingLawsuitDoc, setEditingLawsuitDoc] = useState<Partial<LawsuitDocument> | null>(null);
+    const [isAssetDocModalOpen, setIsAssetDocModalOpen] = useState(false);
+    const [editingAssetDoc, setEditingAssetDoc] = useState<Partial<AssetDocument> | null>(null);
     const personForQSARef = useRef<Person | null>(null);
+    const corporateDocUploadRef = useRef<{ upload: () => Promise<string | null> }>(null);
+    const lawsuitDocUploadRef = useRef<{ upload: () => Promise<string | null> }>(null);
+    const assetDocUploadRef = useRef<{ upload: () => Promise<string | null> }>(null);
+
+    // Quick Status Popup State
+    const [statusPopover, setStatusPopover] = useState<{
+        id: string;
+        type: 'lawsuit' | 'asset' | 'corporate';
+        options: string[];
+        currentStatus: string;
+        rect: { x: number, y: number };
+    } | null>(null);
+
+    const LAWSUIT_STATUSES = ['Ativo', 'Suspenso', 'Arquivado', 'Encerrado'];
+    const ASSET_STATUSES = ['Ativo', 'Bloqueado', 'Vendido', 'Em Garantia', 'Alienado'];
+    const ENTITY_STATUSES_LIST: EntityStatus[] = ['Ativa', 'Baixada', 'Inativa', 'Em Liquidação'];
+
+    const handleQuickStatusUpdate = async (id: string, type: 'lawsuit' | 'asset' | 'corporate', newStatus: string) => {
+        try {
+            if (type === 'lawsuit') {
+                const law = lawsuits.find(l => l.id === id);
+                if (law) {
+                    await saveLawsuit({ ...law, status: newStatus as any }, selectedUserId);
+                    setLawsuits(prev => prev.map(l => l.id === id ? { ...l, status: newStatus as any } : l));
+                }
+            } else if (type === 'asset') {
+                const asset = assets.find(a => a.id === id);
+                if (asset) {
+                    await saveAsset({ ...asset, status: newStatus as any }, selectedUserId);
+                    setAssets(prev => prev.map(a => a.id === id ? { ...a, status: newStatus as any } : a));
+                }
+            } else if (type === 'corporate') {
+                const entity = corporateEntities.find(e => e.id === id);
+                if (entity) {
+                    await saveCorporateEntity({ ...entity, status: newStatus as any }, selectedUserId);
+                    setCorporateEntities(prev => prev.map(e => e.id === id ? { ...e, status: newStatus as any } : e));
+                }
+            }
+            toast.success(`Status atualizado para ${newStatus}`);
+        } catch (error) {
+            console.error('Error updating status:', error);
+            toast.error('Erro ao atualizar status');
+        }
+        setStatusPopover(null);
+    };
+
+    const renderStatusBadge = (id: string, currentStatus: string, type: 'lawsuit' | 'asset' | 'corporate', options: string[]) => {
+        const getStyles = () => {
+            if (currentStatus === 'Ativo' || currentStatus === 'Ativa') return 'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800/50';
+            if (currentStatus === 'Encerrado' || currentStatus === 'Vendido' || currentStatus === 'Baixada' || currentStatus === 'Inativa' || currentStatus === 'Bloqueado') 
+                return 'bg-rose-50 text-rose-600 border-rose-100 dark:bg-rose-900/20 dark:border-rose-800/50';
+            if (currentStatus === 'Suspenso' || currentStatus === 'Em Manutenção' || currentStatus === 'Em Liquidação' || currentStatus === 'Em Garantia') 
+                return 'bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-900/20 dark:border-amber-800/50';
+            return 'bg-slate-50 text-slate-600 border-slate-100 dark:bg-slate-800/50 dark:border-slate-700/50';
+        };
+
+        return (
+            <button
+                type="button"
+                title="Clique para alterar o status"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setStatusPopover({
+                        id,
+                        type,
+                        options,
+                        currentStatus,
+                        rect: { x: rect.left, y: rect.bottom + window.scrollY }
+                    });
+                }}
+                className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase border transition-all hover:scale-110 active:scale-95 cursor-pointer shadow-sm ${getStyles()}`}
+            >
+                {currentStatus}
+            </button>
+        );
+    };
+
+    // Confirmation Modal State
+    const [confirmModal, setConfirmModal] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        onConfirm: () => void;
+        type?: 'danger' | 'warning' | 'info';
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: () => {}
+    });
+
+    const triggerConfirm = (title: string, message: string, onConfirm: () => void, type: 'danger' | 'warning' | 'info' = 'danger') => {
+        setConfirmModal({ isOpen: true, title, message, onConfirm, type });
+    };
+
+    const extractStoragePath = (url: string, bucket: string) => {
+        try {
+            const parts = url.split(`${bucket}/`);
+            if (parts.length > 1) return parts[1];
+            return null;
+        } catch (e) {
+            return null;
+        }
+    };
 
     const filteredEntities = corporateEntities.filter(e => 
         e.legal_name.toLowerCase().includes(corporateSearchTerm.toLowerCase()) ||
@@ -360,6 +604,32 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             setCorporateDocuments([]);
         }
     }, [editingEntity?.id, !editingEntity, selectedUserId]);
+
+    // Fetch Lawsuit Documents when Lawsuit is selected
+    useEffect(() => {
+        if (editingLawsuit?.id) {
+            const fetchDocs = async () => {
+                const result = await listLawsuitDocuments(editingLawsuit.id!, selectedUserId);
+                if (result.data) setLawsuitDocuments(result.data);
+            };
+            fetchDocs();
+        } else {
+            setLawsuitDocuments([]);
+        }
+    }, [editingLawsuit?.id, selectedUserId]);
+
+    // Fetch Asset Documents when Asset is selected
+    useEffect(() => {
+        if (editingAsset?.id) {
+            const fetchDocs = async () => {
+                const result = await listAssetDocuments(editingAsset.id!, selectedUserId);
+                if (result.data) setAssetDocuments(result.data);
+            };
+            fetchDocs();
+        } else {
+            setAssetDocuments([]);
+        }
+    }, [editingAsset?.id, selectedUserId]);
 
     const handleCreateLawsuitFromCRM = (personId: string) => {
         // Switch to lawsuits tab
@@ -634,8 +904,21 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             const targetUserId = selectedUserId;
             if (!editingEntity?.id) return;
 
+            // Trigger manual upload first
+            let fileUrl = editingDocument?.file_url;
+            if (corporateDocUploadRef.current) {
+                const uploadedUrl = await corporateDocUploadRef.current.upload();
+                if (uploadedUrl) fileUrl = uploadedUrl;
+            }
+
+            if (!fileUrl) {
+                toast.error('Por favor, selecione um arquivo primeiro.');
+                return;
+            }
+
             const docData = {
                 ...editingDocument,
+                file_url: fileUrl,
                 entity_id: editingEntity.id
             } as CorporateDocument;
 
@@ -653,6 +936,47 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         } catch (err) {
             console.error('Error saving document:', err);
             toast.error('Erro ao salvar documento');
+        }
+    };
+
+    const handleSaveLawsuitDocument = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            const targetUserId = selectedUserId;
+            if (!editingLawsuit?.id) return;
+
+            // Trigger manual upload first
+            let fileUrl = editingLawsuitDoc?.file_url;
+            if (lawsuitDocUploadRef.current) {
+                const uploadedUrl = await lawsuitDocUploadRef.current.upload();
+                if (uploadedUrl) fileUrl = uploadedUrl;
+            }
+
+            if (!fileUrl) {
+                toast.error('Por favor, selecione um arquivo primeiro.');
+                return;
+            }
+
+            const docData = {
+                ...editingLawsuitDoc,
+                file_url: fileUrl,
+                lawsuit_id: editingLawsuit.id
+            } as LawsuitDocument;
+
+            const savedDoc = await saveLawsuitDocument(docData, targetUserId);
+
+            setIsLawsuitDocModalOpen(false);
+            setEditingLawsuitDoc(null);
+            toast.success('Documento do processo salvo com sucesso!');
+
+            if (editingLawsuitDoc?.id) {
+                setLawsuitDocuments(prev => prev.map(d => d.id === savedDoc.id ? savedDoc : d));
+            } else {
+                setLawsuitDocuments(prev => [savedDoc, ...prev]);
+            }
+        } catch (err) {
+            console.error('Error saving lawsuit document:', err);
+            toast.error('Erro ao salvar documento do processo');
         }
     };
 
@@ -675,15 +999,131 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     };
 
     const handleDeleteDocument = async (id: string) => {
-        if (!window.confirm('Excluir este documento?')) return;
+        const doc = corporateDocuments.find(d => d.id === id);
+        if (!doc) return;
+
+        triggerConfirm(
+            'Excluir Documento Societário',
+            'Deseja realmente remover este documento? Esta ação não pode ser desfeita.',
+            async () => {
+                try {
+                    // Try to delete from storage if URL exists
+                    if (doc.file_url) {
+                        const path = extractStoragePath(doc.file_url, 'nexus-documents');
+                        if (path) {
+                            const supabase = createDynamicClient(credentials.supabaseUrl, credentials.supabaseAnonKey);
+                            await supabase.storage.from('nexus-documents').remove([path]);
+                        }
+                    }
+
+                    await deleteCorporateDocument(id, selectedUserId);
+                    setCorporateDocuments(prev => prev.filter(d => d.id !== id));
+                    toast.success('Documento removido');
+                } catch (err) {
+                    console.error('Error deleting document:', err);
+                    toast.error('Erro ao remover documento');
+                }
+            }
+        );
+    };
+
+    const handleDeleteLawsuitDocument = async (id: string) => {
+        const doc = lawsuitDocuments.find(d => d.id === id);
+        if (!doc) return;
+
+        triggerConfirm(
+            'Excluir Documento',
+            'Deseja realmente remover este documento? Esta ação não pode ser desfeita.',
+            async () => {
+                try {
+                    // Try to delete from storage if URL exists
+                    if (doc.file_url) {
+                        const path = extractStoragePath(doc.file_url, 'nexus-documents');
+                        if (path) {
+                            const supabase = createDynamicClient(credentials.supabaseUrl, credentials.supabaseAnonKey);
+                            await supabase.storage.from('nexus-documents').remove([path]);
+                        }
+                    }
+
+                    await deleteLawsuitDocument(id, selectedUserId);
+                    setLawsuitDocuments(prev => prev.filter(d => d.id !== id));
+                    toast.success('Documento do processo removido');
+                } catch (err) {
+                    console.error('Error deleting lawsuit document:', err);
+                    toast.error('Erro ao remover documento do processo');
+                }
+            }
+        );
+    };
+
+    const handleSaveAssetDocument = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingAsset?.id || !editingAssetDoc) return;
+
         try {
-            await deleteCorporateDocument(id, selectedUserId);
-            setCorporateDocuments(prev => prev.filter(d => d.id !== id));
-            toast.success('Documento removido');
+            const targetUserId = selectedUserId;
+
+            // Trigger manual upload first
+            let fileUrl = editingAssetDoc?.file_url;
+            if (assetDocUploadRef.current) {
+                const uploadedUrl = await assetDocUploadRef.current.upload();
+                if (uploadedUrl) fileUrl = uploadedUrl;
+            }
+
+            if (!fileUrl) {
+                toast.error('Por favor, selecione um arquivo primeiro.');
+                return;
+            }
+
+            const docData = {
+                ...editingAssetDoc,
+                file_url: fileUrl,
+                asset_id: editingAsset.id
+            } as AssetDocument;
+
+            const savedDoc = await saveAssetDocument(docData, targetUserId);
+
+            setIsAssetDocModalOpen(false);
+            setEditingAssetDoc(null);
+            toast.success('Documento do ativo salvo com sucesso!');
+
+            if (editingAssetDoc?.id) {
+                setAssetDocuments(prev => prev.map(d => d.id === savedDoc.id ? savedDoc : d));
+            } else {
+                setAssetDocuments(prev => [savedDoc, ...prev]);
+            }
         } catch (err) {
-            console.error('Error deleting document:', err);
-            toast.error('Erro ao remover documento');
+            console.error('Error saving asset document:', err);
+            toast.error('Erro ao salvar documento do ativo');
         }
+    };
+
+    const handleDeleteAssetDocument = async (id: string) => {
+        const doc = assetDocuments.find(d => d.id === id);
+        if (!doc) return;
+
+        triggerConfirm(
+            'Excluir Documento do Ativo',
+            'Deseja excluir este documento permanentemente?',
+            async () => {
+                try {
+                    if (doc.file_url) {
+                        const path = extractStoragePath(doc.file_url, 'nexus-documents');
+                        if (path) {
+                            const supabase = createDynamicClient(credentials.supabaseUrl, credentials.supabaseAnonKey);
+                            await supabase.storage.from('nexus-documents').remove([path]);
+                        }
+                    }
+
+                    await deleteAssetDocument(id, selectedUserId);
+                    setAssetDocuments(prev => prev.filter(d => d.id !== id));
+                    toast.success('Documento do ativo excluído');
+                } catch (err) {
+                    console.error('Error deleting asset document:', err);
+                    toast.error('Erro ao excluir documento');
+                }
+            }
+        );
     };
 
     const handleSoftDeleteEntity = async (id: string) => {
@@ -954,6 +1394,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                     {/* Tabs Container - Nexus Premium Style */}
                     <div className="flex bg-slate-100 dark:bg-slate-800/50 p-1.5 rounded-[2rem] w-fit border border-slate-200/50 dark:border-slate-800/50 shadow-sm">
                         {[
+                            { id: 'overview', icon: <LayoutDashboard size={14} />, label: `0. ${t('modules.nexus.tabs.overview')}` },
                             { id: 'pessoas', icon: <Users size={14} />, label: `1. ${t('modules.nexus.tabs.people')}` },
                             { id: 'processos', icon: <Scale size={14} />, label: `2. ${t('modules.nexus.tabs.processes')}` },
                             { id: 'tarefas', icon: <Zap size={14} />, label: `3. ${t('modules.nexus.tabs.tasks')}` },
@@ -1016,6 +1457,171 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
 
             {/* 💎 MAIN CONTENT AREA - Nexus 2.0 Router */}
             <div className="flex-1 flex flex-col overflow-hidden">
+                {activeTab === 'overview' && (
+                    <div className="flex-1 flex flex-col pt-0 overflow-y-auto no-scrollbar animate-in fade-in slide-in-from-bottom-4 duration-700">
+                        <div className="flex flex-col h-full space-y-8 p-8">
+                            {/* Header Overview */}
+                            <div className="flex flex-col md:flex-row pb-6 border-b-4 border-slate-100 dark:border-slate-800">
+                                <div className="flex-1">
+                                    <h1 className="text-4xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">
+                                        {t('modules.nexus.tabs.overview')}
+                                    </h1>
+                                    <p className="text-slate-500 font-bold tracking-wide mt-1 italic">
+                                        Monitoramento em tempo real do ecossistema Nexus
+                                    </p>
+                                </div>
+                                <div className="mt-4 md:mt-0 flex items-center gap-4">
+                                    <div className="px-6 py-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-2xl flex items-center gap-3">
+                                        <div className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse" />
+                                        <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest leading-none">Status: Sincronizado</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Cockpit Visual - KPI Grid */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                {[
+                                    { 
+                                        label: t('modules.nexus.metrics.active'), 
+                                        val: lawsuits.filter(l => l.status === 'Ativo').length, 
+                                        color: 'text-indigo-600', 
+                                        bg: 'bg-indigo-50 dark:bg-indigo-900/30',
+                                        icon: Scale, 
+                                        trend: '+12%' 
+                                    },
+                                    { 
+                                        label: t('modules.nexus.metrics.deadlines'), 
+                                        val: tasks.filter(t => t.status !== 'Concluído' && (new Date(t.due_date).getTime() - new Date().getTime()) < 86400000).length, 
+                                        color: 'text-rose-600', 
+                                        bg: 'bg-rose-50 dark:bg-rose-900/30',
+                                        icon: Clock, 
+                                        trend: 'Urgente' 
+                                    },
+                                    { 
+                                        label: t('modules.nexus.metrics.pending'), 
+                                        val: tasks.filter(t => t.status !== 'Concluído').length, 
+                                        color: 'text-amber-600', 
+                                        bg: 'bg-amber-50 dark:bg-amber-900/30',
+                                        icon: CheckCircle2, 
+                                        trend: 'Em Fila' 
+                                    },
+                                    { 
+                                        label: t('modules.nexus.metrics.completion'), 
+                                        val: `${tasks.length > 0 ? Math.round((tasks.filter(t => t.status === 'Concluído').length / tasks.length) * 100) : 0}%`, 
+                                        color: 'text-emerald-600', 
+                                        bg: 'bg-emerald-50 dark:bg-emerald-900/30',
+                                        icon: TrendingUp, 
+                                        trend: 'Produtividade' 
+                                    }
+                                ].map((stat, i) => (
+                                    <div key={i} className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/20 dark:shadow-none hover:-translate-y-2 transition-all duration-500 group relative overflow-hidden">
+                                        <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 dark:bg-slate-800/50 blur-3xl -mr-16 -mt-16 pointer-events-none group-hover:bg-indigo-500/10 transition-colors" />
+                                        
+                                        <div className={`w-14 h-14 rounded-2xl ${stat.bg} ${stat.color} flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform`}>
+                                            <stat.icon size={28} />
+                                        </div>
+                                        
+                                        <div className="flex items-end justify-between">
+                                            <div>
+                                                <div className={`text-4xl font-black tracking-tighter mb-2 ${stat.color}`}>
+                                                    {stat.val}
+                                                </div>
+                                                <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                                    {stat.label}
+                                                </div>
+                                            </div>
+                                            <div className="flex flex-col items-end">
+                                                <span className={`text-[10px] font-black uppercase tracking-tight px-3 py-1.5 rounded-xl border ${
+                                                    stat.trend.includes('+') ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 
+                                                    stat.trend === 'Urgente' ? 'bg-rose-50 text-rose-600 border-rose-100' :
+                                                    'bg-slate-50 text-slate-500 border-slate-100'
+                                                }`}>
+                                                    {stat.trend}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                {/* Insights AI - Premium Widget */}
+                                <div className="lg:col-span-2 space-y-6">
+                                    <IntelligenceWidget credentials={credentials} moduleContext="Estratégico / Nexus" limit={3} />
+                                    
+                                    <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl p-8">
+                                        <div className="flex items-center justify-between mb-8">
+                                            <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tight flex items-center gap-3">
+                                                <PieChart className="text-indigo-600" size={20} /> Distribuição de Ativos
+                                            </h3>
+                                            <Link href="/veritumpro/nexus?tab=ativos" className="text-xs font-bold text-indigo-600 hover:underline uppercase tracking-widest">Ver Todos</Link>
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                            {['Imóvel', 'Veículo', 'Empresa / Quotas', 'Outros'].map((type, i) => {
+                                                const count = assets.filter(a => a.asset_type === type).length;
+                                                return (
+                                                    <div key={i} className="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-white/5 transition-all hover:bg-white dark:hover:bg-slate-800 shadow-sm hover:shadow-md">
+                                                        <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 truncate">{type}</div>
+                                                        <div className="text-2xl font-black text-slate-800 dark:text-white">{count}</div>
+                                                        <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full mt-3 overflow-hidden">
+                                                            <motion.div 
+                                                                className={`h-full ${i % 2 === 0 ? 'bg-indigo-600' : 'bg-emerald-600'}`}
+                                                                initial={{ width: 0 }}
+                                                                animate={{ width: assets.length > 0 ? `${(count / assets.length) * 100}%` : 0 }}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Sidebar Stats / Recent Activity */}
+                                <div className="space-y-6">
+                                    <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-[2.5rem] p-8 text-white shadow-2xl shadow-indigo-600/30 relative overflow-hidden group">
+                                        <div className="absolute -right-8 -bottom-8 w-40 h-40 bg-white/10 blur-3xl rounded-full group-hover:scale-150 transition-transform duration-1000" />
+                                        <div className="relative z-10">
+                                            <h3 className="text-lg font-black uppercase tracking-tight mb-2">Power User Nexus</h3>
+                                            <p className="text-indigo-100 text-sm font-medium mb-6 leading-relaxed opacity-80">Você atingiu 84% de eficácia na gestão de ativos e processos este mês.</p>
+                                            <div className="flex items-center gap-2">
+                                                <div className="px-4 py-2 bg-white/20 backdrop-blur-md rounded-xl text-xs font-black uppercase tracking-widest">Nível 12</div>
+                                                <div className="px-4 py-2 bg-emerald-500 rounded-xl text-xs font-black uppercase tracking-widest">+5.2k XP</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl p-8 h-[calc(100%-180px)]">
+                                        <h3 className="text-lg font-black text-slate-800 dark:text-white uppercase tracking-tight mb-6 flex items-center gap-3">
+                                            <List className="text-indigo-600" size={18} /> Ações Recomendadas
+                                        </h3>
+                                        <div className="space-y-4">
+                                            {[
+                                                { label: 'Revisar Prazos', icon: Clock, color: 'text-rose-500', bg: 'bg-rose-50 dark:bg-rose-900/20', tab: 'tarefas' },
+                                                { label: 'Cadastrar Ativos', icon: Shield, color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-900/20', tab: 'ativos' },
+                                                { label: 'Mapear QSA', icon: Building2, color: 'text-indigo-500', bg: 'bg-indigo-50 dark:bg-indigo-900/20', tab: 'societario' },
+                                                { label: 'Sincronizar CRM', icon: Zap, color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-900/20', tab: 'pessoas' }
+                                            ].map((action, i) => (
+                                                <button 
+                                                    key={i} 
+                                                    onClick={() => setActiveTab(action.tab as any)}
+                                                    className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all group border border-transparent hover:border-slate-100 dark:hover:border-white/5 active:scale-95"
+                                                >
+                                                    <div className={`w-10 h-10 rounded-xl ${action.bg} ${action.color} flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                                                        <action.icon size={18} />
+                                                    </div>
+                                                    <span className="text-sm font-bold text-slate-600 dark:text-slate-300 tracking-tight">{action.label}</span>
+                                                    <ChevronRight className="ml-auto text-slate-300 group-hover:text-indigo-600 transition-colors" size={16} />
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
                 {activeTab === 'pessoas' && (
                     <div className="flex-1 flex flex-col pt-0 overflow-y-auto no-scrollbar animate-in fade-in slide-in-from-bottom-4 duration-700">
                         <div className="flex flex-col h-full space-y-6">
@@ -1158,10 +1764,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                     </div>
                                                                 </td>
                                                                 <td className="px-6 py-4">
-                                                                    <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase border ${law.status === 'Ativo' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-slate-50 text-slate-600 border-slate-100'
-                                                                        }`}>
-                                                                        {law.status}
-                                                                    </span>
+                                                                    {renderStatusBadge(law.id, law.status, 'lawsuit', LAWSUIT_STATUSES)}
                                                                 </td>
                                                                 <td className="px-6 py-4">
                                                                     <div className="font-black text-slate-800 dark:text-white">
@@ -1211,6 +1814,21 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                             <Shield size={18} />
                                                                         </button>
                                                                         <button
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                setEditingLawsuit(law);
+                                                                                setEditingLawsuitDoc({ 
+                                                                                    document_type: 'Petição Inicial', 
+                                                                                    event_date: new Date().toISOString() 
+                                                                                });
+                                                                                setIsLawsuitDocModalOpen(true);
+                                                                            }}
+                                                                            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
+                                                                            title="Upload Rápido de Documento"
+                                                                        >
+                                                                            <Upload size={18} />
+                                                                        </button>
+                                                                        <button
                                                                             onClick={() => { setEditingLawsuit(law); setIsLawsuitModalOpen(true); setActiveLawsuitTab('basic'); }}
                                                                             className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
                                                                         >
@@ -1247,9 +1865,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                     <span className="text-[10px] font-mono font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-tight">{law.cnj_number}</span>
                                                                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">{law.sphere}</span>
                                                                 </div>
-                                                                <span className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase border ${law.status === 'Ativo' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-slate-50 text-slate-600 border-slate-100'}`}>
-                                                                    {law.status}
-                                                                </span>
+                                                                {renderStatusBadge(law.id, law.status, 'lawsuit', LAWSUIT_STATUSES)}
                                                             </div>
 
                                                             <h3 className="font-bold text-slate-800 dark:text-white text-lg mb-4 line-clamp-2 leading-tight">{law.case_title}</h3>
@@ -1307,6 +1923,21 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                         title="Vincular Novo Ativo/Garantia"
                                                                     >
                                                                         <Shield size={16} />
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setEditingLawsuit(law);
+                                                                            setEditingLawsuitDoc({ 
+                                                                                document_type: 'Petição Inicial', 
+                                                                                event_date: new Date().toISOString() 
+                                                                            });
+                                                                            setIsLawsuitDocModalOpen(true);
+                                                                        }}
+                                                                        className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
+                                                                        title="Upload Rápido de Documento"
+                                                                    >
+                                                                        <Upload size={16} />
                                                                     </button>
                                                                     <button
                                                                         onClick={() => { setEditingLawsuit(law); setIsLawsuitModalOpen(true); setActiveLawsuitTab('basic'); }}
@@ -1836,12 +2467,25 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                     {lawsuit && <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-1"><Scale size={10} /> {lawsuit.cnj_number || lawsuit.case_title}</div>}
                                                                 </td>
                                                                 <td className="px-6 py-4">
-                                                                    <span className={`px-2 py-1 text-[9px] font-black uppercase rounded-lg border ${asset.status === 'Ativo' ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800' : 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-900/20 dark:border-rose-800'}`}>
-                                                                        {asset.status}
-                                                                    </span>
+                                                                    {renderStatusBadge(asset.id, asset.status, 'asset', ASSET_STATUSES)}
                                                                 </td>
                                                                 <td className="px-6 py-4">
                                                                     <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                        <button
+                                                                            onClick={(e) => { 
+                                                                                e.stopPropagation(); 
+                                                                                setEditingAsset(asset); 
+                                                                                setEditingAssetDoc({ 
+                                                                                    document_type: 'Matrícula', 
+                                                                                    event_date: new Date().toISOString() 
+                                                                                });
+                                                                                setIsAssetDocModalOpen(true); 
+                                                                            }}
+                                                                            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
+                                                                            title="Upload Rápido de Documento"
+                                                                        >
+                                                                            <Upload size={18} />
+                                                                        </button>
                                                                         <button
                                                                             onClick={(e) => { e.stopPropagation(); setEditingAsset(asset); setIsAssetModalOpen(true); }}
                                                                             className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
@@ -1889,9 +2533,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                             <div key={asset.id} className="bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden flex flex-col h-full">
                                                 <div className="flex justify-between items-start mb-4">
                                                     <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg text-[10px] font-black uppercase tracking-widest">{asset.asset_type}</span>
-                                                    <span className={`px-2 py-1 text-[9px] font-black uppercase rounded-lg border ${asset.status === 'Ativo' ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800' : 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-900/20 dark:border-rose-800'}`}>
-                                                        {asset.status}
-                                                    </span>
+                                                    {renderStatusBadge(asset.id, asset.status, 'asset', ASSET_STATUSES)}
                                                 </div>
 
                                                 <h3 className="font-bold text-slate-800 dark:text-white text-lg mb-2 line-clamp-2 leading-tight">{asset.title}</h3>
@@ -1918,6 +2560,21 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                         </span>
                                                     </div>
                                                     <div className="flex gap-1">
+                                                        <button
+                                                            onClick={(e) => { 
+                                                                e.stopPropagation(); 
+                                                                setEditingAsset(asset); 
+                                                                setEditingAssetDoc({ 
+                                                                    document_type: 'Matrícula', 
+                                                                    event_date: new Date().toISOString() 
+                                                                });
+                                                                setIsAssetDocModalOpen(true); 
+                                                            }}
+                                                            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                                                            title="Upload Rápido de Documento"
+                                                        >
+                                                            <Upload size={18} />
+                                                        </button>
                                                         <button
                                                             onClick={() => { setEditingAsset(asset); setIsAssetModalOpen(true); }}
                                                             className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
@@ -2049,12 +2706,25 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                 {entity.total_capital ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(entity.total_capital) : '-'}
                                                             </td>
                                                             <td className="px-6 py-4">
-                                                                <span className={`px-2 py-1 text-[9px] font-black uppercase rounded-lg border ${entity.status === 'Ativa' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-rose-50 text-rose-600 border-rose-200'}`}>
-                                                                    {entity.status}
-                                                                </span>
+                                                                {renderStatusBadge(entity.id, entity.status, 'corporate', ENTITY_STATUSES_LIST)}
                                                             </td>
                                                             <td className="px-6 py-4 text-right">
                                                                 <div className="flex items-center justify-end gap-1 opacity-100">
+                                                                    <button
+                                                                        onClick={(e) => { 
+                                                                            e.stopPropagation(); 
+                                                                            setEditingEntity(entity); 
+                                                                            setEditingDocument({ 
+                                                                                document_type: 'Contrato Social', 
+                                                                                event_date: new Date().toISOString() 
+                                                                            });
+                                                                            setIsDocumentModalOpen(true); 
+                                                                        }}
+                                                                        className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
+                                                                        title="Upload Rápido de Documento"
+                                                                    >
+                                                                        <Upload size={18} />
+                                                                    </button>
                                                                     <button
                                                                         onClick={() => handleEditEntity(entity)}
                                                                         className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
@@ -2099,9 +2769,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                         <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 rounded-3xl group-hover:scale-110 transition-transform">
                                                             <Building2 size={24} />
                                                         </div>
-                                                        <span className={`px-3 py-1 text-[10px] font-black uppercase rounded-xl border-2 ${entity.status === 'Ativa' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'}`}>
-                                                            {entity.status}
-                                                        </span>
+                                                        {renderStatusBadge(entity.id, entity.status, 'corporate', ENTITY_STATUSES_LIST)}
                                                     </div>
 
                                                     <h3 className="font-black text-slate-800 dark:text-white text-xl mb-1 line-clamp-1 truncate uppercase tracking-tighter leading-tight">
@@ -2138,6 +2806,21 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                             className="flex-1 bg-slate-900 dark:bg-white dark:text-slate-900 text-white py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-slate-100 transition-all active:scale-95 shadow-lg"
                                                         >
                                                             Gerenciar QSA
+                                                        </button>
+                                                        <button 
+                                                            onClick={(e) => { 
+                                                                e.stopPropagation(); 
+                                                                setEditingEntity(entity); 
+                                                                setEditingDocument({ 
+                                                                    document_type: 'Contrato Social', 
+                                                                    event_date: new Date().toISOString() 
+                                                                });
+                                                                setIsDocumentModalOpen(true); 
+                                                            }}
+                                                            className="p-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-2xl hover:bg-indigo-600 hover:text-white transition-all active:scale-95"
+                                                            title="Upload Rápido"
+                                                        >
+                                                            <Upload size={18} />
                                                         </button>
                                                         <button 
                                                             onClick={() => handleEditEntity(entity)}
@@ -2235,6 +2918,13 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap ${activeLawsuitTab === 'advanced' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-xl shadow-indigo-600/10' : 'text-slate-500 hover:text-slate-700'}`}
                                     >
                                         <Zap size={14} /> {t('common.advanced') || 'Avançado'}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveLawsuitTab('docs')}
+                                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap ${activeLawsuitTab === 'docs' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-xl shadow-indigo-600/10' : 'text-slate-500 hover:text-slate-700'}`}
+                                    >
+                                        <FileText size={14} /> Documentos
                                     </button>
                                 </div>
                             </div>
@@ -2421,7 +3111,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                     </div>
                                                 </div>
                                             </div>
-                                        ) : (
+                                        ) : activeLawsuitTab === 'advanced' ? (
                                             <div className="space-y-8 animate-in fade-in duration-300">
                                                 <div className="grid grid-cols-2 gap-4">
                                                     <div>
@@ -2507,6 +3197,74 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                 </div>
 
                                             </div>
+                                        ) : (
+                                            <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <h4 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Documentos do Processo</h4>
+                                                        <p className="text-xs text-slate-500 font-bold">Petições, Provas e Decisões</p>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => { setEditingLawsuitDoc({ document_type: 'Petição Inicial', event_date: new Date().toISOString() }); setIsLawsuitDocModalOpen(true); }}
+                                                        className="p-4 bg-indigo-600 text-white rounded-2xl flex items-center gap-2 hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20"
+                                                    >
+                                                        <Plus size={20} /> Novo Documento
+                                                    </button>
+                                                </div>
+
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    {lawsuitDocuments.length === 0 ? (
+                                                        <div className="col-span-full py-20 text-center text-slate-400 font-bold italic border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-[2.5rem]">
+                                                            Nenhum documento anexado a este processo.
+                                                        </div>
+                                                    ) : lawsuitDocuments.map(doc => (
+                                                        <div key={doc.id} className="bg-slate-50 dark:bg-slate-950/50 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 hover:border-indigo-200 transition-all group relative overflow-hidden">
+                                                            <div className="flex justify-between items-start mb-4 relative z-10">
+                                                                <div className="p-3 bg-white dark:bg-slate-800 rounded-2xl text-indigo-600 shadow-sm">
+                                                                    <FileText size={20} />
+                                                                </div>
+                                                                <span className="text-[9px] font-black text-slate-400 capitalize bg-white dark:bg-slate-800 px-3 py-1 rounded-full border border-slate-100 dark:border-slate-700">
+                                                                    {doc.document_type}
+                                                                </span>
+                                                            </div>
+                                                            <div className="relative z-10">
+                                                                <h5 className="font-bold text-slate-800 dark:text-white text-sm mb-1 line-clamp-1">{doc.title}</h5>
+                                                                <p className="text-[10px] text-slate-500 font-bold mb-4">Referência: {doc.event_date ? new Date(doc.event_date).toLocaleDateString() : 'N/I'}</p>
+                                                                
+                                                                <div className="flex items-center justify-between gap-2 mt-auto">
+                                                                     <button 
+                                                                         type="button"
+                                                                         onClick={() => { setEditingLawsuitDoc(doc); setIsLawsuitDocModalOpen(true); }}
+                                                                         className="text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:underline"
+                                                                     >
+                                                                         Editar
+                                                                     </button>
+                                                                     <div className="flex gap-2">
+                                                                        {doc.file_url && (
+                                                                            <a 
+                                                                                href={doc.file_url} 
+                                                                                target="_blank" 
+                                                                                rel="noopener noreferrer"
+                                                                                className="p-2 text-slate-400 hover:text-indigo-600 transition-colors"
+                                                                            >
+                                                                                <Download size={16} />
+                                                                            </a>
+                                                                        )}
+                                                                        <button 
+                                                                            type="button"
+                                                                            onClick={() => handleDeleteLawsuitDocument(doc.id)}
+                                                                            className="p-2 text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                        >
+                                                                            <Trash2 size={16} />
+                                                                        </button>
+                                                                     </div>
+                                                                 </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
                                         )}
                                     </div>
                                 </div>
@@ -2520,12 +3278,14 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                     >
                                         {t('modules.nexus.modals.lawsuit.cancel')}
                                     </button>
-                                    <button
-                                        type="submit"
-                                        className="flex-[2] px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-600/30 transition-all flex items-center justify-center gap-2 text-xs"
-                                    >
-                                        <Save size={20} /> {t('modules.nexus.modals.lawsuit.save')}
-                                    </button>
+                                    {activeLawsuitTab !== 'docs' && (
+                                        <button
+                                            type="submit"
+                                            className="flex-[2] px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-600/30 transition-all flex items-center justify-center gap-2 text-xs"
+                                        >
+                                            <Save size={20} /> {t('modules.nexus.modals.lawsuit.save')}
+                                        </button>
+                                    )}
                                 </div>
                             </form>
                         </motion.div>
@@ -2883,11 +3643,32 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         <XCircle size={28} />
                                     </button>
                                 </div>
+                                
+                                {/* Asset Modal Tabs */}
+                                <div className="mt-8">
+                                    <div className="flex bg-slate-100 dark:bg-slate-800/80 p-1 rounded-2xl">
+                                        <button
+                                            type="button"
+                                            onClick={() => setActiveAssetTab('basic')}
+                                            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeAssetTab === 'basic' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-xl' : 'text-slate-500 hover:text-slate-700'}`}
+                                        >
+                                            <Building2 size={14} /> Básico
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setActiveAssetTab('docs')}
+                                            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeAssetTab === 'docs' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-xl' : 'text-slate-500 hover:text-slate-700'}`}
+                                        >
+                                            <FileText size={14} /> Documentos
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
 
                             <form onSubmit={handleSaveAsset} className="flex-1 flex flex-col overflow-hidden">
                                 <div className="flex-1 overflow-y-auto no-scrollbar p-8">
-                                    <div className="space-y-6">
+                                    {activeAssetTab === 'basic' ? (
+                                        <div className="space-y-6 animate-in fade-in duration-500">
                                         <div>
                                             <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Título do Ativo *</label>
                                             <input
@@ -3011,33 +3792,117 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                 value={editingAsset?.description || ''}
                                                 onChange={e => setEditingAsset({ ...editingAsset, description: e.target.value })}
                                                 className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 font-bold resize-none"
-                                                placeholder="Informações adicionais sobre o ativo, endereço, chassi, bloqueios, etc..."
                                             />
                                         </div>
                                     </div>
+                                    ) : (
+                                        <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <h4 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Documentos do Ativo</h4>
+                                                    <p className="text-xs text-slate-500 font-bold">Matrículas, CRLVs e Avaliações</p>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => { setEditingAssetDoc({ document_type: 'Matrícula', event_date: new Date().toISOString() }); setIsAssetDocModalOpen(true); }}
+                                                    className="p-4 bg-indigo-600 text-white rounded-2xl flex items-center gap-2 hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20"
+                                                    title="Novo Documento"
+                                                >
+                                                    <Plus size={20} />
+                                                    <span className="text-[10px] font-black uppercase tracking-widest">Novo</span>
+                                                </button>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 gap-4">
+                                                {assetDocuments.length === 0 ? (
+                                                    <div className="py-20 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[2.5rem] bg-slate-50/50 dark:bg-slate-900/50">
+                                                        <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 mb-4">
+                                                            <FileText size={32} />
+                                                        </div>
+                                                        <p className="text-slate-500 font-bold">Nenhum documento anexado ao ativo</p>
+                                                        <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">Anexe certidões, laudos ou fotos</p>
+                                                    </div>
+                                                ) : (
+                                                    assetDocuments.map(doc => (
+                                                        <div key={doc.id} className="group bg-slate-50 dark:bg-slate-950 p-6 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 hover:border-indigo-500/30 transition-all flex items-center justify-between shadow-sm hover:shadow-xl hover:shadow-indigo-500/5">
+                                                            <div className="flex items-center gap-5">
+                                                                <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform">
+                                                                    <FileText size={28} />
+                                                                </div>
+                                                                <div>
+                                                                    <h5 className="font-black text-slate-800 dark:text-white uppercase tracking-tighter text-sm">{doc.title}</h5>
+                                                                    <div className="flex items-center gap-3 mt-1">
+                                                                        <span className="px-2 py-0.5 bg-slate-200 dark:bg-slate-800 text-[9px] font-black text-slate-600 dark:text-slate-400 rounded-lg uppercase tracking-widest">
+                                                                            {doc.document_type}
+                                                                        </span>
+                                                                        {doc.event_date && (
+                                                                            <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1">
+                                                                                <Calendar size={10} /> {new Date(doc.event_date).toLocaleDateString('pt-BR')}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-2">
+                                                                {doc.file_url && (
+                                                                    <a
+                                                                        href={doc.file_url}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        className="p-3 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-xl transition-all"
+                                                                        title="Download / Visualizar"
+                                                                    >
+                                                                        <Download size={18} />
+                                                                    </a>
+                                                                )}
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => { setEditingAssetDoc(doc); setIsAssetDocModalOpen(true); }}
+                                                                    className="p-3 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 rounded-xl transition-all"
+                                                                >
+                                                                    <Pencil size={18} />
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleDeleteAssetDocument(doc.id)}
+                                                                    className="p-3 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-xl transition-all"
+                                                                >
+                                                                    <Trash2 size={18} />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    ))
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
-                                <div className="p-8 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0 flex gap-4">
-                                    <button
-                                        type="button"
-                                        onClick={() => { setIsAssetModalOpen(false); setActiveAssetTab('basic'); }}
-                                        className="flex-1 px-8 py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-200 transition-all text-xs"
-                                    >
-                                        Cancelar
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        className="flex-[2] px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-600/30 transition-all flex items-center justify-center gap-2 text-xs"
-                                    >
-                                        <Save size={20} /> Salvar Ativo
-                                    </button>
-                                </div>
+                                {activeAssetTab !== 'docs' && (
+                                    <div className="p-8 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0 flex gap-4">
+                                        <button
+                                            type="button"
+                                            onClick={() => { setIsAssetModalOpen(false); setActiveAssetTab('basic'); }}
+                                            className="flex-1 px-8 py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-200 transition-all text-xs"
+                                        >
+                                            Cancelar
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            className="flex-[2] px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-600/30 transition-all flex items-center justify-center gap-2 text-xs"
+                                        >
+                                            <Save size={20} /> Salvar Ativo
+                                        </button>
+                                    </div>
+                                )}
                             </form>
                         </motion.div>
                     </div>
                 )}
+            </AnimatePresence>
 
-                {/* Corporate Entity Modal (The "Big One") */}
+            {/* Corporate Entity Modal (The "Big One") */}
+            <AnimatePresence>
                 {isEntityModalOpen && (
                     <div className="fixed inset-0 z-[100] flex justify-end overflow-hidden">
                         <motion.div
@@ -3070,7 +3935,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                 </div>
 
                                 {/* Premium Tabs */}
-                                <div className="flex bg-slate-100 dark:bg-slate-800/80 p-1.5 rounded-[2.5rem] w-full max-w-xl">
+                                <div className="flex bg-slate-100 dark:bg-slate-800/80 p-1.5 rounded-[2.5rem] w-full">
                                     {[
                                         { id: 'basic', label: 'Dados Gerais', icon: Building2 },
                                         { id: 'qsa', label: 'Quadro Societário', icon: Users },
@@ -3079,7 +3944,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         <button
                                             key={tab.id}
                                             onClick={() => setActiveEntityTab(tab.id as any)}
-                                            className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-3xl text-[10px] font-black uppercase tracking-widest transition-all ${activeEntityTab === tab.id ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-xl' : 'text-slate-500 hover:text-slate-700'}`}
+                                            className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-3xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeEntityTab === tab.id ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-xl' : 'text-slate-500 hover:text-slate-700'}`}
                                         >
                                             <tab.icon size={16} /> {tab.label}
                                         </button>
@@ -3302,13 +4167,26 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                         <p className="text-[10px] text-slate-500 font-bold mb-4">Referência: {doc.event_date ? new Date(doc.event_date).toLocaleDateString() : 'N/I'}</p>
                                                         
                                                         <div className="flex items-center justify-between gap-2 mt-auto">
-                                                             <button 
-                                                                 type="button"
-                                                                 onClick={() => { setEditingDocument(doc); setIsDocumentModalOpen(true); }}
-                                                                 className="text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:underline"
-                                                             >
-                                                                 Editar
-                                                             </button>
+                                                             <div className="flex items-center gap-3">
+                                                                 <button 
+                                                                     type="button"
+                                                                     onClick={() => { setEditingDocument(doc); setIsDocumentModalOpen(true); }}
+                                                                     className="text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:underline"
+                                                                 >
+                                                                     Editar
+                                                                 </button>
+                                                                 {doc.file_url && (
+                                                                     <a 
+                                                                         href={doc.file_url} 
+                                                                         target="_blank" 
+                                                                         rel="noopener noreferrer"
+                                                                         className="p-2 text-slate-400 hover:text-indigo-600 transition-colors"
+                                                                         title="Download / Visualizar"
+                                                                     >
+                                                                         <Download size={16} />
+                                                                     </a>
+                                                                 )}
+                                                             </div>
                                                              <button 
                                                                  type="button"
                                                                  onClick={() => handleDeleteDocument(doc.id)}
@@ -3482,13 +4360,31 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Link do Arquivo (URL)</label>
-                                        <input
-                                            value={editingDocument?.file_url || ''}
-                                            onChange={e => setEditingDocument({ ...editingDocument, file_url: e.target.value })}
-                                            className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none font-mono text-[10px]"
-                                            placeholder="https://supabase.co/..."
+                                        <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Upload do Documento</label>
+                                        <PremiumFileUpload 
+                                            ref={corporateDocUploadRef}
+                                            isManual={true}
+                                            bucket="nexus-documents"
+                                            path={`corporate/${editingEntity?.id || 'temp'}`}
+                                            label="Arraste o documento aqui ou clique para selecionar"
+                                            onFileSelect={(file) => {
+                                                if (file && !editingDocument?.title) {
+                                                    setEditingDocument({ ...editingDocument, title: file.name.split('.')[0] });
+                                                }
+                                            }}
+                                            onUploadComplete={(url) => setEditingDocument({ ...editingDocument, file_url: url })}
                                         />
+                                        {editingDocument?.file_url && (
+                                            <div className="mt-4 flex items-center gap-3 p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 rounded-2xl animate-in zoom-in-95 duration-300">
+                                                <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                                                    <Check size={18} />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Documento Carregado</p>
+                                                    <p className="text-[10px] text-emerald-600/70 truncate font-mono">{editingDocument.file_url}</p>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                                 <div className="p-8 bg-slate-50 dark:bg-slate-800/50 flex gap-4">
@@ -3506,6 +4402,313 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                     </button>
                                 </div>
                             </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+            {/* Lawsuit Document Modal */}
+            <AnimatePresence>
+                {isLawsuitDocModalOpen && (
+                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
+                            onClick={() => setIsLawsuitDocModalOpen(false)}
+                        />
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+                            className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800"
+                        >
+                            <form onSubmit={handleSaveLawsuitDocument}>
+                                <div className="p-8 border-b border-slate-100 dark:border-slate-800">
+                                    <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">
+                                        Novo Documento do Processo
+                                    </h3>
+                                </div>
+
+                                <div className="p-8 space-y-6">
+                                    <div>
+                                        <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Título do Documento</label>
+                                        <input
+                                            required
+                                            value={editingLawsuitDoc?.title || ''}
+                                            onChange={e => setEditingLawsuitDoc({ ...editingLawsuitDoc, title: e.target.value })}
+                                            className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white font-bold"
+                                            placeholder="Ex: Petição de Juntada"
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Tipo</label>
+                                            <select
+                                                value={editingLawsuitDoc?.document_type || 'Petição Inicial'}
+                                                onChange={e => setEditingLawsuitDoc({ ...editingLawsuitDoc, document_type: e.target.value as any })}
+                                                className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white font-bold"
+                                            >
+                                                <option value="Petição Inicial">Petição Inicial</option>
+                                                <option value="Procuração">Procuração</option>
+                                                <option value="Contestação">Contestação</option>
+                                                <option value="Sentença">Sentença</option>
+                                                <option value="Acórdão">Acórdão</option>
+                                                <option value="Prova">Prova</option>
+                                                <option value="Outros">Outros</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Data de Referência</label>
+                                            <input
+                                                type="date"
+                                                value={editingLawsuitDoc?.event_date?.split('T')[0] || ''}
+                                                onChange={e => setEditingLawsuitDoc({ ...editingLawsuitDoc, event_date: e.target.value })}
+                                                className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white font-bold"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Upload do Documento</label>
+                                        <PremiumFileUpload
+                                            ref={lawsuitDocUploadRef}
+                                            isManual={true}
+                                            onUploadComplete={(url) => setEditingLawsuitDoc({ ...editingLawsuitDoc, file_url: url })}
+                                            onFileSelect={(file) => {
+                                                if (file && !editingLawsuitDoc?.title) {
+                                                    setEditingLawsuitDoc({ ...editingLawsuitDoc, title: file.name.split('.')[0] });
+                                                }
+                                            }}
+                                            bucket="nexus-documents"
+                                            path={`lawsuits/${editingLawsuit?.id}`}
+                                            label="Arraste o PDF do documento aqui"
+                                            accept="application/pdf,image/*"
+                                        />
+                                        {editingLawsuitDoc?.file_url && (
+                                            <div className="mt-2 flex items-center gap-2 text-emerald-600 font-bold text-xs bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-xl">
+                                                <CheckCircle2 size={16} /> Arquivo pronto para salvar
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="p-8 bg-slate-50 dark:bg-slate-800/50 flex gap-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsLawsuitDocModalOpen(false)}
+                                        className="flex-1 px-8 py-4 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-100 transition-all text-xs"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="flex-[2] px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-600/30 transition-all text-xs"
+                                    >
+                                        Salvar Documento
+                                    </button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* Asset Document Modal */}
+            <AnimatePresence>
+                {isAssetDocModalOpen && (
+                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
+                            onClick={() => setIsAssetDocModalOpen(false)}
+                        />
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+                            className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800"
+                        >
+                            <form onSubmit={handleSaveAssetDocument}>
+                                <div className="p-8 border-b border-slate-100 dark:border-slate-800">
+                                    <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">
+                                        Novo Documento do Ativo
+                                    </h3>
+                                </div>
+
+                                <div className="p-8 space-y-6">
+                                    <div>
+                                        <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Título do Documento *</label>
+                                        <input
+                                            required
+                                            value={editingAssetDoc?.title || ''}
+                                            onChange={e => setEditingAssetDoc({ ...editingAssetDoc, title: e.target.value })}
+                                            className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white font-bold"
+                                            placeholder="Ex: Matrícula de Imóvel, CRLV..."
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Tipo</label>
+                                            <select
+                                                value={editingAssetDoc?.document_type || 'Matrícula'}
+                                                onChange={e => setEditingAssetDoc({ ...editingAssetDoc, document_type: e.target.value as any })}
+                                                className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white font-bold"
+                                            >
+                                                <option value="Matrícula">Matrícula</option>
+                                                <option value="Escritura">Escritura</option>
+                                                <option value="CRLV">CRLV</option>
+                                                <option value="Contrato Compra e Venda">Contrato Compra e Venda</option>
+                                                <option value="Laudo de Avaliação">Laudo de Avaliação</option>
+                                                <option value="Fotos">Fotos</option>
+                                                <option value="Outros">Outros</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Data de Referência</label>
+                                            <input
+                                                type="date"
+                                                value={editingAssetDoc?.event_date?.split('T')[0] || ''}
+                                                onChange={e => setEditingAssetDoc({ ...editingAssetDoc, event_date: e.target.value })}
+                                                className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white font-bold"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Upload do Documento</label>
+                                        <PremiumFileUpload
+                                            ref={assetDocUploadRef}
+                                            isManual={true}
+                                            onUploadComplete={(url) => setEditingAssetDoc({ ...editingAssetDoc, file_url: url })}
+                                            onFileSelect={(file) => {
+                                                if (file && !editingAssetDoc?.title) {
+                                                    setEditingAssetDoc({ ...editingAssetDoc, title: file.name.split('.')[0] });
+                                                }
+                                            }}
+                                            bucket="nexus-documents"
+                                            path={`assets/${editingAsset?.id}`}
+                                            label="Arraste o PDF do documento aqui"
+                                            accept="application/pdf,image/*"
+                                        />
+                                        {editingAssetDoc?.file_url && (
+                                            <div className="mt-2 flex items-center gap-2 text-emerald-600 font-bold text-xs bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-xl">
+                                                <CheckCircle2 size={16} /> Arquivo pronto para salvar
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="p-8 bg-slate-50 dark:bg-slate-800/50 flex gap-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsAssetDocModalOpen(false)}
+                                        className="flex-1 px-8 py-4 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-100 transition-all text-xs"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="flex-[2] px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-600/30 transition-all text-xs"
+                                    >
+                                        Salvar Documento
+                                    </button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* Custom Confirmation Modal */}
+            <AnimatePresence>
+                {confirmModal.isOpen && (
+                    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
+                            onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                        />
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+                            className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800"
+                        >
+                            <div className="p-8 text-center pt-10">
+                                <div className={`w-20 h-20 mx-auto rounded-[2rem] flex items-center justify-center mb-6 ${
+                                    confirmModal.type === 'danger' ? 'bg-rose-50 text-rose-500 dark:bg-rose-900/20' :
+                                    confirmModal.type === 'warning' ? 'bg-amber-50 text-amber-500 dark:bg-amber-900/20' :
+                                    'bg-indigo-50 text-indigo-500 dark:bg-indigo-900/20'
+                                }`}>
+                                    <AlertTriangle size={32} />
+                                </div>
+                                <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter mb-2">
+                                    {confirmModal.title}
+                                </h3>
+                                <p className="text-slate-500 dark:text-slate-400 font-bold px-4">
+                                    {confirmModal.message}
+                                </p>
+                            </div>
+                            <div className="p-8 bg-slate-50 dark:bg-slate-800/50 flex gap-4">
+                                <button
+                                    type="button" 
+                                    onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                                    className="flex-1 py-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all text-slate-600 dark:text-slate-400"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        confirmModal.onConfirm();
+                                        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                                    }}
+                                    className={`flex-[2] py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg transition-all active:scale-95 ${
+                                        confirmModal.type === 'danger' ? 'bg-rose-500 hover:bg-rose-600 text-white shadow-rose-500/20' :
+                                        confirmModal.type === 'warning' ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/20' :
+                                        'bg-indigo-500 hover:bg-indigo-600 text-white shadow-indigo-500/20'
+                                    }`}
+                                >
+                                    Confirmar
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* Quick Status Popover */}
+            <AnimatePresence>
+                {statusPopover && (
+                    <div className="fixed inset-0 z-[500]">
+                        <div 
+                            className="absolute inset-0" 
+                            onClick={() => setStatusPopover(null)} 
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                            style={{ 
+                                position: 'fixed', 
+                                left: Math.min(statusPopover.rect.x, typeof window !== 'undefined' ? window.innerWidth - 180 : statusPopover.rect.x), 
+                                top: statusPopover.rect.y + 8,
+                                minWidth: '160px'
+                            }}
+                            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-[501] overflow-hidden p-2"
+                        >
+                            <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-3 py-2 border-b border-slate-50 dark:border-slate-800 mb-1">
+                                Alterar Status
+                            </div>
+                            {statusPopover.options.map((opt) => (
+                                <button
+                                    key={opt}
+                                    onClick={() => handleQuickStatusUpdate(statusPopover.id, statusPopover.type, opt)}
+                                    className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-between group ${
+                                        statusPopover.currentStatus === opt 
+                                            ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600' 
+                                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                                    }`}
+                                >
+                                    {opt}
+                                    {statusPopover.currentStatus === opt && <Check size={14} className="text-indigo-600" />}
+                                </button>
+                            ))}
                         </motion.div>
                     </div>
                 )}

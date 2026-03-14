@@ -1,5 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { Lawsuit } from '@/types';
+import { Lawsuit, LawsuitDocument } from '@/types';
 import { ILawsuitRepository } from './lawsuit-repository.interface';
 
 export class SupabaseLawsuitRepository implements ILawsuitRepository {
@@ -46,6 +46,45 @@ export class SupabaseLawsuitRepository implements ILawsuitRepository {
         const { error } = await this.client
             .from('lawsuits')
             .update({ deleted_at: new Date().toISOString() })
+            .eq('id', id);
+        if (error) throw error;
+    }
+
+    async listDocuments(lawsuitId: string): Promise<LawsuitDocument[]> {
+        const { data, error } = await this.client
+            .from('legal_documents')
+            .select('*')
+            .eq('lawsuit_id', lawsuitId)
+            .order('created_at', { ascending: false });
+        if (error) throw error;
+        return data || [];
+    }
+
+    async saveDocument(doc: Partial<LawsuitDocument>): Promise<LawsuitDocument> {
+        if (doc.id) {
+            const { data, error } = await this.client
+                .from('legal_documents')
+                .update(doc)
+                .eq('id', doc.id)
+                .select()
+                .single();
+            if (error) throw error;
+            return data;
+        } else {
+            const { data, error } = await this.client
+                .from('legal_documents')
+                .insert([doc])
+                .select()
+                .single();
+            if (error) throw error;
+            return data;
+        }
+    }
+
+    async deleteDocument(id: string): Promise<void> {
+        const { error } = await this.client
+            .from('legal_documents')
+            .delete()
             .eq('id', id);
         if (error) throw error;
     }

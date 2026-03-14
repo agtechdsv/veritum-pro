@@ -1,5 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { Asset } from '@/types';
+import { Asset, AssetDocument } from '@/types';
 import { IAssetRepository } from './asset-repository.interface';
 
 export class SupabaseAssetRepository implements IAssetRepository {
@@ -58,6 +58,45 @@ export class SupabaseAssetRepository implements IAssetRepository {
             .delete()
             .eq('id', id);
 
+        if (error) throw error;
+    }
+
+    async listDocuments(assetId: string): Promise<AssetDocument[]> {
+        const { data, error } = await this.client
+            .from('asset_documents')
+            .select('*')
+            .eq('asset_id', assetId)
+            .order('created_at', { ascending: false });
+        if (error) throw error;
+        return data || [];
+    }
+
+    async saveDocument(doc: Partial<AssetDocument>): Promise<AssetDocument> {
+        if (doc.id) {
+            const { data, error } = await this.client
+                .from('asset_documents')
+                .update(doc)
+                .eq('id', doc.id)
+                .select()
+                .single();
+            if (error) throw error;
+            return data;
+        } else {
+            const { data, error } = await this.client
+                .from('asset_documents')
+                .insert([doc])
+                .select()
+                .single();
+            if (error) throw error;
+            return data;
+        }
+    }
+
+    async deleteDocument(id: string): Promise<void> {
+        const { error } = await this.client
+            .from('asset_documents')
+            .delete()
+            .eq('id', id);
         if (error) throw error;
     }
 }

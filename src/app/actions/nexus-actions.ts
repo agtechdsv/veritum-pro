@@ -1,6 +1,6 @@
 'use server';
 
-import { Lawsuit, Task, CalendarEvent, Credentials, UserPreferences, Asset, CorporateEntity, Shareholder, CorporateDocument } from '@/types';
+import { Lawsuit, Task, CalendarEvent, Credentials, UserPreferences, Asset, CorporateEntity, Shareholder, CorporateDocument, LawsuitDocument, AssetDocument } from '@/types';
 import { RepositoryFactory } from '@/lib/db/repositories/repository-factory';
 import { createMasterServerClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -115,6 +115,41 @@ export async function deleteLawsuit(id: string, targetUserId?: string) {
         return await repo.delete(id);
     } catch (error: any) {
         console.error('Server Action Error (deleteLawsuit):', error.message);
+        throw error;
+    }
+}
+
+/* Lawsuit Documents Actions */
+export async function listLawsuitDocuments(lawsuitId: string, targetUserId?: string) {
+    try {
+        const { credentials, preferences } = await resolveSecurityContext(targetUserId);
+        const repo = RepositoryFactory.getLawsuitRepository(credentials, preferences);
+        const data = await repo.listDocuments(lawsuitId);
+        return { data };
+    } catch (error: any) {
+        console.error('Server Action Error (listLawsuitDocuments):', error);
+        throw error;
+    }
+}
+
+export async function saveLawsuitDocument(doc: Partial<LawsuitDocument>, targetUserId?: string) {
+    try {
+        const { credentials, preferences } = await resolveSecurityContext(targetUserId);
+        const repo = RepositoryFactory.getLawsuitRepository(credentials, preferences);
+        return await repo.saveDocument(doc);
+    } catch (error: any) {
+        console.error('Server Action Error (saveLawsuitDocument):', error);
+        throw error;
+    }
+}
+
+export async function deleteLawsuitDocument(id: string, targetUserId?: string) {
+    try {
+        const { credentials, preferences } = await resolveSecurityContext(targetUserId);
+        const repo = RepositoryFactory.getLawsuitRepository(credentials, preferences);
+        return await repo.deleteDocument(id);
+    } catch (error: any) {
+        console.error('Server Action Error (deleteLawsuitDocument):', error);
         throw error;
     }
 }
@@ -299,6 +334,42 @@ export async function deleteAsset(id: string, targetUserId?: string) {
         return await repo.delete(id);
     } catch (error: any) {
         console.error('Server Action Error (deleteAsset):', error.message);
+        throw error;
+    }
+}
+
+
+/* Asset Documents Actions */
+export async function listAssetDocuments(assetId: string, targetUserId?: string) {
+    try {
+        const { credentials, preferences } = await resolveSecurityContext(targetUserId);
+        const repo = RepositoryFactory.getAssetRepository(credentials, preferences);
+        const data = await repo.listDocuments(assetId);
+        return { data };
+    } catch (error: any) {
+        console.error('Server Action Error (listAssetDocuments):', error);
+        throw error;
+    }
+}
+
+export async function saveAssetDocument(doc: Partial<AssetDocument>, targetUserId?: string) {
+    try {
+        const { credentials, preferences } = await resolveSecurityContext(targetUserId);
+        const repo = RepositoryFactory.getAssetRepository(credentials, preferences);
+        return await repo.saveDocument(doc);
+    } catch (error: any) {
+        console.error('Server Action Error (saveAssetDocument):', error);
+        throw error;
+    }
+}
+
+export async function deleteAssetDocument(id: string, targetUserId?: string) {
+    try {
+        const { credentials, preferences } = await resolveSecurityContext(targetUserId);
+        const repo = RepositoryFactory.getAssetRepository(credentials, preferences);
+        return await repo.deleteDocument(id);
+    } catch (error: any) {
+        console.error('Server Action Error (deleteAssetDocument):', error);
         throw error;
     }
 }
