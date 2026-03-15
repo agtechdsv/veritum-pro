@@ -21,6 +21,16 @@ export class SupabaseLawsuitRepository implements ILawsuitRepository {
         return data || [];
     }
 
+    async getById(id: string): Promise<Lawsuit | null> {
+        const { data, error } = await this.client
+            .from('lawsuits')
+            .select('*')
+            .eq('id', id)
+            .maybeSingle();
+        if (error) throw error;
+        return data;
+    }
+
     async save(lawsuit: Partial<Lawsuit>): Promise<Lawsuit> {
         if (lawsuit.id) {
             const { data, error } = await this.client

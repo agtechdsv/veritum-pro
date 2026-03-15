@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Credentials, Lawsuit, LawsuitDocument, Task, CalendarEvent, User, Person, TeamMember, Asset, CorporateEntity, Shareholder, CorporateDocument, TaxRegime, EntityStatus, EntityType, AssetDocument } from '@/types';
-import { Plus, MoreHorizontal, Calendar, Scale, Search, Filter, LayoutDashboard, ArrowRight, AlertTriangle, CheckCircle2, Clock, MapPin, Shield, User as UserIcon, Users, Save, XCircle, Pencil, ChevronRight, ChevronLeft, ChevronDown, Zap, Lock as LockIcon, Trash2, LayoutGrid, List, Building2, FileText, PieChart, Briefcase, Upload, Check, Loader2, Download, Trello } from 'lucide-react';
+import { Credentials, Lawsuit, LawsuitDocument, Task, CalendarEvent, User, Person, TeamMember, Asset, CorporateEntity, Shareholder, CorporateDocument, TaxRegime, EntityStatus, EntityType, AssetDocument, TimelineEntry } from '@/types';
+import { Plus, MoreHorizontal, Calendar, Scale, Search, Filter, LayoutDashboard, ArrowRight, AlertTriangle, CheckCircle2, Clock, MapPin, Shield, User as UserIcon, Users, Save, XCircle, Pencil, ChevronRight, ChevronLeft, ChevronDown, Zap, Lock as LockIcon, Trash2, LayoutGrid, List, Building2, FileText, PieChart, Briefcase, Upload, Check, Loader2, Download, Trello, History } from 'lucide-react';
 import { createDynamicClient } from '@/utils/supabase/client';
 import IntelligenceWidget from '../shared/intelligence-widget';
 import { useTranslation } from '@/contexts/language-context';
 import PersonManagement from './person-management';
 import { useModule } from '@/app/veritumpro/layout';
 import { listPersons } from '@/app/actions/crm-actions';
-import { listLawsuits, saveLawsuit, deleteLawsuit, listTasks, saveTask, deleteTask, listEvents, saveEvent, deleteEvent, listTeam, getCitiesByState, listAssets, saveAsset, deleteAsset, listCorporateEntities, saveCorporateEntity, deleteCorporateEntity, listShareholders, saveShareholder, deleteShareholder, listCorporateDocuments, saveCorporateDocument, deleteCorporateDocument, listLawsuitDocuments, saveLawsuitDocument, deleteLawsuitDocument, listAssetDocuments, saveAssetDocument, deleteAssetDocument } from '@/app/actions/nexus-actions';
+import { listLawsuits, saveLawsuit, deleteLawsuit, listTasks, saveTask, deleteTask, listEvents, saveEvent, deleteEvent, listTeam, getCitiesByState, listAssets, saveAsset, deleteAsset, listCorporateEntities, saveCorporateEntity, deleteCorporateEntity, listShareholders, saveShareholder, deleteShareholder, listCorporateDocuments, saveCorporateDocument, deleteCorporateDocument, listLawsuitDocuments, saveLawsuitDocument, deleteLawsuitDocument, listAssetDocuments, saveAssetDocument, deleteAssetDocument, listTimelineEntries } from '@/app/actions/nexus-actions';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from '@/components/ui/toast';
 import { createMasterClient } from '@/lib/supabase/master';
@@ -307,8 +307,12 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     const [editingAsset, setEditingAsset] = useState<Partial<Asset> | null>(null);
     const [activeTab, setActiveTab] = useState<'overview' | 'pessoas' | 'processos' | 'tarefas' | 'agenda' | 'ativos' | 'societario'>('overview');
     const [searchTerm, setSearchTerm] = useState('');
-    const [activeAssetTab, setActiveAssetTab] = useState<'basic' | 'advanced' | 'docs'>('basic');
-    const [activeLawsuitTab, setActiveLawsuitTab] = useState<'basic' | 'advanced' | 'docs'>('basic');
+    const [activeAssetTab, setActiveAssetTab] = useState<'basic' | 'advanced' | 'docs' | 'timeline'>('basic');
+    const [activeLawsuitTab, setActiveLawsuitTab] = useState<'basic' | 'advanced' | 'docs' | 'timeline'>('basic');
+    const [lawsuitTimeline, setLawsuitTimeline] = useState<TimelineEntry[]>([]);
+    const [assetTimeline, setAssetTimeline] = useState<TimelineEntry[]>([]);
+    const [isLawsuitTimelineLoading, setIsLawsuitTimelineLoading] = useState(false);
+    const [isAssetTimelineLoading, setIsAssetTimelineLoading] = useState(false);
     const [activeTaskTab, setActiveTaskTab] = useState<'basic' | 'advanced'>('basic');
     const [processViewStyle, setProcessViewStyle] = useState<'grid' | 'list' | 'kanban'>('grid');
     const [assetViewStyle, setAssetViewStyle] = useState<'grid' | 'list' | 'kanban'>('grid');
@@ -519,6 +523,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             if (eventResult.data) setEvents(eventResult.data);
             if (personResult.data) setPersons(personResult.data);
             if (teamResult?.data) setTeam(teamResult.data);
+
             if (assetResult?.data) setAssets(assetResult.data);
             if (corpResult?.data) setCorporateEntities(corpResult.data);
 
@@ -622,10 +627,25 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 if (result.data) setLawsuitDocuments(result.data);
             };
             fetchDocs();
+
+            // Fetch Timeline if active tab
+            if (activeLawsuitTab === 'timeline') {
+                const fetchTimeline = async () => {
+                    setIsLawsuitTimelineLoading(true);
+                    try {
+                        const res = await listTimelineEntries('lawsuit', editingLawsuit.id!, selectedUserId);
+                        if (res.data) setLawsuitTimeline(res.data);
+                    } finally {
+                        setIsLawsuitTimelineLoading(false);
+                    }
+                };
+                fetchTimeline();
+            }
         } else {
             setLawsuitDocuments([]);
+            setLawsuitTimeline([]);
         }
-    }, [editingLawsuit?.id, selectedUserId]);
+    }, [editingLawsuit?.id, selectedUserId, activeLawsuitTab]);
 
     // Fetch Asset Documents when Asset is selected
     useEffect(() => {
@@ -635,10 +655,25 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 if (result.data) setAssetDocuments(result.data);
             };
             fetchDocs();
+
+             // Fetch Timeline if active tab
+             if (activeAssetTab === 'timeline') {
+                const fetchTimeline = async () => {
+                    setIsAssetTimelineLoading(true);
+                    try {
+                        const res = await listTimelineEntries('asset', editingAsset.id!, selectedUserId);
+                        if (res.data) setAssetTimeline(res.data);
+                    } finally {
+                        setIsAssetTimelineLoading(false);
+                    }
+                };
+                fetchTimeline();
+            }
         } else {
             setAssetDocuments([]);
+            setAssetTimeline([]);
         }
-    }, [editingAsset?.id, selectedUserId]);
+    }, [editingAsset?.id, selectedUserId, activeAssetTab]);
 
     const handleCreateLawsuitFromCRM = (personId: string) => {
         // Switch to lawsuits tab
@@ -726,6 +761,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
 
             setIsLawsuitModalOpen(false);
             setEditingLawsuit(null);
+            setLawsuitTimeline([]);
             setActiveLawsuitTab('basic');
             toast.success(t('modules.nexus.modals.lawsuit.success') || 'Processo salvo com sucesso!');
             
@@ -794,6 +830,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
 
             setIsAssetModalOpen(false);
             setEditingAsset(null);
+            setAssetTimeline([]);
             setActiveAssetTab('basic');
             toast.success('Ativo salvo com sucesso!');
             
@@ -3332,7 +3369,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm"
-                            onClick={() => { setIsLawsuitModalOpen(false); setActiveLawsuitTab('basic'); }}
+                            onClick={() => { setIsLawsuitModalOpen(false); setLawsuitTimeline([]); setActiveLawsuitTab('basic'); }}
                         />
 
                         {/* Drawer Content */}
@@ -3341,7 +3378,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                             animate={{ x: 0 }}
                             exit={{ x: '100%' }}
                             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-                            className="relative w-full max-w-xl bg-white dark:bg-slate-900 shadow-[-20px_0_50px_-10px_rgba(0,0,0,0.1)] h-full flex flex-col border-l border-slate-200 dark:border-slate-800"
+                            className="relative w-full max-w-2xl bg-white dark:bg-slate-900 shadow-[-20px_0_50px_-10px_rgba(0,0,0,0.1)] h-full flex flex-col border-l border-slate-200 dark:border-slate-800"
                         >
                             {/* Header */}
                             <div className="p-8 border-b border-slate-100 dark:border-slate-800 shrink-0 bg-slate-50/50 dark:bg-slate-800/50">
@@ -3377,7 +3414,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         )}
                                         <button
                                             type="button"
-                                            onClick={() => { setIsLawsuitModalOpen(false); setActiveLawsuitTab('basic'); }}
+                                            onClick={() => { setIsLawsuitModalOpen(false); setLawsuitTimeline([]); setActiveLawsuitTab('basic'); }}
                                             className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all"
                                         >
                                             <XCircle size={28} />
@@ -3390,23 +3427,30 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                     <button
                                         type="button"
                                         onClick={() => setActiveLawsuitTab('basic')}
-                                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap ${activeLawsuitTab === 'basic' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-xl shadow-indigo-600/10' : 'text-slate-500 hover:text-slate-700'}`}
+                                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-[9px] font-black uppercase tracking-[0.1em] transition-all whitespace-nowrap ${activeLawsuitTab === 'basic' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-xl shadow-indigo-600/10' : 'text-slate-500 hover:text-slate-700'}`}
                                     >
                                         <Zap size={14} /> {t('common.basic') || 'Básico'}
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => setActiveLawsuitTab('advanced')}
-                                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap ${activeLawsuitTab === 'advanced' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-xl shadow-indigo-600/10' : 'text-slate-500 hover:text-slate-700'}`}
+                                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-[9px] font-black uppercase tracking-[0.1em] transition-all whitespace-nowrap ${activeLawsuitTab === 'advanced' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-xl shadow-indigo-600/10' : 'text-slate-500 hover:text-slate-700'}`}
                                     >
                                         <Zap size={14} /> {t('common.advanced') || 'Avançado'}
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => setActiveLawsuitTab('docs')}
-                                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap ${activeLawsuitTab === 'docs' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-xl shadow-indigo-600/10' : 'text-slate-500 hover:text-slate-700'}`}
+                                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-[9px] font-black uppercase tracking-[0.1em] transition-all whitespace-nowrap ${activeLawsuitTab === 'docs' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-xl shadow-indigo-600/10' : 'text-slate-500 hover:text-slate-700'}`}
                                     >
                                         <FileText size={14} /> Documentos
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveLawsuitTab('timeline')}
+                                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-[9px] font-black uppercase tracking-[0.1em] transition-all whitespace-nowrap ${activeLawsuitTab === 'timeline' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-xl shadow-indigo-600/10' : 'text-slate-500 hover:text-slate-700'}`}
+                                    >
+                                        <History size={14} /> Histórico
                                     </button>
                                 </div>
                             </div>
@@ -3678,6 +3722,80 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                     </div>
                                                 </div>
 
+                                            </div>
+                                        ) : activeLawsuitTab === 'timeline' ? (
+                                            <div className="space-y-2 animate-in fade-in slide-in-from-right-4 duration-500">
+                                                <div className="flex items-center justify-between mb-8">
+                                                    <div>
+                                                        <h4 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Histórico do Processo</h4>
+                                                        <p className="text-xs text-slate-500 font-bold">Trilha de auditoria e alterações de status</p>
+                                                    </div>
+                                                    <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 rounded-2xl">
+                                                        <History size={24} />
+                                                    </div>
+                                                </div>
+
+                                                <div className="relative">
+                                                    {isLawsuitTimelineLoading ? (
+                                                        <div className="py-20 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[2.5rem] bg-slate-50/50 dark:bg-slate-900/50">
+                                                            <Loader2 size={48} className="text-indigo-500 mb-4 animate-spin" />
+                                                            <p className="text-slate-500 font-black uppercase tracking-widest text-[10px]">Carregando histórico...</p>
+                                                        </div>
+                                                    ) : lawsuitTimeline.length === 0 ? (
+                                                        <div className="py-20 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[2.5rem] bg-slate-50/50 dark:bg-slate-900/50">
+                                                            <Clock size={48} className="text-slate-300 mb-4" />
+                                                            <p className="text-slate-400 font-bold italic">Nenhum evento registrado ainda.</p>
+                                                        </div>
+                                                    ) : lawsuitTimeline.map((entry, idx) => (
+                                                        <div key={entry.id} className="relative pl-10 pb-10 group">
+                                                            {/* Thread Line */}
+                                                            {idx < lawsuitTimeline.length - 1 && (
+                                                                <div className="absolute left-[15px] top-8 bottom-0 w-[2px] bg-slate-100 dark:bg-slate-800 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/30 transition-colors" />
+                                                            )}
+                                                            
+                                                            {/* Icon Circle */}
+                                                            <div className={`absolute left-0 top-0 w-8 h-8 rounded-2xl z-10 flex items-center justify-center shadow-sm border ${
+                                                                entry.action === 'STATUS_CHANGE' 
+                                                                    ? 'bg-amber-50 border-amber-200 text-amber-600 dark:bg-amber-900/20 dark:border-amber-800' 
+                                                                    : entry.action === 'CREATE'
+                                                                    ? 'bg-emerald-50 border-emerald-200 text-emerald-600 dark:bg-emerald-900/20 dark:border-emerald-800'
+                                                                    : 'bg-indigo-50 border-indigo-200 text-indigo-600 dark:bg-indigo-900/20 dark:border-indigo-800'
+                                                            }`}>
+                                                                {entry.action === 'STATUS_CHANGE' ? <Zap size={14} /> : entry.action === 'CREATE' ? <Plus size={14} /> : <Clock size={14} />}
+                                                            </div>
+
+                                                            <div className="bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 p-6 rounded-[2rem] shadow-sm hover:shadow-md transition-all hover:border-indigo-200 dark:hover:border-indigo-900/40">
+                                                                <div className="flex justify-between items-center mb-3">
+                                                                    <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${
+                                                                        entry.action === 'STATUS_CHANGE' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'
+                                                                    }`}>
+                                                                        {entry.action}
+                                                                    </span>
+                                                                    <span className="text-[10px] font-bold text-slate-400">
+                                                                        {entry.created_at ? new Date(entry.created_at).toLocaleString('pt-BR') : 'Agora'}
+                                                                    </span>
+                                                                </div>
+                                                                <p className="text-sm font-bold text-slate-700 dark:text-slate-200 leading-relaxed uppercase tracking-tight">
+                                                                    {entry.description}
+                                                                </p>
+                                                                <div className="mt-4 flex items-center gap-2">
+                                                                    <div className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
+                                                                        <UserIcon size={10} className="text-slate-500" />
+                                                                    </div>
+                                                                    <span className="text-[10px] text-slate-500 font-bold">Por: <span className="text-indigo-600 dark:text-indigo-400">
+                                                                        {(() => {
+    if (!entry.user_id) return entry.user_name || 'Sistema';
+    const member = team.find(m => m.master_user_id === entry.user_id || m.id === entry.user_id);
+    if (member) return member.full_name;
+    if (entry.user_id === user.id) return user.name;
+    return entry.user_name || 'Sistema';
+})()}
+                                                                    </span></span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
                                         ) : (
                                             <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
@@ -4099,7 +4217,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm"
-                            onClick={() => { setIsAssetModalOpen(false); setActiveAssetTab('basic'); }}
+                            onClick={() => { setIsAssetModalOpen(false); setAssetTimeline([]); setActiveAssetTab('basic'); }}
                         />
                         <motion.div
                             initial={{ x: '100%' }}
@@ -4119,7 +4237,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         </p>
                                     </div>
                                     <button
-                                        onClick={() => { setIsAssetModalOpen(false); setActiveAssetTab('basic'); }}
+                                        onClick={() => { setIsAssetModalOpen(false); setAssetTimeline([]); setActiveAssetTab('basic'); }}
                                         className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all"
                                     >
                                         <XCircle size={28} />
@@ -4142,6 +4260,13 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                             className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeAssetTab === 'docs' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-xl' : 'text-slate-500 hover:text-slate-700'}`}
                                         >
                                             <FileText size={14} /> Documentos
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setActiveAssetTab('timeline')}
+                                            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeAssetTab === 'timeline' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-xl' : 'text-slate-500 hover:text-slate-700'}`}
+                                        >
+                                            <History size={14} /> Histórico
                                         </button>
                                     </div>
                                 </div>
@@ -4277,6 +4402,78 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                             />
                                         </div>
                                     </div>
+                                    ) : activeAssetTab === 'timeline' ? (
+                                        <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-500">
+                                            <div className="flex items-center justify-between mb-8">
+                                                <div>
+                                                    <h4 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Histórico do Ativo</h4>
+                                                    <p className="text-xs text-slate-500 font-bold">Auditoria de movimentações e garantias</p>
+                                                </div>
+                                                <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 rounded-2xl">
+                                                    <History size={24} />
+                                                </div>
+                                            </div>
+
+                                            <div className="relative">
+                                                {isAssetTimelineLoading ? (
+                                                    <div className="py-20 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[2.5rem] bg-slate-50/50 dark:bg-slate-900/50">
+                                                        <Loader2 size={48} className="text-indigo-500 mb-4 animate-spin" />
+                                                        <p className="text-slate-500 font-black uppercase tracking-widest text-[10px]">Carregando histórico...</p>
+                                                    </div>
+                                                ) : assetTimeline.length === 0 ? (
+                                                    <div className="py-20 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[2.5rem] bg-slate-50/50 dark:bg-slate-900/50">
+                                                        <Clock size={48} className="text-slate-300 mb-4" />
+                                                        <p className="text-slate-400 font-bold italic">Nenhum evento registrado ainda.</p>
+                                                    </div>
+                                                ) : assetTimeline.map((entry, idx) => (
+                                                    <div key={entry.id} className="relative pl-10 pb-10 group">
+                                                        {idx < assetTimeline.length - 1 && (
+                                                            <div className="absolute left-[15px] top-8 bottom-0 w-[2px] bg-slate-100 dark:bg-slate-800 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/30 transition-colors" />
+                                                        )}
+                                                        
+                                                        <div className={`absolute left-0 top-0 w-8 h-8 rounded-2xl z-10 flex items-center justify-center shadow-sm border ${
+                                                            entry.action === 'STATUS_CHANGE' 
+                                                                ? 'bg-amber-50 border-amber-200 text-amber-600 dark:bg-amber-900/20 dark:border-amber-800' 
+                                                                : entry.action === 'CREATE'
+                                                                ? 'bg-emerald-50 border-emerald-200 text-emerald-600 dark:bg-emerald-900/20 dark:border-emerald-800'
+                                                                : 'bg-indigo-50 border-indigo-200 text-indigo-600 dark:bg-indigo-900/20 dark:border-indigo-800'
+                                                        }`}>
+                                                            {entry.action === 'STATUS_CHANGE' ? <Zap size={14} /> : entry.action === 'CREATE' ? <Plus size={14} /> : <Clock size={14} />}
+                                                        </div>
+
+                                                        <div className="bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 p-6 rounded-[2rem] shadow-sm hover:shadow-md transition-all hover:border-indigo-200 dark:hover:border-indigo-900/40">
+                                                            <div className="flex justify-between items-center mb-3">
+                                                                <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${
+                                                                    entry.action === 'STATUS_CHANGE' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'
+                                                                }`}>
+                                                                    {entry.action}
+                                                                </span>
+                                                                <span className="text-[10px] font-bold text-slate-400">
+                                                                    {entry.created_at ? new Date(entry.created_at).toLocaleString('pt-BR') : 'Agora'}
+                                                                </span>
+                                                            </div>
+                                                            <p className="text-sm font-bold text-slate-700 dark:text-slate-200 leading-relaxed uppercase tracking-tight">
+                                                                {entry.description}
+                                                            </p>
+                                                            <div className="mt-4 flex items-center gap-2">
+                                                                <div className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
+                                                                    <UserIcon size={10} className="text-slate-500" />
+                                                                </div>
+                                                                <span className="text-[10px] text-slate-500 font-bold">Por: <span className="text-indigo-600 dark:text-indigo-400">
+                                                                    {(() => {
+                                                                        if (!entry.user_id) return entry.user_name || 'Sistema';
+                                                                        const member = team.find(m => m.master_user_id === entry.user_id || m.id === entry.user_id);
+                                                                        if (member) return member.full_name;
+                                                                        if (entry.user_id === user.id) return user.name;
+                                                                        return entry.user_name || 'Sistema';
+                                                                    })()}
+                                                                </span></span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
                                     ) : (
                                         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
                                             <div className="flex items-center justify-between">

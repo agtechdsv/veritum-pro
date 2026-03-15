@@ -2,6 +2,7 @@ import { Lawsuit, LawsuitDocument } from '@/types';
 
 export interface ILawsuitRepository {
     list(searchTerm?: string): Promise<Lawsuit[]>;
+    getById(id: string): Promise<Lawsuit | null>;
     save(lawsuit: Partial<Lawsuit>): Promise<Lawsuit>;
     delete(id: string): Promise<void>;
 

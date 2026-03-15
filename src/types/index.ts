@@ -582,3 +582,17 @@ export interface CorporateDocument {
     created_at?: string;
     updated_at?: string;
 }
+
+export interface TimelineEntry {
+    id: string;
+    entity_type: string;
+    entity_id: string;
+    action: string;
+    description?: string;
+    old_values?: any;
+    new_values?: any;
+    user_id?: string;
+    created_at?: string;
+    // Helper fields
+    user_name?: string;
+}

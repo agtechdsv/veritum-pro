@@ -27,6 +27,15 @@ export class DrizzleLawsuitRepository implements ILawsuitRepository {
         return result as unknown as Lawsuit[];
     }
 
+    async getById(id: string): Promise<Lawsuit | null> {
+        const result = await this.db.select()
+            .from(lawsuits)
+            .where(eq(lawsuits.id, id))
+            .limit(1);
+        
+        return result[0] ? (result[0] as unknown as Lawsuit) : null;
+    }
+
     async save(lawsuit: Partial<Lawsuit>): Promise<Lawsuit> {
         // Convert numeric to string for Drizzle if needed
         const lawsuitForDrizzle = {

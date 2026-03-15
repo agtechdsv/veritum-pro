@@ -1,6 +1,6 @@
 'use server';
 
-import { Lawsuit, Task, CalendarEvent, Credentials, UserPreferences, Asset, CorporateEntity, Shareholder, CorporateDocument, LawsuitDocument, AssetDocument } from '@/types';
+import { Lawsuit, Task, CalendarEvent, Credentials, UserPreferences, Asset, CorporateEntity, Shareholder, CorporateDocument, LawsuitDocument, AssetDocument, TimelineEntry } from '@/types';
 import { RepositoryFactory } from '@/lib/db/repositories/repository-factory';
 import { createMasterServerClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -16,15 +16,15 @@ async function resolveSecurityContext(targetUserId?: string) {
 
     if (!user) throw new Error('Unauthorized');
 
+    const { data: userProfile } = await supabaseMaster
+        .from('users')
+        .select('parent_user_id')
+        .eq('id', user.id)
+        .maybeSingle();
+
     let resolvedId = user.id;
 
     if (!targetUserId || targetUserId === user.id) {
-        const { data: userProfile } = await supabaseMaster
-            .from('users')
-            .select('parent_user_id')
-            .eq('id', user.id)
-            .single();
-
         if (userProfile?.parent_user_id) {
             resolvedId = userProfile.parent_user_id;
         }
@@ -73,7 +73,31 @@ async function resolveSecurityContext(targetUserId?: string) {
         theme: 'dark'
     };
 
-    return { credentials, preferences: userPrefs };
+    return { credentials, preferences: userPrefs, userId: user.id };
+}
+
+/* Timeline / Audit Actions */
+export async function listTimelineEntries(entityType: string, entityId: string, targetUserId?: string) {
+    try {
+        const { credentials, preferences } = await resolveSecurityContext(targetUserId);
+        const repo = RepositoryFactory.getTimelineRepository(credentials, preferences);
+        const data = await repo.list(entityType, entityId);
+        return { data };
+    } catch (error: any) {
+        console.error('Server Action Error (listTimelineEntries):', error);
+        throw error;
+    }
+}
+
+export async function saveTimelineEntry(entry: Partial<TimelineEntry>, targetUserId?: string) {
+    try {
+        const { credentials, preferences, userId } = await resolveSecurityContext(targetUserId);
+        const repo = RepositoryFactory.getTimelineRepository(credentials, preferences);
+        return await repo.save({ ...entry, user_id: userId });
+    } catch (error: any) {
+        console.error('Server Action Error (saveTimelineEntry):', error);
+        throw error;
+    }
 }
 
 /* Lawsuits Actions */
@@ -99,9 +123,40 @@ export async function listLawsuits(searchTerm?: string, targetUserId?: string) {
 
 export async function saveLawsuit(lawsuit: Partial<Lawsuit>, targetUserId?: string) {
     try {
-        const { credentials, preferences } = await resolveSecurityContext(targetUserId);
+        const { credentials, preferences, userId } = await resolveSecurityContext(targetUserId);
         const repo = RepositoryFactory.getLawsuitRepository(credentials, preferences);
-        return await repo.save(lawsuit);
+        const timelineRepo = RepositoryFactory.getTimelineRepository(credentials, preferences);
+
+        let oldLawsuit: Lawsuit | null = null;
+        if (lawsuit.id) {
+            oldLawsuit = await repo.getById(lawsuit.id);
+        }
+
+        const saved = await repo.save(lawsuit);
+
+        // Audit Status Change
+        if (oldLawsuit && lawsuit.status && oldLawsuit.status !== lawsuit.status) {
+            await timelineRepo.save({
+                entity_type: 'lawsuit',
+                entity_id: saved.id,
+                action: 'STATUS_CHANGE',
+                description: `Alterou status de "${oldLawsuit.status}" para "${lawsuit.status}"`,
+                old_values: { status: oldLawsuit.status },
+                new_values: { status: lawsuit.status },
+                user_id: userId
+            });
+        } else if (!oldLawsuit) {
+             await timelineRepo.save({
+                entity_type: 'lawsuit',
+                entity_id: saved.id,
+                action: 'CREATE',
+                description: `Processo criado`,
+                new_values: saved,
+                user_id: userId
+            });
+        }
+
+        return saved;
     } catch (error: any) {
         console.error('Server Action Error (saveLawsuit):', error.message);
         throw error;
@@ -258,6 +313,9 @@ export async function listTeam(targetUserId?: string) {
     }
 }
 
+
+
+
 const UF_TO_ID: Record<string, number> = {
     'AC': 12, 'AL': 27, 'AP': 16, 'AM': 13, 'BA': 29, 'CE': 23, 'DF': 53, 'ES': 32, 'GO': 52, 'MA': 21,
     'MT': 51, 'MS': 50, 'MG': 31, 'PA': 15, 'PB': 25, 'PR': 41, 'PE': 26, 'PI': 22, 'RJ': 33, 'RN': 24,
@@ -318,9 +376,40 @@ export async function listAssets(personId?: string, lawsuitId?: string, targetUs
 
 export async function saveAsset(asset: Partial<Asset>, targetUserId?: string) {
     try {
-        const { credentials, preferences } = await resolveSecurityContext(targetUserId);
+        const { credentials, preferences, userId } = await resolveSecurityContext(targetUserId);
         const repo = RepositoryFactory.getAssetRepository(credentials, preferences);
-        return await repo.save(asset);
+        const timelineRepo = RepositoryFactory.getTimelineRepository(credentials, preferences);
+
+        let oldAsset: Asset | null = null;
+        if (asset.id) {
+            oldAsset = await repo.getById(asset.id);
+        }
+
+        const saved = await repo.save(asset);
+
+        // Audit Status Change
+        if (oldAsset && asset.status && oldAsset.status !== asset.status) {
+            await timelineRepo.save({
+                entity_type: 'asset',
+                entity_id: saved.id,
+                action: 'STATUS_CHANGE',
+                description: `Alterou status de "${oldAsset.status}" para "${asset.status}"`,
+                old_values: { status: oldAsset.status },
+                new_values: { status: asset.status },
+                user_id: userId
+            });
+        } else if (!oldAsset) {
+            await timelineRepo.save({
+                entity_type: 'asset',
+                entity_id: saved.id,
+                action: 'CREATE',
+                description: `Ativo criado`,
+                new_values: saved,
+                user_id: userId
+            });
+        }
+
+        return saved;
     } catch (error: any) {
         console.error('Server Action Error (saveAsset):', error.message);
         throw error;
