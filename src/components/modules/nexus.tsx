@@ -443,6 +443,15 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     const [filterResponsibleId, setFilterResponsibleId] = useState('');
     const [filterLawsuitId, setFilterLawsuitId] = useState('');
 
+    // Specific Filters for Processos and Ativos
+    const [lawsuitSearch, setLawsuitSearch] = useState('');
+    const [lawsuitStatusFilter, setLawsuitStatusFilter] = useState('');
+    const [lawsuitLawyerFilter, setLawsuitLawyerFilter] = useState('');
+
+    const [assetSearch, setAssetSearch] = useState('');
+    const [assetStatusFilter, setAssetStatusFilter] = useState('');
+    const [assetTypeFilter, setAssetTypeFilter] = useState('');
+
     // Searchable Select States
     const [authorSearch, setAuthorSearch] = useState('');
     const [defendantSearch, setDefendantSearch] = useState('');
@@ -1414,6 +1423,20 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         return matchSearch && matchResponsible && matchLawsuit;
     });
 
+    const filteredLawsuits = lawsuits.filter(l => {
+        const matchSearch = lawsuitSearch ? (l.cnj_number?.toLowerCase().includes(lawsuitSearch.toLowerCase()) || l.case_title?.toLowerCase().includes(lawsuitSearch.toLowerCase())) : true;
+        const matchStatus = lawsuitStatusFilter ? l.status === lawsuitStatusFilter : true;
+        const matchLawyer = lawsuitLawyerFilter ? l.responsible_lawyer_id === lawsuitLawyerFilter : true;
+        return matchSearch && matchStatus && matchLawyer;
+    });
+
+    const filteredAssets = assets.filter(a => {
+        const matchSearch = assetSearch ? (a.title.toLowerCase().includes(assetSearch.toLowerCase()) || a.description?.toLowerCase().includes(assetSearch.toLowerCase())) : true;
+        const matchStatus = assetStatusFilter ? a.status === assetStatusFilter : true;
+        const matchType = assetTypeFilter ? a.asset_type === assetTypeFilter : true;
+        return matchSearch && matchStatus && matchType;
+    });
+
     const renderFilterBar = () => (
         <div className="flex gap-4 mb-6 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in slide-in-from-top-2">
             <div className="flex-1">
@@ -1456,6 +1479,100 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 >
                     <Filter size={16} className="relative z-10" />
                     <XCircle size={14} className="relative z-10 -ml-1" />
+                </button>
+            )}
+        </div>
+    );
+
+    const renderLawsuitFilterBar = () => (
+        <div className="flex gap-4 mb-6 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in slide-in-from-top-2">
+            <div className="flex-1">
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                    <input
+                        type="text"
+                        placeholder="Buscar por CNPJ ou Título..."
+                        value={lawsuitSearch}
+                        onChange={e => setLawsuitSearch(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
+                    />
+                </div>
+            </div>
+            <div className="w-48">
+                <select
+                    value={lawsuitStatusFilter}
+                    onChange={e => setLawsuitStatusFilter(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
+                >
+                    <option value="">⚖️ Todos os Status</option>
+                    {LAWSUIT_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+            </div>
+            <div className="w-64">
+                <select
+                    value={lawsuitLawyerFilter}
+                    onChange={e => setLawsuitLawyerFilter(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
+                >
+                    <option value="">👤 Todos os Advogados</option>
+                    {team.map(t => <option key={t.id} value={t.id}>{t.full_name}</option>)}
+                </select>
+            </div>
+            {(lawsuitSearch || lawsuitStatusFilter || lawsuitLawyerFilter) && (
+                <button
+                    onClick={() => { setLawsuitSearch(''); setLawsuitStatusFilter(''); setLawsuitLawyerFilter(''); }}
+                    className="px-4 py-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all flex items-center gap-2 border border-transparent hover:border-rose-200 dark:hover:border-rose-800"
+                    title="Limpar Filtros"
+                >
+                    <Filter size={16} />
+                    <XCircle size={14} className="-ml-1" />
+                </button>
+            )}
+        </div>
+    );
+
+    const renderAssetFilterBar = () => (
+        <div className="flex gap-4 mb-6 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in slide-in-from-top-2">
+            <div className="flex-1">
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                    <input
+                        type="text"
+                        placeholder="Buscar por título ou descrição..."
+                        value={assetSearch}
+                        onChange={e => setAssetSearch(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
+                    />
+                </div>
+            </div>
+            <div className="w-48">
+                <select
+                    value={assetStatusFilter}
+                    onChange={e => setAssetStatusFilter(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
+                >
+                    <option value="">🏢 Todos os Status</option>
+                    {ASSET_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+            </div>
+            <div className="w-64">
+                <select
+                    value={assetTypeFilter}
+                    onChange={e => setAssetTypeFilter(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
+                >
+                    <option value="">📦 Todos os Tipos</option>
+                    {['Imóvel', 'Veículo', 'Conta Bancária', 'Ação Judicial', 'Empresa / Quotas', 'Outros'].map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+            </div>
+            {(assetSearch || assetStatusFilter || assetTypeFilter) && (
+                <button
+                    onClick={() => { setAssetSearch(''); setAssetStatusFilter(''); setAssetTypeFilter(''); }}
+                    className="px-4 py-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all flex items-center gap-2 border border-transparent hover:border-rose-200 dark:hover:border-rose-800"
+                    title="Limpar Filtros"
+                >
+                    <Filter size={16} />
+                    <XCircle size={14} className="-ml-1" />
                 </button>
             )}
         </div>
@@ -1795,6 +1912,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                             </div>
 
                             <div className="flex-1 px-8 pb-8 h-[calc(100vh-280px)]">
+                                {renderLawsuitFilterBar()}
                                 <AnimatePresence mode="wait">
                                     {processViewStyle === 'kanban' ? (
                                         <motion.div
@@ -1821,15 +1939,15 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                             }`} />
                                                             <h3 className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">{status}</h3>
                                                             <span className="ml-2 px-2 py-0.5 bg-white dark:bg-slate-800 rounded-lg text-[10px] border border-slate-200 dark:border-slate-800 font-bold">
-                                                                {lawsuits.filter(l => l.status === status).length}
+                                                                {filteredLawsuits.filter(l => l.status === status).length}
                                                             </span>
                                                         </div>
                                                     </div>
                                                     <div className="flex-1 overflow-y-auto no-scrollbar space-y-4 px-1 pb-6">
-                                                        {lawsuits.filter(l => l.status === status).length === 0 ? (
+                                                        {filteredLawsuits.filter(l => l.status === status).length === 0 ? (
                                                             <div className="py-20 text-center text-[10px] font-bold text-slate-300 italic uppercase tracking-widest">Vazio</div>
                                                         ) : (
-                                                            lawsuits.filter(l => l.status === status).map(law => (
+                                                            filteredLawsuits.filter(l => l.status === status).map(law => (
                                                                 <div 
                                                                     key={law.id} 
                                                                     draggable
@@ -1911,7 +2029,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                     </div>
                                                                 </td>
                                                             </tr>
-                                                        ) : lawsuits.length === 0 ? (
+                                                        ) : filteredLawsuits.length === 0 ? (
                                                             <tr>
                                                                 <td colSpan={6} className="px-6 py-20 text-center">
                                                                     <div className="flex flex-col items-center gap-3">
@@ -1920,7 +2038,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                     </div>
                                                                 </td>
                                                             </tr>
-                                                        ) : lawsuits.map((law) => (
+                                                        ) : filteredLawsuits.map((law) => (
                                                             <tr key={law.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors group">
                                                                 <td className="px-6 py-4">
                                                                     <div className="font-mono text-sm font-bold text-indigo-600 dark:text-indigo-400">{law.cnj_number}</div>
@@ -2030,9 +2148,9 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                                 {loading ? (
                                                     <div className="col-span-full py-20 text-center animate-pulse text-slate-400 font-bold">{t('modules.nexus.empty.syncing')}</div>
-                                                ) : lawsuits.length === 0 ? (
+                                                ) : filteredLawsuits.length === 0 ? (
                                                     <div className="col-span-full py-20 text-center text-slate-400 font-bold italic">{t('modules.nexus.empty.processes')}</div>
-                                                ) : lawsuits.map((law) => {
+                                                ) : filteredLawsuits.map((law) => {
                                                     const author = persons.find(p => p.id === law.author_id);
                                                     return (
                                                         <div key={law.id} className="bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden flex flex-col h-full">
@@ -2601,6 +2719,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
 
                             {/* Tabela Ativos */}
                             <div className="flex-1 px-8 pb-8 h-[calc(100vh-280px)]">
+                             {renderAssetFilterBar()}
                              <AnimatePresence mode="wait">
                                 {assetViewStyle === 'kanban' ? (
                                     <motion.div
@@ -2627,15 +2746,15 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                         }`} />
                                                         <h3 className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">{status}</h3>
                                                         <span className="ml-2 px-2 py-0.5 bg-white dark:bg-slate-900 rounded-lg text-[10px] border border-slate-200 dark:border-slate-800 font-bold">
-                                                            {assets.filter(a => a.status === status).length}
+                                                            {filteredAssets.filter(a => a.status === status).length}
                                                         </span>
                                                     </div>
                                                 </div>
                                                 <div className="flex-1 overflow-y-auto no-scrollbar space-y-4 px-1 pb-6">
-                                                    {assets.filter(a => a.status === status).length === 0 ? (
+                                                    {filteredAssets.filter(a => a.status === status).length === 0 ? (
                                                         <div className="py-20 text-center text-[10px] font-bold text-slate-300 italic uppercase tracking-widest">Vazio</div>
                                                     ) : (
-                                                        assets.filter(a => a.status === status).map(asset => {
+                                                        filteredAssets.filter(a => a.status === status).map(asset => {
                                                             const person = persons.find(p => p.id === asset.person_id);
                                                             const lawsuit = lawsuits.find(l => l.id === asset.lawsuit_id);
                                                             return (
@@ -2716,11 +2835,11 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-slate-50 dark:divide-slate-800 overflow-y-auto">
-                                                    {assets.length === 0 ? (
+                                                    {filteredAssets.length === 0 ? (
                                                         <tr>
                                                             <td colSpan={6} className="px-6 py-20 text-center text-slate-500 font-bold text-sm">Nenhum ativo registrado.</td>
                                                         </tr>
-                                                    ) : assets.map((asset) => {
+                                                    ) : filteredAssets.map((asset) => {
                                                         const person = persons.find(p => p.id === asset.person_id);
                                                         const lawsuit = lawsuits.find(l => l.id === asset.lawsuit_id);
                                                         return (
@@ -2799,9 +2918,9 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                     {loading ? (
                                         <div className="col-span-full py-20 text-center animate-pulse text-slate-400 font-bold">{t('modules.nexus.empty.assetsSyncing')}</div>
-                                    ) : assets.length === 0 ? (
+                                    ) : filteredAssets.length === 0 ? (
                                         <div className="col-span-full py-20 text-center text-slate-400 font-bold italic">{t('modules.nexus.empty.assets')}</div>
-                                    ) : assets.map((asset) => {
+                                    ) : filteredAssets.map((asset) => {
                                         const person = persons.find(p => p.id === asset.person_id);
                                         const lawsuit = lawsuits.find(l => l.id === asset.lawsuit_id);
                                         return (
