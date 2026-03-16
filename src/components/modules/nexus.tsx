@@ -1794,13 +1794,13 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         );
     };
 
-    const columns = ['A Fazer', 'Em Andamento', 'ConcluÃ­do', 'Atrasado'];
+    const columns = ['A Fazer', 'Em Andamento', 'Concluído', 'Atrasado'];
 
     const getColumnTranslation = (col: string) => {
         switch (col) {
             case 'A Fazer': return t('modules.nexus.kanban.todo');
             case 'Em Andamento': return t('modules.nexus.kanban.doing');
-            case 'ConcluÃ­do': return t('modules.nexus.kanban.done');
+            case 'Concluído': return t('modules.nexus.kanban.done');
             case 'Atrasado': return t('modules.nexus.kanban.late');
             default: return col;
         }
@@ -1809,7 +1809,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     const getPriorityTranslation = (priority: string) => {
         switch (priority) {
             case 'Baixa': return t('modules.nexus.modals.task.priorities.Low');
-            case 'MÃ©dia': return t('modules.nexus.modals.task.priorities.Medium');
+            case 'Média': return t('modules.nexus.modals.task.priorities.Medium');
             case 'Alta': return t('modules.nexus.modals.task.priorities.High');
             case 'Urgente': return t('modules.nexus.modals.task.priorities.Urgent');
             default: return priority;
@@ -1817,7 +1817,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     };
 
     const getSeverityColor = (dueDate: string, status: string) => {
-        if (status === 'ConcluÃ­do') return 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600';
+        if (status === 'Concluído') return 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600';
         const now = new Date();
         const due = new Date(dueDate);
         const diffHours = (due.getTime() - now.getTime()) / (1000 * 60 * 60);
@@ -1849,12 +1849,12 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     // Cascading Constants (100% Brazilian Judicial Geography)
     const ESFERAS = [
         'Trabalhista',
-        'CÃ­vel',
+        'Cível',
         'Federal',
-        'PrevidenciÃ¡ria',
-        'TributÃ¡ria',
+        'Previdenciária',
+        'Tributária',
         'Criminal',
-        'FamÃ­lia & SucessÃµes',
+        'Família & Sucessões',
         'Eleitoral',
         'Militar'
     ];
@@ -1862,18 +1862,18 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     const UFS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
 
     const RITOS = {
-        'Trabalhista': ['OrdinÃ¡rio', 'SumarÃ­ssimo', 'SumÃ¡rio (AlÃ§ada)', 'ExecuÃ§Ã£o Trabalhista'],
-        'CÃ­vel': ['Procedimento Comum', 'SumarÃ­ssimo (Juizado Especial)', 'ExecuÃ§Ã£o de TÃ­tulo Extrajudicial', 'MonitÃ³ria', 'InventÃ¡rio/Arrolamento'],
-        'Federal': ['Procedimento Comum', 'SumarÃ­ssimo (JEF)', 'ExecuÃ§Ã£o Fiscal'],
-        'PrevidenciÃ¡ria': ['Procedimento Comum', 'SumarÃ­ssimo (JEF)', 'AcidentÃ¡rio'],
-        'TributÃ¡ria': ['ExecuÃ§Ã£o Fiscal', 'AnulatÃ³ria', 'Mandado de SeguranÃ§a', 'RepetiÃ§Ã£o de IndÃ©bito'],
-        'Criminal': ['OrdinÃ¡rio', 'SumÃ¡rio', 'SumarÃ­ssimo', 'Tribunal do JÃºri', 'ExecuÃ§Ã£o Penal'],
-        'default': ['Procedimento Comum', 'Especial', 'Mandado de SeguranÃ§a']
+        'Trabalhista': ['Ordinário', 'Sumaríssimo', 'Sumário (Alçada)', 'Execução Trabalhista'],
+        'Cível': ['Procedimento Comum', 'Sumaríssimo (Juizado Especial)', 'Execução de Título Extrajudicial', 'Monitória', 'Inventário/Arrolamento'],
+        'Federal': ['Procedimento Comum', 'Sumaríssimo (JEF)', 'Execução Fiscal'],
+        'Previdenciária': ['Procedimento Comum', 'Sumaríssimo (JEF)', 'Acidentário'],
+        'Tributária': ['Execução Fiscal', 'Anulatória', 'Mandado de Segurança', 'Repetição de Indébito'],
+        'Criminal': ['Ordinário', 'Sumário', 'Sumaríssimo', 'Tribunal do Júri', 'Execução Penal'],
+        'default': ['Procedimento Comum', 'Especial', 'Mandado de Segurança']
     };
 
     const TAX_REGIMES: TaxRegime[] = ['Simples Nacional', 'Lucro Presumido', 'Lucro Real', 'Isenta'];
-    const ENTITY_STATUSES: EntityStatus[] = ['Ativa', 'Baixada', 'Inativa', 'Em LiquidaÃ§Ã£o'];
-    const ENTITY_TYPES: EntityType[] = ['LTDA', 'SA', 'EIRELI', 'MEI', 'Holding', 'AssociaÃ§Ã£o', 'Outros'];
+    const ENTITY_STATUSES: EntityStatus[] = ['Ativa', 'Baixada', 'Inativa', 'Em Liquidação'];
+    const ENTITY_TYPES: EntityType[] = ['LTDA', 'SA', 'EIRELI', 'MEI', 'Holding', 'Associação', 'Outros'];
 
     const TRIBUNAIS: Record<string, Record<string, string[]>> = {
         'Trabalhista': {
@@ -1893,9 +1893,9 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             'PR': ['TRF-4'], 'PE': ['TRF-5'], 'PI': ['TRF-1'], 'RJ': ['TRF-2'], 'RN': ['TRF-5'],
             'RS': ['TRF-4'], 'RO': ['TRF-1'], 'RR': ['TRF-1'], 'SC': ['TRF-4'], 'SP': ['TRF-3'],
             'SE': ['TRF-5'], 'TO': ['TRF-1'],
-            'Superior': ['STJ - Superior Tribunal de JustiÃ§a', 'STF']
+            'Superior': ['STJ - Superior Tribunal de Justiça', 'STF']
         },
-        'CÃ­vel': {
+        'Cível': {
             'AC': ['TJAC'], 'AL': ['TJAL'], 'AP': ['TJAP'], 'AM': ['TJAM'], 'BA': ['TJBA'],
             'CE': ['TJCE'], 'DF': ['TJDFT'], 'ES': ['TJES'], 'GO': ['TJGO'], 'MA': ['TJMA'],
             'MT': ['TJMT'], 'MS': ['TJMS'], 'MG': ['TJMG'], 'PA': ['TJPA'], 'PB': ['TJPB'],
@@ -1906,11 +1906,11 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         }
     };
 
-    // Extension: PrevidenciÃ¡ria and TributÃ¡ria often share CÃ­vel/Federal courts
-    TRIBUNAIS['PrevidenciÃ¡ria'] = TRIBUNAIS['Federal'];
-    TRIBUNAIS['TributÃ¡ria'] = TRIBUNAIS['Federal'];
-    TRIBUNAIS['Criminal'] = TRIBUNAIS['CÃ­vel'];
-    TRIBUNAIS['FamÃ­lia & SucessÃµes'] = TRIBUNAIS['CÃ­vel'];
+    // Extension: Previdenciária and Tributária often share Cível/Federal courts
+    TRIBUNAIS['Previdenciária'] = TRIBUNAIS['Federal'];
+    TRIBUNAIS['Tributária'] = TRIBUNAIS['Federal'];
+    TRIBUNAIS['Criminal'] = TRIBUNAIS['Cível'];
+    TRIBUNAIS['Família & Sucessões'] = TRIBUNAIS['Cível'];
     TRIBUNAIS['Eleitoral'] = Object.fromEntries(UFS.map(uf => [uf, [`TRE-${uf}`]]));
     TRIBUNAIS['Militar'] = { 'default': ['STM - Superior Tribunal Militar', 'TJM (Estadual)'] };
 
@@ -1992,7 +1992,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                     <input
                         type="text"
-                        placeholder="Buscar por tÃ­tulo..."
+                        placeholder="Buscar por título..."
                         value={filterSearchTerm}
                         onChange={e => setFilterSearchTerm(e.target.value)}
                         className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
@@ -2086,7 +2086,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                     <input
                         type="text"
-                        placeholder="Buscar por tÃ­tulo ou descriÃ§Ã£o..."
+                        placeholder="Buscar por título ou descrição..."
                         value={assetSearch}
                         onChange={e => setAssetSearch(e.target.value)}
                         className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
@@ -2110,7 +2110,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                     className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
                 >
                     <option value="">ðŸ“¦ Todos os Tipos</option>
-                    {['ImÃ³vel', 'VeÃ­culo', 'Conta BancÃ¡ria', 'AÃ§Ã£o Judicial', 'Empresa / Quotas', 'Outros'].map(t => <option key={t} value={t}>{t}</option>)}
+                    {['Imóvel', 'Veículo', 'Conta BancÃ¡ria', 'AÃ§Ã£o Judicial', 'Empresa / Quotas', 'Outros'].map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
             </div>
             {(assetSearch || assetStatusFilter || assetTypeFilter) && (
@@ -2291,7 +2291,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                     },
                                     { 
                                         label: t('modules.nexus.metrics.deadlines'), 
-                                        val: tasks.filter(t => t.status !== 'ConcluÃ­do' && (new Date(t.due_date).getTime() - new Date().getTime()) < 86400000).length, 
+                                        val: tasks.filter(t => t.status !== 'Concluído' && (new Date(t.due_date).getTime() - new Date().getTime()) < 86400000).length, 
                                         color: 'text-rose-600', 
                                         bg: 'bg-rose-50 dark:bg-rose-900/30',
                                         icon: Clock, 
@@ -2299,7 +2299,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                     },
                                     { 
                                         label: t('modules.nexus.metrics.pending'), 
-                                        val: tasks.filter(t => t.status !== 'ConcluÃ­do').length, 
+                                        val: tasks.filter(t => t.status !== 'Concluído').length, 
                                         color: 'text-amber-600', 
                                         bg: 'bg-amber-50 dark:bg-amber-900/30',
                                         icon: CheckCircle2, 
@@ -2307,7 +2307,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                     },
                                     { 
                                         label: t('modules.nexus.metrics.completion'), 
-                                        val: `${tasks.length > 0 ? Math.round((tasks.filter(t => t.status === 'ConcluÃ­do').length / tasks.length) * 100) : 0}%`, 
+                                        val: `${tasks.length > 0 ? Math.round((tasks.filter(t => t.status === 'Concluído').length / tasks.length) * 100) : 0}%`, 
                                         color: 'text-emerald-600', 
                                         bg: 'bg-emerald-50 dark:bg-emerald-900/30',
                                         icon: TrendingUp, 
@@ -2347,18 +2347,18 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                                 {/* Insights AI - Premium Widget */}
                                 <div className="lg:col-span-2 space-y-6">
-                                    <IntelligenceWidget credentials={credentials} moduleContext="EstratÃ©gico / Nexus" limit={3} />
+                                    <IntelligenceWidget credentials={credentials} moduleContext="Estratégico / Nexus" limit={3} />
                                     
                                     <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl p-8">
                                         <div className="flex items-center justify-between mb-8">
                                             <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tight flex items-center gap-3">
-                                                <PieChart className="text-indigo-600" size={20} /> DistribuiÃ§Ã£o de Ativos
+                                                <PieChart className="text-indigo-600" size={20} /> Distribuição de Ativos
                                             </h3>
                                             <Link href="/veritumpro/nexus?tab=ativos" className="text-xs font-bold text-indigo-600 hover:underline uppercase tracking-widest">Ver Todos</Link>
                                         </div>
                                         
                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                            {['ImÃ³vel', 'VeÃ­culo', 'Empresa / Quotas', 'Outros'].map((type, i) => {
+                                            {['Imóvel', 'Veículo', 'Empresa / Quotas', 'Outros'].map((type, i) => {
                                                 const count = assets.filter(a => a.asset_type === type).length;
                                                 return (
                                                     <div key={i} className="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-white/5 transition-all hover:bg-white dark:hover:bg-slate-800 shadow-sm hover:shadow-md">
@@ -2384,9 +2384,9 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         <div className="absolute -right-8 -bottom-8 w-40 h-40 bg-white/10 blur-3xl rounded-full group-hover:scale-150 transition-transform duration-1000" />
                                         <div className="relative z-10">
                                             <h3 className="text-lg font-black uppercase tracking-tight mb-2">Power User Nexus</h3>
-                                            <p className="text-indigo-100 text-sm font-medium mb-6 leading-relaxed opacity-80">VocÃª atingiu 84% de eficÃ¡cia na gestÃ£o de ativos e processos este mÃªs.</p>
+                                            <p className="text-indigo-100 text-sm font-medium mb-6 leading-relaxed opacity-80">VocÃª atingiu 84% de eficácia na gestão de ativos e processos este mês.</p>
                                             <div className="flex items-center gap-2">
-                                                <div className="px-4 py-2 bg-white/20 backdrop-blur-md rounded-xl text-xs font-black uppercase tracking-widest">NÃ­vel 12</div>
+                                                <div className="px-4 py-2 bg-white/20 backdrop-blur-md rounded-xl text-xs font-black uppercase tracking-widest">Nível 12</div>
                                                 <div className="px-4 py-2 bg-emerald-500 rounded-xl text-xs font-black uppercase tracking-widest">+5.2k XP</div>
                                             </div>
                                         </div>
@@ -2394,7 +2394,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
 
                                     <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl p-8 h-[calc(100%-180px)]">
                                         <h3 className="text-lg font-black text-slate-800 dark:text-white uppercase tracking-tight mb-6 flex items-center gap-3">
-                                            <List className="text-indigo-600" size={18} /> AÃ§Ãµes Recomendadas
+                                            <List className="text-indigo-600" size={18} /> Ações Recomendadas
                                         </h3>
                                         <div className="space-y-4">
                                             {[
@@ -2482,21 +2482,21 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         <button
                                             onClick={() => setProcessViewStyle('grid')}
                                             className={`p-2 rounded-lg transition-all ${processViewStyle === 'grid' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-                                            title="VisualizaÃ§Ã£o em Cards"
+                                            title="Visualização em Cards"
                                         >
                                             <LayoutGrid size={18} />
                                         </button>
                                         <button
                                             onClick={() => setProcessViewStyle('list')}
                                             className={`p-2 rounded-lg transition-all ${processViewStyle === 'list' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-                                            title="VisualizaÃ§Ã£o em Lista"
+                                            title="Visualização em Lista"
                                         >
                                             <List size={18} />
                                         </button>
                                         <button
                                             onClick={() => setProcessViewStyle('kanban')}
                                             className={`p-2 rounded-lg transition-all ${processViewStyle === 'kanban' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-                                            title="VisualizaÃ§Ã£o em Kanban"
+                                            title="Visualização em Kanban"
                                         >
                                             <Trello size={18} />
                                         </button>
@@ -2572,7 +2572,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                                 <button
                                                                                     onClick={(e) => { e.stopPropagation(); handleOpenHistory(law.id, 'lawsuit', law.case_title || 'Sem TÃ­tulo'); }}
                                                                                     className="p-1 text-slate-400 hover:text-indigo-600 bg-slate-50 dark:bg-slate-800 rounded cursor-pointer"
-                                                                                    title="AnÃ¡lise de HistÃ³rico"
+                                                                                    title="Análise de Histórico"
                                                                                 >
                                                                                     <History size={12} />
                                                                                 </button>
@@ -2600,7 +2600,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                             {persons.find(p => p.id === law.author_id)?.full_name?.charAt(0) || 'C'}
                                                                         </div>
                                                                         <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 truncate">
-                                                                            {persons.find(p => p.id === law.author_id)?.full_name || 'ContestaÃ§Ã£o'}
+                                                                            {persons.find(p => p.id === law.author_id)?.full_name || 'Contestação'}
                                                                         </span>
                                                                     </div>
 
@@ -2681,7 +2681,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                             {persons.find(p => p.id === law.author_id)?.full_name?.charAt(0) || 'C'}
                                                                         </div>
                                                                         <span className="font-bold text-slate-600 dark:text-slate-300 text-sm">
-                                                                            {persons.find(p => p.id === law.author_id)?.full_name || 'ContestaÃ§Ã£o'}
+                                                                            {persons.find(p => p.id === law.author_id)?.full_name || 'Contestação'}
                                                                         </span>
                                                                     </div>
                                                                 </td>
@@ -2711,7 +2711,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                                      lawsuit_id: law.id,
                                                                                      responsible_id: law.responsible_lawyer_id || '',
                                                                                      title: `${law.author_id ? (persons.find(p => p.id === law.author_id)?.full_name + ' - ') : ''}Andamento de Processo`,
-                                                                                     priority: 'MÃ©dia'
+                                                                                     priority: 'Média'
                                                                                  });
                                                                                  setTimeout(() => {
                                                                                      setIsTaskModalOpen(true);
@@ -2748,7 +2748,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                                 handleOpenHistory(law.id, 'lawsuit', law.case_title || 'Sem TÃ­tulo');
                                                                             }}
                                                                             className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
-                                                                            title="Ver HistÃ³rico de Auditoria"
+                                                                            title="Ver Histórico de Auditoria"
                                                                         >
                                                                             <History size={18} />
                                                                         </button>
@@ -2757,7 +2757,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                                 e.stopPropagation();
                                                                                 setEditingLawsuit(law);
                                                                                 setEditingLawsuitDoc({
-                                                                                    document_type: 'PetiÃ§Ã£o Inicial',
+                                                                                    document_type: 'Petição Inicial',
                                                                                     event_date: new Date().toISOString()
                                                                                 });
                                                                                 setIsLawsuitDocModalOpen(true);
@@ -2850,7 +2850,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                                 lawsuit_id: law.id,
                                                                                 responsible_id: law.responsible_lawyer_id || '',
                                                                                 title: `${law.author_id ? (persons.find(p => p.id === law.author_id)?.full_name + ' - ') : ''}Andamento de Processo`,
-                                                                                priority: 'MÃ©dia'
+                                                                                priority: 'Média'
                                                                             });
                                                                             setTimeout(() => {
                                                                                 setIsTaskModalOpen(true);
@@ -2886,7 +2886,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                             handleOpenHistory(law.id, 'lawsuit', law.case_title || 'Sem TÃ­tulo');
                                                                         }}
                                                                         className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
-                                                                        title="Ver HistÃ³rico de Auditoria"
+                                                                        title="Ver Histórico de Auditoria"
                                                                     >
                                                                         <History size={16} />
                                                                     </button>
@@ -2895,7 +2895,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                             e.stopPropagation();
                                                                             setEditingLawsuit(law);
                                                                             setEditingLawsuitDoc({
-                                                                                document_type: 'PetiÃ§Ã£o Inicial',
+                                                                                document_type: 'Petição Inicial',
                                                                                 event_date: new Date().toISOString()
                                                                             });
                                                                             setIsLawsuitDocModalOpen(true);
@@ -2985,14 +2985,14 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                             <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
                                 <div>
                                     <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest">{t('modules.nexus.metrics.deadlines')}</p>
-                                    <p className="text-2xl font-black text-rose-600">{filteredTasks.filter(t => t.status !== 'ConcluÃ­do' && (new Date(t.due_date).getTime() - new Date().getTime()) < 86400000).length}</p>
+                                    <p className="text-2xl font-black text-rose-600">{filteredTasks.filter(t => t.status !== 'Concluído' && (new Date(t.due_date).getTime() - new Date().getTime()) < 86400000).length}</p>
                                 </div>
                                 <div className="p-2 bg-rose-50 dark:bg-rose-900/20 text-rose-600 rounded-lg"><Clock size={20} /></div>
                             </div>
                             <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
                                 <div>
                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.metrics.pending')}</p>
-                                    <p className="text-2xl font-black text-slate-800 dark:text-white">{filteredTasks.filter(t => t.status !== 'ConcluÃ­do').length}</p>
+                                    <p className="text-2xl font-black text-slate-800 dark:text-white">{filteredTasks.filter(t => t.status !== 'Concluído').length}</p>
                                 </div>
                                 <div className="p-2 bg-slate-50 dark:bg-slate-800 text-slate-400 rounded-lg"><CheckCircle2 size={20} /></div>
                             </div>
@@ -3000,7 +3000,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                 <div>
                                     <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">{t('modules.nexus.metrics.completion')}</p>
                                     <p className="text-2xl font-black text-emerald-600">
-                                        {filteredTasks.length > 0 ? Math.round((filteredTasks.filter(t => t.status === 'ConcluÃ­do').length / filteredTasks.length) * 100) : 0}%
+                                        {filteredTasks.length > 0 ? Math.round((filteredTasks.filter(t => t.status === 'Concluído').length / filteredTasks.length) * 100) : 0}%
                                     </p>
                                 </div>
                                 <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-lg"><TrendingUp size={20} /></div>
@@ -3021,7 +3021,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         <div className="flex items-center justify-between px-2 mb-2">
                                             <h3 className="font-black text-xs text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
                                                 <div className={`w-2 h-2 rounded-full ${column === 'Atrasado' ? 'bg-rose-500' :
-                                                    column === 'ConcluÃ­do' ? 'bg-emerald-500' : 'bg-slate-400'
+                                                    column === 'Concluído' ? 'bg-emerald-500' : 'bg-slate-400'
                                                     }`} />
                                                 {getColumnTranslation(column)}
                                                 <span className="ml-2 px-2 py-0.5 bg-white dark:bg-slate-800 rounded-lg text-[10px] border border-slate-200 dark:border-slate-800 font-bold">
@@ -3051,7 +3051,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                     >
                                                         <div className="flex justify-between items-start mb-3">
                                                             <span className={`text-[9px] font-black uppercase px-2 py-1 rounded-md border ${getSeverityColor(task.due_date, task.status)}`}>
-                                                                {getPriorityTranslation(task.priority || 'MÃ©dia')}
+                                                                {getPriorityTranslation(task.priority || 'Média')}
                                                             </span>
                                                             <div className="flex gap-1.5 transition-all">
                                                                 <button
@@ -3125,7 +3125,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                             </td>
                                                             <td className="px-6 py-4">
                                                                 <span className={`text-[10px] font-black uppercase text-slate-500`}>
-                                                                    {getPriorityTranslation(task.priority || 'MÃ©dia')}
+                                                                    {getPriorityTranslation(task.priority || 'Média')}
                                                                 </span>
                                                             </td>
                                                             <td className="px-6 py-4 text-xs font-bold text-slate-500">
@@ -3174,7 +3174,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                             <div className="flex items-center gap-6">
                                 <div>
                                     <h1 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">{t('modules.nexus.tabs.calendar')}</h1>
-                                    <p className="text-slate-500 font-bold">VisualizaÃ§Ã£o cronolÃ³gica de compromissos</p>
+                                    <p className="text-slate-500 font-bold">Visualização cronolÃ³gica de compromissos</p>
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <div className="flex w-72 bg-slate-100 dark:bg-slate-900 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-inner">
@@ -3192,7 +3192,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         </button>
                                     </div>
                                     <button
-                                        onClick={() => { setEditingEvent({ event_type: 'AudiÃªncia' }); setIsEventModalOpen(true); }}
+                                        onClick={() => { setEditingEvent({ event_type: 'Audiência' }); setIsEventModalOpen(true); }}
                                         className="bg-slate-800 text-white px-6 py-2 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-slate-900 transition-all shadow-lg active:scale-95"
                                     >
                                         <Plus size={14} /> {t('modules.nexus.modals.event.title')}
@@ -3385,27 +3385,27 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         <button
                                             onClick={() => setAssetViewStyle('grid')}
                                             className={`p-2 rounded-lg transition-all ${assetViewStyle === 'grid' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-                                            title="VisualizaÃ§Ã£o em Cards"
+                                            title="Visualização em Cards"
                                         >
                                             <LayoutGrid size={18} />
                                         </button>
                                         <button
                                             onClick={() => setAssetViewStyle('list')}
                                             className={`p-2 rounded-lg transition-all ${assetViewStyle === 'list' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-                                            title="VisualizaÃ§Ã£o em Lista"
+                                            title="Visualização em Lista"
                                         >
                                             <List size={18} />
                                         </button>
                                         <button
                                             onClick={() => setAssetViewStyle('kanban')}
                                             className={`p-2 rounded-lg transition-all ${assetViewStyle === 'kanban' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-                                            title="VisualizaÃ§Ã£o em Kanban"
+                                            title="Visualização em Kanban"
                                         >
                                             <Trello size={18} />
                                         </button>
                                     </div>
                                     <button
-                                        onClick={() => { setEditingAsset({ status: 'Ativo', asset_type: 'ImÃ³vel' }); setIsAssetModalOpen(true); }}
+                                        onClick={() => { setEditingAsset({ status: 'Ativo', asset_type: 'Imóvel' }); setIsAssetModalOpen(true); }}
                                         className="bg-slate-800 hover:bg-indigo-600 dark:bg-white dark:hover:bg-indigo-500 dark:text-slate-900 text-white font-black uppercase tracking-widest text-[10px] px-6 py-3 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-xl hover:shadow-indigo-500/30 hover:-translate-y-1"
                                     >
                                         <Plus size={14} /> Novo Ativo
@@ -3505,7 +3505,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                             <button
                                                                                 onClick={(e) => { e.stopPropagation(); handleOpenHistory(asset.id, 'asset', asset.title || 'Sem TÃ­tulo'); }}
                                                                                 className="p-1 text-slate-400 hover:text-indigo-600 bg-slate-50 dark:bg-slate-800 rounded cursor-pointer"
-                                                                                title="AnÃ¡lise de HistÃ³rico"
+                                                                                title="Análise de Histórico"
                                                                             >
                                                                                 <History size={12} />
                                                                             </button>
@@ -3543,7 +3543,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                         <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Valor</th>
                                                         <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">VÃ­nculo</th>
                                                         <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
-                                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">AÃ§Ãµes</th>
+                                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Ações</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-slate-50 dark:divide-slate-800 overflow-y-auto">
@@ -3589,7 +3589,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                         <button
                                                                             onClick={(e) => { e.stopPropagation(); handleOpenHistory(asset.id, 'asset', asset.title || 'Sem TÃ­tulo'); }}
                                                                             className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
-                                                                            title="AnÃ¡lise de HistÃ³rico"
+                                                                            title="Análise de Histórico"
                                                                         >
                                                                             <History size={18} />
                                                                         </button>
@@ -3689,7 +3689,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                         <button
                                                             onClick={(e) => { e.stopPropagation(); handleOpenHistory(asset.id, 'asset', asset.title || 'Sem TÃ­tulo'); }}
                                                             className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
-                                                            title="AnÃ¡lise de HistÃ³rico"
+                                                            title="Análise de Histórico"
                                                         >
                                                             <History size={18} />
                                                         </button>
@@ -3764,21 +3764,21 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         <button
                                             onClick={() => setCorporateViewStyle('grid')}
                                             className={`p-2 rounded-lg transition-all ${corporateViewStyle === 'grid' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-                                            title="VisualizaÃ§Ã£o em Cards"
+                                            title="Visualização em Cards"
                                         >
                                             <LayoutGrid size={18} />
                                         </button>
                                         <button
                                             onClick={() => setCorporateViewStyle('list')}
                                             className={`p-2 rounded-lg transition-all ${corporateViewStyle === 'list' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-                                            title="VisualizaÃ§Ã£o em Lista"
+                                            title="Visualização em Lista"
                                         >
                                             <List size={18} />
                                         </button>
                                         <button
                                             onClick={() => setCorporateViewStyle('kanban')}
                                             className={`p-2 rounded-lg transition-all ${corporateViewStyle === 'kanban' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-                                            title="VisualizaÃ§Ã£o em Kanban"
+                                            title="Visualização em Kanban"
                                         >
                                             <Trello size={18} />
                                         </button>
@@ -3863,7 +3863,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                                 <button
                                                                                     onClick={(e) => { e.stopPropagation(); handleOpenHistory(entity.id, 'corporate', entity.legal_name || 'Sem TÃ­tulo'); }}
                                                                                     className="p-1 text-slate-400 hover:text-indigo-600 bg-slate-50 dark:bg-slate-800 rounded cursor-pointer"
-                                                                                    title="AnÃ¡lise de HistÃ³rico"
+                                                                                    title="Análise de Histórico"
                                                                                 >
                                                                                     <History size={12} />
                                                                                 </button>
@@ -3915,7 +3915,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                         <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Tipo</th>
                                                         <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Capital</th>
                                                         <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
-                                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">AÃ§Ãµes</th>
+                                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Ações</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
@@ -3953,7 +3953,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                     <button
                                                                         onClick={(e) => { e.stopPropagation(); handleOpenHistory(entity.id, 'corporate', entity.legal_name || 'Sem TÃ­tulo'); }}
                                                                         className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
-                                                                        title="AnÃ¡lise de HistÃ³rico"
+                                                                        title="Análise de Histórico"
                                                                     >
                                                                         <History size={18} />
                                                                     </button>
@@ -4066,7 +4066,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                         <button 
                                                             onClick={(e) => { e.stopPropagation(); handleOpenHistory(entity.id, 'corporate', entity.legal_name || 'Sem TÃ­tulo'); }}
                                                             className="p-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-2xl hover:bg-indigo-600 hover:text-white transition-all active:scale-95"
-                                                            title="AnÃ¡lise de HistÃ³rico"
+                                                            title="Análise de Histórico"
                                                         >
                                                             <History size={18} />
                                                         </button>
@@ -4326,7 +4326,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         onClick={() => setActiveLawsuitTab('timeline')}
                                         className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-[9px] font-black uppercase tracking-[0.1em] transition-all whitespace-nowrap ${activeLawsuitTab === 'timeline' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-xl shadow-indigo-600/10' : 'text-slate-500 hover:text-slate-700'} ${!editingLawsuit?.id ? 'opacity-50' : ''}`}
                                     >
-                                        <History size={14} /> HistÃ³rico {!editingLawsuit?.id && 'ðŸ”’'}
+                                        <History size={14} /> Histórico {!editingLawsuit?.id && 'ðŸ”’'}
                                     </button>
                                 </div>
                             </div>
@@ -4603,7 +4603,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                             <div className="space-y-2 animate-in fade-in slide-in-from-right-4 duration-500">
                                                 <div className="flex items-center justify-between mb-8">
                                                     <div>
-                                                        <h4 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">HistÃ³rico do Processo</h4>
+                                                        <h4 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Histórico do Processo</h4>
                                                         <p className="text-xs text-slate-500 font-bold">Trilha de auditoria e alteraÃ§Ãµes de status</p>
                                                     </div>
                                                     <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 rounded-2xl">
@@ -4684,7 +4684,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                     </div>
                                                     <button
                                                         type="button"
-                                                        onClick={() => { setEditingLawsuitDoc({ document_type: 'PetiÃ§Ã£o Inicial', event_date: new Date().toISOString() }); setIsLawsuitDocModalOpen(true); }}
+                                                        onClick={() => { setEditingLawsuitDoc({ document_type: 'Petição Inicial', event_date: new Date().toISOString() }); setIsLawsuitDocModalOpen(true); }}
                                                         className="p-4 bg-indigo-600 text-white rounded-2xl flex items-center gap-2 hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20"
                                                     >
                                                         <Plus size={20} /> Novo Documento
@@ -4932,7 +4932,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                 <div>
                                                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 px-1">{t('modules.nexus.modals.task.labelPriority')}</label>
                                                     <div className="grid grid-cols-2 gap-3">
-                                                        {['Baixa', 'MÃ©dia', 'Alta', 'Urgente'].map(p => (
+                                                        {['Baixa', 'Média', 'Alta', 'Urgente'].map(p => (
                                                             <button
                                                                 key={p}
                                                                 type="button"
@@ -5034,7 +5034,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                 onChange={e => setEditingEvent({ ...editingEvent, event_type: e.target.value as any })}
                                                 className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white font-bold"
                                             >
-                                                {['AudiÃªncia', 'ReuniÃ£o', 'Despacho', 'DiligÃªncia', 'Outro'].map(t => <option key={t} value={t}>{t}</option>)}
+                                                {['Audiência', 'ReuniÃ£o', 'Despacho', 'DiligÃªncia', 'Outro'].map(t => <option key={t} value={t}>{t}</option>)}
                                             </select>
                                         </div>
 
