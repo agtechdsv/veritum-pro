@@ -938,7 +938,7 @@ export async function listPersonParticipations(personId: string, targetUserId?: 
             .from('corporate_shareholders')
             .select(`
                 *,
-                entity:corporate_entities(*)
+                entity:corporate_entities!entity_id(*)
             `)
             .eq('person_shareholder_id', personId);
             
