@@ -41,6 +41,9 @@
     "./supabase",
     "scripts",
     "tmp",
-    "run_sql.ts"
+    "run_sql.ts",
+    "diagnose_storage.ts",
+    "tmp-plans.ts",
+    "tmp-trial.ts"
   ]
 }

@@ -2291,6 +2291,13 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                         <div className="text-[8px] font-mono font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-tight truncate">{law.cnj_number || 'Sem CNJ'}</div>
                                                                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                                             <button
+                                                                                onClick={(e) => { e.stopPropagation(); handleOpenHistory(law.id, 'lawsuit', law.case_title || 'Sem Título'); }}
+                                                                                className="p-1 text-slate-400 hover:text-indigo-600 bg-slate-50 dark:bg-slate-800 rounded cursor-pointer"
+                                                                                title="Análise de Histórico"
+                                                                            >
+                                                                                <History size={12} />
+                                                                            </button>
+                                                                            <button
                                                                                 onClick={(e) => { e.stopPropagation(); setEditingLawsuit(law); setIsLawsuitModalOpen(true); setActiveLawsuitTab('basic'); }}
                                                                                 className="p-1 text-slate-400 hover:text-indigo-600 bg-slate-50 dark:bg-slate-800 rounded cursor-pointer"
                                                                                 title={t('common.edit')}
