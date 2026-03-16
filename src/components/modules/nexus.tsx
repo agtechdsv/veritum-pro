@@ -349,6 +349,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     const [isDocumentModalOpen, setIsDocumentModalOpen] = useState(false);
     const [editingDocument, setEditingDocument] = useState<Partial<CorporateDocument> | null>(null);
     const [isNexoVisualOpen, setIsNexoVisualOpen] = useState(false);
+    const [isNexoVisualLoading, setIsNexoVisualLoading] = useState(false);
     const [nexoData, setNexoData] = useState<{ origin_type: 'lawsuit' | 'corporate' | 'asset' | 'task' | 'document' | 'person', id: string, title: string, data: any } | null>(null);
     const [isLawsuitDocModalOpen, setIsLawsuitDocModalOpen] = useState(false);
     const [editingLawsuitDoc, setEditingLawsuitDoc] = useState<Partial<LawsuitDocument> | null>(null);
@@ -770,6 +771,42 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             setCorporateTimeline([]);
         }
     }, [editingEntity?.id, selectedUserId, activeEntityTab]);
+
+    // 🧠 NEXO VISUAL: Auto-fetch detailed sub-data if not present
+    useEffect(() => {
+        if (isNexoVisualOpen && nexoData?.id) {
+            const { origin_type, id } = nexoData;
+            const targetUserId = selectedUserId;
+
+            setIsNexoVisualLoading(true);
+
+            const performFetch = async () => {
+                try {
+                    if (origin_type === 'corporate') {
+                        const [sResult, dResult] = await Promise.all([
+                            listShareholders(id, targetUserId),
+                            listCorporateDocuments(id, targetUserId)
+                        ]);
+                        if (sResult.data) setShareholders(sResult.data);
+                        if (dResult.data) setCorporateDocuments(dResult.data);
+                    } else if (origin_type === 'lawsuit') {
+                        const result = await listLawsuitDocuments(id, targetUserId);
+                        if (result.data) setLawsuitDocuments(result.data);
+                    } else if (origin_type === 'asset') {
+                        const result = await listAssetDocuments(id, targetUserId);
+                        if (result.data) setAssetDocuments(result.data);
+                    }
+                } catch (error) {
+                    console.error('Error fetching Nexo Visual sub-data:', error);
+                } finally {
+                    // Mantemos o loading por um tempinho para a animação inicial do mapa respirar
+                    setTimeout(() => setIsNexoVisualLoading(false), 1500);
+                }
+            };
+
+            performFetch();
+        }
+    }, [isNexoVisualOpen, nexoData?.id, selectedUserId]);
 
     const handleCreateLawsuitFromCRM = (personId: string) => {
         // Switch to lawsuits tab
@@ -6542,6 +6579,24 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                 </p>
                             </div>
                             <div className="flex items-center gap-6">
+                                <AnimatePresence>
+                                    {isNexoVisualLoading && (
+                                        <motion.div 
+                                            initial={{ opacity: 0, x: 20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: 20 }}
+                                            className="flex items-center gap-3 px-4 py-2 bg-indigo-500/10 rounded-2xl border border-indigo-500/20 mr-2"
+                                        >
+                                            <div className="relative">
+                                                <div className="w-2 h-2 rounded-full bg-indigo-400 animate-ping absolute inset-0" />
+                                                <div className="w-2 h-2 rounded-full bg-indigo-400 relative z-10" />
+                                            </div>
+                                            <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] animate-pulse">
+                                                Elaborando Mapa Mental...
+                                            </span>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                                 <div className="text-right hidden md:block">
                                     <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Sujeito Central</p>
                                     <p className="text-sm font-bold text-white uppercase">{nexoData.title}</p>
