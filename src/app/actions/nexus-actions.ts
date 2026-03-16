@@ -928,3 +928,24 @@ export async function listAllGlobalDocuments(targetUserId?: string) {
         throw error;
     }
 }
+
+export async function listPersonParticipations(personId: string, targetUserId?: string) {
+    try {
+        const { credentials, preferences } = await resolveSecurityContext(targetUserId);
+        const supabase = DatabaseService.getClient(credentials);
+        
+        const { data, error } = await supabase
+            .from('corporate_shareholders')
+            .select(`
+                *,
+                entity:corporate_entities(*)
+            `)
+            .eq('person_shareholder_id', personId);
+            
+        if (error) throw error;
+        return { data };
+    } catch (error: any) {
+        console.error('Server Action Error (listPersonParticipations):', error);
+        throw error;
+    }
+}

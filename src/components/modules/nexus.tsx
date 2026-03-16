@@ -13,7 +13,7 @@ import { toast } from '@/components/ui/toast';
 import { createMasterClient } from '@/lib/supabase/master';
 import Link from 'next/link';
 
-// 💎 Premium File Upload Component
+// ðŸ’Ž Premium File Upload Component
 const PremiumFileUpload = React.forwardRef<{ upload: () => Promise<string | null> }, {
     onUploadComplete?: (url: string) => void;
     onFileSelect?: (file: File | null) => void;
@@ -273,13 +273,13 @@ const PremiumCombobox: React.FC<{
     );
 };
 
-// 🔒 Blocked Tab Content Overlay (For the "Chicken and Egg" problem)
+// ðŸ”’ Blocked Tab Content Overlay (For the "Chicken and Egg" problem)
 const BlockedTabOverlay: React.FC<{ message: string }> = ({ message }) => (
     <div className="py-24 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[2.5rem] bg-slate-50/50 dark:bg-slate-900/50 animate-in fade-in duration-500">
         <div className="w-20 h-20 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-500 flex items-center justify-center mb-8 shadow-inner border border-amber-100 dark:border-amber-800">
             <LockIcon size={32} />
         </div>
-        <h4 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter mb-3">CONTEÚDO BLOQUEADO</h4>
+        <h4 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter mb-3">CONTEÃšDO BLOQUEADO</h4>
         <p className="text-slate-500 font-bold text-center max-w-[320px] mb-8 leading-relaxed">{message}</p>
         
         <div className="flex items-center gap-3 px-6 py-3 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm animate-pulse">
@@ -379,7 +379,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             setHistoryData(prev => prev ? { ...prev, timeline: data || [], isLoading: false } : null);
         } catch (error) {
             console.error('Error fetching history:', error);
-            toast.error('Erro ao carregar histórico');
+            toast.error('Erro ao carregar histÃ³rico');
             setHistoryData(prev => prev ? { ...prev, isLoading: false } : null);
         }
     };
@@ -395,7 +395,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
 
     const LAWSUIT_STATUSES = ['Ativo', 'Suspenso', 'Arquivado', 'Encerrado'];
     const ASSET_STATUSES = ['Ativo', 'Bloqueado', 'Vendido', 'Em Garantia', 'Alienado'];
-    const ENTITY_STATUSES_LIST: EntityStatus[] = ['Ativa', 'Baixada', 'Inativa', 'Em Liquidação'];
+    const ENTITY_STATUS_LIST: EntityStatus[] = ['Ativa', 'Baixada', 'Inativa', 'Em Liquidação'];
 
     const handleQuickStatusUpdate = async (id: string, type: 'lawsuit' | 'asset' | 'corporate', newStatus: string) => {
         try {
@@ -431,7 +431,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             if (currentStatus === 'Ativo' || currentStatus === 'Ativa') return 'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800/50';
             if (currentStatus === 'Encerrado' || currentStatus === 'Vendido' || currentStatus === 'Baixada' || currentStatus === 'Inativa' || currentStatus === 'Bloqueado') 
                 return 'bg-rose-50 text-rose-600 border-rose-100 dark:bg-rose-900/20 dark:border-rose-800/50';
-            if (currentStatus === 'Suspenso' || currentStatus === 'Em Manutenção' || currentStatus === 'Em Liquidação' || currentStatus === 'Em Garantia') 
+            if (currentStatus === 'Suspenso' || currentStatus === 'Em ManutenÃ§Ã£o' || currentStatus === 'Em LiquidaÃ§Ã£o' || currentStatus === 'Em Garantia') 
                 return 'bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-900/20 dark:border-amber-800/50';
             return 'bg-slate-50 text-slate-600 border-slate-100 dark:bg-slate-800/50 dark:border-slate-700/50';
         };
@@ -590,13 +590,13 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 corpResult?.error === 'TABLE_NOT_FOUND';
 
             if (hasTableError) {
-                toast.error(t('modules.nexus.errors.notMigrated') || 'O banco de dados do cliente selecionado ainda não foi migrado (tabelas Nexus/Team faltantes).');
+                toast.error(t('modules.nexus.errors.notMigrated') || 'O banco de dados do cliente selecionado ainda nÃ£o foi migrado (tabelas Nexus/Team faltantes).');
             }
 
         } catch (err: any) {
             console.error('Error loading Nexus data:', err);
             if (err.message?.includes('relation') && err.message?.includes('does not exist')) {
-                toast.error(t('modules.nexus.errors.notInitialized') || 'O banco de dados deste cliente ainda não foi inicializado (tabelas Nexus/Team faltantes).');
+                toast.error(t('modules.nexus.errors.notInitialized') || 'O banco de dados deste cliente ainda nÃ£o foi inicializado (tabelas Nexus/Team faltantes).');
             } else {
                 toast.error(t('modules.nexus.errors.loadError') || 'Erro ao carregar dados do Nexus.');
             }
@@ -664,8 +664,8 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
 
                 // Common defaults if none exist
                 const defaults = editingLawsuit.sphere === 'Trabalhista'
-                    ? ['1ª VARA DO TRABALHO', '2ª VARA DO TRABALHO', '3ª VARA DO TRABALHO', '4ª VARA DO TRABALHO', '5ª VARA DO TRABALHO']
-                    : ['1ª VARA CÍVEL', '2ª VARA CÍVEL', '3ª VARA CÍVEL', '1ª VARA FEDERAL', '2ª VARA FEDERAL'];
+                    ? ['1Âª VARA DO TRABALHO', '2Âª VARA DO TRABALHO', '3Âª VARA DO TRABALHO', '4Âª VARA DO TRABALHO', '5Âª VARA DO TRABALHO']
+                    : ['1Âª VARA CÃVEL', '2Âª VARA CÃVEL', '3Âª VARA CÃVEL', '1Âª VARA FEDERAL', '2Âª VARA FEDERAL'];
 
                 setChambers(Array.from(new Set([...uniqueChambers, ...defaults])).sort());
                 setIsLoadingChambers(false);
@@ -689,8 +689,8 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             };
             fetchSubs();
         } else if (!editingEntity) {
-            // Só limpamos se o modal estiver fechado (editingEntity === null)
-            // Isso preserva os sócios "virtuais" injetados pelo CRM
+            // SÃ³ limpamos se o modal estiver fechado (editingEntity === null)
+            // Isso preserva os sÃ³cios "virtuais" injetados pelo CRM
             setShareholders([]);
             setCorporateDocuments([]);
         }
@@ -772,7 +772,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         }
     }, [editingEntity?.id, selectedUserId, activeEntityTab]);
 
-    // 🧠 NEXO VISUAL: Auto-fetch detailed sub-data if not present
+    // ðŸ§  NEXO VISUAL: Auto-fetch detailed sub-data if not present
     useEffect(() => {
         if (isNexoVisualOpen && nexoData?.id) {
             const { origin_type, id } = nexoData;
@@ -795,12 +795,23 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                     } else if (origin_type === 'asset') {
                         const result = await listAssetDocuments(id, targetUserId);
                         if (result.data) setAssetDocuments(result.data);
+                    } else if (origin_type === 'person') {
+                        // NavegaÃ§Ã£o profunda: buscar participaÃ§Ãµes societÃ¡rias da pessoa
+                        const { listPersonParticipations } = await import('@/app/actions/nexus-actions');
+                        const result = await listPersonParticipations(id, targetUserId);
+                        if (result.data) {
+                            // Mapeamos para o formato de Shareholder esperado para renderizar no mapa
+                            setShareholders(result.data.map((s: any) => ({
+                                ...s,
+                                shareholder_name: s.entity?.legal_name || 'Holding Desconhecida'
+                            })));
+                        }
                     }
                 } catch (error) {
                     console.error('Error fetching Nexo Visual sub-data:', error);
                 } finally {
-                    // Mantemos o loading por um tempinho para a animação inicial do mapa respirar
-                    setTimeout(() => setIsNexoVisualLoading(false), 1500);
+                    // Mantemos o loading por um tempinho para a animaÃ§Ã£o inicial do mapa respirar
+                    setTimeout(() => setIsNexoVisualLoading(false), 1200);
                 }
             };
 
@@ -818,7 +829,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         // FALLBACK: If not found, try to find the first member who has a lawyer-related role
         const firstLawyer = team.find(m =>
             m.role?.toLowerCase().includes('advogado') ||
-            m.role?.toLowerCase().includes('sócio') ||
+            m.role?.toLowerCase().includes('sÃ³cio') ||
             m.role?.toLowerCase().includes('socio') ||
             m.specialty // If they have a specialty, they are likely a lawyer
         );
@@ -826,7 +837,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         setEditingLawsuit({
             author_id: personId,
             status: 'Ativo',
-            sphere: 'Cível', // Default
+            sphere: 'CÃ­vel', // Default
             responsible_lawyer_id: currentMember?.id || firstLawyer?.id || team[0]?.id || ''
         });
         // Open modal with a small delay to allow tab transition animation to feel smooth
@@ -850,7 +861,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             entity_type: isCNPJ ? 'LTDA' : 'MEI'
         });
 
-        // Se for CPF, guarda a pessoa na Ref e já popula a UI para visualização imediata
+        // Se for CPF, guarda a pessoa na Ref e jÃ¡ popula a UI para visualizaÃ§Ã£o imediata
         if (!isCNPJ) {
             personForQSARef.current = person;
             setShareholders([{
@@ -861,11 +872,11 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 shares_count: 100,
                 ownership_percentage: 100,
                 is_admin: true,
-                position: 'Sócio-Administrador',
+                position: 'SÃ³cio-Administrador',
                 shareholder_name: person.full_name,
                 shareholder_type: 'Person'
             } as Shareholder]);
-            console.log('[NEXUS] Sócio preparado e enviado para a UI:', person.full_name);
+            console.log('[NEXUS] SÃ³cio preparado e enviado para a UI:', person.full_name);
         } else {
             personForQSARef.current = null;
             setShareholders([]);
@@ -908,7 +919,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         setNexoData({
             origin_type: type,
             id: data.id,
-            title: title || 'Sem Título',
+            title: title || 'Sem TÃ­tulo',
             data: data
         });
         setIsNexoVisualOpen(true);
@@ -924,7 +935,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 setIsLawsuitModalOpen(true);
                 setActiveLawsuitTab('docs');
             } else {
-                toast.error('Processo não encontrado nos dados carregados.');
+                toast.error('Processo nÃ£o encontrado nos dados carregados.');
             }
         } else if (origin_type === 'asset') {
             const asset = assets.find(a => a.id === origin_id);
@@ -933,14 +944,14 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 setIsAssetModalOpen(true);
                 setActiveAssetTab('docs');
             } else {
-                toast.error('Ativo não encontrado nos dados carregados.');
+                toast.error('Ativo nÃ£o encontrado nos dados carregados.');
             }
         } else if (origin_type === 'corporate') {
             const entity = corporateEntities.find(e => e.id === origin_id);
             if (entity) {
                 handleEditEntity(entity, 'docs');
             } else {
-                toast.error('Entidade não encontrada nos dados carregados.');
+                toast.error('Entidade nÃ£o encontrada nos dados carregados.');
             }
         }
     };
@@ -951,7 +962,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         
         triggerConfirm(
             confirmTitle,
-            `Deseja realmente remover o documento "${title}"? Esta ação não pode ser desfeita.`,
+            `Deseja realmente remover o documento "${title}"? Esta aÃ§Ã£o nÃ£o pode ser desfeita.`,
             async () => {
                 try {
                     if (file_url) {
@@ -990,7 +1001,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         // CNJ Strict Validation
         const cnjRegex = /^\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}$/;
         if (editingLawsuit?.cnj_number && !cnjRegex.test(editingLawsuit.cnj_number)) {
-            toast.error(t('modules.nexus.modals.lawsuit.validation.cnj') || 'Formato de CNJ inválido. Use 0000000-00.0000.0.00.0000');
+            toast.error(t('modules.nexus.modals.lawsuit.validation.cnj') || 'Formato de CNJ invÃ¡lido. Use 0000000-00.0000.0.00.0000');
             return;
         }
 
@@ -1176,10 +1187,10 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         try {
             const savedEntity = await saveCorporateEntity(editingEntity!, targetUserId);
 
-            // Vínculo automático de sócio se for criação via CRM
+            // VÃ­nculo automÃ¡tico de sÃ³cio se for criaÃ§Ã£o via CRM
             if (isNew && personToLink) {
                 try {
-                    console.log('[NEXUS-DEBUG] Criando vínculo societário para:', personToLink.full_name);
+                    console.log('[NEXUS-DEBUG] Criando vÃ­nculo societÃ¡rio para:', personToLink.full_name);
                     await saveShareholder({
                         entity_id: savedEntity.id,
                         person_shareholder_id: personToLink.id,
@@ -1187,13 +1198,13 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                         share_type: 'Quotas',
                         shares_count: 100,
                         is_admin: true,
-                        position: 'Sócio-Administrador'
+                        position: 'SÃ³cio-Administrador'
                     } as any, targetUserId);
                     
-                    toast.success(`${personToLink.full_name} vinculado como sócio 100%`);
+                    toast.success(`${personToLink.full_name} vinculado como sÃ³cio 100%`);
                 } catch (shErr: any) {
-                    console.error('[NEXUS-DEBUG] Erro ao vincular sócio:', shErr);
-                    toast.error(`Atenção: A empresa foi salva, mas o QSA falhou: ${shErr.message}`);
+                    console.error('[NEXUS-DEBUG] Erro ao vincular sÃ³cio:', shErr);
+                    toast.error(`AtenÃ§Ã£o: A empresa foi salva, mas o QSA falhou: ${shErr.message}`);
                 } finally {
                     personForQSARef.current = null;
                 }
@@ -1249,7 +1260,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 setCorporateEntities(prev => [savedEntity, ...prev]);
             }
             
-            // Refresh geral para garantir que o QSA apareça na próxima abertura
+            // Refresh geral para garantir que o QSA apareÃ§a na prÃ³xima abertura
             if (isNew && personToLink) {
                 fetchAll();
             }
@@ -1274,7 +1285,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
 
             setIsShareholderModalOpen(false);
             setEditingShareholder(null);
-            toast.success('Sócio salvo com sucesso!');
+            toast.success('SÃ³cio salvo com sucesso!');
             
             if (editingShareholder?.id) {
                 setShareholders(prev => prev.map(s => s.id === savedShareholder.id ? savedShareholder : s));
@@ -1283,22 +1294,22 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             }
         } catch (err) {
             console.error('Error saving shareholder:', err);
-            toast.error('Erro ao salvar sócio');
+            toast.error('Erro ao salvar sÃ³cio');
         }
     };
 
     const handleDeleteShareholder = (id: string) => {
         triggerConfirm(
-            'Excluir Sócio',
-            'Tem certeza que deseja excluir este sócio? Esta ação removerá o vínculo com a entidade.',
+            'Excluir SÃ³cio',
+            'Tem certeza que deseja excluir este sÃ³cio? Esta aÃ§Ã£o removerÃ¡ o vÃ­nculo com a entidade.',
             async () => {
                 try {
                     await deleteShareholder(id, selectedUserId);
                     setShareholders(prev => prev.filter(s => s.id !== id));
-                    toast.success('Sócio removido');
+                    toast.success('SÃ³cio removido');
                 } catch (err) {
                     console.error('Error deleting shareholder:', err);
-                    toast.error('Erro ao remover sócio');
+                    toast.error('Erro ao remover sÃ³cio');
                 }
             }
         );
@@ -1326,7 +1337,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 setIsDocumentModalOpen(false);
                 setEditingDocument(null);
                 setCorporateDocFile(null);
-                toast.success('Documento adicionado à fila. Ele será salvo após você clicar em "Criar Entidade".');
+                toast.success('Documento adicionado Ã  fila. Ele serÃ¡ salvo apÃ³s vocÃª clicar em "Criar Entidade".');
                 return;
             }
 
@@ -1388,7 +1399,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 setIsLawsuitDocModalOpen(false);
                 setEditingLawsuitDoc(null);
                 setLawsuitDocFile(null);
-                toast.success('Documento adicionado à fila. Ele será salvo após você clicar em "Criar Processo".');
+                toast.success('Documento adicionado Ã  fila. Ele serÃ¡ salvo apÃ³s vocÃª clicar em "Criar Processo".');
                 return;
             }
 
@@ -1451,8 +1462,8 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         if (!doc) return;
 
         triggerConfirm(
-            'Excluir Documento Societário',
-            'Deseja realmente remover este documento? Esta ação não pode ser desfeita.',
+            'Excluir Documento SocietÃ¡rio',
+            'Deseja realmente remover este documento? Esta aÃ§Ã£o nÃ£o pode ser desfeita.',
             async () => {
                 try {
                     // Try to delete from storage if URL exists
@@ -1481,7 +1492,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
 
         triggerConfirm(
             'Excluir Documento',
-            'Deseja realmente remover este documento? Esta ação não pode ser desfeita.',
+            'Deseja realmente remover este documento? Esta aÃ§Ã£o nÃ£o pode ser desfeita.',
             async () => {
                 try {
                     // Try to delete from storage if URL exists
@@ -1528,7 +1539,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 setIsAssetDocModalOpen(false);
                 setEditingAssetDoc(null);
                 setAssetDocFile(null);
-                toast.success('Documento adicionado à fila. Ele será salvo após você clicar em "Criar Ativo".');
+                toast.success('Documento adicionado Ã  fila. Ele serÃ¡ salvo apÃ³s vocÃª clicar em "Criar Ativo".');
                 return;
             }
 
@@ -1587,7 +1598,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
 
                     await deleteAssetDocument(id, selectedUserId);
                     setAssetDocuments(prev => prev.filter(d => d.id !== id));
-                    toast.success('Documento do ativo excluído');
+                    toast.success('Documento do ativo excluÃ­do');
                 } catch (err) {
                     console.error('Error deleting asset document:', err);
                     toast.error('Erro ao excluir documento');
@@ -1599,12 +1610,12 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     const handleSoftDeleteEntity = (id: string) => {
         triggerConfirm(
             'Excluir Entidade',
-            'Deseja excluir esta entidade corporativa? Isso removerá o vínculo com QSA e Documentos.',
+            'Deseja excluir esta entidade corporativa? Isso removerÃ¡ o vÃ­nculo com QSA e Documentos.',
             async () => {
                 try {
                     const targetUserId = selectedUserId;
                     await deleteCorporateEntity(id, targetUserId);
-                    toast.success('Entidade excluída!');
+                    toast.success('Entidade excluÃ­da!');
                     setCorporateEntities(prev => prev.filter(c => c.id !== id));
                 } catch (err) {
                     console.error('Error deleting entity:', err);
@@ -1737,7 +1748,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 try {
                     const targetUserId = selectedUserId;
                     await deleteLawsuit(id, targetUserId);
-                    toast.success(t('modules.nexus.kanban.deleteSuccess') || 'Processo excluído corretamente');
+                    toast.success(t('modules.nexus.kanban.deleteSuccess') || 'Processo excluÃ­do corretamente');
                     setLawsuits(prev => prev.filter(l => l.id !== id));
                 } catch (err) {
                     console.error('Error deleting lawsuit:', err);
@@ -1755,7 +1766,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 try {
                     const targetUserId = selectedUserId;
                     await deleteAsset(id, targetUserId);
-                    toast.success('Ativo excluído!');
+                    toast.success('Ativo excluÃ­do!');
                     setAssets(prev => prev.filter(a => a.id !== id));
                 } catch (err) {
                     console.error('Error deleting asset:', err);
@@ -1773,7 +1784,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 try {
                     const targetUserId = selectedUserId;
                     await deleteEvent(id, targetUserId);
-                    toast.success('Evento excluído!');
+                    toast.success('Evento excluÃ­do!');
                     setEvents(prev => prev.filter(e => e.id !== id));
                 } catch (err) {
                     console.error('Error deleting event:', err);
@@ -1783,13 +1794,13 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         );
     };
 
-    const columns = ['A Fazer', 'Em Andamento', 'Concluído', 'Atrasado'];
+    const columns = ['A Fazer', 'Em Andamento', 'ConcluÃ­do', 'Atrasado'];
 
     const getColumnTranslation = (col: string) => {
         switch (col) {
             case 'A Fazer': return t('modules.nexus.kanban.todo');
             case 'Em Andamento': return t('modules.nexus.kanban.doing');
-            case 'Concluído': return t('modules.nexus.kanban.done');
+            case 'ConcluÃ­do': return t('modules.nexus.kanban.done');
             case 'Atrasado': return t('modules.nexus.kanban.late');
             default: return col;
         }
@@ -1798,7 +1809,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     const getPriorityTranslation = (priority: string) => {
         switch (priority) {
             case 'Baixa': return t('modules.nexus.modals.task.priorities.Low');
-            case 'Média': return t('modules.nexus.modals.task.priorities.Medium');
+            case 'MÃ©dia': return t('modules.nexus.modals.task.priorities.Medium');
             case 'Alta': return t('modules.nexus.modals.task.priorities.High');
             case 'Urgente': return t('modules.nexus.modals.task.priorities.Urgent');
             default: return priority;
@@ -1806,7 +1817,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     };
 
     const getSeverityColor = (dueDate: string, status: string) => {
-        if (status === 'Concluído') return 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600';
+        if (status === 'ConcluÃ­do') return 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600';
         const now = new Date();
         const due = new Date(dueDate);
         const diffHours = (due.getTime() - now.getTime()) / (1000 * 60 * 60);
@@ -1838,12 +1849,12 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     // Cascading Constants (100% Brazilian Judicial Geography)
     const ESFERAS = [
         'Trabalhista',
-        'Cível',
+        'CÃ­vel',
         'Federal',
-        'Previdenciária',
-        'Tributária',
+        'PrevidenciÃ¡ria',
+        'TributÃ¡ria',
         'Criminal',
-        'Família & Sucessões',
+        'FamÃ­lia & SucessÃµes',
         'Eleitoral',
         'Militar'
     ];
@@ -1851,18 +1862,18 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     const UFS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
 
     const RITOS = {
-        'Trabalhista': ['Ordinário', 'Sumaríssimo', 'Sumário (Alçada)', 'Execução Trabalhista'],
-        'Cível': ['Procedimento Comum', 'Sumaríssimo (Juizado Especial)', 'Execução de Título Extrajudicial', 'Monitória', 'Inventário/Arrolamento'],
-        'Federal': ['Procedimento Comum', 'Sumaríssimo (JEF)', 'Execução Fiscal'],
-        'Previdenciária': ['Procedimento Comum', 'Sumaríssimo (JEF)', 'Acidentário'],
-        'Tributária': ['Execução Fiscal', 'Anulatória', 'Mandado de Segurança', 'Repetição de Indébito'],
-        'Criminal': ['Ordinário', 'Sumário', 'Sumaríssimo', 'Tribunal do Júri', 'Execução Penal'],
-        'default': ['Procedimento Comum', 'Especial', 'Mandado de Segurança']
+        'Trabalhista': ['OrdinÃ¡rio', 'SumarÃ­ssimo', 'SumÃ¡rio (AlÃ§ada)', 'ExecuÃ§Ã£o Trabalhista'],
+        'CÃ­vel': ['Procedimento Comum', 'SumarÃ­ssimo (Juizado Especial)', 'ExecuÃ§Ã£o de TÃ­tulo Extrajudicial', 'MonitÃ³ria', 'InventÃ¡rio/Arrolamento'],
+        'Federal': ['Procedimento Comum', 'SumarÃ­ssimo (JEF)', 'ExecuÃ§Ã£o Fiscal'],
+        'PrevidenciÃ¡ria': ['Procedimento Comum', 'SumarÃ­ssimo (JEF)', 'AcidentÃ¡rio'],
+        'TributÃ¡ria': ['ExecuÃ§Ã£o Fiscal', 'AnulatÃ³ria', 'Mandado de SeguranÃ§a', 'RepetiÃ§Ã£o de IndÃ©bito'],
+        'Criminal': ['OrdinÃ¡rio', 'SumÃ¡rio', 'SumarÃ­ssimo', 'Tribunal do JÃºri', 'ExecuÃ§Ã£o Penal'],
+        'default': ['Procedimento Comum', 'Especial', 'Mandado de SeguranÃ§a']
     };
 
     const TAX_REGIMES: TaxRegime[] = ['Simples Nacional', 'Lucro Presumido', 'Lucro Real', 'Isenta'];
-    const ENTITY_STATUSES: EntityStatus[] = ['Ativa', 'Baixada', 'Inativa', 'Em Liquidação'];
-    const ENTITY_TYPES: EntityType[] = ['LTDA', 'SA', 'EIRELI', 'MEI', 'Holding', 'Associação', 'Outros'];
+    const ENTITY_STATUSES: EntityStatus[] = ['Ativa', 'Baixada', 'Inativa', 'Em LiquidaÃ§Ã£o'];
+    const ENTITY_TYPES: EntityType[] = ['LTDA', 'SA', 'EIRELI', 'MEI', 'Holding', 'AssociaÃ§Ã£o', 'Outros'];
 
     const TRIBUNAIS: Record<string, Record<string, string[]>> = {
         'Trabalhista': {
@@ -1882,9 +1893,9 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             'PR': ['TRF-4'], 'PE': ['TRF-5'], 'PI': ['TRF-1'], 'RJ': ['TRF-2'], 'RN': ['TRF-5'],
             'RS': ['TRF-4'], 'RO': ['TRF-1'], 'RR': ['TRF-1'], 'SC': ['TRF-4'], 'SP': ['TRF-3'],
             'SE': ['TRF-5'], 'TO': ['TRF-1'],
-            'Superior': ['STJ - Superior Tribunal de Justiça', 'STF']
+            'Superior': ['STJ - Superior Tribunal de JustiÃ§a', 'STF']
         },
-        'Cível': {
+        'CÃ­vel': {
             'AC': ['TJAC'], 'AL': ['TJAL'], 'AP': ['TJAP'], 'AM': ['TJAM'], 'BA': ['TJBA'],
             'CE': ['TJCE'], 'DF': ['TJDFT'], 'ES': ['TJES'], 'GO': ['TJGO'], 'MA': ['TJMA'],
             'MT': ['TJMT'], 'MS': ['TJMS'], 'MG': ['TJMG'], 'PA': ['TJPA'], 'PB': ['TJPB'],
@@ -1895,11 +1906,11 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         }
     };
 
-    // Extension: Previdenciária and Tributária often share Cível/Federal courts
-    TRIBUNAIS['Previdenciária'] = TRIBUNAIS['Federal'];
-    TRIBUNAIS['Tributária'] = TRIBUNAIS['Federal'];
-    TRIBUNAIS['Criminal'] = TRIBUNAIS['Cível'];
-    TRIBUNAIS['Família & Sucessões'] = TRIBUNAIS['Cível'];
+    // Extension: PrevidenciÃ¡ria and TributÃ¡ria often share CÃ­vel/Federal courts
+    TRIBUNAIS['PrevidenciÃ¡ria'] = TRIBUNAIS['Federal'];
+    TRIBUNAIS['TributÃ¡ria'] = TRIBUNAIS['Federal'];
+    TRIBUNAIS['Criminal'] = TRIBUNAIS['CÃ­vel'];
+    TRIBUNAIS['FamÃ­lia & SucessÃµes'] = TRIBUNAIS['CÃ­vel'];
     TRIBUNAIS['Eleitoral'] = Object.fromEntries(UFS.map(uf => [uf, [`TRE-${uf}`]]));
     TRIBUNAIS['Militar'] = { 'default': ['STM - Superior Tribunal Militar', 'TJM (Estadual)'] };
 
@@ -1981,7 +1992,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                     <input
                         type="text"
-                        placeholder="Buscar por título..."
+                        placeholder="Buscar por tÃ­tulo..."
                         value={filterSearchTerm}
                         onChange={e => setFilterSearchTerm(e.target.value)}
                         className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
@@ -1994,7 +2005,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                     onChange={e => setFilterResponsibleId(e.target.value)}
                     className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
                 >
-                    <option value="">👤 Todos os Membros</option>
+                    <option value="">ðŸ‘¤ Todos os Membros</option>
                     {team.map(t => <option key={t.id} value={t.id}>{t.full_name}</option>)}
                 </select>
             </div>
@@ -2004,7 +2015,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                     onChange={e => setFilterLawsuitId(e.target.value)}
                     className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
                 >
-                    <option value="">⚖️ Todos os Processos</option>
+                    <option value="">âš–ï¸ Todos os Processos</option>
                     {lawsuits.map(law => <option key={law.id} value={law.id}>{law.cnj_number || law.case_title}</option>)}
                 </select>
             </div>
@@ -2028,7 +2039,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                     <input
                         type="text"
-                        placeholder="Buscar por CNPJ ou Título..."
+                        placeholder="Buscar por CNPJ ou TÃ­tulo..."
                         value={lawsuitSearch}
                         onChange={e => setLawsuitSearch(e.target.value)}
                         className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
@@ -2041,7 +2052,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                     onChange={e => setLawsuitStatusFilter(e.target.value)}
                     className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
                 >
-                    <option value="">⚖️ Todos os Status</option>
+                    <option value="">âš–ï¸ Todos os Status</option>
                     {LAWSUIT_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
             </div>
@@ -2051,7 +2062,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                     onChange={e => setLawsuitLawyerFilter(e.target.value)}
                     className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
                 >
-                    <option value="">👤 Todos os Advogados</option>
+                    <option value="">ðŸ‘¤ Todos os Advogados</option>
                     {team.map(t => <option key={t.id} value={t.id}>{t.full_name}</option>)}
                 </select>
             </div>
@@ -2075,7 +2086,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                     <input
                         type="text"
-                        placeholder="Buscar por título ou descrição..."
+                        placeholder="Buscar por tÃ­tulo ou descriÃ§Ã£o..."
                         value={assetSearch}
                         onChange={e => setAssetSearch(e.target.value)}
                         className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
@@ -2088,7 +2099,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                     onChange={e => setAssetStatusFilter(e.target.value)}
                     className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
                 >
-                    <option value="">🏢 Todos os Status</option>
+                    <option value="">ðŸ¢ Todos os Status</option>
                     {ASSET_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
             </div>
@@ -2098,8 +2109,8 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                     onChange={e => setAssetTypeFilter(e.target.value)}
                     className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
                 >
-                    <option value="">📦 Todos os Tipos</option>
-                    {['Imóvel', 'Veículo', 'Conta Bancária', 'Ação Judicial', 'Empresa / Quotas', 'Outros'].map(t => <option key={t} value={t}>{t}</option>)}
+                    <option value="">ðŸ“¦ Todos os Tipos</option>
+                    {['ImÃ³vel', 'VeÃ­culo', 'Conta BancÃ¡ria', 'AÃ§Ã£o Judicial', 'Empresa / Quotas', 'Outros'].map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
             </div>
             {(assetSearch || assetStatusFilter || assetTypeFilter) && (
@@ -2135,10 +2146,10 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                     onChange={e => setDocOriginFilter(e.target.value)}
                     className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
                 >
-                    <option value="">📁 Todas as Origens</option>
-                    <option value="lawsuit">⚖️ Processos</option>
-                    <option value="asset">🛡️ Ativos</option>
-                    <option value="corporate">🏢 Societário</option>
+                    <option value="">ðŸ“ Todas as Origens</option>
+                    <option value="lawsuit">âš–ï¸ Processos</option>
+                    <option value="asset">ðŸ›¡ï¸ Ativos</option>
+                    <option value="corporate">ðŸ¢ SocietÃ¡rio</option>
                 </select>
             </div>
             <div className="w-56">
@@ -2147,7 +2158,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                     onChange={e => setDocTypeFilter(e.target.value)}
                     className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
                 >
-                    <option value="">📄 Todos os Tipos</option>
+                    <option value="">ðŸ“„ Todos os Tipos</option>
                     {uniqueDocTypes.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
             </div>
@@ -2224,14 +2235,14 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                     }}
                                 >
                                     <option value="">--- {t('management.users.masterFilter.selectClient') || 'Selecione um Cliente'} ---</option>
-                                    <optgroup label={t('management.users.masterFilter.clients')?.toUpperCase() || 'CLIENTES (SÓCIOS ADM)'}>
+                                    <optgroup label={t('management.users.masterFilter.clients')?.toUpperCase() || 'CLIENTES (SÃ“CIOS ADM)'}>
                                         {allClients.filter(u => u.id !== user.id).map(c => {
                                             const rawName = typeof c.name === 'object' ? ((c.name as any).pt || (c.name as any).en || '') : (c.name || '');
                                             const formattedName = rawName.toLowerCase().split(' ').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
                                             const formattedEmail = (c.email || '').toLowerCase();
                                             return (
                                                 <option key={c.id} value={c.id}>
-                                                    🏢 {formattedName} ({formattedEmail})
+                                                    ðŸ¢ {formattedName} ({formattedEmail})
                                                 </option>
                                             );
                                         })}
@@ -2244,7 +2255,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 </div>
             </div>
 
-            {/* 💎 MAIN CONTENT AREA - Nexus 2.0 Router */}
+            {/* ðŸ’Ž MAIN CONTENT AREA - Nexus 2.0 Router */}
             <div className="flex-1 flex flex-col overflow-hidden">
                 {activeTab === 'overview' && (
                     <div className="flex-1 flex flex-col pt-0 overflow-y-auto no-scrollbar animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -2280,7 +2291,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                     },
                                     { 
                                         label: t('modules.nexus.metrics.deadlines'), 
-                                        val: tasks.filter(t => t.status !== 'Concluído' && (new Date(t.due_date).getTime() - new Date().getTime()) < 86400000).length, 
+                                        val: tasks.filter(t => t.status !== 'ConcluÃ­do' && (new Date(t.due_date).getTime() - new Date().getTime()) < 86400000).length, 
                                         color: 'text-rose-600', 
                                         bg: 'bg-rose-50 dark:bg-rose-900/30',
                                         icon: Clock, 
@@ -2288,7 +2299,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                     },
                                     { 
                                         label: t('modules.nexus.metrics.pending'), 
-                                        val: tasks.filter(t => t.status !== 'Concluído').length, 
+                                        val: tasks.filter(t => t.status !== 'ConcluÃ­do').length, 
                                         color: 'text-amber-600', 
                                         bg: 'bg-amber-50 dark:bg-amber-900/30',
                                         icon: CheckCircle2, 
@@ -2296,7 +2307,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                     },
                                     { 
                                         label: t('modules.nexus.metrics.completion'), 
-                                        val: `${tasks.length > 0 ? Math.round((tasks.filter(t => t.status === 'Concluído').length / tasks.length) * 100) : 0}%`, 
+                                        val: `${tasks.length > 0 ? Math.round((tasks.filter(t => t.status === 'ConcluÃ­do').length / tasks.length) * 100) : 0}%`, 
                                         color: 'text-emerald-600', 
                                         bg: 'bg-emerald-50 dark:bg-emerald-900/30',
                                         icon: TrendingUp, 
@@ -2336,18 +2347,18 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                                 {/* Insights AI - Premium Widget */}
                                 <div className="lg:col-span-2 space-y-6">
-                                    <IntelligenceWidget credentials={credentials} moduleContext="Estratégico / Nexus" limit={3} />
+                                    <IntelligenceWidget credentials={credentials} moduleContext="EstratÃ©gico / Nexus" limit={3} />
                                     
                                     <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl p-8">
                                         <div className="flex items-center justify-between mb-8">
                                             <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tight flex items-center gap-3">
-                                                <PieChart className="text-indigo-600" size={20} /> Distribuição de Ativos
+                                                <PieChart className="text-indigo-600" size={20} /> DistribuiÃ§Ã£o de Ativos
                                             </h3>
                                             <Link href="/veritumpro/nexus?tab=ativos" className="text-xs font-bold text-indigo-600 hover:underline uppercase tracking-widest">Ver Todos</Link>
                                         </div>
                                         
                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                            {['Imóvel', 'Veículo', 'Empresa / Quotas', 'Outros'].map((type, i) => {
+                                            {['ImÃ³vel', 'VeÃ­culo', 'Empresa / Quotas', 'Outros'].map((type, i) => {
                                                 const count = assets.filter(a => a.asset_type === type).length;
                                                 return (
                                                     <div key={i} className="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-white/5 transition-all hover:bg-white dark:hover:bg-slate-800 shadow-sm hover:shadow-md">
@@ -2373,9 +2384,9 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         <div className="absolute -right-8 -bottom-8 w-40 h-40 bg-white/10 blur-3xl rounded-full group-hover:scale-150 transition-transform duration-1000" />
                                         <div className="relative z-10">
                                             <h3 className="text-lg font-black uppercase tracking-tight mb-2">Power User Nexus</h3>
-                                            <p className="text-indigo-100 text-sm font-medium mb-6 leading-relaxed opacity-80">Você atingiu 84% de eficácia na gestão de ativos e processos este mês.</p>
+                                            <p className="text-indigo-100 text-sm font-medium mb-6 leading-relaxed opacity-80">VocÃª atingiu 84% de eficÃ¡cia na gestÃ£o de ativos e processos este mÃªs.</p>
                                             <div className="flex items-center gap-2">
-                                                <div className="px-4 py-2 bg-white/20 backdrop-blur-md rounded-xl text-xs font-black uppercase tracking-widest">Nível 12</div>
+                                                <div className="px-4 py-2 bg-white/20 backdrop-blur-md rounded-xl text-xs font-black uppercase tracking-widest">NÃ­vel 12</div>
                                                 <div className="px-4 py-2 bg-emerald-500 rounded-xl text-xs font-black uppercase tracking-widest">+5.2k XP</div>
                                             </div>
                                         </div>
@@ -2383,7 +2394,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
 
                                     <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl p-8 h-[calc(100%-180px)]">
                                         <h3 className="text-lg font-black text-slate-800 dark:text-white uppercase tracking-tight mb-6 flex items-center gap-3">
-                                            <List className="text-indigo-600" size={18} /> Ações Recomendadas
+                                            <List className="text-indigo-600" size={18} /> AÃ§Ãµes Recomendadas
                                         </h3>
                                         <div className="space-y-4">
                                             {[
@@ -2471,21 +2482,21 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         <button
                                             onClick={() => setProcessViewStyle('grid')}
                                             className={`p-2 rounded-lg transition-all ${processViewStyle === 'grid' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-                                            title="Visualização em Cards"
+                                            title="VisualizaÃ§Ã£o em Cards"
                                         >
                                             <LayoutGrid size={18} />
                                         </button>
                                         <button
                                             onClick={() => setProcessViewStyle('list')}
                                             className={`p-2 rounded-lg transition-all ${processViewStyle === 'list' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-                                            title="Visualização em Lista"
+                                            title="VisualizaÃ§Ã£o em Lista"
                                         >
                                             <List size={18} />
                                         </button>
                                         <button
                                             onClick={() => setProcessViewStyle('kanban')}
                                             className={`p-2 rounded-lg transition-all ${processViewStyle === 'kanban' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-                                            title="Visualização em Kanban"
+                                            title="VisualizaÃ§Ã£o em Kanban"
                                         >
                                             <Trello size={18} />
                                         </button>
@@ -2559,9 +2570,9 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                         <div className="flex items-center gap-1.5">
                                                                             <div className="flex gap-1 transition-all">
                                                                                 <button
-                                                                                    onClick={(e) => { e.stopPropagation(); handleOpenHistory(law.id, 'lawsuit', law.case_title || 'Sem Título'); }}
+                                                                                    onClick={(e) => { e.stopPropagation(); handleOpenHistory(law.id, 'lawsuit', law.case_title || 'Sem TÃ­tulo'); }}
                                                                                     className="p-1 text-slate-400 hover:text-indigo-600 bg-slate-50 dark:bg-slate-800 rounded cursor-pointer"
-                                                                                    title="Análise de Histórico"
+                                                                                    title="AnÃ¡lise de HistÃ³rico"
                                                                                 >
                                                                                     <History size={12} />
                                                                                 </button>
@@ -2589,7 +2600,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                             {persons.find(p => p.id === law.author_id)?.full_name?.charAt(0) || 'C'}
                                                                         </div>
                                                                         <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 truncate">
-                                                                            {persons.find(p => p.id === law.author_id)?.full_name || 'Contestação'}
+                                                                            {persons.find(p => p.id === law.author_id)?.full_name || 'ContestaÃ§Ã£o'}
                                                                         </span>
                                                                     </div>
 
@@ -2670,7 +2681,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                             {persons.find(p => p.id === law.author_id)?.full_name?.charAt(0) || 'C'}
                                                                         </div>
                                                                         <span className="font-bold text-slate-600 dark:text-slate-300 text-sm">
-                                                                            {persons.find(p => p.id === law.author_id)?.full_name || 'Contestação'}
+                                                                            {persons.find(p => p.id === law.author_id)?.full_name || 'ContestaÃ§Ã£o'}
                                                                         </span>
                                                                     </div>
                                                                 </td>
@@ -2700,7 +2711,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                                      lawsuit_id: law.id,
                                                                                      responsible_id: law.responsible_lawyer_id || '',
                                                                                      title: `${law.author_id ? (persons.find(p => p.id === law.author_id)?.full_name + ' - ') : ''}Andamento de Processo`,
-                                                                                     priority: 'Média'
+                                                                                     priority: 'MÃ©dia'
                                                                                  });
                                                                                  setTimeout(() => {
                                                                                      setIsTaskModalOpen(true);
@@ -2734,10 +2745,10 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                         <button
                                                                             onClick={(e) => {
                                                                                 e.stopPropagation();
-                                                                                handleOpenHistory(law.id, 'lawsuit', law.case_title || 'Sem Título');
+                                                                                handleOpenHistory(law.id, 'lawsuit', law.case_title || 'Sem TÃ­tulo');
                                                                             }}
                                                                             className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
-                                                                            title="Ver Histórico de Auditoria"
+                                                                            title="Ver HistÃ³rico de Auditoria"
                                                                         >
                                                                             <History size={18} />
                                                                         </button>
@@ -2746,13 +2757,13 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                                 e.stopPropagation();
                                                                                 setEditingLawsuit(law);
                                                                                 setEditingLawsuitDoc({
-                                                                                    document_type: 'Petição Inicial',
+                                                                                    document_type: 'PetiÃ§Ã£o Inicial',
                                                                                     event_date: new Date().toISOString()
                                                                                 });
                                                                                 setIsLawsuitDocModalOpen(true);
                                                                             }}
                                                                             className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
-                                                                            title="Upload Rápido de Documento"
+                                                                            title="Upload RÃ¡pido de Documento"
                                                                         >
                                                                             <Upload size={18} />
                                                                         </button>
@@ -2839,7 +2850,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                                 lawsuit_id: law.id,
                                                                                 responsible_id: law.responsible_lawyer_id || '',
                                                                                 title: `${law.author_id ? (persons.find(p => p.id === law.author_id)?.full_name + ' - ') : ''}Andamento de Processo`,
-                                                                                priority: 'Média'
+                                                                                priority: 'MÃ©dia'
                                                                             });
                                                                             setTimeout(() => {
                                                                                 setIsTaskModalOpen(true);
@@ -2872,10 +2883,10 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                     <button
                                                                         onClick={(e) => {
                                                                             e.stopPropagation();
-                                                                            handleOpenHistory(law.id, 'lawsuit', law.case_title || 'Sem Título');
+                                                                            handleOpenHistory(law.id, 'lawsuit', law.case_title || 'Sem TÃ­tulo');
                                                                         }}
                                                                         className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
-                                                                        title="Ver Histórico de Auditoria"
+                                                                        title="Ver HistÃ³rico de Auditoria"
                                                                     >
                                                                         <History size={16} />
                                                                     </button>
@@ -2884,13 +2895,13 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                             e.stopPropagation();
                                                                             setEditingLawsuit(law);
                                                                             setEditingLawsuitDoc({
-                                                                                document_type: 'Petição Inicial',
+                                                                                document_type: 'PetiÃ§Ã£o Inicial',
                                                                                 event_date: new Date().toISOString()
                                                                             });
                                                                             setIsLawsuitDocModalOpen(true);
                                                                         }}
                                                                         className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
-                                                                        title="Upload Rápido de Documento"
+                                                                        title="Upload RÃ¡pido de Documento"
                                                                     >
                                                                         <Upload size={16} />
                                                                     </button>
@@ -2974,14 +2985,14 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                             <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
                                 <div>
                                     <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest">{t('modules.nexus.metrics.deadlines')}</p>
-                                    <p className="text-2xl font-black text-rose-600">{filteredTasks.filter(t => t.status !== 'Concluído' && (new Date(t.due_date).getTime() - new Date().getTime()) < 86400000).length}</p>
+                                    <p className="text-2xl font-black text-rose-600">{filteredTasks.filter(t => t.status !== 'ConcluÃ­do' && (new Date(t.due_date).getTime() - new Date().getTime()) < 86400000).length}</p>
                                 </div>
                                 <div className="p-2 bg-rose-50 dark:bg-rose-900/20 text-rose-600 rounded-lg"><Clock size={20} /></div>
                             </div>
                             <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
                                 <div>
                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.metrics.pending')}</p>
-                                    <p className="text-2xl font-black text-slate-800 dark:text-white">{filteredTasks.filter(t => t.status !== 'Concluído').length}</p>
+                                    <p className="text-2xl font-black text-slate-800 dark:text-white">{filteredTasks.filter(t => t.status !== 'ConcluÃ­do').length}</p>
                                 </div>
                                 <div className="p-2 bg-slate-50 dark:bg-slate-800 text-slate-400 rounded-lg"><CheckCircle2 size={20} /></div>
                             </div>
@@ -2989,7 +3000,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                 <div>
                                     <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">{t('modules.nexus.metrics.completion')}</p>
                                     <p className="text-2xl font-black text-emerald-600">
-                                        {filteredTasks.length > 0 ? Math.round((filteredTasks.filter(t => t.status === 'Concluído').length / filteredTasks.length) * 100) : 0}%
+                                        {filteredTasks.length > 0 ? Math.round((filteredTasks.filter(t => t.status === 'ConcluÃ­do').length / filteredTasks.length) * 100) : 0}%
                                     </p>
                                 </div>
                                 <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-lg"><TrendingUp size={20} /></div>
@@ -3010,7 +3021,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         <div className="flex items-center justify-between px-2 mb-2">
                                             <h3 className="font-black text-xs text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
                                                 <div className={`w-2 h-2 rounded-full ${column === 'Atrasado' ? 'bg-rose-500' :
-                                                    column === 'Concluído' ? 'bg-emerald-500' : 'bg-slate-400'
+                                                    column === 'ConcluÃ­do' ? 'bg-emerald-500' : 'bg-slate-400'
                                                     }`} />
                                                 {getColumnTranslation(column)}
                                                 <span className="ml-2 px-2 py-0.5 bg-white dark:bg-slate-800 rounded-lg text-[10px] border border-slate-200 dark:border-slate-800 font-bold">
@@ -3040,7 +3051,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                     >
                                                         <div className="flex justify-between items-start mb-3">
                                                             <span className={`text-[9px] font-black uppercase px-2 py-1 rounded-md border ${getSeverityColor(task.due_date, task.status)}`}>
-                                                                {getPriorityTranslation(task.priority || 'Média')}
+                                                                {getPriorityTranslation(task.priority || 'MÃ©dia')}
                                                             </span>
                                                             <div className="flex gap-1.5 transition-all">
                                                                 <button
@@ -3114,7 +3125,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                             </td>
                                                             <td className="px-6 py-4">
                                                                 <span className={`text-[10px] font-black uppercase text-slate-500`}>
-                                                                    {getPriorityTranslation(task.priority || 'Média')}
+                                                                    {getPriorityTranslation(task.priority || 'MÃ©dia')}
                                                                 </span>
                                                             </td>
                                                             <td className="px-6 py-4 text-xs font-bold text-slate-500">
@@ -3163,7 +3174,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                             <div className="flex items-center gap-6">
                                 <div>
                                     <h1 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">{t('modules.nexus.tabs.calendar')}</h1>
-                                    <p className="text-slate-500 font-bold">Visualização cronológica de compromissos</p>
+                                    <p className="text-slate-500 font-bold">VisualizaÃ§Ã£o cronolÃ³gica de compromissos</p>
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <div className="flex w-72 bg-slate-100 dark:bg-slate-900 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-inner">
@@ -3171,7 +3182,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                             onClick={() => setEventView('calendar')}
                                             className={`flex-1 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${eventView === 'calendar' ? 'bg-white dark:bg-indigo-600 text-indigo-600 dark:text-white shadow-md scale-[1.02]' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                                         >
-                                            Calendário
+                                            CalendÃ¡rio
                                         </button>
                                         <button
                                             onClick={() => setEventView('list')}
@@ -3181,7 +3192,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         </button>
                                     </div>
                                     <button
-                                        onClick={() => { setEditingEvent({ event_type: 'Audiência' }); setIsEventModalOpen(true); }}
+                                        onClick={() => { setEditingEvent({ event_type: 'AudiÃªncia' }); setIsEventModalOpen(true); }}
                                         className="bg-slate-800 text-white px-6 py-2 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-slate-900 transition-all shadow-lg active:scale-95"
                                     >
                                         <Plus size={14} /> {t('modules.nexus.modals.event.title')}
@@ -3285,7 +3296,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                 </div>
                                 <div className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar pb-4 pr-2">
                                     <div className="grid grid-cols-7 gap-4 h-full">
-                                        {['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'].map(d => (
+                                        {['Domingo', 'Segunda', 'TerÃ§a', 'Quarta', 'Quinta', 'Sexta', 'SÃ¡bado'].map(d => (
                                             <div key={d} className="text-center text-[10px] font-black text-slate-400 uppercase tracking-widest pb-4">
                                                 {d}
                                             </div>
@@ -3339,7 +3350,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                     >
                                                                         <div className={`truncate ${isPastEvent ? 'line-through decoration-slate-300 dark:decoration-slate-600' : ''}`}>{ev.title}</div>
                                                                         <div className={`${isPastEvent ? 'text-slate-400 dark:text-slate-500' : 'text-indigo-200'} font-medium mt-0.5 transition-opacity`}>
-                                                                            {new Date(ev.start_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {ev.event_type}
+                                                                            {new Date(ev.start_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} â€¢ {ev.event_type}
                                                                         </div>
                                                                     </div>
                                                                 );
@@ -3374,27 +3385,27 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         <button
                                             onClick={() => setAssetViewStyle('grid')}
                                             className={`p-2 rounded-lg transition-all ${assetViewStyle === 'grid' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-                                            title="Visualização em Cards"
+                                            title="VisualizaÃ§Ã£o em Cards"
                                         >
                                             <LayoutGrid size={18} />
                                         </button>
                                         <button
                                             onClick={() => setAssetViewStyle('list')}
                                             className={`p-2 rounded-lg transition-all ${assetViewStyle === 'list' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-                                            title="Visualização em Lista"
+                                            title="VisualizaÃ§Ã£o em Lista"
                                         >
                                             <List size={18} />
                                         </button>
                                         <button
                                             onClick={() => setAssetViewStyle('kanban')}
                                             className={`p-2 rounded-lg transition-all ${assetViewStyle === 'kanban' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-                                            title="Visualização em Kanban"
+                                            title="VisualizaÃ§Ã£o em Kanban"
                                         >
                                             <Trello size={18} />
                                         </button>
                                     </div>
                                     <button
-                                        onClick={() => { setEditingAsset({ status: 'Ativo', asset_type: 'Imóvel' }); setIsAssetModalOpen(true); }}
+                                        onClick={() => { setEditingAsset({ status: 'Ativo', asset_type: 'ImÃ³vel' }); setIsAssetModalOpen(true); }}
                                         className="bg-slate-800 hover:bg-indigo-600 dark:bg-white dark:hover:bg-indigo-500 dark:text-slate-900 text-white font-black uppercase tracking-widest text-[10px] px-6 py-3 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-xl hover:shadow-indigo-500/30 hover:-translate-y-1"
                                     >
                                         <Plus size={14} /> Novo Ativo
@@ -3492,9 +3503,9 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                         </div>
                                                                         <div className="flex gap-1 transition-all">
                                                                             <button
-                                                                                onClick={(e) => { e.stopPropagation(); handleOpenHistory(asset.id, 'asset', asset.title || 'Sem Título'); }}
+                                                                                onClick={(e) => { e.stopPropagation(); handleOpenHistory(asset.id, 'asset', asset.title || 'Sem TÃ­tulo'); }}
                                                                                 className="p-1 text-slate-400 hover:text-indigo-600 bg-slate-50 dark:bg-slate-800 rounded cursor-pointer"
-                                                                                title="Análise de Histórico"
+                                                                                title="AnÃ¡lise de HistÃ³rico"
                                                                             >
                                                                                 <History size={12} />
                                                                             </button>
@@ -3530,9 +3541,9 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                         <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Ativo</th>
                                                         <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Tipo</th>
                                                         <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Valor</th>
-                                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Vínculo</th>
+                                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">VÃ­nculo</th>
                                                         <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
-                                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Ações</th>
+                                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">AÃ§Ãµes</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-slate-50 dark:divide-slate-800 overflow-y-auto">
@@ -3576,9 +3587,9 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                             <Network size={18} />
                                                                         </button>
                                                                         <button
-                                                                            onClick={(e) => { e.stopPropagation(); handleOpenHistory(asset.id, 'asset', asset.title || 'Sem Título'); }}
+                                                                            onClick={(e) => { e.stopPropagation(); handleOpenHistory(asset.id, 'asset', asset.title || 'Sem TÃ­tulo'); }}
                                                                             className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
-                                                                            title="Análise de Histórico"
+                                                                            title="AnÃ¡lise de HistÃ³rico"
                                                                         >
                                                                             <History size={18} />
                                                                         </button>
@@ -3587,13 +3598,13 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                                 e.stopPropagation();
                                                                                 setEditingAsset(asset);
                                                                                 setEditingAssetDoc({
-                                                                                    document_type: 'Matrícula',
+                                                                                    document_type: 'MatrÃ­cula',
                                                                                     event_date: new Date().toISOString()
                                                                                 });
                                                                                 setIsAssetDocModalOpen(true);
                                                                             }}
                                                                             className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
-                                                                            title="Upload Rápido de Documento"
+                                                                            title="Upload RÃ¡pido de Documento"
                                                                         >
                                                                             <Upload size={18} />
                                                                         </button>
@@ -3676,9 +3687,9 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                     </div>
                                                     <div className="flex gap-1">
                                                         <button
-                                                            onClick={(e) => { e.stopPropagation(); handleOpenHistory(asset.id, 'asset', asset.title || 'Sem Título'); }}
+                                                            onClick={(e) => { e.stopPropagation(); handleOpenHistory(asset.id, 'asset', asset.title || 'Sem TÃ­tulo'); }}
                                                             className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
-                                                            title="Análise de Histórico"
+                                                            title="AnÃ¡lise de HistÃ³rico"
                                                         >
                                                             <History size={18} />
                                                         </button>
@@ -3687,13 +3698,13 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                 e.stopPropagation();
                                                                 setEditingAsset(asset);
                                                                 setEditingAssetDoc({
-                                                                                    document_type: 'Matrícula',
+                                                                                    document_type: 'MatrÃ­cula',
                                                                                     event_date: new Date().toISOString()
                                                                                 });
                                                                 setIsAssetDocModalOpen(true);
                                                             }}
                                                             className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
-                                                            title="Upload Rápido de Documento"
+                                                            title="Upload RÃ¡pido de Documento"
                                                         >
                                                             <Upload size={18} />
                                                         </button>
@@ -3727,14 +3738,14 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 {activeTab === 'societario' && (
                     <div className="flex-1 flex flex-col pt-0 overflow-y-auto no-scrollbar animate-in fade-in slide-in-from-bottom-4 duration-700">
                         <div className="flex flex-col h-full space-y-6">
-                            {/* Header Societário */}
+                            {/* Header SocietÃ¡rio */}
                             <div className="flex flex-col md:flex-row pb-6 mb-2 mt-4 px-8 border-b-4 border-slate-100 dark:border-slate-800">
                                 <div className="flex-1">
                                     <h1 className="text-4xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">
                                         Entidades & Holdings
                                     </h1>
                                     <p className="text-slate-500 font-bold tracking-wide mt-1">
-                                        Gestão de pessoas jurídicas, participações e governança
+                                        GestÃ£o de pessoas jurÃ­dicas, participaÃ§Ãµes e governanÃ§a
                                     </p>
                                 </div>
                                 <div className="mt-4 md:mt-0 flex items-center gap-4">
@@ -3753,21 +3764,21 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         <button
                                             onClick={() => setCorporateViewStyle('grid')}
                                             className={`p-2 rounded-lg transition-all ${corporateViewStyle === 'grid' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-                                            title="Visualização em Cards"
+                                            title="VisualizaÃ§Ã£o em Cards"
                                         >
                                             <LayoutGrid size={18} />
                                         </button>
                                         <button
                                             onClick={() => setCorporateViewStyle('list')}
                                             className={`p-2 rounded-lg transition-all ${corporateViewStyle === 'list' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-                                            title="Visualização em Lista"
+                                            title="VisualizaÃ§Ã£o em Lista"
                                         >
                                             <List size={18} />
                                         </button>
                                         <button
                                             onClick={() => setCorporateViewStyle('kanban')}
                                             className={`p-2 rounded-lg transition-all ${corporateViewStyle === 'kanban' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-                                            title="Visualização em Kanban"
+                                            title="VisualizaÃ§Ã£o em Kanban"
                                         >
                                             <Trello size={18} />
                                         </button>
@@ -3788,7 +3799,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                 </div>
                             </div>
 
-                            {/* Tabela/Grade Societário */}
+                            {/* Tabela/Grade SocietÃ¡rio */}
                             <div className="flex-1 px-8 pb-8 h-[calc(100vh-280px)]">
                                 <AnimatePresence mode="wait">
                                     {corporateViewStyle === 'kanban' ? (
@@ -3850,9 +3861,9 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                             </button>
                                                                             <div className="flex gap-1 transition-all">
                                                                                 <button
-                                                                                    onClick={(e) => { e.stopPropagation(); handleOpenHistory(entity.id, 'corporate', entity.legal_name || 'Sem Título'); }}
+                                                                                    onClick={(e) => { e.stopPropagation(); handleOpenHistory(entity.id, 'corporate', entity.legal_name || 'Sem TÃ­tulo'); }}
                                                                                     className="p-1 text-slate-400 hover:text-indigo-600 bg-slate-50 dark:bg-slate-800 rounded cursor-pointer"
-                                                                                    title="Análise de Histórico"
+                                                                                    title="AnÃ¡lise de HistÃ³rico"
                                                                                 >
                                                                                     <History size={12} />
                                                                                 </button>
@@ -3869,7 +3880,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
 
                                                                     <div className="flex flex-col gap-2 mb-4">
                                                                         <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                                                                            {entity.cnpj || 'CNPJ NÃO INFORMADO'}
+                                                                            {entity.cnpj || 'CNPJ NÃƒO INFORMADO'}
                                                                         </div>
                                                                     </div>
 
@@ -3904,7 +3915,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                         <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Tipo</th>
                                                         <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Capital</th>
                                                         <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
-                                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Ações</th>
+                                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">AÃ§Ãµes</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
@@ -3940,9 +3951,9 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                         <Network size={18} />
                                                                     </button>
                                                                     <button
-                                                                        onClick={(e) => { e.stopPropagation(); handleOpenHistory(entity.id, 'corporate', entity.legal_name || 'Sem Título'); }}
+                                                                        onClick={(e) => { e.stopPropagation(); handleOpenHistory(entity.id, 'corporate', entity.legal_name || 'Sem TÃ­tulo'); }}
                                                                         className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
-                                                                        title="Análise de Histórico"
+                                                                        title="AnÃ¡lise de HistÃ³rico"
                                                                     >
                                                                         <History size={18} />
                                                                     </button>
@@ -3957,7 +3968,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                             setIsDocumentModalOpen(true); 
                                                                         }}
                                                                         className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
-                                                                        title="Upload Rápido de Documento"
+                                                                        title="Upload RÃ¡pido de Documento"
                                                                     >
                                                                         <Upload size={18} />
                                                                     </button>
@@ -3971,7 +3982,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                     <button
                                                                         onClick={() => { setEditingEntity(entity); setIsEntityModalOpen(true); setActiveEntityTab('qsa'); }}
                                                                         className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-all"
-                                                                        title="Quadro Societário (QSA)"
+                                                                        title="Quadro SocietÃ¡rio (QSA)"
                                                                     >
                                                                         <Users size={18} />
                                                                     </button>
@@ -4020,7 +4031,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                     <h3 className="font-black text-slate-800 dark:text-white text-xl mb-1 line-clamp-1 truncate uppercase tracking-tighter leading-tight">
                                                         {entity.legal_name}
                                                     </h3>
-                                                    <p className="text-xs font-bold text-slate-400 mb-6 uppercase tracking-widest">{entity.cnpj || 'CNPJ NÃO INFORMADO'}</p>
+                                                    <p className="text-xs font-bold text-slate-400 mb-6 uppercase tracking-widest">{entity.cnpj || 'CNPJ NÃƒO INFORMADO'}</p>
 
                                                     <div className="grid grid-cols-2 gap-3 mb-8">
                                                         <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl">
@@ -4053,9 +4064,9 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                             Gerenciar QSA
                                                         </button>
                                                         <button 
-                                                            onClick={(e) => { e.stopPropagation(); handleOpenHistory(entity.id, 'corporate', entity.legal_name || 'Sem Título'); }}
+                                                            onClick={(e) => { e.stopPropagation(); handleOpenHistory(entity.id, 'corporate', entity.legal_name || 'Sem TÃ­tulo'); }}
                                                             className="p-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-2xl hover:bg-indigo-600 hover:text-white transition-all active:scale-95"
-                                                            title="Análise de Histórico"
+                                                            title="AnÃ¡lise de HistÃ³rico"
                                                         >
                                                             <History size={18} />
                                                         </button>
@@ -4070,7 +4081,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                 setIsDocumentModalOpen(true); 
                                                             }}
                                                             className="p-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-2xl hover:bg-indigo-600 hover:text-white transition-all active:scale-95"
-                                                            title="Upload Rápido"
+                                                            title="Upload RÃ¡pido"
                                                         >
                                                             <Upload size={18} />
                                                         </button>
@@ -4189,7 +4200,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                 <button 
                                                                     onClick={() => handleEditGlobalDocumentOrigin(doc)}
                                                                     className="p-2 bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all rounded-xl"
-                                                                    title={doc.origin_type === 'lawsuit' ? 'Ir para o Processo' : doc.origin_type === 'asset' ? 'Ir para o Ativo' : 'Ir para o Societário'}
+                                                                    title={doc.origin_type === 'lawsuit' ? 'Ir para o Processo' : doc.origin_type === 'asset' ? 'Ir para o Ativo' : 'Ir para o SocietÃ¡rio'}
                                                                 >
                                                                     <ArrowRight size={16} />
                                                                 </button>
@@ -4243,7 +4254,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                             {editingLawsuit?.id ? t('modules.nexus.modals.lawsuit.titleEdit') : t('modules.nexus.modals.lawsuit.title')}
                                         </h3>
                                         <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-1">
-                                            Central de Inteligência Jurídica Veritum
+                                            Central de InteligÃªncia JurÃ­dica Veritum
                                         </p>
                                     </div>
                                     <div className="flex gap-2">
@@ -4294,14 +4305,14 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         onClick={() => setActiveLawsuitTab('basic')}
                                         className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-[9px] font-black uppercase tracking-[0.1em] transition-all whitespace-nowrap ${activeLawsuitTab === 'basic' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-xl shadow-indigo-600/10' : 'text-slate-500 hover:text-slate-700'}`}
                                     >
-                                        <Zap size={14} /> {t('common.basic') || 'Básico'}
+                                        <Zap size={14} /> {t('common.basic') || 'BÃ¡sico'}
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => setActiveLawsuitTab('advanced')}
                                         className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-[9px] font-black uppercase tracking-[0.1em] transition-all whitespace-nowrap ${activeLawsuitTab === 'advanced' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-xl shadow-indigo-600/10' : 'text-slate-500 hover:text-slate-700'}`}
                                     >
-                                        <Zap size={14} /> {t('common.advanced') || 'Avançado'}
+                                        <Zap size={14} /> {t('common.advanced') || 'AvanÃ§ado'}
                                     </button>
                                     <button
                                         type="button"
@@ -4315,7 +4326,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         onClick={() => setActiveLawsuitTab('timeline')}
                                         className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-[9px] font-black uppercase tracking-[0.1em] transition-all whitespace-nowrap ${activeLawsuitTab === 'timeline' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-xl shadow-indigo-600/10' : 'text-slate-500 hover:text-slate-700'} ${!editingLawsuit?.id ? 'opacity-50' : ''}`}
                                     >
-                                        <History size={14} /> Histórico {!editingLawsuit?.id && '🔒'}
+                                        <History size={14} /> HistÃ³rico {!editingLawsuit?.id && 'ðŸ”’'}
                                     </button>
                                 </div>
                             </div>
@@ -4402,9 +4413,9 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                         )}
                                                     </div>
 
-                                                    {/* Searchable Select: Polo Passivo (Réu) */}
+                                                    {/* Searchable Select: Polo Passivo (RÃ©u) */}
                                                     <div className="relative">
-                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Polo Passivo (Réu)</label>
+                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Polo Passivo (RÃ©u)</label>
                                                         <div
                                                             className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl cursor-pointer flex items-center justify-between group hover:border-indigo-300 transition-all font-bold text-slate-800 dark:text-white"
                                                             onClick={() => { setIsDefendantDropdownOpen(!isDefendantDropdownOpen); setIsAuthorDropdownOpen(false); }}
@@ -4458,7 +4469,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                 </div>
 
                                                 <div>
-                                                    <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Advogado Responsável</label>
+                                                    <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Advogado ResponsÃ¡vel</label>
                                                     <select
                                                         required
                                                         value={editingLawsuit?.responsible_lawyer_id || ''}
@@ -4564,12 +4575,12 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
 
                                                 <div className="grid grid-cols-1 gap-4">
                                                     <div>
-                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Órgão Julgador (Vara/Câmara)</label>
+                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Ã“rgÃ£o Julgador (Vara/CÃ¢mara)</label>
                                                         <PremiumCombobox
                                                             value={editingLawsuit?.chamber || ''}
                                                             onChange={val => setEditingLawsuit({ ...editingLawsuit, chamber: val })}
                                                             options={chambers}
-                                                            placeholder="Ex: 12ª Vara"
+                                                            placeholder="Ex: 12Âª Vara"
                                                             creatable
                                                             disabled={!editingLawsuit?.court}
                                                         />
@@ -4592,8 +4603,8 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                             <div className="space-y-2 animate-in fade-in slide-in-from-right-4 duration-500">
                                                 <div className="flex items-center justify-between mb-8">
                                                     <div>
-                                                        <h4 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Histórico do Processo</h4>
-                                                        <p className="text-xs text-slate-500 font-bold">Trilha de auditoria e alterações de status</p>
+                                                        <h4 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">HistÃ³rico do Processo</h4>
+                                                        <p className="text-xs text-slate-500 font-bold">Trilha de auditoria e alteraÃ§Ãµes de status</p>
                                                     </div>
                                                     <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 rounded-2xl">
                                                         <History size={24} />
@@ -4602,11 +4613,11 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
 
                                                 <div className="relative">
                                                     {!editingLawsuit?.id ? (
-                                                        <BlockedTabOverlay message="O histórico de auditoria será gerado automaticamente após a criação deste processo no sistema." />
+                                                        <BlockedTabOverlay message="O histÃ³rico de auditoria serÃ¡ gerado automaticamente apÃ³s a criaÃ§Ã£o deste processo no sistema." />
                                                     ) : isLawsuitTimelineLoading ? (
                                                         <div className="py-20 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[2.5rem] bg-slate-50/50 dark:bg-slate-900/50">
                                                             <Loader2 size={48} className="text-indigo-500 mb-4 animate-spin" />
-                                                            <p className="text-slate-500 font-black uppercase tracking-widest text-[10px]">Carregando histórico...</p>
+                                                            <p className="text-slate-500 font-black uppercase tracking-widest text-[10px]">Carregando histÃ³rico...</p>
                                                         </div>
                                                     ) : lawsuitTimeline.length === 0 ? (
                                                         <div className="py-20 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[2.5rem] bg-slate-50/50 dark:bg-slate-900/50">
@@ -4669,11 +4680,11 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                 <div className="flex items-center justify-between">
                                                     <div>
                                                         <h4 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Documentos do Processo</h4>
-                                                        <p className="text-xs text-slate-500 font-bold">Petições, Provas e Decisões</p>
+                                                        <p className="text-xs text-slate-500 font-bold">PetiÃ§Ãµes, Provas e DecisÃµes</p>
                                                     </div>
                                                     <button
                                                         type="button"
-                                                        onClick={() => { setEditingLawsuitDoc({ document_type: 'Petição Inicial', event_date: new Date().toISOString() }); setIsLawsuitDocModalOpen(true); }}
+                                                        onClick={() => { setEditingLawsuitDoc({ document_type: 'PetiÃ§Ã£o Inicial', event_date: new Date().toISOString() }); setIsLawsuitDocModalOpen(true); }}
                                                         className="p-4 bg-indigo-600 text-white rounded-2xl flex items-center gap-2 hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20"
                                                     >
                                                         <Plus size={20} /> Novo Documento
@@ -4700,7 +4711,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                     </div>
                                                                     <div className="relative z-10">
                                                                         <h5 className="font-bold text-slate-800 dark:text-white text-sm mb-1 line-clamp-1">{doc.title}</h5>
-                                                                        <p className="text-[10px] text-slate-500 font-bold mb-4">Referência: {doc.event_date ? new Date(doc.event_date).toLocaleDateString() : 'N/I'}</p>
+                                                                        <p className="text-[10px] text-slate-500 font-bold mb-4">ReferÃªncia: {doc.event_date ? new Date(doc.event_date).toLocaleDateString() : 'N/I'}</p>
                                                                         
                                                                         <div className="flex items-center justify-between gap-2 mt-auto">
                                                                             <button 
@@ -4832,7 +4843,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                             {editingTask?.id ? t('modules.nexus.modals.task.title') : 'Nova Tarefa'}
                                         </h3>
                                         <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-1">
-                                            Workflow & Gestão de Prazos
+                                            Workflow & GestÃ£o de Prazos
                                         </p>
                                     </div>
                                     <button
@@ -4921,7 +4932,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                 <div>
                                                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 px-1">{t('modules.nexus.modals.task.labelPriority')}</label>
                                                     <div className="grid grid-cols-2 gap-3">
-                                                        {['Baixa', 'Média', 'Alta', 'Urgente'].map(p => (
+                                                        {['Baixa', 'MÃ©dia', 'Alta', 'Urgente'].map(p => (
                                                             <button
                                                                 key={p}
                                                                 type="button"
@@ -5023,7 +5034,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                 onChange={e => setEditingEvent({ ...editingEvent, event_type: e.target.value as any })}
                                                 className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white font-bold"
                                             >
-                                                {['Audiência', 'Reunião', 'Despacho', 'Diligência', 'Outro'].map(t => <option key={t} value={t}>{t}</option>)}
+                                                {['AudiÃªncia', 'ReuniÃ£o', 'Despacho', 'DiligÃªncia', 'Outro'].map(t => <option key={t} value={t}>{t}</option>)}
                                             </select>
                                         </div>
 
@@ -5040,7 +5051,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
 
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
-                                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Início</label>
+                                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">InÃ­cio</label>
                                                 <input
                                                     required
                                                     type="datetime-local"
@@ -5061,12 +5072,12 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         </div>
 
                                         <div>
-                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Localização (Física ou Link)</label>
+                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">LocalizaÃ§Ã£o (FÃ­sica ou Link)</label>
                                             <input
                                                 value={editingEvent?.location || ''}
                                                 onChange={e => setEditingEvent({ ...editingEvent, location: e.target.value })}
                                                 className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white font-bold"
-                                                placeholder="Ex: Fórum Central ou Zoom Link"
+                                                placeholder="Ex: FÃ³rum Central ou Zoom Link"
                                             />
                                         </div>
 
@@ -5839,24 +5850,22 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                 <p className="text-[10px] text-slate-500 font-bold mb-4">Referência: {doc.event_date ? new Date(doc.event_date).toLocaleDateString() : 'N/I'}</p>
                                                                 
                                                                 <div className="flex items-center justify-between gap-2 mt-auto">
-                                                                    <div className="flex items-center gap-3">
+                                                                    <button 
+                                                                        type="button"
+                                                                        onClick={() => { setEditingDocument(doc); setIsDocumentModalOpen(true); }}
+                                                                        className="text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:underline"
+                                                                    >
+                                                                        Editar
+                                                                    </button>
+                                                                    {doc.file_url && (
                                                                         <button 
-                                                                            type="button"
-                                                                            onClick={() => { setEditingDocument(doc); setIsDocumentModalOpen(true); }}
-                                                                            className="text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:underline"
+                                                                            onClick={() => handleDownloadFile(doc.file_url!, doc.title || 'documento')}
+                                                                            className="p-2 text-slate-400 hover:text-indigo-600 transition-colors"
+                                                                            title="Fazer Download"
                                                                         >
-                                                                            Editar
+                                                                            <Download size={16} />
                                                                         </button>
-                                                                        {doc.file_url && (
-                                                                            <button 
-                                                                                onClick={() => handleDownloadFile(doc.file_url!, doc.title || 'documento')}
-                                                                                className="p-2 text-slate-400 hover:text-indigo-600 transition-colors"
-                                                                                title="Fazer Download"
-                                                                            >
-                                                                                <Download size={16} />
-                                                                            </button>
-                                                                        )}
-                                                                    </div>
+                                                                    )}
                                                                     <button 
                                                                         type="button"
                                                                         onClick={() => handleDeleteDocument(doc.id)}
@@ -6612,185 +6621,153 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
 
                         {/* Interactive Canvas */}
                         <div className="flex-1 relative overflow-hidden flex items-center justify-center p-20 cursor-grab active:cursor-grabbing">
-                            {/* SVG Background Lines */}
-                            <svg className="absolute inset-0 w-full h-full pointer-events-none">
-                                <defs>
-                                    <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                                        <stop offset="0%" stopColor="#6366f1" stopOpacity="0.8" />
-                                        <stop offset="100%" stopColor="#6366f1" stopOpacity="0.1" />
-                                    </linearGradient>
-                                </defs>
-                                {(() => {
-                                    const radius = 280;
-                                    const centerX = typeof window !== 'undefined' ? window.innerWidth / 2 : 0;
-                                    const centerY = typeof window !== 'undefined' ? (window.innerHeight - 100) / 2 : 0; // Adjust for header
-                                    
-                                    // Calculate nodes logic
-                                    const neighbors: any[] = [];
-                                    const { origin_type, id, data } = nexoData;
-                                    if (origin_type === 'lawsuit') {
-                                        const author = persons.find(p => p.id === data.author_id);
-                                        if (author) neighbors.push({ label: author.full_name, icon: UserIcon, color: '#3b82f6', cat: 'Autor' });
-                                        const def = persons.find(p => p.id === data.defendant_id);
-                                        if (def) neighbors.push({ label: def.full_name, icon: UserIcon, color: '#f43f5e', cat: 'Réu' });
-                                        const lawyer = team.find(t => t.id === data.responsible_lawyer_id);
-                                        if (lawyer) neighbors.push({ label: lawyer.full_name, icon: Briefcase, color: '#f59e0b', cat: 'Responsável' });
-                                        assets.filter(a => a.lawsuit_id === id).forEach(a => neighbors.push({ label: a.title, icon: Shield, color: '#10b981', cat: 'Ativo' }));
-                                        lawsuitDocuments.filter(d => d.lawsuit_id === id).forEach(d => neighbors.push({ label: d.title, icon: FileText, color: '#64748b', cat: 'Documento' }));
-                                        tasks.filter(t => t.lawsuit_id === id).forEach(t => neighbors.push({ label: t.title, icon: CheckCircle2, color: '#8b5cf6', cat: 'Tarefa' }));
-                                    } else if (origin_type === 'corporate') {
-                                        shareholders.filter(s => s.entity_id === id).forEach(s => neighbors.push({ label: s.shareholder_name, icon: Users, color: '#3b82f6', cat: 'Sócio' }));
-                                        corporateDocuments.filter(d => d.entity_id === id).forEach(d => neighbors.push({ label: d.title, icon: FileText, color: '#64748b', cat: 'Documento' }));
-                                    } else if (origin_type === 'asset') {
-                                        const owner = persons.find(p => p.id === data.person_id);
-                                        if (owner) neighbors.push({ label: owner.full_name, icon: UserIcon, color: '#3b82f6', cat: 'Proprietário' });
-                                        const lawsuit = lawsuits.find(l => l.id === data.lawsuit_id);
-                                        if (lawsuit) neighbors.push({ label: lawsuit.case_title || lawsuit.cnj_number, icon: Scale, color: '#8b5cf6', cat: 'Processo' });
-                                        assetDocuments.filter(d => d.asset_id === id).forEach(d => neighbors.push({ label: d.title, icon: FileText, color: '#64748b', cat: 'Documento' }));
-                                    } else if (origin_type === 'task') {
-                                        const lawsuit = lawsuits.find(l => l.id === data.lawsuit_id);
-                                        if (lawsuit) neighbors.push({ label: lawsuit.case_title || lawsuit.cnj_number, icon: Scale, color: '#8b5cf6', cat: 'Processo' });
-                                        const resp = team.find(t => t.id === data.responsible_id);
-                                        if (resp) neighbors.push({ label: resp.full_name, icon: Briefcase, color: '#f59e0b', cat: 'Responsável' });
-                                    } else if (origin_type === 'document') {
-                                        if (data.origin_type === 'lawsuit') {
-                                            const law = lawsuits.find(l => l.id === data.origin_id);
-                                            if (law) neighbors.push({ label: law.case_title || law.cnj_number, icon: Scale, color: '#8b5cf6', cat: 'Origem' });
-                                        } else if (data.origin_type === 'corporate') {
-                                            const entity = corporateEntities.find(e => e.id === data.origin_id);
-                                            if (entity) neighbors.push({ label: entity.legal_name, icon: Building2, color: '#3b82f6', cat: 'Origem' });
-                                        } else if (data.origin_type === 'asset') {
-                                            const asset = assets.find(a => a.id === data.origin_id);
-                                            if (asset) neighbors.push({ label: asset.title, icon: Shield, color: '#10b981', cat: 'Origem' });
-                                        }
-                                    } else if (origin_type === 'person') {
-                                        lawsuits.filter(l => l.author_id === id || l.defendant_id === id).forEach(l => neighbors.push({ label: l.case_title || l.cnj_number, icon: Scale, color: '#8b5cf6', cat: 'Processo' }));
-                                        assets.filter(a => a.person_id === id).forEach(a => neighbors.push({ label: a.title, icon: Shield, color: '#10b981', cat: 'Ativo' }));
-                                        shareholders.filter(s => s.person_shareholder_id === id).forEach(s => {
-                                            const entity = corporateEntities.find(e => e.id === s.entity_id);
-                                            if (entity) neighbors.push({ label: entity.legal_name, icon: Building2, color: '#3b82f6', cat: 'Holding/PJ' });
-                                        });
-                                        tasks.filter(t => t.responsible_id === id).forEach(t => neighbors.push({ label: t.title, icon: CheckCircle2, color: '#f59e0b', cat: 'Tarefa' }));
-                                    }
-
-                                    return neighbors.map((n, i) => {
-                                        const angle = (i / neighbors.length) * 2 * Math.PI;
-                                        const x2 = Math.cos(angle) * radius;
-                                        const y2 = Math.sin(angle) * radius;
-                                        return (
-                                            <motion.line
-                                                key={`line-${i}`}
-                                                initial={{ pathLength: 0, opacity: 0 }}
-                                                animate={{ pathLength: 1, opacity: 1 }}
-                                                transition={{ duration: 1, delay: 0.5 + i * 0.1 }}
-                                                x1="50%" y1="50%"
-                                                x2={`calc(50% + ${x2}px)`} y2={`calc(50% + ${y2}px)`}
-                                                stroke={n.color}
-                                                strokeWidth="2"
-                                                strokeDasharray="4 4"
-                                                className="opacity-20"
-                                            />
-                                        );
-                                    });
-                                })()}
-                            </svg>
-
-                            {/* Center Node */}
-                            <motion.div
-                                drag
-                                dragConstraints={{ left: -100, right: 100, top: -100, bottom: 100 }}
-                                initial={{ scale: 0, rotate: -180 }}
-                                animate={{ scale: 1, rotate: 0 }}
-                                transition={{ type: 'spring', damping: 15 }}
-                                className="relative z-20 w-48 h-48 bg-white dark:bg-slate-900 rounded-full border-4 border-indigo-600 shadow-[0_0_60px_rgba(79,70,229,0.3)] flex flex-col items-center justify-center p-6 text-center cursor-pointer group"
-                            >
-                                <div className="absolute inset-0 rounded-full bg-indigo-600 opacity-0 group-hover:opacity-5 transition-opacity" />
-                                {nexoData.origin_type === 'lawsuit' ? <Scale size={40} className="text-indigo-600 mb-2" /> : 
-                                 nexoData.origin_type === 'corporate' ? <Building2 size={40} className="text-indigo-600 mb-2" /> :
-                                 nexoData.origin_type === 'asset' ? <Shield size={40} className="text-indigo-600 mb-2" /> :
-                                 nexoData.origin_type === 'task' ? <CheckCircle2 size={40} className="text-indigo-600 mb-2" /> :
-                                 nexoData.origin_type === 'person' ? <UserIcon size={40} className="text-indigo-600 mb-2" /> :
-                                 <FileText size={40} className="text-indigo-600 mb-2" />}
-                                <h4 className="text-xs font-black text-slate-800 dark:text-white uppercase leading-tight line-clamp-2">
-                                    {nexoData.title}
-                                </h4>
-                                <div className="mt-2 px-2 py-0.5 bg-indigo-50 dark:bg-indigo-900/30 rounded-full text-[8px] font-black text-indigo-600 uppercase tracking-widest border border-indigo-100 dark:border-indigo-800">
-                                    Principal
-                                </div>
-                            </motion.div>
-
-                            {/* Orbiting Nodes */}
                             {(() => {
-                                const radius = 280;
+                                const radius = 300; // Define radius once here
                                 const neighbors: any[] = [];
                                 const { origin_type, id, data } = nexoData;
+                                
                                 if (origin_type === 'lawsuit') {
                                     const author = persons.find(p => p.id === data.author_id);
-                                    if (author) neighbors.push({ label: author.full_name, icon: UserIcon, color: 'bg-blue-500', cat: 'Autor' });
+                                    if (author) neighbors.push({ label: author.full_name, icon: UserIcon, hex: '#3b82f6', bg: 'bg-blue-500', cat: 'Autor', type: 'person', data: author });
                                     const def = persons.find(p => p.id === data.defendant_id);
-                                    if (def) neighbors.push({ label: def.full_name, icon: UserIcon, color: 'bg-rose-500', cat: 'Réu' });
+                                    if (def) neighbors.push({ label: def.full_name, icon: UserIcon, hex: '#f43f5e', bg: 'bg-rose-500', cat: 'Réu', type: 'person', data: def });
                                     const lawyer = team.find(t => t.id === data.responsible_lawyer_id);
-                                    if (lawyer) neighbors.push({ label: lawyer.full_name, icon: Briefcase, color: 'bg-amber-500', cat: 'Responsável' });
-                                    assets.filter(a => a.lawsuit_id === id).forEach(a => neighbors.push({ label: a.title, icon: Shield, color: 'bg-emerald-500', cat: 'Ativo' }));
-                                    lawsuitDocuments.filter(d => d.lawsuit_id === id).forEach(d => neighbors.push({ label: d.title, icon: FileText, color: 'bg-slate-500', cat: 'Documento' }));
-                                    tasks.filter(t => t.lawsuit_id === id).forEach(t => neighbors.push({ label: t.title, icon: CheckCircle2, color: 'bg-purple-500', cat: 'Tarefa' }));
-                                } else if (origin_type === 'person') {
-                                    lawsuits.filter(l => l.author_id === id || l.defendant_id === id).forEach(l => neighbors.push({ label: l.case_title || l.cnj_number, icon: Scale, color: 'bg-purple-500', cat: 'Processo' }));
-                                    assets.filter(a => a.person_id === id).forEach(a => neighbors.push({ label: a.title, icon: Shield, color: 'bg-emerald-500', cat: 'Ativo' }));
-                                    shareholders.filter(s => s.person_shareholder_id === id).forEach(s => {
-                                        const entity = corporateEntities.find(e => e.id === s.entity_id);
-                                        if (entity) neighbors.push({ label: entity.legal_name, icon: Building2, color: 'bg-blue-500', cat: 'Sociedade' });
-                                    });
-                                    tasks.filter(t => t.responsible_id === id).forEach(t => neighbors.push({ label: t.title, icon: CheckCircle2, color: 'bg-amber-500', cat: 'Tarefa' }));
+                                    if (lawyer) neighbors.push({ label: lawyer.full_name, icon: Briefcase, hex: '#f59e0b', bg: 'bg-amber-500', cat: 'Responsável', type: 'person', data: lawyer });
+                                    assets.filter(a => a.lawsuit_id === id).forEach(a => neighbors.push({ label: a.title, icon: Shield, hex: '#10b981', bg: 'bg-emerald-500', cat: 'Ativo', type: 'asset', data: a }));
+                                    lawsuitDocuments.filter(d => d.lawsuit_id === id).forEach(d => neighbors.push({ label: d.title, icon: FileText, hex: '#64748b', bg: 'bg-slate-500', cat: 'Documento', type: 'document', data: d }));
+                                    tasks.filter(t => t.lawsuit_id === id).forEach(t => neighbors.push({ label: t.title, icon: CheckCircle2, hex: '#8b5cf6', bg: 'bg-purple-500', cat: 'Tarefa', type: 'task', data: t }));
                                 } else if (origin_type === 'corporate') {
-                                    shareholders.filter(s => s.entity_id === id).forEach(s => neighbors.push({ label: s.shareholder_name, icon: Users, color: 'bg-blue-500', cat: 'Sócio' }));
-                                    corporateDocuments.filter(d => d.entity_id === id).forEach(d => neighbors.push({ label: d.title, icon: FileText, color: 'bg-slate-500', cat: 'Documento' }));
+                                    shareholders.filter(s => s.entity_id === id).forEach(s => {
+                                        let neighborData = null;
+                                        let neighborType: any = null;
+                                        if (s.person_shareholder_id) {
+                                            neighborData = persons.find(p => p.id === s.person_shareholder_id);
+                                            neighborType = 'person';
+                                        } else if (s.corporate_shareholder_id) {
+                                            neighborData = corporateEntities.find(e => e.id === s.corporate_shareholder_id);
+                                            neighborType = 'corporate';
+                                        }
+                                        neighbors.push({ label: s.shareholder_name, icon: Users, hex: '#3b82f6', bg: 'bg-blue-500', cat: 'Sócio', type: neighborType, data: neighborData || s });
+                                    });
+                                    corporateDocuments.filter(d => d.entity_id === id).forEach(d => neighbors.push({ label: d.title, icon: FileText, hex: '#64748b', bg: 'bg-slate-500', cat: 'Documento', type: 'document', data: d }));
+                                } else if (origin_type === 'person') {
+                                    lawsuits.filter(l => l.author_id === id || l.defendant_id === id).forEach(l => neighbors.push({ label: l.case_title || l.cnj_number, icon: Scale, hex: '#8b5cf6', bg: 'bg-purple-500', cat: 'Processo', type: 'lawsuit', data: l }));
+                                    assets.filter(a => a.person_id === id).forEach(a => neighbors.push({ label: a.title, icon: Shield, hex: '#10b981', bg: 'bg-emerald-500', cat: 'Ativo', type: 'asset', data: a }));
+                                    shareholders.forEach(s => {
+                                        const entity = (s as any).entity || corporateEntities.find(e => e.id === s.entity_id);
+                                        if (entity) neighbors.push({ label: entity.legal_name, icon: Building2, hex: '#3b82f6', bg: 'bg-blue-500', cat: 'Sociedade/PJ', type: 'corporate', data: entity });
+                                    });
+                                    tasks.filter(t => t.responsible_id === id).forEach(t => neighbors.push({ label: t.title, icon: CheckCircle2, hex: '#f59e0b', bg: 'bg-amber-500', cat: 'Tarefa', type: 'task', data: t }));
                                 } else if (origin_type === 'asset') {
                                     const owner = persons.find(p => p.id === data.person_id);
-                                    if (owner) neighbors.push({ label: owner.full_name, icon: UserIcon, color: 'bg-blue-500', cat: 'Proprietário' });
+                                    if (owner) neighbors.push({ label: owner.full_name, icon: UserIcon, hex: '#3b82f6', bg: 'bg-blue-500', cat: 'Proprietário', type: 'person', data: owner });
                                     const lawsuit = lawsuits.find(l => l.id === data.lawsuit_id);
-                                    if (lawsuit) neighbors.push({ label: lawsuit.case_title || lawsuit.cnj_number, icon: Scale, color: 'bg-purple-500', cat: 'Processo' });
-                                    assetDocuments.filter(d => d.asset_id === id).forEach(d => neighbors.push({ label: d.title, icon: FileText, color: 'bg-slate-500', cat: 'Documento' }));
+                                    if (lawsuit) neighbors.push({ label: lawsuit.case_title || lawsuit.cnj_number, hex: '#8b5cf6', icon: Scale, bg: 'bg-purple-500', cat: 'Processo', type: 'lawsuit', data: lawsuit });
+                                    assetDocuments.filter(d => d.asset_id === id).forEach(d => neighbors.push({ label: d.title, icon: FileText, hex: '#64748b', bg: 'bg-slate-500', cat: 'Documento', type: 'document', data: d }));
                                 } else if (origin_type === 'task') {
                                     const lawsuit = lawsuits.find(l => l.id === data.lawsuit_id);
-                                    if (lawsuit) neighbors.push({ label: lawsuit.case_title || lawsuit.cnj_number, icon: Scale, color: 'bg-purple-500', cat: 'Processo' });
+                                    if (lawsuit) neighbors.push({ label: lawsuit.case_title || lawsuit.cnj_number, hex: '#8b5cf6', icon: Scale, bg: 'bg-purple-500', cat: 'Processo', type: 'lawsuit', data: lawsuit });
                                     const resp = team.find(t => t.id === data.responsible_id);
-                                    if (resp) neighbors.push({ label: resp.full_name, icon: Briefcase, color: 'bg-amber-500', cat: 'Responsável' });
+                                    if (resp) neighbors.push({ label: resp.full_name, icon: Briefcase, hex: '#f59e0b', bg: 'bg-amber-500', cat: 'Responsável', type: 'person', data: resp });
                                 } else if (origin_type === 'document') {
                                     if (data.origin_type === 'lawsuit') {
                                         const law = lawsuits.find(l => l.id === data.origin_id);
-                                        if (law) neighbors.push({ label: law.case_title || law.cnj_number, icon: Scale, color: 'bg-purple-500', cat: 'Origem' });
+                                        if (law) neighbors.push({ label: law.case_title || law.cnj_number, hex: '#8b5cf6', icon: Scale, bg: 'bg-purple-500', cat: 'Origem', type: 'lawsuit', data: law });
                                     } else if (data.origin_type === 'corporate') {
                                         const entity = corporateEntities.find(e => e.id === data.origin_id);
-                                        if (entity) neighbors.push({ label: entity.legal_name, icon: Building2, color: 'bg-blue-500', cat: 'Origem' });
+                                        if (entity) neighbors.push({ label: entity.legal_name, icon: Building2, hex: '#3b82f6', bg: 'bg-blue-500', cat: 'Origem', type: 'corporate', data: entity });
                                     } else if (data.origin_type === 'asset') {
                                         const asset = assets.find(a => a.id === data.origin_id);
-                                        if (asset) neighbors.push({ label: asset.title, icon: Shield, color: 'bg-emerald-500', cat: 'Origem' });
+                                        if (asset) neighbors.push({ label: asset.title, icon: Shield, hex: '#10b981', bg: 'bg-emerald-500', cat: 'Origem', type: 'asset', data: asset });
                                     }
                                 }
 
-                                return neighbors.map((n, i) => {
-                                    const angle = (i / neighbors.length) * 2 * Math.PI;
-                                    const x = Math.cos(angle) * radius;
-                                    const y = Math.sin(angle) * radius;
-                                    return (
+                                return (
+                                    <>
+                                        {/* SVG Background Lines */}
+                                        <svg className="absolute inset-0 w-full h-full pointer-events-none">
+                                            <defs>
+                                                <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                                    <stop offset="0%" stopColor="#6366f1" stopOpacity="0.8" />
+                                                    <stop offset="100%" stopColor="#6366f1" stopOpacity="0.1" />
+                                                </linearGradient>
+                                            </defs>
+                                            {neighbors.map((n, i) => {
+                                                const angle = (i / neighbors.length) * 2 * Math.PI;
+                                                const x2 = Math.cos(angle) * radius;
+                                                const y2 = Math.sin(angle) * radius;
+                                                return (
+                                                    <motion.line
+                                                        key={`line-${i}`}
+                                                        initial={{ pathLength: 0, opacity: 0 }}
+                                                        animate={{ pathLength: 1, opacity: 1 }}
+                                                        transition={{ duration: 1, delay: 0.5 + i * 0.1 }}
+                                                        x1="50%" y1="50%"
+                                                        x2={`calc(50% + ${x2}px)`} y2={`calc(50% + ${y2}px)`}
+                                                        stroke={n.hex}
+                                                        strokeWidth="2"
+                                                        strokeDasharray="4 4"
+                                                        className="opacity-20"
+                                                    />
+                                                );
+                                            })}
+                                        </svg>
+
+                                        {/* Center Node */}
                                         <motion.div
-                                            key={`node-${i}`}
-                                            initial={{ scale: 0, x: 0, y: 0 }}
-                                            animate={{ scale: 1, x: x, y: y }}
-                                            transition={{ type: 'spring', damping: 20, delay: 0.2 + i * 0.05 }}
-                                            className="absolute w-40 p-4 bg-white/10 backdrop-blur-md border border-white/10 rounded-3xl flex flex-col items-center text-center group cursor-pointer hover:bg-white/20 hover:border-white/30 transition-all hover:-translate-y-1 shadow-2xl"
+                                            drag
+                                            dragConstraints={{ left: -100, right: 100, top: -100, bottom: 100 }}
+                                            initial={{ scale: 0, rotate: -180 }}
+                                            animate={{ scale: 1, rotate: 0 }}
+                                            transition={{ type: 'spring', damping: 15 }}
+                                            className="relative z-20 w-48 h-48 bg-white dark:bg-slate-900 rounded-full border-4 border-indigo-600 shadow-[0_0_60px_rgba(79,70,229,0.3)] flex flex-col items-center justify-center p-6 text-center cursor-pointer group"
                                         >
-                                            <div className={`p-3 ${n.color} text-white rounded-2xl mb-3 shadow-lg group-hover:scale-110 transition-transform`}>
-                                                <n.icon size={20} />
+                                            <div className="absolute inset-0 rounded-full bg-indigo-600 opacity-0 group-hover:opacity-5 transition-opacity" />
+                                            {nexoData.origin_type === 'lawsuit' ? <Scale size={40} className="text-indigo-600 mb-2" /> : 
+                                            nexoData.origin_type === 'corporate' ? <Building2 size={40} className="text-indigo-600 mb-2" /> :
+                                            nexoData.origin_type === 'asset' ? <Shield size={40} className="text-indigo-600 mb-2" /> :
+                                            nexoData.origin_type === 'task' ? <CheckCircle2 size={40} className="text-indigo-600 mb-2" /> :
+                                            nexoData.origin_type === 'person' ? <UserIcon size={40} className="text-indigo-600 mb-2" /> :
+                                            <FileText size={40} className="text-indigo-600 mb-2" />}
+                                            <h4 className="text-xs font-black text-slate-800 dark:text-white uppercase leading-tight line-clamp-2">
+                                                {nexoData.title}
+                                            </h4>
+                                            <div className="mt-2 px-2 py-0.5 bg-indigo-50 dark:bg-indigo-900/30 rounded-full text-[8px] font-black text-indigo-600 uppercase tracking-widest border border-indigo-100 dark:border-indigo-800">
+                                                Principal
                                             </div>
-                                            <span className="text-[9px] font-black text-white/50 uppercase tracking-[0.2em] mb-1">{n.cat}</span>
-                                            <span className="text-[10px] font-bold text-white line-clamp-2 leading-tight">
-                                                {n.label}
-                                            </span>
                                         </motion.div>
-                                    );
-                                });
+
+                                        {/* Orbiting Nodes */}
+                                        {neighbors.map((n, i) => {
+                                            const angle = (i / neighbors.length) * 2 * Math.PI;
+                                            const x = Math.cos(angle) * radius;
+                                            const y = Math.sin(angle) * radius;
+                                            return (
+                                                <motion.div
+                                                    key={`node-${i}`}
+                                                    initial={{ scale: 0, x: 0, y: 0 }}
+                                                    animate={{ scale: 1, x: x, y: y }}
+                                                    transition={{ type: 'spring', damping: 20, delay: 0.2 + i * 0.05 }}
+                                                    onClick={() => n.type && n.data && handleOpenNexoVisual(n.type, n.data)}
+                                                    className="absolute w-40 p-4 bg-white/10 backdrop-blur-md border border-white/10 rounded-3xl flex flex-col items-center text-center group cursor-pointer hover:bg-white/20 hover:border-white/30 transition-all hover:scale-105 shadow-2xl z-30"
+                                                >
+                                                    <div className={`p-3 ${n.bg} text-white rounded-2xl mb-3 shadow-lg group-hover:scale-110 transition-transform`}>
+                                                        <n.icon size={20} />
+                                                    </div>
+                                                    <span className="text-[9px] font-black text-white/50 uppercase tracking-[0.2em] mb-1">{n.cat}</span>
+                                                    <span className="text-[10px] font-bold text-white line-clamp-2 leading-tight">
+                                                        {n.label}
+                                                    </span>
+                                                    {n.type && (
+                                                        <div className="mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <div className="px-2 py-0.5 bg-white/10 rounded-full text-[7px] font-black text-white uppercase tracking-widest">Explorar</div>
+                                                        </div>
+                                                    )}
+                                                </motion.div>
+                                            );
+                                        })}
+                                    </>
+                                );
                             })()}
                         </div>
 
@@ -6822,3 +6799,4 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
 };
 
 export default Nexus;
+
