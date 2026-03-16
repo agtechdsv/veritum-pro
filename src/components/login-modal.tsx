@@ -39,7 +39,10 @@ export function LoginModal() {
         setConfirmPassword('')
     }
 
-    const handleOpenChange = (open: boolean) => {
+    const handleOpenChange = async (open: boolean) => {
+        if (!open && mode === 'change_password') {
+            await supabase.auth.signOut();
+        }
         setIsOpen(open)
         if (!open) resetStates()
     }
@@ -68,9 +71,10 @@ export function LoginModal() {
             return
         }
 
-        if (data?.user?.user_metadata?.need_to_change_password) {
+        const meta = data?.user?.user_metadata;
+        if (meta?.need_to_change_password || meta?.force_password_reset) {
             setMode('change_password')
-            setSuccessMsg('Primeiro acesso com senha provisória detectado. Por favor, crie sua senha definitiva.')
+            setSuccessMsg('Ação necessária: crie sua senha definitiva para continuar.')
             setLoading(false)
             return
         }
@@ -127,7 +131,17 @@ export function LoginModal() {
         })
 
         if (error) {
-            setErrorMsg('Erro ao atualizar senha.')
+            console.error('Password update error:', error);
+            const isSamePassword = error.status === 422 || 
+                                 (error as any).code === 'same_password' || 
+                                 error.message?.toLowerCase().includes('different') ||
+                                 error.message?.toLowerCase().includes('same password');
+
+            if (isSamePassword) {
+                setErrorMsg('A nova senha deve ser diferente da senha que você usou para entrar agora.');
+            } else {
+                setErrorMsg('Erro ao atualizar senha.');
+            }
             setLoading(false)
             return
         }
@@ -260,6 +274,11 @@ export function LoginModal() {
                         </form>
                     )}
 
+                    {mode === 'change_password' && (
+                        <div className="mb-4 p-3 text-xs bg-amber-500/10 border border-amber-500/20 rounded-lg text-amber-500 font-medium">
+                            Atenção: Se você fechar esta janela agora, será desconectado e precisará entrar novamente com a senha provisória.
+                        </div>
+                    )}
                     {mode === 'change_password' && (
                         <form onSubmit={handleChangePassword} className="space-y-5 pt-2">
                             <div className="space-y-2">

@@ -456,8 +456,7 @@ const UserManagement: React.FC<Props> = ({ currentUser }) => {
                 city: unifiedFormData.city || undefined,
                 state: unifiedFormData.state || undefined,
                 pix_key: unifiedFormData.pix_key || undefined,
-                notes: unifiedFormData.notes || undefined,
-                master_user_id: parentId || undefined
+                notes: unifiedFormData.notes || undefined
             };
 
             // Remove any undefined explicitly just to be 100% safe

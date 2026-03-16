@@ -317,7 +317,7 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
 
                         {currentUser === undefined ? (
                             <div className="w-32 h-10 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-full" />
-                        ) : currentUser ? (
+                        ) : (currentUser && !currentUser.profile?.force_password_reset && !currentUser.user_metadata?.need_to_change_password) ? (
                             <div className="flex items-center gap-3">
                                 <Link
                                     href="/veritumpro"
@@ -380,6 +380,14 @@ function LandingPageContent({ theme, setTheme, resolvedTheme, mounted }: any) {
                                 }
 
                                 if (userToUse) {
+                                    const needsReset = userToUse.user_metadata?.force_password_reset ||
+                                        userToUse.user_metadata?.need_to_change_password ||
+                                        userToUse.profile?.force_password_reset;
+
+                                    if (needsReset) {
+                                        openAuth('login');
+                                        return;
+                                    }
                                     router.push('/veritumpro');
                                 } else {
                                     openAuth('register');

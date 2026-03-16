@@ -282,7 +282,10 @@ export const pt = {
                 done: 'Concluído',
                 late: 'Atrasado',
                 loading: 'Carregando...',
-                deleteConfirm: 'Tem certeza que deseja arquivar este processo? Ele poderá ser recuperado pelo administrador.'
+                deleteConfirm: 'Tem certeza que deseja arquivar este processo? Ele poderá ser recuperado pelo administrador.',
+                deleteConfirmTitle: 'Excluir Processo',
+                deleteSuccess: 'Processo excluído corretamente',
+                deleteError: 'Erro ao excluir processo'
             },
             table: {
                 headers: {

@@ -38,9 +38,9 @@ export class SupabaseTeamRepository implements ITeamRepository {
     }
 
     async create(data: Omit<TeamMember, 'id' | 'created_at' | 'updated_at'>): Promise<TeamMember> {
-        // Remove undefined values to prevent Supabase errors
+        // Remove undefined values and deprecated fields to prevent Supabase errors
         const cleanData = Object.fromEntries(
-            Object.entries(data).filter(([_, v]) => v !== undefined)
+            Object.entries(data).filter(([k, v]) => v !== undefined && k !== 'master_user_id')
         );
 
         const { data: result, error } = await this.client
@@ -54,9 +54,9 @@ export class SupabaseTeamRepository implements ITeamRepository {
     }
 
     async update(id: string, data: Partial<TeamMember>): Promise<TeamMember> {
-        // Remove undefined values to prevent Supabase errors
+        // Remove undefined values and deprecated fields to prevent Supabase errors
         const cleanData = Object.fromEntries(
-            Object.entries(data).filter(([_, v]) => v !== undefined)
+            Object.entries(data).filter(([k, v]) => v !== undefined && k !== 'master_user_id')
         );
 
         const { data: result, error } = await this.client

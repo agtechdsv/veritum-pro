@@ -112,19 +112,7 @@ export async function saveTeamMember(member: Partial<TeamMember>, targetUserId?:
         if (isUpdate && member.id) {
             result = await repo.update(member.id, member);
         } else {
-            // Tenta salvar com workspace_id, mas se falhar por coluna inexistente, tenta sem ela
-            try {
-                // @ts-ignore
-                result = await repo.create({ ...member, workspace_id: preferences.user_id } as any);
-            } catch (err: any) {
-                // PostgREST return code for column not found is often PGRST204 instead of 42703
-                if (err.code === '42703' || err.code === 'PGRST204') {
-                    // @ts-ignore
-                    result = await repo.create(member);
-                } else {
-                    throw err;
-                }
-            }
+            result = await repo.create(member as any);
         }
 
         revalidatePath('/veritumpro/users');

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { X, Mail, Lock, User, Chrome, ArrowRight, Scale, CheckCircle2, Circle, Eye, EyeOff } from 'lucide-react';
+import { X, Mail, Lock, User, Chrome, ArrowRight, Scale, CheckCircle2, Circle, Eye, EyeOff, ShieldAlert } from 'lucide-react';
 import { useTheme } from 'next-themes'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createMasterClient } from '@/lib/supabase/master'
@@ -345,7 +345,17 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
             })
 
             if (error) {
-                setError('Erro ao atualizar senha no sistema de autenticação.')
+                console.error('Password update error:', error);
+                const isSamePassword = error.status === 422 || 
+                                     (error as any).code === 'same_password' || 
+                                     error.message?.toLowerCase().includes('different') ||
+                                     error.message?.toLowerCase().includes('same password');
+                
+                if (isSamePassword) {
+                    setError('A nova senha não pode ser igual à senha provisória ou atual.');
+                } else {
+                    setError('Erro ao atualizar senha no sistema de autenticação.');
+                }
                 setLoading(false)
                 return
             }
@@ -494,12 +504,23 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
         }
     };
 
+    const handleDialogChange = async (open: boolean) => {
+        if (!open) {
+            if (currentMode === 'force-reset') {
+                const supabase = createMasterClient();
+                await supabase.auth.signOut();
+                // We don't need a full reload here yet, just onClose
+            }
+            onClose();
+        }
+    };
+
     return (
-        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <Dialog open={isOpen} onOpenChange={handleDialogChange}>
             <DialogContent className="sm:max-w-lg p-0 bg-transparent border-none shadow-none">
                 <div className={`relative w-full p-6 pt-10 rounded-[2.5rem] shadow-2xl border transition-colors ${theme === 'dark' ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
                     <DialogTitle className="sr-only">{currentMode === 'login' ? t('auth.signIn') : t('auth.signUp')}</DialogTitle>
-                    <button onClick={onClose} className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">
+                    <button onClick={handleDialogChange.bind(null, false)} className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">
                         <X size={20} />
                     </button>
 
@@ -604,7 +625,23 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                                 </button>
                             </form>
                         ) : currentMode === 'force-reset' ? (
-                            <form className="space-y-4" onSubmit={handleResetPassword}>
+                            <div className="space-y-6">
+                                <div className="p-4 rounded-[2rem] bg-indigo-50/50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 animate-in fade-in zoom-in duration-500">
+                                    <div className="flex items-start gap-3">
+                                        <div className="p-2 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-600/20">
+                                            <ShieldAlert size={18} />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-sm font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-tight leading-none mb-1">Acesso Restrito</h4>
+                                            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-bold leading-relaxed">
+                                                Para garantir a segurança dos seus dados, você deve definir uma senha definitiva agora. 
+                                                <span className="block mt-1 text-slate-400 italic">Se fechar esta janela, você será desconectado.</span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <form className="space-y-4" onSubmit={handleResetPassword}>
                                 <div className="relative">
                                     <Lock className="absolute left-4 top-3.5 text-slate-400" size={20} />
                                     <input
@@ -655,6 +692,7 @@ export function AuthModal({ isOpen, onClose, mode }: Props) {
                                     <p className="text-[10px] text-rose-500 font-bold uppercase tracking-wider text-center">{t('auth.errors.passwordsDoNotMatch')}</p>
                                 )}
                             </form>
+                        </div>
                         ) : (
                             <form className="space-y-4" onSubmit={handleEmailAuth}>
                                 {currentMode === 'register' && (

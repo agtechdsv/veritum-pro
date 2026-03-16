@@ -164,7 +164,17 @@ export default function LoginPage() {
         })
 
         if (error) {
-            setErrorMsg('Erro ao atualizar senha no sistema de autenticação.')
+            console.error('Password update error:', error);
+            const isSamePassword = error.status === 422 || 
+                                 (error as any).code === 'same_password' || 
+                                 error.message?.toLowerCase().includes('different') ||
+                                 error.message?.toLowerCase().includes('same password');
+            
+            if (isSamePassword) {
+                setErrorMsg('A nova senha não pode ser igual à senha atual ou à senha provisória que você acabou de usar.');
+            } else {
+                setErrorMsg('Erro ao atualizar senha no sistema de autenticação.');
+            }
             setLoading(false)
             return
         }

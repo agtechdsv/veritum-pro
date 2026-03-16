@@ -56,9 +56,12 @@ CREATE TABLE public.users (
   phone TEXT,
   access_group_id UUID, -- Referenciada via ALTER TABLE abaixo
   plan_id UUID,         -- Referenciada via ALTER TABLE abaixo
+  cloud_plan_id UUID,    -- ID do Plano de Infraestrutura (Supabase Privativo)
   parent_user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
   vip_active BOOLEAN DEFAULT false,
+  vip_points INTEGER DEFAULT 0,
   vip_code TEXT UNIQUE,
+  force_password_reset BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   CONSTRAINT users_email_key UNIQUE (email)
@@ -67,6 +70,23 @@ CREATE TABLE public.users (
 -- ============================================================================
 -- 3. REGISTRO DE INQUILINOS (TENANT REGISTRY / BYODB)
 -- ============================================================================
+CREATE TABLE IF NOT EXISTS public.cloud_plans (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  code_name varchar(50) UNIQUE NOT NULL,
+  name jsonb NOT NULL DEFAULT '{"pt": "", "en": "", "es": ""}'::jsonb,
+  badge jsonb DEFAULT '{"pt": "", "en": "", "es": ""}'::jsonb,
+  subtitle jsonb DEFAULT '{"pt": "", "en": "", "es": ""}'::jsonb,
+  price_monthly numeric NOT NULL DEFAULT 0,
+  discounts jsonb DEFAULT '{"quarterly": 0, "semiannual": 0, "yearly": 0}'::jsonb,
+  credits jsonb DEFAULT '{"pt": "", "en": "", "es": ""}'::jsonb,
+  need_more jsonb DEFAULT '{"pt": "", "en": "", "es": ""}'::jsonb,
+  features_title jsonb DEFAULT '{"pt": "", "en": "", "es": ""}'::jsonb,
+  features jsonb DEFAULT '[]'::jsonb,
+  is_active boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now()
+);
+
 CREATE TABLE public.tenant_configs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     owner_id UUID REFERENCES auth.users(id) NOT NULL UNIQUE,
@@ -181,6 +201,7 @@ CREATE TABLE public.access_groups (
 
 -- Link tardio para evitar erro de dependência
 ALTER TABLE public.users ADD CONSTRAINT fk_user_access_group FOREIGN KEY (access_group_id) REFERENCES public.access_groups(id) ON DELETE SET NULL;
+ALTER TABLE public.users ADD CONSTRAINT fk_user_cloud_plan FOREIGN KEY (cloud_plan_id) REFERENCES public.cloud_plans(id) ON DELETE SET NULL;
 
 CREATE TABLE public.roles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -290,7 +311,7 @@ BEGIN
     SELECT r.name, ng.id, new_admin_id
     FROM public.roles r
     JOIN public.access_groups og ON og.id = r.access_group_id
-    JOIN public.access_groups ng ON ng.name = og.name AND ng.admin_id = new_admin_id
+    JOIN public.access_groups ng ON ng.name->>'pt' = og.name->>'pt' AND ng.admin_id = new_admin_id
     WHERE r.admin_id = master_id ON CONFLICT DO NOTHING;
 
     -- Permissões
@@ -506,8 +527,8 @@ CREATE POLICY "Public: Read plan permissions" ON public.plan_permissions FOR SEL
 CREATE POLICY "Users: Manage own profile" ON public.users FOR ALL USING (auth.uid() = id);
 CREATE POLICY "Admins: Manage team members" ON public.users FOR ALL USING (auth.uid() = parent_user_id);
 CREATE POLICY "Users: View colleagues and parent" ON public.users FOR SELECT USING (
-    parent_user_id = (SELECT parent_user_id FROM public.users WHERE id = auth.uid()) OR
-    id = (SELECT parent_user_id FROM public.users WHERE id = auth.uid())
+    parent_user_id = (auth.jwt() -> 'user_metadata' ->> 'parent_user_id')::uuid OR
+    id = (auth.jwt() -> 'user_metadata' ->> 'parent_user_id')::uuid
 );
 CREATE POLICY "Admins manage own config" ON public.tenant_configs FOR ALL USING (auth.uid() = owner_id OR (auth.jwt() -> 'user_metadata' ->> 'role') = 'Master');
 CREATE POLICY "Admins manage organization" ON public.organizations FOR ALL USING (auth.uid() = admin_id OR (auth.jwt() -> 'user_metadata' ->> 'role') = 'Master');
@@ -894,9 +915,10 @@ ON CONFLICT (feature_key) DO UPDATE SET
 -- ----------------------------------------------------------------------------
 -- 3. PLANOS (GRADE DE VENDAS)
 -- ----------------------------------------------------------------------------
-INSERT INTO "public"."plans" ("name", "short_desc", "monthly_price", "monthly_discount", "quarterly_discount", "semiannual_discount", "yearly_discount", "features", "recommended", "active", "order_index", "is_combo") VALUES 
+INSERT INTO "public"."plans" ("id", "name", "short_desc", "monthly_price", "monthly_discount", "quarterly_discount", "semiannual_discount", "yearly_discount", "features", "recommended", "active", "order_index", "is_combo") VALUES 
 -- COMBOS (is_combo = true)
 (
+  '4e375276-8805-4c07-88f5-932fccf42e61',
   '{"pt": "Plano START", "en": "START Plan", "es": "Plan START"}'::jsonb, 
   '{"pt":"A base sólida para advogados autônomos e pequenos escritórios entrarem na era digital.","en":"The solid foundation for solo attorneys and small firms to enter the digital age.","es":"La base sólida para abogados autónomos y pequeños despachos para entrar en la era digital."}'::jsonb, 
   149.00, 5, 7, 10, 15, 
@@ -904,6 +926,7 @@ INSERT INTO "public"."plans" ("name", "short_desc", "monthly_price", "monthly_di
   false, true, 0, true
 ),
 (
+  'e6328330-9b4b-483a-8b1b-ad3ef3f6e80b',
   '{"pt": "Plano GROWTH", "en": "GROWTH Plan", "es": "Plan GROWTH"}'::jsonb, 
   '{"pt":"O ecossistema completo para alta performance jurídica com IA e automação de atendimento.","en":"The complete ecosystem for high legal performance with AI and service automation.","es":"El ecosistema completo para alto rendimiento legal con IA y automatización de procesos."}'::jsonb, 
   450.00, 5, 10, 15, 20, 
@@ -911,6 +934,7 @@ INSERT INTO "public"."plans" ("name", "short_desc", "monthly_price", "monthly_di
   true, true, 1, true
 ),
 (
+  'd9ff73a7-38a8-4416-b531-16183bcb4be7',
   '{"pt": "Plano STRATEGY", "en": "STRATEGY Plan", "es": "Plan STRATEGY"}'::jsonb, 
   '{"pt":"Infraestrutura estratégica para grandes bancas. Foco em inteligência preditiva e dados.","en":"Strategic infrastructure for large firms. Focus on predictive intelligence and data.","es":"Infraestructura estratégica para grandes despachos. Foco en inteligencia predictiva y datos."}'::jsonb, 
   1500.00, 5, 10, 15, 20, 
@@ -920,6 +944,7 @@ INSERT INTO "public"."plans" ("name", "short_desc", "monthly_price", "monthly_di
 
 -- STANDALONES (is_combo = false)
 (
+  '7a14e6b1-3e4b-4a5f-8c3a-2b4c5d6e7f8a',
   '{"pt": "Sentinel Radar", "en": "Sentinel Radar", "es": "Sentinel Radar"}'::jsonb, 
   '{"pt":"Monitoramento inteligente de processos e diários oficiais com Captura Antecipada.","en":"Smart case and official gazette monitoring with Early Capture.","es":"Monitoreo inteligente de procesos y diarios oficiales con Captura Anticipada."}'::jsonb, 
   89.90, 5, 7, 10, 15, 
@@ -927,6 +952,7 @@ INSERT INTO "public"."plans" ("name", "short_desc", "monthly_price", "monthly_di
   false, true, 3, false
 ),
 (
+  '8125f7c2-4f5c-4b6d-9d4b-3c5d6e7f8a9b',
   '{"pt": "Sentinel 360º", "en": "Sentinel 360º", "es": "Sentinel 360º"}'::jsonb, 
   '{"pt":"Inteligência total: Tribunais + Clipping de notícias, jornais e monitoramento de marca.","en":"Total intelligence: Courts + News clipping, newspapers and brand monitoring.","es":"Inteligencia total: Tribunales + Clipping de noticias, periódicos y monitoreo de marca."}'::jsonb, 
   249.00, 5, 7, 10, 15, 
@@ -934,6 +960,7 @@ INSERT INTO "public"."plans" ("name", "short_desc", "monthly_price", "monthly_di
   false, true, 4, false
 ),
 (
+  '9236a8d3-506d-4c7e-ae5c-4d6e7f8a9b0c',
   '{"pt": "Cognitio Pro", "en": "Cognitio Pro", "es": "Cognitio Pro"}'::jsonb, 
   '{"pt":"Jurimetria de entrada para decisões baseadas em dados e probabilidade de êxito.","en":"Entry-level jurimetrics for data-driven decisions and success probability.","es":"Jurimetría básica para decisiones basadas en datos y probabilidad de éxito."}'::jsonb, 
   399.00, 5, 7, 10, 15, 
@@ -941,6 +968,7 @@ INSERT INTO "public"."plans" ("name", "short_desc", "monthly_price", "monthly_di
   false, true, 5, false
 ),
 (
+  'a347b9e4-617e-4d8f-bf6d-5e7f8a9b0c1d',
   '{"pt": "Scriptor Pro", "en": "Scriptor Pro", "es": "Scriptor Pro"}'::jsonb, 
   '{"pt":"O copiloto definitivo para elaboração de peças processuais com IA generativa.","en":"The ultimate copilot for drafting procedural pieces with generative AI.","es":"El copiloto definitivo para la elaboración de piezas procesales con IA generativa."}'::jsonb, 
   149.00, 5, 7, 10, 15, 
@@ -949,6 +977,7 @@ INSERT INTO "public"."plans" ("name", "short_desc", "monthly_price", "monthly_di
 ),
 -- TRIAL (is_combo = false)
 (
+  'b458ca05-728f-4e90-c07e-6f8a9b0c1d2e',
   '{"pt": "Trial 14 Dias", "en": "14-Day Trial", "es": "Prueba 14 Días"}'::jsonb, 
   '{"pt":"Acesso total gratuito por 14 dias.","en":"Full free access for 14 days.","es":"Acceso total gratuito por 14 días."}'::jsonb, 
   0, 0, 0, 0, 0, 
@@ -1151,6 +1180,13 @@ WHERE feature_key IN ('vox_portal', 'vox_traducao_ia', 'vox_whatsapp');
 -- ----------------------------------------------------------------------------
 -- 7. LÓGICA DE AUTO-SETUP MASTER (MULTI-ROLES GRANULARES)
 -- ----------------------------------------------------------------------------
+
+-- A. Primeiro, garantimos que o Usuário Master exista
+INSERT INTO "public"."users" ("id", "name", "email", "role", "active", "avatar_url", "cpf_cnpj", "phone", "access_group_id", "plan_id", "parent_user_id", "created_at", "updated_at", "cloud_plan_id", "vip_active", "vip_points", "vip_code", "force_password_reset") 
+VALUES ('c3b6d81d-73e3-46ad-bfd5-ed6f80ee3042', 'AG Tech Tecnologia', 'agtech.dsv@gmail.com', 'Master', 'true', 'https://lh3.googleusercontent.com/a/ACg8ocKwlwbdHWqWnVmIAmirgurAlKHByzXSNFi1svn4bPFkqv_jqgE=s96-c', null, null, null, 'd9ff73a7-38a8-4416-b531-16183bcb4be7', null, '2026-03-02 02:37:43.681369+00', '2026-03-06 17:30:00.514114+00', null, 'true', '0', 'VIP-MASTER-TESTE', 'false')
+ON CONFLICT (id) DO NOTHING;
+
+-- B. Agora populamos os grupos baseados no Master
 DO $$
 DECLARE
   master_id uuid;
@@ -1358,3 +1394,58 @@ BEGIN
     END IF;
 
 END $$;
+
+-- ============================================================================
+-- 11. MASTER SEED (CLOUD PLANS & USERS)
+-- ============================================================================
+
+-- A. Inserir Planos Cloud Iniciais
+INSERT INTO public.cloud_plans (code_name, name, badge, subtitle, price_monthly, discounts, credits, need_more, features_title, features)
+VALUES 
+('cloud_pro', 
+ '{"pt": "Cloud Professional", "en": "Cloud Professional", "es": "Cloud Professional"}', 
+ '{"pt": "ESCOLHA DO GESTOR", "en": "MANAGER CHOICE", "es": "ELECCIÓN DEL GERENTE"}', 
+ '{"pt": "Alta performance e recursos avançados para escritórios em fase de expansão.", "en": "High performance and advanced features for expanding law firms.", "es": "Alto rendimiento y funções avançadas para despachos em expansão."}', 
+ 249.90, 
+ '{"quarterly": 0, "semiannual": 0, "yearly": 0}', 
+ '{"pt": "Créditos Veritum (R$ 55,00) inclusos", "en": "Veritum Credits ($10) included", "es": "Veritum Credits ($10) incluidos"}', 
+ '{"pt": "Escalabilidade sob demanda", "en": "Scalability on demand", "es": "Escalabilidad a pedido"}', 
+ '{"pt": "Recursos Inclusos no Plano:", "en": "Features Included in the Plan:", "es": "Funciones incluidas en el plan:"}', 
+ '[{"category": "compute", "text": "100.000 Usuários Ativos (MAU)", "isSub": false}, {"category": "compute", "text": "após, R$ 0,05 por MAU", "isSub": true}, {"category": "storage", "text": "8 GB de Disco Dedicado", "isSub": false}, {"category": "storage", "text": "após, R$ 1,25 por GB", "isSub": true}, {"category": "storage", "text": "250 GB de Tráfego Egresso", "isSub": false}, {"category": "storage", "text": "após, R$ 0,95 por GB", "isSub": true}, {"category": "250 GB de Rede em Cache", "text": "250 GB de Rede em Cache", "isSub": false}, {"category": "storage", "text": "após, R$ 0,40 por GB", "isSub": true}, {"category": "storage", "text": "100 GB de Storage de Arquivos", "isSub": false}, {"category": "storage", "text": "após, R$ 0,25 por GB", "isSub": true}, {"category": "security", "text": "Suporte Técnico Prioritário", "isSub": false}, {"category": "security", "text": "Backups Diários (7 dias de retenção)", "isSub": false}, {"category": "security", "text": "Logs de Sistema (7 dias)", "isSub": false}]'
+),
+('cloud_enterprise', 
+ '{"pt": "Cloud Enterprise", "en": "Cloud Enterprise", "es": "Cloud Enterprise"}', 
+ '{"pt": "COMPLIANCE TOTAL", "en": "FULL COMPLIANCE", "es": "CUMPLIMIENTO TOTAL"}', 
+ '{"pt": "Segurança de nível bancário e conformidade rigorosa para grandes corporações.", "en": "Bank-grade security and strict compliance for large corporations.", "es": "Bank-grade security and strict compliance for large corporations."}', 
+ 4399.90, 
+ '{"quarterly": 0, "semiannual": 0, "yearly": 0}', 
+ '{"pt": "Créditos Veritum (R$ 55,00) inclusos", "en": "Veritum Credits ($10) included", "es": "Veritum Credits ($10) incluidos"}', 
+ '{"pt": "Soluções Enterprise", "en": "Enterprise Solutions", "es": "Soluciones Empresariales"}', 
+ '{"pt": "Tudo do Professional, mais:", "en": "Everything in Professional, plus:", "es": "Everything in Professional, plus:"}', 
+ '[{"category": "security", "text": "Certificação SOC2", "isSub": false}, {"category": "security", "text": "Acesso Restrito (Read-only / Project-scope)", "isSub": false}, {"category": "security", "text": "Compatibilidade HIPAA (Add-on)", "isSub": false}, {"category": "security", "text": "Single Sign-On (SSO) para Gestores", "isSub": false}, {"category": "security", "text": "SLAs de Atendimento Prioritário", "isSub": false}, {"category": "security", "text": "Backups Estendidos (14 dias)", "isSub": false}, {"category": "security", "text": "Retenção de Logs em Massa (28 dias)", "isSub": false}, {"category": "security", "text": "Monitoramento de Drenos de Log", "isSub": false}, {"category": "security", "text": "após, R$ 479,90 por dreno extra", "isSub": true}]'
+)
+ON CONFLICT (code_name) DO UPDATE SET 
+  name = EXCLUDED.name,
+  badge = EXCLUDED.badge,
+  subtitle = EXCLUDED.subtitle,
+  price_monthly = EXCLUDED.price_monthly,
+  features_title = EXCLUDED.features_title,
+  features = EXCLUDED.features;
+
+-- Inserção de usuário Master movida para cima para permitir seeding de grupos.
+
+-- ============================================================================
+-- 12. CONFIGURAÇÃO DE REALTIME (MASTER DB)
+-- ============================================================================
+DROP PUBLICATION IF EXISTS supabase_realtime;
+CREATE PUBLICATION supabase_realtime FOR TABLE 
+    public.users, 
+    public.user_subscriptions, 
+    public.plans, 
+    public.payments, 
+    public.demo_requests,
+    public.organizations,
+    public.tenant_configs,
+    public.access_groups,
+    public.roles,
+    public.group_permissions;

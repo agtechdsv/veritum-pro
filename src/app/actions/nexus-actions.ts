@@ -481,9 +481,40 @@ export async function listCorporateEntities(searchTerm?: string, targetUserId?: 
 
 export async function saveCorporateEntity(entity: Partial<CorporateEntity>, targetUserId?: string) {
     try {
-        const { credentials, preferences } = await resolveSecurityContext(targetUserId);
+        const { credentials, preferences, userId } = await resolveSecurityContext(targetUserId);
         const repo = RepositoryFactory.getCorporateRepository(credentials, preferences);
-        return await repo.saveEntity(entity);
+        const timelineRepo = RepositoryFactory.getTimelineRepository(credentials, preferences);
+
+        let oldEntity: CorporateEntity | null = null;
+        if (entity.id) {
+            oldEntity = await repo.getEntityById(entity.id);
+        }
+
+        const saved = await repo.saveEntity(entity);
+
+        // Audit Trail
+        if (oldEntity && entity.status && oldEntity.status !== entity.status) {
+            await timelineRepo.save({
+                entity_type: 'corporate',
+                entity_id: saved.id,
+                action: 'STATUS_CHANGE',
+                description: `Alterou status de "${oldEntity.status}" para "${entity.status}"`,
+                old_values: { status: oldEntity.status },
+                new_values: { status: entity.status },
+                user_id: userId
+            });
+        } else if (!oldEntity) {
+            await timelineRepo.save({
+                entity_type: 'corporate',
+                entity_id: saved.id,
+                action: 'CREATE',
+                description: `Entidade corporativa criada`,
+                new_values: saved,
+                user_id: userId
+            });
+        }
+
+        return saved;
     } catch (error: any) {
         console.error('Server Action Error (saveCorporateEntity):', error);
         throw error;

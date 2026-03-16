@@ -241,7 +241,10 @@ export const en = {
                 done: 'Done',
                 late: 'Overdue',
                 loading: 'Loading...',
-                deleteConfirm: 'Are you sure you want to archive this case? It can be recovered by the administrator.'
+                deleteConfirm: 'Are you sure you want to archive this case? It can be recovered by the administrator.',
+                deleteConfirmTitle: 'Delete Case',
+                deleteSuccess: 'Case deleted successfully',
+                deleteError: 'Error deleting case'
             },
             table: {
                 headers: {
