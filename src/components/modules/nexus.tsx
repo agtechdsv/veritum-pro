@@ -796,7 +796,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                         const result = await listAssetDocuments(id, targetUserId);
                         if (result.data) setAssetDocuments(result.data);
                     } else if (origin_type === 'person') {
-                        // NavegaÃ§Ã£o profunda: buscar participaÃ§Ãµes societÃ¡rias da pessoa
+                        // Navegação profunda: buscar participações societárias da pessoa
                         const { listPersonParticipations } = await import('@/app/actions/nexus-actions');
                         const result = await listPersonParticipations(id, targetUserId);
                         if (result.data) {
@@ -935,7 +935,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 setIsLawsuitModalOpen(true);
                 setActiveLawsuitTab('docs');
             } else {
-                toast.error('Processo nÃ£o encontrado nos dados carregados.');
+                toast.error('Processo não encontrado nos dados carregados.');
             }
         } else if (origin_type === 'asset') {
             const asset = assets.find(a => a.id === origin_id);
@@ -944,7 +944,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 setIsAssetModalOpen(true);
                 setActiveAssetTab('docs');
             } else {
-                toast.error('Ativo nÃ£o encontrado nos dados carregados.');
+                toast.error('Ativo não encontrado nos dados carregados.');
             }
         } else if (origin_type === 'corporate') {
             const entity = corporateEntities.find(e => e.id === origin_id);
@@ -6670,14 +6670,18 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                     const resp = team.find(t => t.id === data.responsible_id);
                                     if (resp) neighbors.push({ label: resp.full_name, icon: Briefcase, hex: '#f59e0b', bg: 'bg-amber-500', cat: 'Responsável', type: 'person', data: resp });
                                 } else if (origin_type === 'document') {
-                                    if (data.origin_type === 'lawsuit') {
-                                        const law = lawsuits.find(l => l.id === data.origin_id);
+                                    // Detect origin based on available IDs (handles specific document types or global ones)
+                                    const oType = data.origin_type || (data.lawsuit_id ? 'lawsuit' : data.asset_id ? 'asset' : data.entity_id ? 'corporate' : null);
+                                    const oId = data.origin_id || data.lawsuit_id || data.asset_id || data.entity_id;
+
+                                    if (oType === 'lawsuit') {
+                                        const law = lawsuits.find(l => l.id === oId);
                                         if (law) neighbors.push({ label: law.case_title || law.cnj_number, hex: '#8b5cf6', icon: Scale, bg: 'bg-purple-500', cat: 'Origem', type: 'lawsuit', data: law });
-                                    } else if (data.origin_type === 'corporate') {
-                                        const entity = corporateEntities.find(e => e.id === data.origin_id);
+                                    } else if (oType === 'corporate') {
+                                        const entity = corporateEntities.find(e => e.id === oId);
                                         if (entity) neighbors.push({ label: entity.legal_name, icon: Building2, hex: '#3b82f6', bg: 'bg-blue-500', cat: 'Origem', type: 'corporate', data: entity });
-                                    } else if (data.origin_type === 'asset') {
-                                        const asset = assets.find(a => a.id === data.origin_id);
+                                    } else if (oType === 'asset') {
+                                        const asset = assets.find(a => a.id === oId);
                                         if (asset) neighbors.push({ label: asset.title, icon: Shield, hex: '#10b981', bg: 'bg-emerald-500', cat: 'Origem', type: 'asset', data: asset });
                                     }
                                 }
