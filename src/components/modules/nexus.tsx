@@ -840,6 +840,95 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         }, 300);
     };
 
+    const handleDownloadFile = async (url: string, filename: string) => {
+        try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(blobUrl);
+        } catch (error) {
+            console.error('Download error:', error);
+            // Fallback: open in new tab if fetch fails
+            window.open(url, '_blank');
+        }
+    };
+
+    const handleEditGlobalDocumentOrigin = async (doc: GlobalDocument) => {
+        const { origin_type, origin_id } = doc;
+        
+        if (origin_type === 'lawsuit') {
+            const lawsuit = lawsuits.find(l => l.id === origin_id);
+            if (lawsuit) {
+                setEditingLawsuit(lawsuit);
+                setIsLawsuitModalOpen(true);
+                setActiveLawsuitTab('docs');
+            } else {
+                toast.error('Processo não encontrado nos dados carregados.');
+            }
+        } else if (origin_type === 'asset') {
+            const asset = assets.find(a => a.id === origin_id);
+            if (asset) {
+                setEditingAsset(asset);
+                setIsAssetModalOpen(true);
+                setActiveAssetTab('docs');
+            } else {
+                toast.error('Ativo não encontrado nos dados carregados.');
+            }
+        } else if (origin_type === 'corporate') {
+            const entity = corporateEntities.find(e => e.id === origin_id);
+            if (entity) {
+                handleEditEntity(entity, 'docs');
+            } else {
+                toast.error('Entidade não encontrada nos dados carregados.');
+            }
+        }
+    };
+
+    const handleDeleteGlobalDocument = async (doc: GlobalDocument) => {
+        const { origin_type, id, title, file_url } = doc;
+        let confirmTitle = 'Excluir Documento';
+        
+        triggerConfirm(
+            confirmTitle,
+            `Deseja realmente remover o documento "${title}"? Esta ação não pode ser desfeita.`,
+            async () => {
+                try {
+                    if (file_url) {
+                        const path = extractStoragePath(file_url, 'nexus-documents');
+                        if (path) {
+                            const supabase = createDynamicClient(contextCreds.supabaseUrl, contextCreds.supabaseAnonKey);
+                            await supabase.storage.from('nexus-documents').remove([path]);
+                        }
+                    }
+
+                    if (origin_type === 'lawsuit') {
+                        await deleteLawsuitDocument(id, selectedUserId);
+                    } else if (origin_type === 'asset') {
+                        await deleteAssetDocument(id, selectedUserId);
+                    } else if (origin_type === 'corporate') {
+                        await deleteCorporateDocument(id, selectedUserId);
+                    }
+
+                    setGlobalDocuments(prev => prev.filter(d => d.id !== id));
+                    setLawsuitDocuments(prev => prev.filter(d => d.id !== id));
+                    setAssetDocuments(prev => prev.filter(d => d.id !== id));
+                    setCorporateDocuments(prev => prev.filter(d => d.id !== id));
+                    
+                    toast.success('Documento removido com sucesso');
+                } catch (err) {
+                    console.error('Error deleting global document:', err);
+                    toast.error('Erro ao remover documento');
+                }
+            }
+        );
+    };
+
     const handleSaveLawsuit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -3929,16 +4018,31 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                     {doc.event_date ? new Date(doc.event_date).toLocaleDateString('pt-BR') : 'Sem Data'}
                                                                 </span>
                                                             </div>
-                                                            {doc.file_url && (
-                                                                <a 
-                                                                    href={doc.file_url} 
-                                                                    download
-                                                                    className="p-2 bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all rounded-xl"
-                                                                    title="Download"
+                                                            <div className="flex items-center gap-1">
+                                                                {doc.file_url && (
+                                                                    <button 
+                                                                        onClick={() => handleDownloadFile(doc.file_url, doc.title || 'documento')}
+                                                                        className="p-2 bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all rounded-xl"
+                                                                        title="Fazer Download"
+                                                                    >
+                                                                        <Download size={16} />
+                                                                    </button>
+                                                                )}
+                                                                <button 
+                                                                    onClick={() => handleEditGlobalDocumentOrigin(doc)}
+                                                                    className="p-2 bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all rounded-xl"
+                                                                    title={doc.origin_type === 'lawsuit' ? 'Ir para o Processo' : doc.origin_type === 'asset' ? 'Ir para o Ativo' : 'Ir para o Societário'}
                                                                 >
-                                                                    <Download size={16} />
-                                                                </a>
-                                                            )}
+                                                                    <ArrowRight size={16} />
+                                                                </button>
+                                                                <button 
+                                                                    onClick={() => handleDeleteGlobalDocument(doc)}
+                                                                    className="p-2 bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all rounded-xl"
+                                                                    title="Excluir Documento"
+                                                                >
+                                                                    <Trash2 size={16} />
+                                                                </button>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -5198,15 +5302,13 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                 </div>
                                                                 <div className="flex items-center gap-2">
                                                                     {doc.file_url && (
-                                                                        <a
-                                                                            href={doc.file_url}
-                                                                            target="_blank"
-                                                                            rel="noopener noreferrer"
+                                                                        <button
+                                                                            onClick={() => handleDownloadFile(doc.file_url!, doc.title || 'documento')}
                                                                             className="p-3 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-xl transition-all"
-                                                                            title="Download / Visualizar"
+                                                                            title="Fazer Download"
                                                                         >
                                                                             <Download size={18} />
-                                                                        </a>
+                                                                        </button>
                                                                     )}
                                                                     <button
                                                                         type="button"
@@ -5567,15 +5669,13 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                             Editar
                                                                         </button>
                                                                         {doc.file_url && (
-                                                                            <a 
-                                                                                href={doc.file_url} 
-                                                                                target="_blank" 
-                                                                                rel="noopener noreferrer"
+                                                                            <button 
+                                                                                onClick={() => handleDownloadFile(doc.file_url!, doc.title || 'documento')}
                                                                                 className="p-2 text-slate-400 hover:text-indigo-600 transition-colors"
-                                                                                title="Download / Visualizar"
+                                                                                title="Fazer Download"
                                                                             >
                                                                                 <Download size={16} />
-                                                                            </a>
+                                                                            </button>
                                                                         )}
                                                                     </div>
                                                                     <button 
