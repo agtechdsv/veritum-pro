@@ -596,3 +596,15 @@ export interface TimelineEntry {
     // Helper fields
     user_name?: string;
 }
+
+export interface GlobalDocument {
+    id: string;
+    title: string;
+    document_type: string;
+    file_url: string;
+    created_at?: string;
+    event_date?: string;
+    origin_type: 'lawsuit' | 'corporate' | 'asset';
+    origin_id: string;
+    origin_name: string;
+}

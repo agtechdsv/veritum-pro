@@ -1,6 +1,6 @@
 'use server';
 
-import { Lawsuit, Task, CalendarEvent, Credentials, UserPreferences, Asset, CorporateEntity, Shareholder, CorporateDocument, LawsuitDocument, AssetDocument, TimelineEntry } from '@/types';
+import { Lawsuit, Task, CalendarEvent, Credentials, UserPreferences, Asset, CorporateEntity, Shareholder, CorporateDocument, LawsuitDocument, AssetDocument, TimelineEntry, GlobalDocument } from '@/types';
 import { RepositoryFactory } from '@/lib/db/repositories/repository-factory';
 import { createMasterServerClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -855,6 +855,76 @@ export async function deleteCorporateDocument(id: string, targetUserId?: string)
         return await repo.deleteDocument(id);
     } catch (error: any) {
         console.error('Server Action Error (deleteCorporateDocument):', error);
+        throw error;
+    }
+}
+export async function listAllGlobalDocuments(targetUserId?: string) {
+    try {
+        const { credentials, preferences } = await resolveSecurityContext(targetUserId);
+        const supabase = DatabaseService.getClient(credentials);
+
+        const [lawDocs, corpDocs, assetDocs, lawsuits, corps, assets] = await Promise.all([
+            supabase.from('legal_documents').select('*'),
+            supabase.from('corporate_documents').select('*'),
+            supabase.from('asset_documents').select('*'),
+            supabase.from('lawsuits').select('id, case_title'),
+            supabase.from('corporate_entities').select('id, legal_name'),
+            supabase.from('assets').select('id, title')
+        ]);
+
+        const globalDocs: GlobalDocument[] = [];
+
+        lawDocs.data?.forEach((d: any) => {
+            const origin = lawsuits.data?.find((l: any) => l.id === d.lawsuit_id);
+            globalDocs.push({
+                id: d.id,
+                title: d.title,
+                document_type: d.document_type,
+                file_url: d.file_url,
+                created_at: d.created_at,
+                event_date: d.event_date,
+                origin_type: 'lawsuit',
+                origin_id: d.lawsuit_id,
+                origin_name: origin?.case_title || 'Processo Desconhecido'
+            });
+        });
+
+        corpDocs.data?.forEach((d: any) => {
+            const origin = corps.data?.find((c: any) => c.id === d.entity_id);
+            globalDocs.push({
+                id: d.id,
+                title: d.title,
+                document_type: d.document_type,
+                file_url: d.file_url,
+                created_at: d.created_at,
+                event_date: d.event_date,
+                origin_type: 'corporate',
+                origin_id: d.entity_id,
+                origin_name: origin?.legal_name || 'Entidade Desconhecida'
+            });
+        });
+
+        assetDocs.data?.forEach((d: any) => {
+            const origin = assets.data?.find((a: any) => a.id === d.asset_id);
+            globalDocs.push({
+                id: d.id,
+                title: d.title,
+                document_type: d.document_type,
+                file_url: d.file_url,
+                created_at: d.created_at,
+                event_date: d.event_date,
+                origin_type: 'asset',
+                origin_id: d.asset_id,
+                origin_name: origin?.title || 'Ativo Desconhecido'
+            });
+        });
+
+        // Sort by creation date descending
+        globalDocs.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+
+        return { data: globalDocs };
+    } catch (error: any) {
+        console.error('Server Action Error (listAllGlobalDocuments):', error);
         throw error;
     }
 }

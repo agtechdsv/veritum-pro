@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Credentials, Lawsuit, LawsuitDocument, Task, CalendarEvent, User, Person, TeamMember, Asset, CorporateEntity, Shareholder, CorporateDocument, TaxRegime, EntityStatus, EntityType, AssetDocument, TimelineEntry } from '@/types';
-import { Plus, MoreHorizontal, Calendar, Scale, Search, Filter, LayoutDashboard, ArrowRight, AlertTriangle, CheckCircle2, Clock, MapPin, Shield, User as UserIcon, Users, Save, XCircle, Pencil, ChevronRight, ChevronLeft, ChevronDown, Zap, Lock as LockIcon, Trash2, LayoutGrid, List, Building2, FileText, PieChart, Briefcase, Upload, Check, Loader2, Download, Trello, History } from 'lucide-react';
+import { Credentials, Lawsuit, LawsuitDocument, Task, CalendarEvent, User, Person, TeamMember, Asset, CorporateEntity, Shareholder, CorporateDocument, TaxRegime, EntityStatus, EntityType, AssetDocument, TimelineEntry, GlobalDocument } from '@/types';
+import { Plus, MoreHorizontal, Calendar, Scale, Search, Filter, LayoutDashboard, ArrowRight, AlertTriangle, CheckCircle2, Clock, MapPin, Shield, User as UserIcon, Users, Save, XCircle, Pencil, ChevronRight, ChevronLeft, ChevronDown, Zap, Lock as LockIcon, Trash2, LayoutGrid, List, Building2, FileText, PieChart, Briefcase, Upload, Check, Loader2, Download, Trello, History, ExternalLink } from 'lucide-react';
 import { createDynamicClient } from '@/utils/supabase/client';
 import IntelligenceWidget from '../shared/intelligence-widget';
 import { useTranslation } from '@/contexts/language-context';
 import PersonManagement from './person-management';
 import { useModule } from '@/app/veritumpro/layout';
 import { listPersons } from '@/app/actions/crm-actions';
-import { listLawsuits, saveLawsuit, deleteLawsuit, listTasks, saveTask, deleteTask, listEvents, saveEvent, deleteEvent, listTeam, getCitiesByState, listAssets, saveAsset, deleteAsset, listCorporateEntities, saveCorporateEntity, deleteCorporateEntity, listShareholders, saveShareholder, deleteShareholder, listCorporateDocuments, saveCorporateDocument, deleteCorporateDocument, listLawsuitDocuments, saveLawsuitDocument, deleteLawsuitDocument, listAssetDocuments, saveAssetDocument, deleteAssetDocument, listTimelineEntries } from '@/app/actions/nexus-actions';
+import { listLawsuits, saveLawsuit, deleteLawsuit, listTasks, saveTask, deleteTask, listEvents, saveEvent, deleteEvent, listTeam, getCitiesByState, listAssets, saveAsset, deleteAsset, listCorporateEntities, saveCorporateEntity, deleteCorporateEntity, listShareholders, saveShareholder, deleteShareholder, listCorporateDocuments, saveCorporateDocument, deleteCorporateDocument, listLawsuitDocuments, saveLawsuitDocument, deleteLawsuitDocument, listAssetDocuments, saveAssetDocument, deleteAssetDocument, listTimelineEntries, listAllGlobalDocuments } from '@/app/actions/nexus-actions';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from '@/components/ui/toast';
 import { createMasterClient } from '@/lib/supabase/master';
@@ -311,6 +311,8 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     const [team, setTeam] = useState<TeamMember[]>([]);
     const [persons, setPersons] = useState<Person[]>([]);
     const [loading, setLoading] = useState(true);
+    const [globalDocuments, setGlobalDocuments] = useState<GlobalDocument[]>([]);
+    const [isGlobalDocsLoading, setIsGlobalDocsLoading] = useState(false);
 
     // UI State
     const [isLawsuitModalOpen, setIsLawsuitModalOpen] = useState(false);
@@ -321,7 +323,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     const [isEventModalOpen, setIsEventModalOpen] = useState(false);
     const [isAssetModalOpen, setIsAssetModalOpen] = useState(false);
     const [editingAsset, setEditingAsset] = useState<Partial<Asset> | null>(null);
-    const [activeTab, setActiveTab] = useState<'overview' | 'pessoas' | 'processos' | 'tarefas' | 'agenda' | 'ativos' | 'societario'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'pessoas' | 'processos' | 'tarefas' | 'agenda' | 'ativos' | 'societario' | 'documentos'>('overview');
     const [searchTerm, setSearchTerm] = useState('');
     const [activeAssetTab, setActiveAssetTab] = useState<'basic' | 'advanced' | 'docs' | 'timeline'>('basic');
     const [activeLawsuitTab, setActiveLawsuitTab] = useState<'basic' | 'advanced' | 'docs' | 'timeline'>('basic');
@@ -501,6 +503,10 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     const [assetStatusFilter, setAssetStatusFilter] = useState('');
     const [assetTypeFilter, setAssetTypeFilter] = useState('');
 
+    const [docSearch, setDocSearch] = useState('');
+    const [docTypeFilter, setDocTypeFilter] = useState('');
+    const [docOriginFilter, setDocOriginFilter] = useState('');
+
     // Searchable Select States
     const [authorSearch, setAuthorSearch] = useState('');
     const [defendantSearch, setDefendantSearch] = useState('');
@@ -595,6 +601,29 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             setLoading(false);
         }
     };
+
+    const handleFetchGlobalDocuments = async (showToast = false) => {
+        setIsGlobalDocsLoading(true);
+        try {
+            const result = await listAllGlobalDocuments(selectedUserId);
+            if (result.data) {
+                setGlobalDocuments(result.data);
+            }
+            if (showToast) toast.success("Painel de documentos atualizado");
+        } catch (error) {
+            console.error("Error fetching global docs:", error);
+            toast.error("Erro ao carregar documentos globais");
+        } finally {
+            setIsGlobalDocsLoading(false);
+        }
+    };
+
+    // Load global documents when tab is active
+    useEffect(() => {
+        if (activeTab === 'documentos') {
+            handleFetchGlobalDocuments();
+        }
+    }, [activeTab]);
 
     // Cascading Logic: State -> City
     useEffect(() => {
@@ -1758,6 +1787,49 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         return matchSearch && matchStatus && matchType;
     });
 
+    const filteredGlobalDocuments = globalDocuments.filter(d => {
+        const matchSearch = docSearch ? (
+            d.title.toLowerCase().includes(docSearch.toLowerCase()) || 
+            d.document_type.toLowerCase().includes(docSearch.toLowerCase()) ||
+            d.origin_name?.toLowerCase().includes(docSearch.toLowerCase())
+        ) : true;
+        const matchType = docTypeFilter ? d.document_type === docTypeFilter : true;
+        const matchOrigin = docOriginFilter ? d.origin_type === docOriginFilter : true;
+        return matchSearch && matchType && matchOrigin;
+    });
+
+    const uniqueDocTypes = Array.from(new Set(globalDocuments.map(d => d.document_type))).sort();
+
+    const renderOriginBadge = (origin: 'lawsuit' | 'asset' | 'corporate', name: string) => {
+        const icons = {
+            lawsuit: <Scale size={12} className="text-white" />,
+            asset: <Shield size={12} className="text-white" />,
+            corporate: <Building2 size={12} className="text-white" />
+        };
+        const colors = {
+            lawsuit: 'bg-indigo-500',
+            asset: 'bg-emerald-500',
+            corporate: 'bg-amber-500'
+        };
+        const labels = {
+            lawsuit: 'Processo',
+            asset: 'Ativo',
+            corporate: 'Soc.'
+        };
+
+        return (
+            <div className="flex items-center gap-2">
+                <div className={`p-1.5 rounded-lg shrink-0 ${colors[origin]}`}>
+                    {icons[origin]}
+                </div>
+                <div className="flex flex-col min-w-0">
+                    <span className="text-[8px] font-black uppercase text-slate-400 leading-none mb-0.5">{labels[origin]}</span>
+                    <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 truncate max-w-[150px]">{name}</span>
+                </div>
+            </div>
+        );
+    };
+
     const renderFilterBar = () => (
         <div className="flex gap-4 mb-6 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in slide-in-from-top-2">
             <div className="flex-1">
@@ -1899,6 +1971,55 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         </div>
     );
 
+    const renderGlobalDocumentsFilterBar = () => (
+        <div className="flex gap-4 mb-6 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in slide-in-from-top-2">
+            <div className="flex-1">
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                    <input
+                        type="text"
+                        placeholder="Buscar por nome, tipo ou origem (Processo/Ativo)..."
+                        value={docSearch}
+                        onChange={e => setDocSearch(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
+                    />
+                </div>
+            </div>
+            <div className="w-48">
+                <select
+                    value={docOriginFilter}
+                    onChange={e => setDocOriginFilter(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
+                >
+                    <option value="">📁 Todas as Origens</option>
+                    <option value="lawsuit">⚖️ Processos</option>
+                    <option value="asset">🛡️ Ativos</option>
+                    <option value="corporate">🏢 Societário</option>
+                </select>
+            </div>
+            <div className="w-56">
+                <select
+                    value={docTypeFilter}
+                    onChange={e => setDocTypeFilter(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
+                >
+                    <option value="">📄 Todos os Tipos</option>
+                    {uniqueDocTypes.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+            </div>
+            {(docSearch || docOriginFilter || docTypeFilter) && (
+                <button
+                    onClick={() => { setDocSearch(''); setDocOriginFilter(''); setDocTypeFilter(''); }}
+                    className="px-4 py-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all flex items-center gap-2 border border-transparent hover:border-rose-200 dark:hover:border-rose-800"
+                    title="Limpar Filtros"
+                >
+                    <Filter size={16} />
+                    <XCircle size={14} className="-ml-1" />
+                </button>
+            )}
+        </div>
+    );
+
     return (
         <div className="flex flex-col h-full space-y-6 high-density">
             {/* Top Bar / Header */}
@@ -1923,7 +2044,8 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                             { id: 'tarefas', icon: <Zap size={14} />, label: `3. ${t('modules.nexus.tabs.tasks')}` },
                             { id: 'agenda', icon: <Calendar size={14} />, label: `4. ${t('modules.nexus.tabs.calendar')}` },
                             { id: 'ativos', icon: <Shield size={14} />, label: `5. ${t('modules.nexus.tabs.assets')}` },
-                            { id: 'societario', icon: <LockIcon size={14} />, label: `6. ${t('modules.nexus.tabs.corporate')}` }
+                            { id: 'societario', icon: <LockIcon size={14} />, label: `6. ${t('modules.nexus.tabs.corporate')}` },
+                            { id: 'documentos', icon: <FileText size={14} />, label: `7. Documentos` }
                         ].map((tab) => (
                             <button
                                 key={tab.id}
@@ -3728,6 +3850,104 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                 </AnimatePresence>
                             </div>
                         </div>
+                    </div>
+                )}
+                
+                {activeTab === 'documentos' && (
+                    <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+                         {renderGlobalDocumentsFilterBar()}
+                         
+                         <div className="flex-1 overflow-y-auto pr-2 no-scrollbar">
+                            <AnimatePresence mode="wait">
+                                {isGlobalDocsLoading ? (
+                                    <motion.div 
+                                        key="loading"
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        exit={{ opacity: 0 }}
+                                        className="h-full flex flex-col items-center justify-center py-20"
+                                    >
+                                        <Loader2 size={48} className="text-indigo-600 animate-spin mb-4" />
+                                        <p className="text-slate-500 font-black uppercase tracking-widest text-[10px]">Consolidando documentos globais...</p>
+                                    </motion.div>
+                                ) : filteredGlobalDocuments.length === 0 ? (
+                                    <motion.div 
+                                        key="empty"
+                                        initial={{ opacity: 0, scale: 0.9 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        className="h-full flex flex-col items-center justify-center py-20 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[3rem] bg-slate-50/50 dark:bg-slate-900/50"
+                                    >
+                                        <FileText size={64} className="text-slate-200 dark:text-slate-800 mb-4" />
+                                        <h3 className="text-lg font-black text-slate-400 uppercase tracking-tighter">Nenhum documento encontrado</h3>
+                                        <p className="text-sm text-slate-400 font-medium mt-1">Tente ajustar seus filtros ou busca global.</p>
+                                    </motion.div>
+                                ) : (
+                                    <motion.div 
+                                        key="grid"
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-10"
+                                    >
+                                        {filteredGlobalDocuments.map((doc, idx) => (
+                                            <motion.div
+                                                key={doc.id}
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: idx * 0.05 }}
+                                                className="bg-white dark:bg-slate-950 p-5 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 hover:border-indigo-200 dark:hover:border-indigo-900/40 hover:shadow-2xl hover:shadow-indigo-500/10 transition-all group relative overflow-hidden"
+                                            >
+                                                <div className="flex justify-between items-start mb-6">
+                                                    <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 rounded-2xl group-hover:scale-110 transition-transform">
+                                                        <FileText size={20} />
+                                                    </div>
+                                                    <button 
+                                                        onClick={() => doc.file_url && window.open(doc.file_url, '_blank')}
+                                                        className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all"
+                                                        title="Visualizar Documento"
+                                                    >
+                                                        <ExternalLink size={18} />
+                                                    </button>
+                                                </div>
+
+                                                <div className="space-y-4">
+                                                    <div>
+                                                        <h4 className="font-black text-slate-800 dark:text-white text-sm line-clamp-1 group-hover:text-indigo-600 transition-colors capitalize">
+                                                            {doc.title}
+                                                        </h4>
+                                                        <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mt-1 block">
+                                                            {doc.document_type}
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="pt-4 border-t border-slate-50 dark:border-slate-800/50 flex flex-col gap-3">
+                                                        {renderOriginBadge(doc.origin_type, doc.origin_name || 'N/A')}
+                                                        
+                                                        <div className="flex items-center justify-between mt-2">
+                                                            <div className="flex flex-col">
+                                                                <span className="text-[8px] font-black uppercase text-slate-400 leading-none mb-0.5 whitespace-nowrap">Data do Evento</span>
+                                                                <span className="text-[10px] font-bold text-slate-500">
+                                                                    {doc.event_date ? new Date(doc.event_date).toLocaleDateString('pt-BR') : 'Sem Data'}
+                                                                </span>
+                                                            </div>
+                                                            {doc.file_url && (
+                                                                <a 
+                                                                    href={doc.file_url} 
+                                                                    download
+                                                                    className="p-2 bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all rounded-xl"
+                                                                    title="Download"
+                                                                >
+                                                                    <Download size={16} />
+                                                                </a>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </motion.div>
+                                        ))}
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                         </div>
                     </div>
                 )}
             </div>
