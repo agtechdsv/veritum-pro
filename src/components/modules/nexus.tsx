@@ -799,12 +799,15 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                         // Navegação profunda: buscar participações societárias da pessoa
                         const { listPersonParticipations } = await import('@/app/actions/nexus-actions');
                         const result = await listPersonParticipations(id, targetUserId);
-                        if (result.data) {
+                        if (result.data && result.data.length > 0) {
                             // Mapeamos para o formato de Shareholder esperado para renderizar no mapa
                             setShareholders(result.data.map((s: any) => ({
                                 ...s,
                                 shareholder_name: s.entity?.legal_name || 'Holding Desconhecida'
                             })));
+                        } else {
+                            // Se não há participações, limpamos para permitir outros filtros (como processos do responsável)
+                            setShareholders([]);
                         }
                     }
                 } catch (error) {
@@ -2272,8 +2275,10 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                 </div>
                                 <div className="mt-4 md:mt-0 flex items-center gap-4">
                                     <div className="px-6 py-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-2xl flex items-center gap-3">
-                                        <div className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse" />
-                                        <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest leading-none">Status: Sincronizado</span>
+                                        <div className={`w-2 h-2 rounded-full ${loading ? 'bg-amber-500 animate-ping' : 'bg-indigo-600 animate-pulse'}`} />
+                                        <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest leading-none">
+                                            Status: {loading ? 'Sincronizando...' : 'Sincronizado'}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -2324,7 +2329,13 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         <div className="flex items-end justify-between">
                                             <div>
                                                 <div className={`text-4xl font-black tracking-tighter mb-2 ${stat.color}`}>
-                                                    {stat.val}
+                                                    {loading ? (
+                                                        <motion.div 
+                                                            animate={{ opacity: [0.3, 0.6, 0.3] }}
+                                                            transition={{ duration: 1.5, repeat: Infinity }}
+                                                            className="h-10 w-16 bg-slate-100 dark:bg-slate-800 rounded-xl"
+                                                        />
+                                                    ) : stat.val}
                                                 </div>
                                                 <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                                                     {stat.label}
@@ -6591,18 +6602,36 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                 <AnimatePresence>
                                     {isNexoVisualLoading && (
                                         <motion.div 
-                                            initial={{ opacity: 0, x: 20 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            exit={{ opacity: 0, x: 20 }}
-                                            className="flex items-center gap-3 px-4 py-2 bg-indigo-500/10 rounded-2xl border border-indigo-500/20 mr-2"
+                                            initial={{ opacity: 0, scale: 0.9 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            exit={{ opacity: 0, scale: 0.9 }}
+                                            className="flex items-center gap-4 px-5 py-2.5 bg-indigo-500/5 rounded-2xl border border-indigo-500/20 mr-2 backdrop-blur-md"
                                         >
-                                            <div className="relative">
-                                                <div className="w-2 h-2 rounded-full bg-indigo-400 animate-ping absolute inset-0" />
-                                                <div className="w-2 h-2 rounded-full bg-indigo-400 relative z-10" />
+                                            <div className="flex gap-1">
+                                                {[0, 1, 2].map((i) => (
+                                                    <motion.div
+                                                        key={i}
+                                                        animate={{ 
+                                                            height: [4, 12, 4],
+                                                            opacity: [0.3, 1, 0.3]
+                                                        }}
+                                                        transition={{ 
+                                                            duration: 0.8, 
+                                                            repeat: Infinity, 
+                                                            delay: i * 0.15 
+                                                        }}
+                                                        className="w-1 bg-indigo-400 rounded-full"
+                                                    />
+                                                ))}
                                             </div>
-                                            <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] animate-pulse">
-                                                Elaborando Mapa Mental...
-                                            </span>
+                                            <div className="flex flex-col">
+                                                <span className="text-[9px] font-black text-indigo-400 uppercase tracking-[0.25em] animate-pulse">
+                                                    Sincronizando Deep Data
+                                                </span>
+                                                <span className="text-[7px] font-bold text-white/30 uppercase tracking-widest mt-0.5">
+                                                    Mapeando Conexões Veritum...
+                                                </span>
+                                            </div>
                                         </motion.div>
                                     )}
                                 </AnimatePresence>
@@ -6629,6 +6658,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                 if (origin_type === 'lawsuit') {
                                     const author = persons.find(p => p.id === data.author_id);
                                     if (author) neighbors.push({ label: author.full_name, icon: UserIcon, hex: '#3b82f6', bg: 'bg-blue-500', cat: 'Autor', type: 'person', data: author });
+
                                     const def = persons.find(p => p.id === data.defendant_id);
                                     if (def) neighbors.push({ label: def.full_name, icon: UserIcon, hex: '#f43f5e', bg: 'bg-rose-500', cat: 'Réu', type: 'person', data: def });
                                     const lawyer = team.find(t => t.id === data.responsible_lawyer_id);
@@ -6652,6 +6682,10 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                     corporateDocuments.filter(d => d.entity_id === id).forEach(d => neighbors.push({ label: d.title, icon: FileText, hex: '#64748b', bg: 'bg-slate-500', cat: 'Documento', type: 'document', data: d }));
                                 } else if (origin_type === 'person') {
                                     lawsuits.filter(l => l.author_id === id || l.defendant_id === id).forEach(l => neighbors.push({ label: l.case_title || l.cnj_number, icon: Scale, hex: '#8b5cf6', bg: 'bg-purple-500', cat: 'Processo', type: 'lawsuit', data: l }));
+                                    
+                                    // Gestão: Processos onde a pessoa é a responsável técnica (Team Member)
+                                    lawsuits.filter(l => l.responsible_lawyer_id === id).forEach(l => neighbors.push({ label: l.case_title || l.cnj_number, icon: Briefcase, hex: '#f59e0b', bg: 'bg-amber-500', cat: 'Gestão', type: 'lawsuit', data: l }));
+                                    
                                     assets.filter(a => a.person_id === id).forEach(a => neighbors.push({ label: a.title, icon: Shield, hex: '#10b981', bg: 'bg-emerald-500', cat: 'Ativo', type: 'asset', data: a }));
                                     shareholders.forEach(s => {
                                         const entity = (s as any).entity || corporateEntities.find(e => e.id === s.entity_id);
@@ -6685,9 +6719,12 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         if (asset) neighbors.push({ label: asset.title, icon: Shield, hex: '#10b981', bg: 'bg-emerald-500', cat: 'Origem', type: 'asset', data: asset });
                                     }
                                 }
-
+                                
                                 return (
-                                    <>
+                                    <motion.div 
+                                        key={nexoData.id} // Forces a fresh mount of the entire orbit when changing selection
+                                        className="relative w-full h-full flex items-center justify-center"
+                                    >
                                         {/* SVG Background Lines */}
                                         <svg className="absolute inset-0 w-full h-full pointer-events-none">
                                             <defs>
@@ -6696,16 +6733,21 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                     <stop offset="100%" stopColor="#6366f1" stopOpacity="0.1" />
                                                 </linearGradient>
                                             </defs>
-                                            {neighbors.map((n, i) => {
+                                            {!isNexoVisualLoading && neighbors.map((n, i) => {
                                                 const angle = (i / neighbors.length) * 2 * Math.PI;
                                                 const x2 = Math.cos(angle) * radius;
                                                 const y2 = Math.sin(angle) * radius;
+                                                const nodeKey = `line-${n.type}-${n.data.id || n.label}-${nexoData.id}`;
                                                 return (
                                                     <motion.line
-                                                        key={`line-${i}`}
+                                                        key={nodeKey}
                                                         initial={{ pathLength: 0, opacity: 0 }}
                                                         animate={{ pathLength: 1, opacity: 1 }}
-                                                        transition={{ duration: 1, delay: 0.5 + i * 0.1 }}
+                                                        transition={{ 
+                                                            duration: 0.8, 
+                                                            delay: 0.1 + i * 0.05,
+                                                            opacity: { duration: 0.3 }
+                                                        }}
                                                         x1="50%" y1="50%"
                                                         x2={`calc(50% + ${x2}px)`} y2={`calc(50% + ${y2}px)`}
                                                         stroke={n.hex}
@@ -6718,44 +6760,73 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         </svg>
 
                                         {/* Center Node */}
-                                        <motion.div
-                                            drag
-                                            dragConstraints={{ left: -100, right: 100, top: -100, bottom: 100 }}
-                                            initial={{ scale: 0, rotate: -180 }}
-                                            animate={{ scale: 1, rotate: 0 }}
-                                            transition={{ type: 'spring', damping: 15 }}
-                                            className="relative z-20 w-48 h-48 bg-white dark:bg-slate-900 rounded-full border-4 border-indigo-600 shadow-[0_0_60px_rgba(79,70,229,0.3)] flex flex-col items-center justify-center p-6 text-center cursor-pointer group"
-                                        >
-                                            <div className="absolute inset-0 rounded-full bg-indigo-600 opacity-0 group-hover:opacity-5 transition-opacity" />
-                                            {nexoData.origin_type === 'lawsuit' ? <Scale size={40} className="text-indigo-600 mb-2" /> : 
-                                            nexoData.origin_type === 'corporate' ? <Building2 size={40} className="text-indigo-600 mb-2" /> :
-                                            nexoData.origin_type === 'asset' ? <Shield size={40} className="text-indigo-600 mb-2" /> :
-                                            nexoData.origin_type === 'task' ? <CheckCircle2 size={40} className="text-indigo-600 mb-2" /> :
-                                            nexoData.origin_type === 'person' ? <UserIcon size={40} className="text-indigo-600 mb-2" /> :
-                                            <FileText size={40} className="text-indigo-600 mb-2" />}
-                                            <h4 className="text-xs font-black text-slate-800 dark:text-white uppercase leading-tight line-clamp-2">
-                                                {nexoData.title}
-                                            </h4>
-                                            <div className="mt-2 px-2 py-0.5 bg-indigo-50 dark:bg-indigo-900/30 rounded-full text-[8px] font-black text-indigo-600 uppercase tracking-widest border border-indigo-100 dark:border-indigo-800">
-                                                Principal
-                                            </div>
-                                        </motion.div>
+                                        <div className="relative z-20">
+                                            {/* Neural Pulse Effect while loading */}
+                                            <AnimatePresence>
+                                                {isNexoVisualLoading && (
+                                                    <>
+                                                        <motion.div
+                                                            initial={{ scale: 0.8, opacity: 0 }}
+                                                            animate={{ scale: [1, 1.8], opacity: [0.5, 0] }}
+                                                            exit={{ opacity: 0 }}
+                                                            transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }}
+                                                            className="absolute inset-0 rounded-full border-2 border-indigo-500/50 pointer-events-none"
+                                                        />
+                                                        <motion.div
+                                                            initial={{ scale: 0.8, opacity: 0 }}
+                                                            animate={{ scale: [1, 2.4], opacity: [0.3, 0] }}
+                                                            exit={{ opacity: 0 }}
+                                                            transition={{ duration: 2, repeat: Infinity, ease: "easeOut", delay: 0.5 }}
+                                                            className="absolute inset-0 rounded-full border border-indigo-400/30 pointer-events-none"
+                                                        />
+                                                    </>
+                                                )}
+                                            </AnimatePresence>
+
+                                            <motion.div
+                                                key={`center-${nexoData.id}`}
+                                                drag
+                                                dragConstraints={{ left: -100, right: 100, top: -100, bottom: 100 }}
+                                                initial={{ scale: 0, rotate: -180 }}
+                                                animate={{ scale: 1, rotate: 0 }}
+                                                transition={{ type: 'spring', damping: 15 }}
+                                                className="relative w-48 h-48 bg-white dark:bg-slate-900 rounded-full border-4 border-indigo-600 shadow-[0_0_60px_rgba(79,70,229,0.3)] flex flex-col items-center justify-center p-6 text-center cursor-pointer group"
+                                            >
+                                                <div className="absolute inset-0 rounded-full bg-indigo-600 opacity-0 group-hover:opacity-5 transition-opacity" />
+                                                {nexoData.origin_type === 'lawsuit' ? <Scale size={40} className="text-indigo-600 mb-2" /> : 
+                                                nexoData.origin_type === 'corporate' ? <Building2 size={40} className="text-indigo-600 mb-2" /> :
+                                                nexoData.origin_type === 'asset' ? <Shield size={40} className="text-indigo-600 mb-2" /> :
+                                                nexoData.origin_type === 'task' ? <CheckCircle2 size={40} className="text-indigo-600 mb-2" /> :
+                                                nexoData.origin_type === 'person' ? <UserIcon size={40} className="text-indigo-600 mb-2" /> :
+                                                <FileText size={40} className="text-indigo-600 mb-2" />}
+                                                <h4 className="text-xs font-black text-slate-800 dark:text-white uppercase leading-tight line-clamp-2">
+                                                    {nexoData.title}
+                                                </h4>
+                                                <div className="mt-2 px-2 py-0.5 bg-indigo-50 dark:bg-indigo-900/30 rounded-full text-[8px] font-black text-indigo-600 uppercase tracking-widest border border-indigo-100 dark:border-indigo-800">
+                                                    Principal
+                                                </div>
+                                            </motion.div>
+                                        </div>
 
                                         {/* Orbiting Nodes */}
-                                        {neighbors.map((n, i) => {
+                                        {!isNexoVisualLoading && neighbors.map((n, i) => {
                                             const angle = (i / neighbors.length) * 2 * Math.PI;
                                             const x = Math.cos(angle) * radius;
                                             const y = Math.sin(angle) * radius;
+                                            const nodeKey = `node-${n.type}-${n.data.id || n.label}-${nexoData.id}`;
                                             return (
                                                 <motion.div
-                                                    key={`node-${i}`}
-                                                    initial={{ scale: 0, x: x, y: y }}
-                                                    animate={{ scale: 1, x: x, y: y }}
+                                                    key={nodeKey}
+                                                    initial={{ scale: 0 }}
+                                                    animate={{ scale: 1 }}
+                                                    style={{ 
+                                                        x, 
+                                                        y,
+                                                        position: 'absolute'
+                                                    }}
                                                     transition={{ 
-                                                        type: 'spring', 
-                                                        damping: 15, 
-                                                        stiffness: 200,
-                                                        delay: 0.8 + i * 0.1 
+                                                        scale: { type: 'spring', damping: 15, stiffness: 200, delay: 0.3 + i * 0.1 },
+                                                        default: { duration: 0 } // Prevents x/y from animating (sliding)
                                                     }}
                                                     onClick={() => n.type && n.data && handleOpenNexoVisual(n.type, n.data)}
                                                     className="absolute w-40 p-4 bg-white/10 backdrop-blur-md border border-white/10 rounded-3xl flex flex-col items-center text-center group cursor-pointer hover:bg-white/20 hover:border-white/30 transition-all hover:scale-105 shadow-2xl z-30"
@@ -6775,7 +6846,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                 </motion.div>
                                             );
                                         })}
-                                    </>
+                                    </motion.div>
                                 );
                             })()}
                         </div>
