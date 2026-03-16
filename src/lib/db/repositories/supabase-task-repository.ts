@@ -21,6 +21,17 @@ export class SupabaseTaskRepository implements ITaskRepository {
         return data || [];
     }
 
+    async getById(id: string): Promise<Task | null> {
+        const { data, error } = await this.client
+            .from('tasks')
+            .select('*')
+            .eq('id', id)
+            .is('deleted_at', null)
+            .maybeSingle();
+        if (error) throw error;
+        return data;
+    }
+
     async save(task: Partial<Task>): Promise<Task> {
         if (task.id) {
             const { data, error } = await this.client

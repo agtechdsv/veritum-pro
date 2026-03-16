@@ -266,6 +266,8 @@ export interface Lawsuit {
     state?: string;
     rito?: string;
     value: number;
+    provision_amount?: number;
+    probability_of_success?: 'Provável' | 'Possível' | 'Remoto';
 }
 
 export interface LawsuitDocument {

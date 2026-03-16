@@ -27,6 +27,13 @@ export class DrizzleTaskRepository implements ITaskRepository {
         return result as unknown as Task[];
     }
 
+    async getById(id: string): Promise<Task | null> {
+        const result = await this.db.select()
+            .from(tasks)
+            .where(and(eq(tasks.id, id), isNull(tasks.deleted_at)));
+        return (result[0] as unknown as Task) || null;
+    }
+
     async save(task: Partial<Task>): Promise<Task> {
         // Convert ISO string to Date for Drizzle
         const taskForDrizzle = {

@@ -134,17 +134,96 @@ export async function saveLawsuit(lawsuit: Partial<Lawsuit>, targetUserId?: stri
 
         const saved = await repo.save(lawsuit);
 
-        // Audit Status Change
-        if (oldLawsuit && lawsuit.status && oldLawsuit.status !== lawsuit.status) {
-            await timelineRepo.save({
-                entity_type: 'lawsuit',
-                entity_id: saved.id,
-                action: 'STATUS_CHANGE',
-                description: `Alterou status de "${oldLawsuit.status}" para "${lawsuit.status}"`,
-                old_values: { status: oldLawsuit.status },
-                new_values: { status: lawsuit.status },
-                user_id: userId
-            });
+        // Audit Trail
+        if (oldLawsuit) {
+            // Status Change
+            if (lawsuit.status && oldLawsuit.status !== lawsuit.status) {
+                await timelineRepo.save({
+                    entity_type: 'lawsuit',
+                    entity_id: saved.id,
+                    action: 'STATUS_CHANGE',
+                    description: `Alterou status de "${oldLawsuit.status}" para "${lawsuit.status}"`,
+                    old_values: { status: oldLawsuit.status },
+                    new_values: { status: lawsuit.status },
+                    user_id: userId
+                });
+            }
+            
+            // Financial Change (Provision)
+            if (lawsuit.provision_amount !== undefined && oldLawsuit.provision_amount !== lawsuit.provision_amount) {
+                await timelineRepo.save({
+                    entity_type: 'lawsuit',
+                    entity_id: saved.id,
+                    action: 'FINANCIAL_UPDATE',
+                    description: `Alteração no valor de provisão: de R$ ${oldLawsuit.provision_amount?.toLocaleString('pt-BR')} para R$ ${lawsuit.provision_amount?.toLocaleString('pt-BR')}`,
+                    old_values: { provision_amount: oldLawsuit.provision_amount },
+                    new_values: { provision_amount: lawsuit.provision_amount },
+                    user_id: userId
+                });
+            }
+
+            // Probability Change
+            if (lawsuit.probability_of_success && oldLawsuit.probability_of_success !== lawsuit.probability_of_success) {
+                await timelineRepo.save({
+                    entity_type: 'lawsuit',
+                    entity_id: saved.id,
+                    action: 'RISK_UPDATE',
+                    description: `Alteração na probabilidade de êxito: de "${oldLawsuit.probability_of_success}" para "${lawsuit.probability_of_success}"`,
+                    old_values: { probability: oldLawsuit.probability_of_success },
+                    new_values: { probability: lawsuit.probability_of_success },
+                    user_id: userId
+                });
+            }
+
+            // Financial Change (Value)
+            if (lawsuit.value !== undefined && oldLawsuit.value !== lawsuit.value) {
+                await timelineRepo.save({
+                    entity_type: 'lawsuit',
+                    entity_id: saved.id,
+                    action: 'FINANCIAL_UPDATE',
+                    description: `Alteração no valor da causa: de R$ ${oldLawsuit.value?.toLocaleString('pt-BR')} para R$ ${lawsuit.value?.toLocaleString('pt-BR')}`,
+                    old_values: { value: oldLawsuit.value },
+                    new_values: { value: lawsuit.value },
+                    user_id: userId
+                });
+            }
+
+            // Parties Change (Author/Defendant)
+            if (lawsuit.author_id !== undefined && oldLawsuit.author_id !== lawsuit.author_id) {
+                await timelineRepo.save({
+                    entity_type: 'lawsuit',
+                    entity_id: saved.id,
+                    action: 'PARTIES_UPDATE',
+                    description: `Alteração do Autor do processo`,
+                    old_values: { author_id: oldLawsuit.author_id },
+                    new_values: { author_id: lawsuit.author_id },
+                    user_id: userId
+                });
+            }
+            if (lawsuit.defendant_id !== undefined && oldLawsuit.defendant_id !== lawsuit.defendant_id) {
+                await timelineRepo.save({
+                    entity_type: 'lawsuit',
+                    entity_id: saved.id,
+                    action: 'PARTIES_UPDATE',
+                    description: `Alteração do Réu do processo`,
+                    old_values: { defendant_id: oldLawsuit.defendant_id },
+                    new_values: { defendant_id: lawsuit.defendant_id },
+                    user_id: userId
+                });
+            }
+
+            // Responsibility Change
+            if (lawsuit.responsible_lawyer_id && oldLawsuit.responsible_lawyer_id !== lawsuit.responsible_lawyer_id) {
+                await timelineRepo.save({
+                    entity_type: 'lawsuit',
+                    entity_id: saved.id,
+                    action: 'TEAM_UPDATE',
+                    description: `Alteração do advogado responsável pelo processo`,
+                    old_values: { responsible_id: oldLawsuit.responsible_lawyer_id },
+                    new_values: { responsible_id: lawsuit.responsible_lawyer_id },
+                    user_id: userId
+                });
+            }
         } else if (!oldLawsuit) {
              await timelineRepo.save({
                 entity_type: 'lawsuit',
@@ -189,9 +268,26 @@ export async function listLawsuitDocuments(lawsuitId: string, targetUserId?: str
 
 export async function saveLawsuitDocument(doc: Partial<LawsuitDocument>, targetUserId?: string) {
     try {
-        const { credentials, preferences } = await resolveSecurityContext(targetUserId);
+        const { credentials, preferences, userId } = await resolveSecurityContext(targetUserId);
         const repo = RepositoryFactory.getLawsuitRepository(credentials, preferences);
-        return await repo.saveDocument(doc);
+        const timelineRepo = RepositoryFactory.getTimelineRepository(credentials, preferences);
+        
+        const saved = await repo.saveDocument(doc);
+
+        // Log critical documents
+        const criticalTypes = ['Petição Inicial', 'Sentença', 'Acórdão', 'Contestação'];
+        if (doc.lawsuit_id && doc.document_type && criticalTypes.includes(doc.document_type)) {
+            await timelineRepo.save({
+                entity_type: 'lawsuit',
+                entity_id: doc.lawsuit_id,
+                action: 'DOCUMENT_UPLOAD',
+                description: `Novo documento crítico anexado: ${doc.document_type}`,
+                new_values: { document_name: doc.title, type: doc.document_type },
+                user_id: userId
+            });
+        }
+
+        return saved;
     } catch (error: any) {
         console.error('Server Action Error (saveLawsuitDocument):', error);
         throw error;
@@ -232,9 +328,49 @@ export async function listTasks(searchTerm?: string, targetUserId?: string) {
 
 export async function saveTask(task: Partial<Task>, targetUserId?: string) {
     try {
-        const { credentials, preferences } = await resolveSecurityContext(targetUserId);
+        const { credentials, preferences, userId } = await resolveSecurityContext(targetUserId);
         const repo = RepositoryFactory.getTaskRepository(credentials, preferences);
-        return await repo.save(task);
+        const timelineRepo = RepositoryFactory.getTimelineRepository(credentials, preferences);
+
+        let oldTask: Task | null = null;
+        if (task.id) {
+            oldTask = await repo.getById(task.id);
+        }
+
+        const saved = await repo.save(task);
+
+        // Audit Task
+        if (oldTask) {
+            // Completion
+            if (task.status === 'Concluído' && oldTask.status !== 'Concluído') {
+                if (task.lawsuit_id) {
+                    await timelineRepo.save({
+                        entity_type: 'lawsuit',
+                        entity_id: task.lawsuit_id,
+                        action: 'TASK_COMPLETED',
+                        description: `Tarefa concluída: "${saved.title}"`,
+                        user_id: userId
+                    });
+                }
+            }
+
+            // Deadline Extension
+            if (task.due_date && oldTask.due_date && new Date(task.due_date).getTime() > new Date(oldTask.due_date).getTime()) {
+                if (task.lawsuit_id) {
+                    await timelineRepo.save({
+                        entity_type: 'lawsuit',
+                        entity_id: task.lawsuit_id,
+                        action: 'DEADLINE_EXTENSION',
+                        description: `Prazo da tarefa "${saved.title}" prorrogado para ${new Date(task.due_date).toLocaleDateString('pt-BR')}`,
+                        old_values: { due_date: oldTask.due_date },
+                        new_values: { due_date: task.due_date },
+                        user_id: userId
+                    });
+                }
+            }
+        }
+
+        return saved;
     } catch (error: any) {
         console.error('Server Action Error (saveTask):', error.message);
         throw error;
@@ -387,17 +523,73 @@ export async function saveAsset(asset: Partial<Asset>, targetUserId?: string) {
 
         const saved = await repo.save(asset);
 
-        // Audit Status Change
-        if (oldAsset && asset.status && oldAsset.status !== asset.status) {
-            await timelineRepo.save({
-                entity_type: 'asset',
-                entity_id: saved.id,
-                action: 'STATUS_CHANGE',
-                description: `Alterou status de "${oldAsset.status}" para "${asset.status}"`,
-                old_values: { status: oldAsset.status },
-                new_values: { status: asset.status },
-                user_id: userId
-            });
+        // Audit Trail
+        if (oldAsset) {
+            // Status Change
+            if (asset.status && oldAsset.status !== asset.status) {
+                await timelineRepo.save({
+                    entity_type: 'asset',
+                    entity_id: saved.id,
+                    action: 'STATUS_CHANGE',
+                    description: `Alterou status de "${oldAsset.status}" para "${asset.status}"`,
+                    old_values: { status: oldAsset.status },
+                    new_values: { status: asset.status },
+                    user_id: userId
+                });
+            }
+
+            // Revaluation (Value Change)
+            if (asset.value !== undefined && oldAsset.value !== asset.value) {
+                await timelineRepo.save({
+                    entity_type: 'asset',
+                    entity_id: saved.id,
+                    action: 'REVALUATION',
+                    description: `Reavaliação do ativo: de R$ ${oldAsset.value?.toLocaleString('pt-BR')} para R$ ${asset.value?.toLocaleString('pt-BR')}`,
+                    old_values: { value: oldAsset.value },
+                    new_values: { value: asset.value },
+                    user_id: userId
+                });
+            }
+
+            // Lawsuit Link/Unlink
+            if (asset.lawsuit_id !== undefined && oldAsset.lawsuit_id !== asset.lawsuit_id) {
+                const actionDesc = asset.lawsuit_id 
+                    ? `Ativo vinculado ao processo como garantia` 
+                    : `Ativo desvinculado de processo`;
+                
+                await timelineRepo.save({
+                    entity_type: 'asset',
+                    entity_id: saved.id,
+                    action: asset.lawsuit_id ? 'LINK_LAWSUIT' : 'UNLINK_LAWSUIT',
+                    description: actionDesc,
+                    new_values: { lawsuit_id: asset.lawsuit_id },
+                    user_id: userId
+                });
+
+                // Also log in lawsuit timeline if linked
+                if (asset.lawsuit_id) {
+                    await timelineRepo.save({
+                        entity_type: 'lawsuit',
+                        entity_id: asset.lawsuit_id,
+                        action: 'ASSET_LINKED',
+                        description: `Ativo "${saved.title}" vinculado como garantia`,
+                        user_id: userId
+                    });
+                }
+            }
+
+            // Ownership Change
+            if (asset.person_id !== undefined && oldAsset.person_id !== asset.person_id) {
+                await timelineRepo.save({
+                    entity_type: 'asset',
+                    entity_id: saved.id,
+                    action: 'OWNERSHIP_UPDATE',
+                    description: `Alteração de proprietário/vínculo do ativo`,
+                    old_values: { person_id: oldAsset.person_id },
+                    new_values: { person_id: asset.person_id },
+                    user_id: userId
+                });
+            }
         } else if (!oldAsset) {
             await timelineRepo.save({
                 entity_type: 'asset',
@@ -493,16 +685,32 @@ export async function saveCorporateEntity(entity: Partial<CorporateEntity>, targ
         const saved = await repo.saveEntity(entity);
 
         // Audit Trail
-        if (oldEntity && entity.status && oldEntity.status !== entity.status) {
-            await timelineRepo.save({
-                entity_type: 'corporate',
-                entity_id: saved.id,
-                action: 'STATUS_CHANGE',
-                description: `Alterou status de "${oldEntity.status}" para "${entity.status}"`,
-                old_values: { status: oldEntity.status },
-                new_values: { status: entity.status },
-                user_id: userId
-            });
+        if (oldEntity) {
+            // Status Change
+            if (entity.status && oldEntity.status !== entity.status) {
+                await timelineRepo.save({
+                    entity_type: 'corporate',
+                    entity_id: saved.id,
+                    action: 'STATUS_CHANGE',
+                    description: `Alterou status de "${oldEntity.status}" para "${entity.status}"`,
+                    old_values: { status: oldEntity.status },
+                    new_values: { status: entity.status },
+                    user_id: userId
+                });
+            }
+
+            // Capital Social
+            if (entity.total_capital !== undefined && oldEntity.total_capital !== entity.total_capital) {
+                await timelineRepo.save({
+                    entity_type: 'corporate',
+                    entity_id: saved.id,
+                    action: 'CAPITAL_UPDATE',
+                    description: `Alteração de Capital Social: de R$ ${oldEntity.total_capital?.toLocaleString('pt-BR')} para R$ ${entity.total_capital?.toLocaleString('pt-BR')}`,
+                    old_values: { capital: oldEntity.total_capital },
+                    new_values: { capital: entity.total_capital },
+                    user_id: userId
+                });
+            }
         } else if (!oldEntity) {
             await timelineRepo.save({
                 entity_type: 'corporate',
@@ -546,9 +754,43 @@ export async function listShareholders(entityId: string, targetUserId?: string) 
 
 export async function saveShareholder(shareholder: Partial<Shareholder>, targetUserId?: string) {
     try {
-        const { credentials, preferences } = await resolveSecurityContext(targetUserId);
+        const { credentials, preferences, userId } = await resolveSecurityContext(targetUserId);
         const repo = RepositoryFactory.getCorporateRepository(credentials, preferences);
-        return await repo.saveShareholder(shareholder);
+        const timelineRepo = RepositoryFactory.getTimelineRepository(credentials, preferences);
+
+        let oldShareholder: Shareholder | null = null;
+        if (shareholder.id) {
+            const list = await repo.listShareholders(shareholder.entity_id!);
+            oldShareholder = list.find(s => s.id === shareholder.id) || null;
+        }
+
+        const saved = await repo.saveShareholder(shareholder);
+
+        // Audit QSA
+        if (shareholder.entity_id) {
+            if (!oldShareholder) {
+                await timelineRepo.save({
+                    entity_type: 'corporate',
+                    entity_id: shareholder.entity_id,
+                    action: 'QSA_ADD',
+                    description: `Novo sócio adicionado ao QSA`,
+                    new_values: { shareholder_id: saved.person_shareholder_id || saved.corporate_shareholder_id, percentage: saved.ownership_percentage },
+                    user_id: userId
+                });
+            } else if (oldShareholder.ownership_percentage !== saved.ownership_percentage) {
+                await timelineRepo.save({
+                    entity_type: 'corporate',
+                    entity_id: shareholder.entity_id,
+                    action: 'QSA_UPDATE',
+                    description: `Alteração de percentual societário`,
+                    old_values: { percentage: oldShareholder.ownership_percentage },
+                    new_values: { percentage: saved.ownership_percentage },
+                    user_id: userId
+                });
+            }
+        }
+
+        return saved;
     } catch (error: any) {
         console.error('Server Action Error (saveShareholder):', error);
         throw error;
@@ -580,9 +822,26 @@ export async function listCorporateDocuments(entityId: string, targetUserId?: st
 
 export async function saveCorporateDocument(doc: Partial<CorporateDocument>, targetUserId?: string) {
     try {
-        const { credentials, preferences } = await resolveSecurityContext(targetUserId);
+        const { credentials, preferences, userId } = await resolveSecurityContext(targetUserId);
         const repo = RepositoryFactory.getCorporateRepository(credentials, preferences);
-        return await repo.saveDocument(doc);
+        const timelineRepo = RepositoryFactory.getTimelineRepository(credentials, preferences);
+        
+        const saved = await repo.saveDocument(doc);
+
+        // Audit Document
+        const criticalTypes = ['Contrato Social', 'Ata de Reunião', 'Ata de Assembleia', 'Acordo de Sócios'];
+        if (doc.entity_id && doc.document_type && criticalTypes.includes(doc.document_type)) {
+            await timelineRepo.save({
+                entity_type: 'corporate',
+                entity_id: doc.entity_id,
+                action: 'DOCUMENT_UPLOAD',
+                description: `Documento de fé pública arquivado: ${doc.document_type}`,
+                new_values: { document_name: doc.title, type: doc.document_type },
+                user_id: userId
+            });
+        }
+
+        return saved;
     } catch (error: any) {
         console.error('Server Action Error (saveCorporateDocument):', error);
         throw error;

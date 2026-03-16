@@ -16,6 +16,8 @@ export const lawsuits = pgTable('lawsuits', {
     city: text('city'),
     state: text('state'),
     value: numeric('value', { precision: 15, scale: 2 }),
+    provision_amount: numeric('provision_amount', { precision: 15, scale: 2 }),
+    probability_of_success: text('probability_of_success'),
     created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
     updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
     deleted_at: timestamp('deleted_at', { withTimezone: true }),
