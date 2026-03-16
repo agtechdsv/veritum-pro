@@ -6749,9 +6749,14 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                             return (
                                                 <motion.div
                                                     key={`node-${i}`}
-                                                    initial={{ scale: 0, x: 0, y: 0 }}
+                                                    initial={{ scale: 0, x: x, y: y }}
                                                     animate={{ scale: 1, x: x, y: y }}
-                                                    transition={{ type: 'spring', damping: 20, delay: 0.2 + i * 0.05 }}
+                                                    transition={{ 
+                                                        type: 'spring', 
+                                                        damping: 15, 
+                                                        stiffness: 200,
+                                                        delay: 0.8 + i * 0.1 
+                                                    }}
                                                     onClick={() => n.type && n.data && handleOpenNexoVisual(n.type, n.data)}
                                                     className="absolute w-40 p-4 bg-white/10 backdrop-blur-md border border-white/10 rounded-3xl flex flex-col items-center text-center group cursor-pointer hover:bg-white/20 hover:border-white/30 transition-all hover:scale-105 shadow-2xl z-30"
                                                 >
