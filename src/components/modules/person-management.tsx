@@ -5,7 +5,7 @@ import {
     ChevronDown, ChevronUp, ChevronRight, Zap, Save, Trash2, Key, Info,
     Pencil, XCircle, Database as DbIcon, ShieldCheck, MessageCircle,
     ExternalLink, Scale, FileDown, ArrowUpRight, Filter, FileCheck,
-    ScrollText, CheckCircle2, LayoutGrid, List
+    ScrollText, CheckCircle2, LayoutGrid, List, Network
 } from 'lucide-react';
 import { useTranslation } from '@/contexts/language-context';
 import { toast } from '@/components/ui/toast';
@@ -27,9 +27,10 @@ interface Props {
     onNewLawsuit?: (personId: string) => void;
     onNewAsset?: (personId: string) => void;
     onNewCorporateEntity?: (person: Person) => void;
+    onOpenNexoVisual?: (person: Person) => void;
 }
 
-const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUser, isEmbedded, externalPersons, externalLoading, masterSelectedUserId, onRefresh, onNewLawsuit, onNewAsset, onNewCorporateEntity }) => {
+const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUser, isEmbedded, externalPersons, externalLoading, masterSelectedUserId, onRefresh, onNewLawsuit, onNewAsset, onNewCorporateEntity, onOpenNexoVisual }) => {
     const { t } = useTranslation();
     const [searchTerm, setSearchTerm] = useState('');
     const [localPersons, setLocalPersons] = useState<Person[]>([]);
@@ -770,11 +771,20 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                                     {t(`management.master.persons.types.${person.person_type}`)}
                                 </span>
                                 <div className="flex gap-2">
+                                    {onOpenNexoVisual && (
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); onOpenNexoVisual(person); }}
+                                            className="p-1.5 text-indigo-600 bg-indigo-50 dark:bg-indigo-900/40 rounded-lg hover:bg-indigo-100 hover:scale-110 active:scale-95 transition-all shadow-sm border border-indigo-100 dark:border-indigo-800/50"
+                                            title="Ver Mapa Mental (Nexo Visual)"
+                                        >
+                                            <Network size={14} />
+                                        </button>
+                                    )}
                                     <button
                                         onClick={() => { setEditingPerson(person); setIsModalOpen(true); setActiveTab('basic'); }}
-                                        className="p-4 -m-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all cursor-pointer"
+                                        className="p-1 px-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all cursor-pointer"
                                     >
-                                        <Pencil size={16} />
+                                        <Pencil size={14} />
                                     </button>
                                     <button
                                         onClick={() => handleSoftDelete(person.id)}
@@ -915,7 +925,16 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <div className="flex items-center justify-end gap-1 transition-all">
+                                                {onOpenNexoVisual && (
+                                                    <button
+                                                        onClick={() => onOpenNexoVisual(person)}
+                                                        className="p-2 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
+                                                        title="Ver Mapa Mental (Nexo Visual)"
+                                                    >
+                                                        <Network size={16} />
+                                                    </button>
+                                                )}
                                                 <button
                                                     onClick={() => handleGenerateDocs(person)}
                                                     className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all"

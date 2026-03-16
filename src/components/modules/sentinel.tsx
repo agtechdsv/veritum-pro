@@ -333,7 +333,7 @@ const Sentinel: React.FC<{ credentials: Credentials; user: User; permissions: an
                                 <h4 className="font-bold text-slate-800 dark:text-white text-sm mb-1">{alert.title}</h4>
                                 <p className="text-xs text-slate-400 font-medium font-mono truncate">{alert.term}</p>
 
-                                <div className="mt-3 pt-3 border-t border-slate-50 dark:border-slate-800 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="mt-3 pt-3 border-t border-slate-50 dark:border-slate-800 flex items-center justify-between transition-all">
                                     <button
                                         onClick={() => { setEditingAlert(alert); setIsAlertModalOpen(true); }}
                                         className="text-[10px] font-black uppercase text-indigo-600 dark:text-indigo-400 flex items-center gap-1 hover:underline"

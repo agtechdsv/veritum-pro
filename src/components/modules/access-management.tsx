@@ -623,7 +623,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                             <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center text-indigo-600 dark:text-indigo-400">
                                 <Shield size={24} />
                             </div>
-                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="flex gap-2 transition-all">
                                 <button onClick={() => handleOpenModal(group)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/50 rounded-lg transition-all" title="Editar">
                                     <FileEdit size={18} />
                                 </button>
@@ -912,7 +912,7 @@ const AccessManagement: React.FC<Props> = ({ currentUser }) => {
                                                                                                             setShowRoleModal(true);
                                                                                                             setIsRoleSelectOpen(false);
                                                                                                         }}
-                                                                                                        className="p-2 rounded-xl text-slate-400 hover:bg-white dark:hover:bg-slate-950 hover:shadow-md transition-all opacity-0 group-hover:opacity-100"
+                                                                                                        className="p-2 rounded-xl text-slate-400 hover:bg-white dark:hover:bg-slate-950 hover:shadow-md transition-all"
                                                                                                     >
                                                                                                         <FileEdit size={14} />
                                                                                                     </button>

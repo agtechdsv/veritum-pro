@@ -76,7 +76,7 @@ export const DashboardCard: React.FC<CardProps> = ({ title, description, subtitl
                         </p>
                     )}
 
-                    <div className={`flex items-center gap-2 text-xs font-black uppercase tracking-widest transition-all transform translate-x-[-10px] group-hover:translate-x-0 ${isLocked ? 'text-amber-600' : 'text-indigo-600 dark:text-indigo-400 opacity-0 group-hover:opacity-100'}`}>
+                    <div className={`flex items-center gap-2 text-xs font-black uppercase tracking-widest transition-all ${isLocked ? 'text-amber-600' : 'text-indigo-600 dark:text-indigo-400'}`}>
                         {isLocked ? (t('dashboard.acquireModule') || 'Adquirir Módulo') : (t('dashboard.accessModule') || 'Acessar Módulo')} <ChevronRight size={14} />
                     </div>
                 </div>

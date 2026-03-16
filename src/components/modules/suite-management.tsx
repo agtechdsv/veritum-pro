@@ -505,7 +505,7 @@ const SuiteManagement: React.FC<Props> = ({ credentials }) => {
                                                     const removed = newFeats.splice(idx, 1)[0];
                                                     setSuiteFeatures(newFeats);
                                                     if (removed.id) setDeletedFeatureIds([...deletedFeatureIds, removed.id]);
-                                                }} className="absolute top-4 right-4 text-slate-400 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100 bg-white dark:bg-slate-800 rounded-full p-1 shadow-sm border border-slate-200 dark:border-slate-700">
+                                                }} className="absolute top-4 right-4 text-slate-400 hover:text-rose-500 transition-all bg-white dark:bg-slate-800 rounded-full p-1 shadow-sm border border-slate-200 dark:border-slate-700">
                                                     <Trash2 size={14} />
                                                 </button>
                                                 <div className="space-y-1.5 w-11/12">

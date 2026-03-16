@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Credentials, Lawsuit, LawsuitDocument, Task, CalendarEvent, User, Person, TeamMember, Asset, CorporateEntity, Shareholder, CorporateDocument, TaxRegime, EntityStatus, EntityType, AssetDocument, TimelineEntry, GlobalDocument } from '@/types';
-import { Plus, MoreHorizontal, Calendar, Scale, Search, Filter, LayoutDashboard, ArrowRight, AlertTriangle, CheckCircle2, Clock, MapPin, Shield, User as UserIcon, Users, Save, XCircle, Pencil, ChevronRight, ChevronLeft, ChevronDown, Zap, Lock as LockIcon, Trash2, LayoutGrid, List, Building2, FileText, PieChart, Briefcase, Upload, Check, Loader2, Download, Trello, History, ExternalLink } from 'lucide-react';
+import { Plus, MoreHorizontal, Calendar, Scale, Search, Filter, LayoutDashboard, ArrowRight, AlertTriangle, CheckCircle2, Clock, MapPin, Shield, User as UserIcon, Users, Save, XCircle, Pencil, ChevronRight, ChevronLeft, ChevronDown, Zap, Lock as LockIcon, Trash2, LayoutGrid, List, Building2, FileText, PieChart, Briefcase, Upload, Check, Loader2, Download, Network, Trello, History, ExternalLink } from 'lucide-react';
 import { createDynamicClient } from '@/utils/supabase/client';
 import IntelligenceWidget from '../shared/intelligence-widget';
 import { useTranslation } from '@/contexts/language-context';
@@ -348,6 +348,8 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     const [editingShareholder, setEditingShareholder] = useState<Partial<Shareholder> | null>(null);
     const [isDocumentModalOpen, setIsDocumentModalOpen] = useState(false);
     const [editingDocument, setEditingDocument] = useState<Partial<CorporateDocument> | null>(null);
+    const [isNexoVisualOpen, setIsNexoVisualOpen] = useState(false);
+    const [nexoData, setNexoData] = useState<{ origin_type: 'lawsuit' | 'corporate' | 'asset' | 'task' | 'document' | 'person', id: string, title: string, data: any } | null>(null);
     const [isLawsuitDocModalOpen, setIsLawsuitDocModalOpen] = useState(false);
     const [editingLawsuitDoc, setEditingLawsuitDoc] = useState<Partial<LawsuitDocument> | null>(null);
     const [lawsuitDocFile, setLawsuitDocFile] = useState<File | null>(null);
@@ -859,6 +861,22 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         }
     };
 
+    const handleOpenNexoVisual = (type: 'lawsuit' | 'corporate' | 'asset' | 'task' | 'document' | 'person', data: any) => {
+        let title = '';
+        if (type === 'lawsuit') title = data.case_title || data.cnj_number;
+        else if (type === 'corporate') title = data.legal_name;
+        else if (type === 'person') title = data.full_name;
+        else if (type === 'asset' || type === 'task' || type === 'document') title = data.title;
+
+        setNexoData({
+            origin_type: type,
+            id: data.id,
+            title: title || 'Sem Título',
+            data: data
+        });
+        setIsNexoVisualOpen(true);
+    };
+
     const handleEditGlobalDocumentOrigin = async (doc: GlobalDocument) => {
         const { origin_type, origin_id } = doc;
         
@@ -902,7 +920,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                     if (file_url) {
                         const path = extractStoragePath(file_url, 'nexus-documents');
                         if (path) {
-                            const supabase = createDynamicClient(contextCreds.supabaseUrl, contextCreds.supabaseAnonKey);
+                            const supabase = createDynamicClient(credentials.supabaseUrl, credentials.supabaseAnonKey);
                             await supabase.storage.from('nexus-documents').remove([path]);
                         }
                     }
@@ -2392,6 +2410,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                 onRefresh={fetchAll}
                                 onNewLawsuit={handleCreateLawsuitFromCRM}
                                 onNewCorporateEntity={handleCreateCorporateEntityFromCRM}
+                                onOpenNexoVisual={p => handleOpenNexoVisual('person', p)}
                             />
                         </div>
                     </div>
@@ -2500,28 +2519,30 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                 >
                                                                     <div className="flex justify-between items-start mb-2">
                                                                         <div className="text-[8px] font-mono font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-tight truncate">{law.cnj_number || 'Sem CNJ'}</div>
-                                                                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                            <button
-                                                                                onClick={(e) => { e.stopPropagation(); handleOpenHistory(law.id, 'lawsuit', law.case_title || 'Sem Título'); }}
-                                                                                className="p-1 text-slate-400 hover:text-indigo-600 bg-slate-50 dark:bg-slate-800 rounded cursor-pointer"
-                                                                                title="Análise de Histórico"
-                                                                            >
-                                                                                <History size={12} />
-                                                                            </button>
-                                                                            <button
-                                                                                onClick={(e) => { e.stopPropagation(); setEditingLawsuit(law); setIsLawsuitModalOpen(true); setActiveLawsuitTab('basic'); }}
-                                                                                className="p-1 text-slate-400 hover:text-indigo-600 bg-slate-50 dark:bg-slate-800 rounded cursor-pointer"
-                                                                                title={t('common.edit')}
-                                                                            >
-                                                                                <Pencil size={12} />
-                                                                            </button>
-                                                                            <button
-                                                                                onClick={(e) => { e.stopPropagation(); handleSoftDeleteLawsuit(law.id); }}
-                                                                                className="p-1 text-slate-400 hover:text-red-600 bg-slate-50 dark:bg-slate-800 rounded cursor-pointer"
-                                                                                title={t('common.delete')}
-                                                                            >
-                                                                                <Trash2 size={12} />
-                                                                            </button>
+                                                                        <div className="flex items-center gap-1.5">
+                                                                            <div className="flex gap-1 transition-all">
+                                                                                <button
+                                                                                    onClick={(e) => { e.stopPropagation(); handleOpenHistory(law.id, 'lawsuit', law.case_title || 'Sem Título'); }}
+                                                                                    className="p-1 text-slate-400 hover:text-indigo-600 bg-slate-50 dark:bg-slate-800 rounded cursor-pointer"
+                                                                                    title="Análise de Histórico"
+                                                                                >
+                                                                                    <History size={12} />
+                                                                                </button>
+                                                                                <button
+                                                                                    onClick={(e) => { e.stopPropagation(); setEditingLawsuit(law); setIsLawsuitModalOpen(true); setActiveLawsuitTab('basic'); }}
+                                                                                    className="p-1 text-slate-400 hover:text-indigo-600 bg-slate-50 dark:bg-slate-800 rounded cursor-pointer"
+                                                                                    title={t('common.edit')}
+                                                                                >
+                                                                                    <Pencil size={12} />
+                                                                                </button>
+                                                                                <button
+                                                                                    onClick={(e) => { e.stopPropagation(); handleSoftDeleteLawsuit(law.id); }}
+                                                                                    className="p-1 text-slate-400 hover:text-red-600 bg-slate-50 dark:bg-slate-800 rounded cursor-pointer"
+                                                                                    title={t('common.delete')}
+                                                                                >
+                                                                                    <Trash2 size={12} />
+                                                                                </button>
+                                                                            </div>
                                                                         </div>
                                                                     </div>
                                                                     <h4 className="font-bold text-slate-800 dark:text-white text-xs mb-3 line-clamp-2 leading-snug uppercase tracking-tight">{law.case_title}</h4>
@@ -2539,7 +2560,14 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                         <div className="text-[9px] font-black text-emerald-600 dark:text-emerald-400">
                                                                             {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(law.value || 0)}
                                                                         </div>
-                                                                        <div className="flex items-center gap-1">
+                                                                        <div className="flex items-center gap-1.5">
+                                                                            <button
+                                                                                onClick={(e) => { e.stopPropagation(); handleOpenNexoVisual('lawsuit', law); }}
+                                                                                className="p-1 px-1.5 text-indigo-600 bg-indigo-50 dark:bg-indigo-900/40 rounded-lg hover:bg-indigo-100 hover:scale-110 active:scale-95 transition-all shadow-sm border border-indigo-100 dark:border-indigo-800/50"
+                                                                                title="Ver Mapa Mental (Nexo Visual)"
+                                                                            >
+                                                                                <Network size={12} />
+                                                                            </button>
                                                                              {renderStatusBadge(law.id, law.status, 'lawsuit', LAWSUIT_STATUSES)}
                                                                         </div>
                                                                     </div>
@@ -2618,47 +2646,54 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                     </div>
                                                                 </td>
                                                                 <td className="px-6 py-4">
-                                                                    <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                        <button
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                setActiveTab('tarefas');
-                                                                                setEditingTask({
-                                                                                    status: 'A Fazer',
-                                                                                    lawsuit_id: law.id,
-                                                                                    responsible_id: law.responsible_lawyer_id || '',
-                                                                                    title: `${law.author_id ? (persons.find(p => p.id === law.author_id)?.full_name + ' - ') : ''}Andamento de Processo`,
-                                                                                    priority: 'Média'
-                                                                                });
-                                                                                setTimeout(() => {
-                                                                                    setIsTaskModalOpen(true);
-                                                                                    setActiveTaskTab('basic');
-                                                                                }, 300);
-                                                                            }}
-                                                                            className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-all"
-                                                                            title={t('modules.nexus.newTask')}
-                                                                        >
-                                                                            <Zap size={18} />
-                                                                        </button>
-                                                                        <button
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                setActiveTab('ativos');
-                                                                                setEditingAsset({
-                                                                                    status: 'Ativo',
-                                                                                    lawsuit_id: law.id,
-                                                                                    person_id: law.author_id || '',
-                                                                                    asset_type: 'Outros'
-                                                                                });
-                                                                                setTimeout(() => {
-                                                                                    setIsAssetModalOpen(true);
-                                                                                }, 300);
-                                                                            }}
-                                                                            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
-                                                                            title="Vincular Novo Ativo/Garantia"
-                                                                        >
-                                                                            <Shield size={18} />
-                                                                        </button>
+                                                                    <div className="flex items-center justify-end gap-1 transition-all">
+                                                                         <button
+                                                                             onClick={(e) => { e.stopPropagation(); handleOpenNexoVisual('lawsuit', law); }}
+                                                                             className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
+                                                                             title="Ver Mapa Mental (Nexo Visual)"
+                                                                         >
+                                                                             <Network size={18} />
+                                                                         </button>
+                                                                         <button
+                                                                             onClick={(e) => {
+                                                                                 e.stopPropagation();
+                                                                                 setActiveTab('tarefas');
+                                                                                 setEditingTask({
+                                                                                     status: 'A Fazer',
+                                                                                     lawsuit_id: law.id,
+                                                                                     responsible_id: law.responsible_lawyer_id || '',
+                                                                                     title: `${law.author_id ? (persons.find(p => p.id === law.author_id)?.full_name + ' - ') : ''}Andamento de Processo`,
+                                                                                     priority: 'Média'
+                                                                                 });
+                                                                                 setTimeout(() => {
+                                                                                     setIsTaskModalOpen(true);
+                                                                                     setActiveTaskTab('basic');
+                                                                                 }, 300);
+                                                                             }}
+                                                                             className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-all"
+                                                                             title={t('modules.nexus.newTask')}
+                                                                         >
+                                                                             <Zap size={18} />
+                                                                         </button>
+                                                                         <button
+                                                                             onClick={(e) => {
+                                                                                 e.stopPropagation();
+                                                                                 setActiveTab('ativos');
+                                                                                 setEditingAsset({
+                                                                                     status: 'Ativo',
+                                                                                     lawsuit_id: law.id,
+                                                                                     person_id: law.author_id || '',
+                                                                                     asset_type: 'Outros'
+                                                                                 });
+                                                                                 setTimeout(() => {
+                                                                                     setIsAssetModalOpen(true);
+                                                                                 }, 300);
+                                                                             }}
+                                                                             className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
+                                                                             title="Vincular Novo Ativo/Garantia"
+                                                                         >
+                                                                             <Shield size={18} />
+                                                                         </button>
                                                                         <button
                                                                             onClick={(e) => {
                                                                                 e.stopPropagation();
@@ -2673,9 +2708,9 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                             onClick={(e) => {
                                                                                 e.stopPropagation();
                                                                                 setEditingLawsuit(law);
-                                                                                setEditingLawsuitDoc({ 
-                                                                                    document_type: 'Petição Inicial', 
-                                                                                    event_date: new Date().toISOString() 
+                                                                                setEditingLawsuitDoc({
+                                                                                    document_type: 'Petição Inicial',
+                                                                                    event_date: new Date().toISOString()
                                                                                 });
                                                                                 setIsLawsuitDocModalOpen(true);
                                                                             }}
@@ -2707,7 +2742,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                             </div>
                                         </motion.div>
                                     ) : (
-                                        <motion.div 
+                                        <motion.div
                                             key="process-grid"
                                             initial={{ opacity: 0, scale: 0.98 }}
                                             animate={{ opacity: 1, scale: 1 }}
@@ -2729,7 +2764,16 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                     <span className="text-[10px] font-mono font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-tight">{law.cnj_number}</span>
                                                                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">{law.sphere}</span>
                                                                 </div>
-                                                                {renderStatusBadge(law.id, law.status, 'lawsuit', LAWSUIT_STATUSES)}
+                                                                <div className="flex items-center gap-2">
+                                                                    <button
+                                                                        onClick={(e) => { e.stopPropagation(); handleOpenNexoVisual('lawsuit', law); }}
+                                                                        className="p-1.5 text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg hover:bg-indigo-100 hover:scale-110 active:scale-95 transition-all shadow-sm border border-indigo-100 dark:border-indigo-800/50"
+                                                                        title="Ver Mapa Mental (Nexo Visual)"
+                                                                    >
+                                                                        <Network size={12} />
+                                                                    </button>
+                                                                    {renderStatusBadge(law.id, law.status, 'lawsuit', LAWSUIT_STATUSES)}
+                                                                </div>
                                                             </div>
 
                                                             <h3 className="font-bold text-slate-800 dark:text-white text-lg mb-4 line-clamp-2 leading-tight">{law.case_title}</h3>
@@ -2802,9 +2846,9 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                         onClick={(e) => {
                                                                             e.stopPropagation();
                                                                             setEditingLawsuit(law);
-                                                                            setEditingLawsuitDoc({ 
-                                                                                document_type: 'Petição Inicial', 
-                                                                                event_date: new Date().toISOString() 
+                                                                            setEditingLawsuitDoc({
+                                                                                document_type: 'Petição Inicial',
+                                                                                event_date: new Date().toISOString()
                                                                             });
                                                                             setIsLawsuitDocModalOpen(true);
                                                                         }}
@@ -2961,7 +3005,14 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                             <span className={`text-[9px] font-black uppercase px-2 py-1 rounded-md border ${getSeverityColor(task.due_date, task.status)}`}>
                                                                 {getPriorityTranslation(task.priority || 'Média')}
                                                             </span>
-                                                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <div className="flex gap-1.5 transition-all">
+                                                                <button
+                                                                    onClick={(e) => { e.stopPropagation(); handleOpenNexoVisual('task', task); }}
+                                                                    className="p-1 px-1.5 text-indigo-600 bg-indigo-50 dark:bg-indigo-900/40 rounded-lg hover:bg-indigo-100 hover:scale-110 active:scale-95 transition-all shadow-sm border border-indigo-100 dark:border-indigo-800/50"
+                                                                    title="Ver Mapa Mental (Nexo Visual)"
+                                                                >
+                                                                    <Network size={12} />
+                                                                </button>
                                                                 <button
                                                                     onClick={() => { setEditingTask(task); setIsTaskModalOpen(true); setActiveTaskTab('basic'); }}
                                                                     className="p-1 text-slate-400 hover:text-indigo-600 bg-slate-50 dark:bg-slate-800 rounded cursor-pointer"
@@ -3041,12 +3092,21 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                 </div>
                                                             </td>
                                                             <td className="px-6 py-4 text-right">
-                                                                <button
-                                                                    onClick={() => { setEditingTask(task); setIsTaskModalOpen(true); setActiveTaskTab('basic'); }}
-                                                                    className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
-                                                                >
-                                                                    <Pencil size={18} />
-                                                                </button>
+                                                                <div className="flex items-center justify-end gap-1">
+                                                                    <button
+                                                                        onClick={(e) => { e.stopPropagation(); handleOpenNexoVisual('task', task); }}
+                                                                        className="p-2 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
+                                                                        title="Ver Mapa Mental (Nexo Visual)"
+                                                                    >
+                                                                        <Network size={18} />
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => { setEditingTask(task); setIsTaskModalOpen(true); setActiveTaskTab('basic'); }}
+                                                                        className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
+                                                                    >
+                                                                        <Pencil size={18} />
+                                                                    </button>
+                                                                </div>
                                                             </td>
                                                         </tr>
                                                     )
@@ -3137,7 +3197,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                             <div className="font-bold text-slate-700 dark:text-slate-200">{resp?.full_name || '-'}</div>
                                                         </td>
                                                         <td className="px-6 py-4">
-                                                            <div className="flex items-center justify-end gap-1 opacity-100 transition-opacity">
+                                                            <div className="flex items-center justify-end gap-1">
                                                                 <button
                                                                     onClick={(e) => { e.stopPropagation(); setEditingEvent(event); setIsEventModalOpen(true); }}
                                                                     className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
@@ -3241,7 +3301,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                             }`}
                                                                     >
                                                                         <div className={`truncate ${isPastEvent ? 'line-through decoration-slate-300 dark:decoration-slate-600' : ''}`}>{ev.title}</div>
-                                                                        <div className={`${isPastEvent ? 'text-slate-400 dark:text-slate-500' : 'text-indigo-200'} font-medium mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity`}>
+                                                                        <div className={`${isPastEvent ? 'text-slate-400 dark:text-slate-500' : 'text-indigo-200'} font-medium mt-0.5 transition-opacity`}>
                                                                             {new Date(ev.start_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {ev.event_type}
                                                                         </div>
                                                                     </div>
@@ -3318,8 +3378,8 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         className="h-full flex gap-6 overflow-x-auto no-scrollbar pb-4"
                                     >
                                         {ASSET_STATUSES.map(status => (
-                                            <div 
-                                                key={status} 
+                                            <div
+                                                key={status}
                                                 className="flex-shrink-0 w-80 bg-slate-100/40 dark:bg-slate-950/40 rounded-[2rem] p-4 border border-slate-200 dark:border-slate-900 flex flex-col gap-4"
                                                 onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('bg-indigo-50/50', 'dark:bg-indigo-900/10', 'border-indigo-300', 'dark:border-indigo-800/50'); }}
                                                 onDragLeave={(e) => { e.currentTarget.classList.remove('bg-indigo-50/50', 'dark:bg-indigo-900/10', 'border-indigo-300', 'dark:border-indigo-800/50'); }}
@@ -3346,8 +3406,8 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                             const person = persons.find(p => p.id === asset.person_id);
                                                             const lawsuit = lawsuits.find(l => l.id === asset.lawsuit_id);
                                                             return (
-                                                                <div 
-                                                                    key={asset.id} 
+                                                                <div
+                                                                    key={asset.id}
                                                                     draggable
                                                                     onDragStart={(e) => {
                                                                         handleDragStartAsset(e, asset.id);
@@ -3359,9 +3419,41 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                     className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group cursor-pointer"
                                                                     onClick={() => { setEditingAsset(asset); setIsAssetModalOpen(true); }}
                                                                 >
-                                                                    <div className="flex justify-between items-start mb-2">
-                                                                        <div className="text-[8px] font-black text-slate-400 uppercase tracking-widest truncate">{asset.asset_type}</div>
-                                                                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                    <div className="flex justify-between items-start mb-3">
+                                                                        <div className="flex flex-col">
+                                                                            <div className="text-[8px] font-black text-slate-400 uppercase tracking-widest truncate">{asset.asset_type}</div>
+                                                                            <h4 className="font-bold text-slate-800 dark:text-white text-xs mt-1 line-clamp-1 leading-tight uppercase tracking-tight">{asset.title}</h4>
+                                                                        </div>
+                                                                        <div className="flex items-center gap-1.5">
+                                                                            <button
+                                                                                onClick={(e) => { e.stopPropagation(); handleOpenNexoVisual('asset', asset); }}
+                                                                                className="p-1 px-1.5 text-indigo-600 bg-indigo-50 dark:bg-indigo-900/40 rounded-lg hover:bg-indigo-100 hover:scale-110 active:scale-95 transition-all shadow-sm border border-indigo-100 dark:border-indigo-800/50"
+                                                                                title="Ver Mapa Mental (Nexo Visual)"
+                                                                            >
+                                                                                <Network size={12} />
+                                                                            </button>
+                                                                            {renderStatusBadge(asset.id, asset.status, 'asset', ASSET_STATUSES)}
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div className="flex flex-col gap-2 mb-4">
+                                                                        {person && (
+                                                                            <div className="flex items-center gap-2 text-[10px] font-bold text-indigo-600 dark:text-indigo-400">
+                                                                                <UserIcon size={10} /> <span className="truncate">{person.full_name}</span>
+                                                                            </div>
+                                                                        )}
+                                                                        {lawsuit && (
+                                                                            <div className="flex items-center gap-2 text-[9px] font-bold text-slate-400">
+                                                                                <Scale size={10} /> <span className="truncate">{lawsuit.cnj_number || lawsuit.case_title}</span>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+
+                                                                    <div className="flex items-center justify-between pt-3 border-t border-slate-50 dark:border-slate-800 mt-auto">
+                                                                        <div className="text-[10px] font-black text-emerald-600 dark:text-emerald-400">
+                                                                            {asset.value ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(asset.value) : '-'}
+                                                                        </div>
+                                                                        <div className="flex gap-1 transition-all">
                                                                             <button
                                                                                 onClick={(e) => { e.stopPropagation(); handleOpenHistory(asset.id, 'asset', asset.title || 'Sem Título'); }}
                                                                                 className="p-1 text-slate-400 hover:text-indigo-600 bg-slate-50 dark:bg-slate-800 rounded cursor-pointer"
@@ -3377,29 +3469,6 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                             </button>
                                                                         </div>
                                                                     </div>
-                                                                    <h4 className="font-bold text-slate-800 dark:text-white text-xs mb-3 line-clamp-2 leading-snug uppercase tracking-tight">{asset.title}</h4>
-                                                                    
-                                                                    <div className="flex flex-col gap-2 mb-4">
-                                                                        {person && (
-                                                                            <div className="flex items-center gap-2 text-[10px] font-bold text-indigo-600 dark:text-indigo-400">
-                                                                                <UserIcon size={10} /> <span className="truncate">{person.full_name}</span>
-                                                                            </div>
-                                                                        )}
-                                                                        {lawsuit && (
-                                                                            <div className="flex items-center gap-2 text-[9px] font-bold text-slate-400">
-                                                                                <Scale size={10} /> <span className="truncate">{lawsuit.cnj_number || lawsuit.case_title}</span>
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
-
-                                                                    <div className="flex items-center justify-between pt-3 border-t border-slate-50 dark:border-slate-800">
-                                                                        <div className="text-[10px] font-black text-emerald-600 dark:text-emerald-400">
-                                                                            {asset.value ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(asset.value) : '-'}
-                                                                        </div>
-                                                                        <div className="flex items-center gap-1">
-                                                                            {renderStatusBadge(asset.id, asset.status, 'asset', ASSET_STATUSES)}
-                                                                        </div>
-                                                                    </div>
                                                                 </div>
                                                             );
                                                         })
@@ -3409,7 +3478,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         ))}
                                     </motion.div>
                                 ) : assetViewStyle === 'list' ? (
-                                    <motion.div 
+                                    <motion.div
                                         key="asset-list"
                                         initial={{ opacity: 0, scale: 0.98 }}
                                         animate={{ opacity: 1, scale: 1 }}
@@ -3456,10 +3525,19 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                     {lawsuit && <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-1"><Scale size={10} /> {lawsuit.cnj_number || lawsuit.case_title}</div>}
                                                                 </td>
                                                                 <td className="px-6 py-4">
-                                                                    {renderStatusBadge(asset.id, asset.status, 'asset', ASSET_STATUSES)}
+                                                                    <div className="flex items-center gap-2">
+                                                                        {renderStatusBadge(asset.id, asset.status, 'asset', ASSET_STATUSES)}
+                                                                    </div>
                                                                 </td>
                                                                 <td className="px-6 py-4">
-                                                                    <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                    <div className="flex items-center justify-end gap-1 transition-all">
+                                                                        <button
+                                                                            onClick={(e) => { e.stopPropagation(); handleOpenNexoVisual('asset', asset); }}
+                                                                            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
+                                                                            title="Ver Mapa Mental (Nexo Visual)"
+                                                                        >
+                                                                            <Network size={18} />
+                                                                        </button>
                                                                         <button
                                                                             onClick={(e) => { e.stopPropagation(); handleOpenHistory(asset.id, 'asset', asset.title || 'Sem Título'); }}
                                                                             className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
@@ -3468,14 +3546,14 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                             <History size={18} />
                                                                         </button>
                                                                         <button
-                                                                            onClick={(e) => { 
-                                                                                e.stopPropagation(); 
-                                                                                setEditingAsset(asset); 
-                                                                                setEditingAssetDoc({ 
-                                                                                    document_type: 'Matrícula', 
-                                                                                    event_date: new Date().toISOString() 
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                setEditingAsset(asset);
+                                                                                setEditingAssetDoc({
+                                                                                    document_type: 'Matrícula',
+                                                                                    event_date: new Date().toISOString()
                                                                                 });
-                                                                                setIsAssetDocModalOpen(true); 
+                                                                                setIsAssetDocModalOpen(true);
                                                                             }}
                                                                             className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
                                                                             title="Upload Rápido de Documento"
@@ -3505,7 +3583,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         </div>
                                     </motion.div>
                                 ) : (
-                                    <motion.div 
+                                    <motion.div
                                         key="asset-grid"
                                         initial={{ opacity: 0, scale: 0.98 }}
                                         animate={{ opacity: 1, scale: 1 }}
@@ -3524,7 +3602,16 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                             <div key={asset.id} className="bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden flex flex-col h-full">
                                                 <div className="flex justify-between items-start mb-4">
                                                     <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg text-[10px] font-black uppercase tracking-widest">{asset.asset_type}</span>
-                                                    {renderStatusBadge(asset.id, asset.status, 'asset', ASSET_STATUSES)}
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); handleOpenNexoVisual('asset', asset); }}
+                                                            className="p-1 px-1.5 text-indigo-600 bg-indigo-50 dark:bg-indigo-900/40 rounded-lg hover:bg-indigo-100 hover:scale-110 active:scale-95 transition-all shadow-sm border border-indigo-100 dark:border-indigo-800/50"
+                                                            title="Ver Mapa Mental (Nexo Visual)"
+                                                        >
+                                                            <Network size={12} />
+                                                        </button>
+                                                        {renderStatusBadge(asset.id, asset.status, 'asset', ASSET_STATUSES)}
+                                                    </div>
                                                 </div>
 
                                                 <h3 className="font-bold text-slate-800 dark:text-white text-lg mb-2 line-clamp-2 leading-tight">{asset.title}</h3>
@@ -3559,14 +3646,14 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                             <History size={18} />
                                                         </button>
                                                         <button
-                                                            onClick={(e) => { 
-                                                                e.stopPropagation(); 
-                                                                setEditingAsset(asset); 
-                                                                setEditingAssetDoc({ 
-                                                                                    document_type: 'Matrícula', 
-                                                                                    event_date: new Date().toISOString() 
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setEditingAsset(asset);
+                                                                setEditingAssetDoc({
+                                                                                    document_type: 'Matrícula',
+                                                                                    event_date: new Date().toISOString()
                                                                                 });
-                                                                setIsAssetDocModalOpen(true); 
+                                                                setIsAssetDocModalOpen(true);
                                                             }}
                                                             className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
                                                             title="Upload Rápido de Documento"
@@ -3616,7 +3703,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                 <div className="mt-4 md:mt-0 flex items-center gap-4">
                                     <div className="relative group">
                                         <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
-                                        <input 
+                                        <input
                                             type="text"
                                             placeholder="Buscar entidade..."
                                             value={corporateSearchTerm}
@@ -3649,13 +3736,13 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         </button>
                                     </div>
                                     <button
-                                        onClick={() => { 
-                                            setEditingEntity({ status: 'Ativa', entity_type: 'LTDA' }); 
+                                        onClick={() => {
+                                            setEditingEntity({ status: 'Ativa', entity_type: 'LTDA' });
                                             personForQSARef.current = null;
                                             setShareholders([]); // Limpa manualmente para nova entidade em branco
                                             setCorporateDocuments([]);
-                                            setIsEntityModalOpen(true); 
-                                            setActiveEntityTab('basic'); 
+                                            setIsEntityModalOpen(true);
+                                            setActiveEntityTab('basic');
                                         }}
                                         className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white font-black uppercase tracking-widest text-[10px] px-6 py-3 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-xl hover:shadow-indigo-500/30 hover:-translate-y-1"
                                     >
@@ -3676,8 +3763,8 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                             className="h-full flex gap-6 overflow-x-auto no-scrollbar pb-4"
                                         >
                                             {ENTITY_STATUSES_LIST.map(status => (
-                                                <div 
-                                                    key={status} 
+                                                <div
+                                                    key={status}
                                                     className="flex-shrink-0 w-80 bg-slate-100/40 dark:bg-slate-950/40 rounded-[2rem] p-4 border border-slate-200 dark:border-slate-900 flex flex-col gap-4"
                                                     onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('bg-indigo-50/50', 'dark:bg-indigo-900/10', 'border-indigo-300', 'dark:border-indigo-800/50'); }}
                                                     onDragLeave={(e) => { e.currentTarget.classList.remove('bg-indigo-50/50', 'dark:bg-indigo-900/10', 'border-indigo-300', 'dark:border-indigo-800/50'); }}
@@ -3701,8 +3788,8 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                             <div className="py-20 text-center text-[10px] font-bold text-slate-300 italic uppercase tracking-widest">Vazio</div>
                                                         ) : (
                                                             filteredEntities.filter(e => e.status === status).map(entity => (
-                                                                <div 
-                                                                    key={entity.id} 
+                                                                <div
+                                                                    key={entity.id}
                                                                     draggable
                                                                     onDragStart={(e) => {
                                                                         handleDragStartEntity(e, entity.id);
@@ -3716,24 +3803,33 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                 >
                                                                     <div className="flex justify-between items-start mb-2">
                                                                         <div className="text-[8px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest truncate">{entity.entity_type}</div>
-                                                                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                        <div className="flex items-center gap-2">
                                                                             <button
-                                                                                onClick={(e) => { e.stopPropagation(); handleOpenHistory(entity.id, 'corporate', entity.legal_name || 'Sem Título'); }}
-                                                                                className="p-1 text-slate-400 hover:text-indigo-600 bg-slate-50 dark:bg-slate-800 rounded cursor-pointer"
-                                                                                title="Análise de Histórico"
+                                                                                onClick={(e) => { e.stopPropagation(); handleOpenNexoVisual('corporate', entity); }}
+                                                                                className="p-1.5 text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg hover:bg-indigo-100 hover:scale-110 active:scale-95 transition-all shadow-sm border border-indigo-100 dark:border-indigo-800/50"
+                                                                                title="Ver Mapa Mental (Nexo Visual)"
                                                                             >
-                                                                                <History size={12} />
+                                                                                <Network size={12} />
                                                                             </button>
-                                                                            <button
-                                                                                onClick={(e) => { e.stopPropagation(); handleEditEntity(entity); }}
-                                                                                className="p-1 text-slate-400 hover:text-indigo-600 bg-slate-50 dark:bg-slate-800 rounded cursor-pointer"
-                                                                            >
-                                                                                <Pencil size={12} />
-                                                                            </button>
+                                                                            <div className="flex gap-1 transition-all">
+                                                                                <button
+                                                                                    onClick={(e) => { e.stopPropagation(); handleOpenHistory(entity.id, 'corporate', entity.legal_name || 'Sem Título'); }}
+                                                                                    className="p-1 text-slate-400 hover:text-indigo-600 bg-slate-50 dark:bg-slate-800 rounded cursor-pointer"
+                                                                                    title="Análise de Histórico"
+                                                                                >
+                                                                                    <History size={12} />
+                                                                                </button>
+                                                                                <button
+                                                                                    onClick={(e) => { e.stopPropagation(); handleEditEntity(entity); }}
+                                                                                    className="p-1 text-slate-400 hover:text-indigo-600 bg-slate-50 dark:bg-slate-800 rounded cursor-pointer"
+                                                                                >
+                                                                                    <Pencil size={12} />
+                                                                                </button>
+                                                                            </div>
                                                                         </div>
                                                                     </div>
                                                                     <h4 className="font-bold text-slate-800 dark:text-white text-xs mb-3 line-clamp-2 leading-snug uppercase tracking-tight">{entity.legal_name}</h4>
-                                                                    
+
                                                                     <div className="flex flex-col gap-2 mb-4">
                                                                         <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
                                                                             {entity.cnpj || 'CNPJ NÃO INFORMADO'}
@@ -3800,6 +3896,13 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                             <td className="px-6 py-4 text-right">
                                                                 <div className="flex items-center justify-end gap-1 opacity-100">
                                                                     <button
+                                                                        onClick={(e) => { e.stopPropagation(); handleOpenNexoVisual('corporate', entity); }}
+                                                                        className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
+                                                                        title="Ver Mapa Mental (Nexo Visual)"
+                                                                    >
+                                                                        <Network size={18} />
+                                                                    </button>
+                                                                    <button
                                                                         onClick={(e) => { e.stopPropagation(); handleOpenHistory(entity.id, 'corporate', entity.legal_name || 'Sem Título'); }}
                                                                         className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
                                                                         title="Análise de Histórico"
@@ -3865,7 +3968,16 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                         <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 rounded-3xl group-hover:scale-110 transition-transform">
                                                             <Building2 size={24} />
                                                         </div>
-                                                        {renderStatusBadge(entity.id, entity.status, 'corporate', ENTITY_STATUSES_LIST)}
+                                                        <div className="flex items-center gap-2">
+                                                            <button
+                                                                onClick={(e) => { e.stopPropagation(); handleOpenNexoVisual('corporate', entity); }}
+                                                                className="p-1.5 text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg hover:bg-indigo-100 hover:scale-110 active:scale-95 transition-all shadow-sm border border-indigo-100 dark:border-indigo-800/50"
+                                                                title="Ver Mapa Mental (Nexo Visual)"
+                                                            >
+                                                                <Network size={12} />
+                                                            </button>
+                                                            {renderStatusBadge(entity.id, entity.status, 'corporate', ENTITY_STATUSES_LIST)}
+                                                        </div>
                                                     </div>
 
                                                     <h3 className="font-black text-slate-800 dark:text-white text-xl mb-1 line-clamp-1 truncate uppercase tracking-tighter leading-tight">
@@ -3989,13 +4101,22 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                     <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 rounded-2xl group-hover:scale-110 transition-transform">
                                                         <FileText size={20} />
                                                     </div>
-                                                    <button 
-                                                        onClick={() => doc.file_url && window.open(doc.file_url, '_blank')}
-                                                        className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all"
-                                                        title="Visualizar Documento"
-                                                    >
-                                                        <ExternalLink size={18} />
-                                                    </button>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); handleOpenNexoVisual('document', doc); }}
+                                                            className="p-1.5 text-indigo-600 bg-indigo-50 dark:bg-indigo-900/40 rounded-xl hover:bg-indigo-100 hover:scale-110 active:scale-95 transition-all shadow-sm border border-indigo-100 dark:border-indigo-800/50"
+                                                            title="Ver Mapa Mental (Nexo Visual)"
+                                                        >
+                                                            <Network size={14} />
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => doc.file_url && window.open(doc.file_url, '_blank')}
+                                                            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all"
+                                                            title="Visualizar Documento"
+                                                        >
+                                                            <ExternalLink size={18} />
+                                                        </button>
+                                                    </div>
                                                 </div>
 
                                                 <div className="space-y-4">
@@ -4090,24 +4211,34 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                     </div>
                                     <div className="flex gap-2">
                                         {editingLawsuit?.id && (
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setIsLawsuitModalOpen(false);
-                                                    setActiveTab('ativos');
-                                                    setEditingAsset({
-                                                        status: 'Ativo',
-                                                        lawsuit_id: editingLawsuit.id,
-                                                        person_id: editingLawsuit.author_id || '',
-                                                        asset_type: 'Outros'
-                                                    });
-                                                    setTimeout(() => setIsAssetModalOpen(true), 150);
-                                                }}
-                                                className="p-2 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-700 dark:bg-emerald-900/20 dark:hover:bg-emerald-900/40 rounded-xl transition-all shadow-sm"
-                                                title="Vincular Novo Ativo/Garantia ao Processo"
-                                            >
-                                                <Shield size={28} className="p-1" />
-                                            </button>
+                                            <>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleOpenNexoVisual('lawsuit', editingLawsuit)}
+                                                    className="p-2 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/20 dark:hover:bg-indigo-900/40 rounded-xl transition-all shadow-sm"
+                                                    title="Ver Mapa Mental (Nexo Visual)"
+                                                >
+                                                    <Network size={28} className="p-1" />
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setIsLawsuitModalOpen(false);
+                                                        setActiveTab('ativos');
+                                                        setEditingAsset({
+                                                            status: 'Ativo',
+                                                            lawsuit_id: editingLawsuit.id,
+                                                            person_id: editingLawsuit.author_id || '',
+                                                            asset_type: 'Outros'
+                                                        });
+                                                        setTimeout(() => setIsAssetModalOpen(true), 150);
+                                                    }}
+                                                    className="p-2 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-700 dark:bg-emerald-900/20 dark:hover:bg-emerald-900/40 rounded-xl transition-all shadow-sm"
+                                                    title="Vincular Novo Ativo/Garantia ao Processo"
+                                                >
+                                                    <Shield size={28} className="p-1" />
+                                                </button>
+                                            </>
                                         )}
                                         <button
                                             type="button"
@@ -4556,7 +4687,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                                 <button 
                                                                                     type="button"
                                                                                     onClick={() => handleDeleteLawsuitDocument(doc.id)}
-                                                                                    className="p-2 text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                                    className="p-2 text-slate-300 hover:text-rose-500 transition-all"
                                                                                 >
                                                                                     <Trash2 size={16} />
                                                                                 </button>
@@ -5382,12 +5513,23 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                             <Shield size={12} className="text-indigo-600" /> Governança & Estrutura Societária
                                         </p>
                                     </div>
-                                    <button
-                                        onClick={() => { setIsEntityModalOpen(false); setActiveEntityTab('basic'); }}
-                                        className="p-3 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-2xl transition-all"
-                                    >
-                                        <XCircle size={32} />
-                                    </button>
+                                    <div className="flex gap-2">
+                                        {editingEntity?.id && (
+                                            <button
+                                                onClick={() => handleOpenNexoVisual('corporate', editingEntity)}
+                                                className="p-2 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/20 dark:hover:bg-indigo-900/40 rounded-2xl transition-all shadow-sm"
+                                                title="Ver Mapa Mental (Nexo Visual)"
+                                            >
+                                                <Network size={28} className="p-1" />
+                                            </button>
+                                        )}
+                                        <button
+                                            onClick={() => { setIsEntityModalOpen(false); setActiveEntityTab('basic'); }}
+                                            className="p-3 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-2xl transition-all"
+                                        >
+                                            <XCircle size={32} />
+                                        </button>
+                                    </div>
                                 </div>
 
                                 {/* Premium Tabs */}
@@ -5681,7 +5823,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                     <button 
                                                                         type="button"
                                                                         onClick={() => handleDeleteDocument(doc.id)}
-                                                                        className="p-2 text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                        className="p-2 text-slate-300 hover:text-rose-500 transition-all"
                                                                     >
                                                                         <Trash2 size={16} />
                                                                     </button>
@@ -6378,6 +6520,246 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                             </div>
                         </motion.div>
                     </div>
+                )}
+                {isNexoVisualOpen && nexoData && (
+                    <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[200] bg-slate-950/95 backdrop-blur-2xl flex flex-col overflow-hidden"
+                    >
+                        {/* Header */}
+                        <div className="p-8 flex items-center justify-between border-b border-white/5 relative z-10 bg-slate-950/50">
+                            <div>
+                                <div className="flex items-center gap-3">
+                                    <div className="p-3 bg-indigo-500/20 text-indigo-400 rounded-2xl">
+                                        <Network size={24} />
+                                    </div>
+                                    <h2 className="text-3xl font-black text-white uppercase tracking-tighter">Nexo Visual</h2>
+                                </div>
+                                <p className="text-[10px] text-indigo-400/60 font-black uppercase tracking-[0.2em] mt-2 flex items-center gap-2">
+                                    <Shield size={10} /> Mapeamento de Inteligência Veritum PRO
+                                </p>
+                            </div>
+                            <div className="flex items-center gap-6">
+                                <div className="text-right hidden md:block">
+                                    <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Sujeito Central</p>
+                                    <p className="text-sm font-bold text-white uppercase">{nexoData.title}</p>
+                                </div>
+                                <button 
+                                    onClick={() => setIsNexoVisualOpen(false)}
+                                    className="p-4 text-white/20 hover:text-white hover:bg-white/10 rounded-full transition-all border border-white/5 shadow-2xl"
+                                >
+                                    <XCircle size={32} />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Interactive Canvas */}
+                        <div className="flex-1 relative overflow-hidden flex items-center justify-center p-20 cursor-grab active:cursor-grabbing">
+                            {/* SVG Background Lines */}
+                            <svg className="absolute inset-0 w-full h-full pointer-events-none">
+                                <defs>
+                                    <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" stopColor="#6366f1" stopOpacity="0.8" />
+                                        <stop offset="100%" stopColor="#6366f1" stopOpacity="0.1" />
+                                    </linearGradient>
+                                </defs>
+                                {(() => {
+                                    const radius = 280;
+                                    const centerX = typeof window !== 'undefined' ? window.innerWidth / 2 : 0;
+                                    const centerY = typeof window !== 'undefined' ? (window.innerHeight - 100) / 2 : 0; // Adjust for header
+                                    
+                                    // Calculate nodes logic
+                                    const neighbors: any[] = [];
+                                    const { origin_type, id, data } = nexoData;
+                                    if (origin_type === 'lawsuit') {
+                                        const author = persons.find(p => p.id === data.author_id);
+                                        if (author) neighbors.push({ label: author.full_name, icon: UserIcon, color: '#3b82f6', cat: 'Autor' });
+                                        const def = persons.find(p => p.id === data.defendant_id);
+                                        if (def) neighbors.push({ label: def.full_name, icon: UserIcon, color: '#f43f5e', cat: 'Réu' });
+                                        const lawyer = team.find(t => t.id === data.responsible_lawyer_id);
+                                        if (lawyer) neighbors.push({ label: lawyer.full_name, icon: Briefcase, color: '#f59e0b', cat: 'Responsável' });
+                                        assets.filter(a => a.lawsuit_id === id).forEach(a => neighbors.push({ label: a.title, icon: Shield, color: '#10b981', cat: 'Ativo' }));
+                                        lawsuitDocuments.filter(d => d.lawsuit_id === id).forEach(d => neighbors.push({ label: d.title, icon: FileText, color: '#64748b', cat: 'Documento' }));
+                                        tasks.filter(t => t.lawsuit_id === id).forEach(t => neighbors.push({ label: t.title, icon: CheckCircle2, color: '#8b5cf6', cat: 'Tarefa' }));
+                                    } else if (origin_type === 'corporate') {
+                                        shareholders.filter(s => s.entity_id === id).forEach(s => neighbors.push({ label: s.shareholder_name, icon: Users, color: '#3b82f6', cat: 'Sócio' }));
+                                        corporateDocuments.filter(d => d.entity_id === id).forEach(d => neighbors.push({ label: d.title, icon: FileText, color: '#64748b', cat: 'Documento' }));
+                                    } else if (origin_type === 'asset') {
+                                        const owner = persons.find(p => p.id === data.person_id);
+                                        if (owner) neighbors.push({ label: owner.full_name, icon: UserIcon, color: '#3b82f6', cat: 'Proprietário' });
+                                        const lawsuit = lawsuits.find(l => l.id === data.lawsuit_id);
+                                        if (lawsuit) neighbors.push({ label: lawsuit.case_title || lawsuit.cnj_number, icon: Scale, color: '#8b5cf6', cat: 'Processo' });
+                                        assetDocuments.filter(d => d.asset_id === id).forEach(d => neighbors.push({ label: d.title, icon: FileText, color: '#64748b', cat: 'Documento' }));
+                                    } else if (origin_type === 'task') {
+                                        const lawsuit = lawsuits.find(l => l.id === data.lawsuit_id);
+                                        if (lawsuit) neighbors.push({ label: lawsuit.case_title || lawsuit.cnj_number, icon: Scale, color: '#8b5cf6', cat: 'Processo' });
+                                        const resp = team.find(t => t.id === data.responsible_id);
+                                        if (resp) neighbors.push({ label: resp.full_name, icon: Briefcase, color: '#f59e0b', cat: 'Responsável' });
+                                    } else if (origin_type === 'document') {
+                                        if (data.origin_type === 'lawsuit') {
+                                            const law = lawsuits.find(l => l.id === data.origin_id);
+                                            if (law) neighbors.push({ label: law.case_title || law.cnj_number, icon: Scale, color: '#8b5cf6', cat: 'Origem' });
+                                        } else if (data.origin_type === 'corporate') {
+                                            const entity = corporateEntities.find(e => e.id === data.origin_id);
+                                            if (entity) neighbors.push({ label: entity.legal_name, icon: Building2, color: '#3b82f6', cat: 'Origem' });
+                                        } else if (data.origin_type === 'asset') {
+                                            const asset = assets.find(a => a.id === data.origin_id);
+                                            if (asset) neighbors.push({ label: asset.title, icon: Shield, color: '#10b981', cat: 'Origem' });
+                                        }
+                                    } else if (origin_type === 'person') {
+                                        lawsuits.filter(l => l.author_id === id || l.defendant_id === id).forEach(l => neighbors.push({ label: l.case_title || l.cnj_number, icon: Scale, color: '#8b5cf6', cat: 'Processo' }));
+                                        assets.filter(a => a.person_id === id).forEach(a => neighbors.push({ label: a.title, icon: Shield, color: '#10b981', cat: 'Ativo' }));
+                                        shareholders.filter(s => s.person_shareholder_id === id).forEach(s => {
+                                            const entity = corporateEntities.find(e => e.id === s.entity_id);
+                                            if (entity) neighbors.push({ label: entity.legal_name, icon: Building2, color: '#3b82f6', cat: 'Holding/PJ' });
+                                        });
+                                        tasks.filter(t => t.responsible_id === id).forEach(t => neighbors.push({ label: t.title, icon: CheckCircle2, color: '#f59e0b', cat: 'Tarefa' }));
+                                    }
+
+                                    return neighbors.map((n, i) => {
+                                        const angle = (i / neighbors.length) * 2 * Math.PI;
+                                        const x2 = Math.cos(angle) * radius;
+                                        const y2 = Math.sin(angle) * radius;
+                                        return (
+                                            <motion.line
+                                                key={`line-${i}`}
+                                                initial={{ pathLength: 0, opacity: 0 }}
+                                                animate={{ pathLength: 1, opacity: 1 }}
+                                                transition={{ duration: 1, delay: 0.5 + i * 0.1 }}
+                                                x1="50%" y1="50%"
+                                                x2={`calc(50% + ${x2}px)`} y2={`calc(50% + ${y2}px)`}
+                                                stroke={n.color}
+                                                strokeWidth="2"
+                                                strokeDasharray="4 4"
+                                                className="opacity-20"
+                                            />
+                                        );
+                                    });
+                                })()}
+                            </svg>
+
+                            {/* Center Node */}
+                            <motion.div
+                                drag
+                                dragConstraints={{ left: -100, right: 100, top: -100, bottom: 100 }}
+                                initial={{ scale: 0, rotate: -180 }}
+                                animate={{ scale: 1, rotate: 0 }}
+                                transition={{ type: 'spring', damping: 15 }}
+                                className="relative z-20 w-48 h-48 bg-white dark:bg-slate-900 rounded-full border-4 border-indigo-600 shadow-[0_0_60px_rgba(79,70,229,0.3)] flex flex-col items-center justify-center p-6 text-center cursor-pointer group"
+                            >
+                                <div className="absolute inset-0 rounded-full bg-indigo-600 opacity-0 group-hover:opacity-5 transition-opacity" />
+                                {nexoData.origin_type === 'lawsuit' ? <Scale size={40} className="text-indigo-600 mb-2" /> : 
+                                 nexoData.origin_type === 'corporate' ? <Building2 size={40} className="text-indigo-600 mb-2" /> :
+                                 nexoData.origin_type === 'asset' ? <Shield size={40} className="text-indigo-600 mb-2" /> :
+                                 nexoData.origin_type === 'task' ? <CheckCircle2 size={40} className="text-indigo-600 mb-2" /> :
+                                 nexoData.origin_type === 'person' ? <UserIcon size={40} className="text-indigo-600 mb-2" /> :
+                                 <FileText size={40} className="text-indigo-600 mb-2" />}
+                                <h4 className="text-xs font-black text-slate-800 dark:text-white uppercase leading-tight line-clamp-2">
+                                    {nexoData.title}
+                                </h4>
+                                <div className="mt-2 px-2 py-0.5 bg-indigo-50 dark:bg-indigo-900/30 rounded-full text-[8px] font-black text-indigo-600 uppercase tracking-widest border border-indigo-100 dark:border-indigo-800">
+                                    Principal
+                                </div>
+                            </motion.div>
+
+                            {/* Orbiting Nodes */}
+                            {(() => {
+                                const radius = 280;
+                                const neighbors: any[] = [];
+                                const { origin_type, id, data } = nexoData;
+                                if (origin_type === 'lawsuit') {
+                                    const author = persons.find(p => p.id === data.author_id);
+                                    if (author) neighbors.push({ label: author.full_name, icon: UserIcon, color: 'bg-blue-500', cat: 'Autor' });
+                                    const def = persons.find(p => p.id === data.defendant_id);
+                                    if (def) neighbors.push({ label: def.full_name, icon: UserIcon, color: 'bg-rose-500', cat: 'Réu' });
+                                    const lawyer = team.find(t => t.id === data.responsible_lawyer_id);
+                                    if (lawyer) neighbors.push({ label: lawyer.full_name, icon: Briefcase, color: 'bg-amber-500', cat: 'Responsável' });
+                                    assets.filter(a => a.lawsuit_id === id).forEach(a => neighbors.push({ label: a.title, icon: Shield, color: 'bg-emerald-500', cat: 'Ativo' }));
+                                    lawsuitDocuments.filter(d => d.lawsuit_id === id).forEach(d => neighbors.push({ label: d.title, icon: FileText, color: 'bg-slate-500', cat: 'Documento' }));
+                                    tasks.filter(t => t.lawsuit_id === id).forEach(t => neighbors.push({ label: t.title, icon: CheckCircle2, color: 'bg-purple-500', cat: 'Tarefa' }));
+                                } else if (origin_type === 'person') {
+                                    lawsuits.filter(l => l.author_id === id || l.defendant_id === id).forEach(l => neighbors.push({ label: l.case_title || l.cnj_number, icon: Scale, color: 'bg-purple-500', cat: 'Processo' }));
+                                    assets.filter(a => a.person_id === id).forEach(a => neighbors.push({ label: a.title, icon: Shield, color: 'bg-emerald-500', cat: 'Ativo' }));
+                                    shareholders.filter(s => s.person_shareholder_id === id).forEach(s => {
+                                        const entity = corporateEntities.find(e => e.id === s.entity_id);
+                                        if (entity) neighbors.push({ label: entity.legal_name, icon: Building2, color: 'bg-blue-500', cat: 'Sociedade' });
+                                    });
+                                    tasks.filter(t => t.responsible_id === id).forEach(t => neighbors.push({ label: t.title, icon: CheckCircle2, color: 'bg-amber-500', cat: 'Tarefa' }));
+                                } else if (origin_type === 'corporate') {
+                                    shareholders.filter(s => s.entity_id === id).forEach(s => neighbors.push({ label: s.shareholder_name, icon: Users, color: 'bg-blue-500', cat: 'Sócio' }));
+                                    corporateDocuments.filter(d => d.entity_id === id).forEach(d => neighbors.push({ label: d.title, icon: FileText, color: 'bg-slate-500', cat: 'Documento' }));
+                                } else if (origin_type === 'asset') {
+                                    const owner = persons.find(p => p.id === data.person_id);
+                                    if (owner) neighbors.push({ label: owner.full_name, icon: UserIcon, color: 'bg-blue-500', cat: 'Proprietário' });
+                                    const lawsuit = lawsuits.find(l => l.id === data.lawsuit_id);
+                                    if (lawsuit) neighbors.push({ label: lawsuit.case_title || lawsuit.cnj_number, icon: Scale, color: 'bg-purple-500', cat: 'Processo' });
+                                    assetDocuments.filter(d => d.asset_id === id).forEach(d => neighbors.push({ label: d.title, icon: FileText, color: 'bg-slate-500', cat: 'Documento' }));
+                                } else if (origin_type === 'task') {
+                                    const lawsuit = lawsuits.find(l => l.id === data.lawsuit_id);
+                                    if (lawsuit) neighbors.push({ label: lawsuit.case_title || lawsuit.cnj_number, icon: Scale, color: 'bg-purple-500', cat: 'Processo' });
+                                    const resp = team.find(t => t.id === data.responsible_id);
+                                    if (resp) neighbors.push({ label: resp.full_name, icon: Briefcase, color: 'bg-amber-500', cat: 'Responsável' });
+                                } else if (origin_type === 'document') {
+                                    if (data.origin_type === 'lawsuit') {
+                                        const law = lawsuits.find(l => l.id === data.origin_id);
+                                        if (law) neighbors.push({ label: law.case_title || law.cnj_number, icon: Scale, color: 'bg-purple-500', cat: 'Origem' });
+                                    } else if (data.origin_type === 'corporate') {
+                                        const entity = corporateEntities.find(e => e.id === data.origin_id);
+                                        if (entity) neighbors.push({ label: entity.legal_name, icon: Building2, color: 'bg-blue-500', cat: 'Origem' });
+                                    } else if (data.origin_type === 'asset') {
+                                        const asset = assets.find(a => a.id === data.origin_id);
+                                        if (asset) neighbors.push({ label: asset.title, icon: Shield, color: 'bg-emerald-500', cat: 'Origem' });
+                                    }
+                                }
+
+                                return neighbors.map((n, i) => {
+                                    const angle = (i / neighbors.length) * 2 * Math.PI;
+                                    const x = Math.cos(angle) * radius;
+                                    const y = Math.sin(angle) * radius;
+                                    return (
+                                        <motion.div
+                                            key={`node-${i}`}
+                                            initial={{ scale: 0, x: 0, y: 0 }}
+                                            animate={{ scale: 1, x: x, y: y }}
+                                            transition={{ type: 'spring', damping: 20, delay: 0.2 + i * 0.05 }}
+                                            className="absolute w-40 p-4 bg-white/10 backdrop-blur-md border border-white/10 rounded-3xl flex flex-col items-center text-center group cursor-pointer hover:bg-white/20 hover:border-white/30 transition-all hover:-translate-y-1 shadow-2xl"
+                                        >
+                                            <div className={`p-3 ${n.color} text-white rounded-2xl mb-3 shadow-lg group-hover:scale-110 transition-transform`}>
+                                                <n.icon size={20} />
+                                            </div>
+                                            <span className="text-[9px] font-black text-white/50 uppercase tracking-[0.2em] mb-1">{n.cat}</span>
+                                            <span className="text-[10px] font-bold text-white line-clamp-2 leading-tight">
+                                                {n.label}
+                                            </span>
+                                        </motion.div>
+                                    );
+                                });
+                            })()}
+                        </div>
+
+                        {/* Footer Tips */}
+                        <div className="p-8 flex justify-between items-center relative z-10 bg-slate-950/50 border-t border-white/5">
+                            <div className="flex gap-4">
+                                <div className="flex items-center gap-2 group">
+                                    <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
+                                    <span className="text-[10px] font-black text-white/40 uppercase tracking-widest transition-colors group-hover:text-white/60">Pessoas</span>
+                                </div>
+                                <div className="flex items-center gap-2 group">
+                                    <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+                                    <span className="text-[10px] font-black text-white/40 uppercase tracking-widest transition-colors group-hover:text-white/60">Ativos</span>
+                                </div>
+                                <div className="flex items-center gap-2 group">
+                                    <div className="w-2 h-2 rounded-full bg-slate-500 shadow-[0_0_10px_rgba(100,116,139,0.5)]" />
+                                    <span className="text-[10px] font-black text-white/40 uppercase tracking-widest transition-colors group-hover:text-white/60">Documentos</span>
+                                </div>
+                            </div>
+                            <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest flex items-center gap-2 animate-pulse">
+                                <Zap size={10} /> Visualização em Tempo Real (Nexus Engine)
+                            </p>
+                        </div>
+                    </motion.div>
                 )}
             </AnimatePresence>
         </div>
