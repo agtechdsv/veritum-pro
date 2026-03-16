@@ -395,7 +395,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
 
     const LAWSUIT_STATUSES = ['Ativo', 'Suspenso', 'Arquivado', 'Encerrado'];
     const ASSET_STATUSES = ['Ativo', 'Bloqueado', 'Vendido', 'Em Garantia', 'Alienado'];
-    const ENTITY_STATUS_LIST: EntityStatus[] = ['Ativa', 'Baixada', 'Inativa', 'Em Liquidação'];
+    const ENTITY_STATUSES: EntityStatus[] = ['Ativa', 'Baixada', 'Inativa', 'Em Liquidação'];
 
     const handleQuickStatusUpdate = async (id: string, type: 'lawsuit' | 'asset' | 'corporate', newStatus: string) => {
         try {
@@ -431,7 +431,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             if (currentStatus === 'Ativo' || currentStatus === 'Ativa') return 'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800/50';
             if (currentStatus === 'Encerrado' || currentStatus === 'Vendido' || currentStatus === 'Baixada' || currentStatus === 'Inativa' || currentStatus === 'Bloqueado') 
                 return 'bg-rose-50 text-rose-600 border-rose-100 dark:bg-rose-900/20 dark:border-rose-800/50';
-            if (currentStatus === 'Suspenso' || currentStatus === 'Em ManutenÃ§Ã£o' || currentStatus === 'Em LiquidaÃ§Ã£o' || currentStatus === 'Em Garantia') 
+            if (currentStatus === 'Suspenso' || currentStatus === 'Em Manutenção' || currentStatus === 'Em Liquidação' || currentStatus === 'Em Garantia') 
                 return 'bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-900/20 dark:border-amber-800/50';
             return 'bg-slate-50 text-slate-600 border-slate-100 dark:bg-slate-800/50 dark:border-slate-700/50';
         };
@@ -919,7 +919,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         setNexoData({
             origin_type: type,
             id: data.id,
-            title: title || 'Sem TÃ­tulo',
+            title: title || 'Sem Título',
             data: data
         });
         setIsNexoVisualOpen(true);
@@ -1462,7 +1462,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         if (!doc) return;
 
         triggerConfirm(
-            'Excluir Documento SocietÃ¡rio',
+            'Excluir Documento Societário',
             'Deseja realmente remover este documento? Esta aÃ§Ã£o nÃ£o pode ser desfeita.',
             async () => {
                 try {
@@ -1872,7 +1872,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     };
 
     const TAX_REGIMES: TaxRegime[] = ['Simples Nacional', 'Lucro Presumido', 'Lucro Real', 'Isenta'];
-    const ENTITY_STATUSES: EntityStatus[] = ['Ativa', 'Baixada', 'Inativa', 'Em Liquidação'];
+    // ENTITY_STATUSES is already defined at line 398
     const ENTITY_TYPES: EntityType[] = ['LTDA', 'SA', 'EIRELI', 'MEI', 'Holding', 'Associação', 'Outros'];
 
     const TRIBUNAIS: Record<string, Record<string, string[]>> = {
@@ -2039,7 +2039,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                     <input
                         type="text"
-                        placeholder="Buscar por CNPJ ou TÃ­tulo..."
+                        placeholder="Buscar por CNPJ ou Título..."
                         value={lawsuitSearch}
                         onChange={e => setLawsuitSearch(e.target.value)}
                         className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
@@ -2109,7 +2109,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                     onChange={e => setAssetTypeFilter(e.target.value)}
                     className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
                 >
-                    <option value="">ðŸ“¦ Todos os Tipos</option>
+                    <option value="">📦 Todos os Tipos</option>
                     {['Imóvel', 'Veículo', 'Conta BancÃ¡ria', 'AÃ§Ã£o Judicial', 'Empresa / Quotas', 'Outros'].map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
             </div>
@@ -2149,7 +2149,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                     <option value="">ðŸ“ Todas as Origens</option>
                     <option value="lawsuit">âš–ï¸ Processos</option>
                     <option value="asset">ðŸ›¡ï¸ Ativos</option>
-                    <option value="corporate">ðŸ¢ SocietÃ¡rio</option>
+                    <option value="corporate">ðŸ¢ Societário</option>
                 </select>
             </div>
             <div className="w-56">
@@ -2570,7 +2570,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                         <div className="flex items-center gap-1.5">
                                                                             <div className="flex gap-1 transition-all">
                                                                                 <button
-                                                                                    onClick={(e) => { e.stopPropagation(); handleOpenHistory(law.id, 'lawsuit', law.case_title || 'Sem TÃ­tulo'); }}
+                                                                                    onClick={(e) => { e.stopPropagation(); handleOpenHistory(law.id, 'lawsuit', law.case_title || 'Sem Título'); }}
                                                                                     className="p-1 text-slate-400 hover:text-indigo-600 bg-slate-50 dark:bg-slate-800 rounded cursor-pointer"
                                                                                     title="Análise de Histórico"
                                                                                 >
@@ -2745,7 +2745,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                         <button
                                                                             onClick={(e) => {
                                                                                 e.stopPropagation();
-                                                                                handleOpenHistory(law.id, 'lawsuit', law.case_title || 'Sem TÃ­tulo');
+                                                                                handleOpenHistory(law.id, 'lawsuit', law.case_title || 'Sem Título');
                                                                             }}
                                                                             className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
                                                                             title="Ver Histórico de Auditoria"
@@ -2763,7 +2763,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                                 setIsLawsuitDocModalOpen(true);
                                                                             }}
                                                                             className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
-                                                                            title="Upload RÃ¡pido de Documento"
+                                                                            title="Upload Rápido de Documento"
                                                                         >
                                                                             <Upload size={18} />
                                                                         </button>
@@ -2883,7 +2883,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                     <button
                                                                         onClick={(e) => {
                                                                             e.stopPropagation();
-                                                                            handleOpenHistory(law.id, 'lawsuit', law.case_title || 'Sem TÃ­tulo');
+                                                                            handleOpenHistory(law.id, 'lawsuit', law.case_title || 'Sem Título');
                                                                         }}
                                                                         className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
                                                                         title="Ver Histórico de Auditoria"
@@ -2901,7 +2901,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                             setIsLawsuitDocModalOpen(true);
                                                                         }}
                                                                         className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
-                                                                        title="Upload RÃ¡pido de Documento"
+                                                                        title="Upload Rápido de Documento"
                                                                     >
                                                                         <Upload size={16} />
                                                                     </button>
@@ -3174,7 +3174,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                             <div className="flex items-center gap-6">
                                 <div>
                                     <h1 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">{t('modules.nexus.tabs.calendar')}</h1>
-                                    <p className="text-slate-500 font-bold">Visualização cronolÃ³gica de compromissos</p>
+                                    <p className="text-slate-500 font-bold">Visualização cronológica de compromissos</p>
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <div className="flex w-72 bg-slate-100 dark:bg-slate-900 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-inner">
@@ -3503,7 +3503,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                         </div>
                                                                         <div className="flex gap-1 transition-all">
                                                                             <button
-                                                                                onClick={(e) => { e.stopPropagation(); handleOpenHistory(asset.id, 'asset', asset.title || 'Sem TÃ­tulo'); }}
+                                                                                onClick={(e) => { e.stopPropagation(); handleOpenHistory(asset.id, 'asset', asset.title || 'Sem Título'); }}
                                                                                 className="p-1 text-slate-400 hover:text-indigo-600 bg-slate-50 dark:bg-slate-800 rounded cursor-pointer"
                                                                                 title="Análise de Histórico"
                                                                             >
@@ -3587,7 +3587,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                             <Network size={18} />
                                                                         </button>
                                                                         <button
-                                                                            onClick={(e) => { e.stopPropagation(); handleOpenHistory(asset.id, 'asset', asset.title || 'Sem TÃ­tulo'); }}
+                                                                            onClick={(e) => { e.stopPropagation(); handleOpenHistory(asset.id, 'asset', asset.title || 'Sem Título'); }}
                                                                             className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
                                                                             title="Análise de Histórico"
                                                                         >
@@ -3604,7 +3604,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                                 setIsAssetDocModalOpen(true);
                                                                             }}
                                                                             className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
-                                                                            title="Upload RÃ¡pido de Documento"
+                                                                            title="Upload Rápido de Documento"
                                                                         >
                                                                             <Upload size={18} />
                                                                         </button>
@@ -3687,7 +3687,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                     </div>
                                                     <div className="flex gap-1">
                                                         <button
-                                                            onClick={(e) => { e.stopPropagation(); handleOpenHistory(asset.id, 'asset', asset.title || 'Sem TÃ­tulo'); }}
+                                                            onClick={(e) => { e.stopPropagation(); handleOpenHistory(asset.id, 'asset', asset.title || 'Sem Título'); }}
                                                             className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
                                                             title="Análise de Histórico"
                                                         >
@@ -3704,7 +3704,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                 setIsAssetDocModalOpen(true);
                                                             }}
                                                             className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
-                                                            title="Upload RÃ¡pido de Documento"
+                                                            title="Upload Rápido de Documento"
                                                         >
                                                             <Upload size={18} />
                                                         </button>
@@ -3738,7 +3738,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 {activeTab === 'societario' && (
                     <div className="flex-1 flex flex-col pt-0 overflow-y-auto no-scrollbar animate-in fade-in slide-in-from-bottom-4 duration-700">
                         <div className="flex flex-col h-full space-y-6">
-                            {/* Header SocietÃ¡rio */}
+                            {/* Header Societário */}
                             <div className="flex flex-col md:flex-row pb-6 mb-2 mt-4 px-8 border-b-4 border-slate-100 dark:border-slate-800">
                                 <div className="flex-1">
                                     <h1 className="text-4xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">
@@ -3799,7 +3799,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                 </div>
                             </div>
 
-                            {/* Tabela/Grade SocietÃ¡rio */}
+                            {/* Tabela/Grade Societário */}
                             <div className="flex-1 px-8 pb-8 h-[calc(100vh-280px)]">
                                 <AnimatePresence mode="wait">
                                     {corporateViewStyle === 'kanban' ? (
@@ -3810,7 +3810,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                             exit={{ opacity: 0, x: -20 }}
                                             className="h-full flex gap-6 overflow-x-auto no-scrollbar pb-4"
                                         >
-                                            {ENTITY_STATUSES_LIST.map(status => (
+                                            {ENTITY_STATUSES.map(status => (
                                                 <div
                                                     key={status}
                                                     className="flex-shrink-0 w-80 bg-slate-100/40 dark:bg-slate-950/40 rounded-[2rem] p-4 border border-slate-200 dark:border-slate-900 flex flex-col gap-4"
@@ -3861,7 +3861,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                             </button>
                                                                             <div className="flex gap-1 transition-all">
                                                                                 <button
-                                                                                    onClick={(e) => { e.stopPropagation(); handleOpenHistory(entity.id, 'corporate', entity.legal_name || 'Sem TÃ­tulo'); }}
+                                                                                    onClick={(e) => { e.stopPropagation(); handleOpenHistory(entity.id, 'corporate', entity.legal_name || 'Sem Título'); }}
                                                                                     className="p-1 text-slate-400 hover:text-indigo-600 bg-slate-50 dark:bg-slate-800 rounded cursor-pointer"
                                                                                     title="Análise de Histórico"
                                                                                 >
@@ -3880,7 +3880,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
 
                                                                     <div className="flex flex-col gap-2 mb-4">
                                                                         <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                                                                            {entity.cnpj || 'CNPJ NÃƒO INFORMADO'}
+                                                                            {entity.cnpj || 'CNPJ NÃO INFORMADO'}
                                                                         </div>
                                                                     </div>
 
@@ -3889,7 +3889,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                             {entity.total_capital ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(entity.total_capital) : '-'}
                                                                         </div>
                                                                         <div className="flex items-center gap-1">
-                                                                            {renderStatusBadge(entity.id, entity.status, 'corporate', ENTITY_STATUSES_LIST)}
+                                                                            {renderStatusBadge(entity.id, entity.status, 'corporate', ENTITY_STATUSES)}
                                                                         </div>
                                                                     </div>
                                                                 </div>
@@ -3939,7 +3939,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                 {entity.total_capital ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(entity.total_capital) : '-'}
                                                             </td>
                                                             <td className="px-6 py-4">
-                                                                {renderStatusBadge(entity.id, entity.status, 'corporate', ENTITY_STATUSES_LIST)}
+                                                                {renderStatusBadge(entity.id, entity.status, 'corporate', ENTITY_STATUSES)}
                                                             </td>
                                                             <td className="px-6 py-4 text-right">
                                                                 <div className="flex items-center justify-end gap-1 opacity-100">
@@ -3951,7 +3951,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                         <Network size={18} />
                                                                     </button>
                                                                     <button
-                                                                        onClick={(e) => { e.stopPropagation(); handleOpenHistory(entity.id, 'corporate', entity.legal_name || 'Sem TÃ­tulo'); }}
+                                                                        onClick={(e) => { e.stopPropagation(); handleOpenHistory(entity.id, 'corporate', entity.legal_name || 'Sem Título'); }}
                                                                         className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
                                                                         title="Análise de Histórico"
                                                                     >
@@ -3968,7 +3968,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                             setIsDocumentModalOpen(true); 
                                                                         }}
                                                                         className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
-                                                                        title="Upload RÃ¡pido de Documento"
+                                                                        title="Upload Rápido de Documento"
                                                                     >
                                                                         <Upload size={18} />
                                                                     </button>
@@ -3982,7 +3982,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                     <button
                                                                         onClick={() => { setEditingEntity(entity); setIsEntityModalOpen(true); setActiveEntityTab('qsa'); }}
                                                                         className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-all"
-                                                                        title="Quadro SocietÃ¡rio (QSA)"
+                                                                        title="Quadro Societário (QSA)"
                                                                     >
                                                                         <Users size={18} />
                                                                     </button>
@@ -4024,14 +4024,14 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                             >
                                                                 <Network size={12} />
                                                             </button>
-                                                            {renderStatusBadge(entity.id, entity.status, 'corporate', ENTITY_STATUSES_LIST)}
+                                                            {renderStatusBadge(entity.id, entity.status, 'corporate', ENTITY_STATUSES)}
                                                         </div>
                                                     </div>
 
                                                     <h3 className="font-black text-slate-800 dark:text-white text-xl mb-1 line-clamp-1 truncate uppercase tracking-tighter leading-tight">
                                                         {entity.legal_name}
                                                     </h3>
-                                                    <p className="text-xs font-bold text-slate-400 mb-6 uppercase tracking-widest">{entity.cnpj || 'CNPJ NÃƒO INFORMADO'}</p>
+                                                    <p className="text-xs font-bold text-slate-400 mb-6 uppercase tracking-widest">{entity.cnpj || 'CNPJ NÃO INFORMADO'}</p>
 
                                                     <div className="grid grid-cols-2 gap-3 mb-8">
                                                         <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl">
@@ -4064,7 +4064,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                             Gerenciar QSA
                                                         </button>
                                                         <button 
-                                                            onClick={(e) => { e.stopPropagation(); handleOpenHistory(entity.id, 'corporate', entity.legal_name || 'Sem TÃ­tulo'); }}
+                                                            onClick={(e) => { e.stopPropagation(); handleOpenHistory(entity.id, 'corporate', entity.legal_name || 'Sem Título'); }}
                                                             className="p-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-2xl hover:bg-indigo-600 hover:text-white transition-all active:scale-95"
                                                             title="Análise de Histórico"
                                                         >
@@ -4081,7 +4081,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                 setIsDocumentModalOpen(true); 
                                                             }}
                                                             className="p-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-2xl hover:bg-indigo-600 hover:text-white transition-all active:scale-95"
-                                                            title="Upload RÃ¡pido"
+                                                            title="Upload Rápido"
                                                         >
                                                             <Upload size={18} />
                                                         </button>
@@ -4200,7 +4200,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                 <button 
                                                                     onClick={() => handleEditGlobalDocumentOrigin(doc)}
                                                                     className="p-2 bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all rounded-xl"
-                                                                    title={doc.origin_type === 'lawsuit' ? 'Ir para o Processo' : doc.origin_type === 'asset' ? 'Ir para o Ativo' : 'Ir para o SocietÃ¡rio'}
+                                                                    title={doc.origin_type === 'lawsuit' ? 'Ir para o Processo' : doc.origin_type === 'asset' ? 'Ir para o Ativo' : 'Ir para o Societário'}
                                                                 >
                                                                     <ArrowRight size={16} />
                                                                 </button>
@@ -4604,7 +4604,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                 <div className="flex items-center justify-between mb-8">
                                                     <div>
                                                         <h4 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Histórico do Processo</h4>
-                                                        <p className="text-xs text-slate-500 font-bold">Trilha de auditoria e alteraÃ§Ãµes de status</p>
+                                                        <p className="text-xs text-slate-500 font-bold">Trilha de auditoria e alterações de status</p>
                                                     </div>
                                                     <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 rounded-2xl">
                                                         <History size={24} />
@@ -5034,7 +5034,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                 onChange={e => setEditingEvent({ ...editingEvent, event_type: e.target.value as any })}
                                                 className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white font-bold"
                                             >
-                                                {['Audiência', 'ReuniÃ£o', 'Despacho', 'DiligÃªncia', 'Outro'].map(t => <option key={t} value={t}>{t}</option>)}
+                                                {['Audiência', 'Reunião', 'Despacho', 'Diligência', 'Outro'].map(t => <option key={t} value={t}>{t}</option>)}
                                             </select>
                                         </div>
 
