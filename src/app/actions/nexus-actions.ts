@@ -191,7 +191,7 @@ export async function listLawsuits(searchTerm?: string, targetUserId?: string) {
     }
 }
 
-export async function saveLawsuit(lawsuit: Partial<Lawsuit>, targetUserId?: string) {
+export async function saveLawsuit(lawsuit: Partial<Lawsuit>, targetUserId?: string, justification?: string) {
     try {
         const { credentials, preferences, userId } = await resolveSecurityContext(targetUserId);
         const repo = RepositoryFactory.getLawsuitRepository(credentials, preferences);
@@ -212,9 +212,9 @@ export async function saveLawsuit(lawsuit: Partial<Lawsuit>, targetUserId?: stri
                     entity_type: 'lawsuit',
                     entity_id: saved.id,
                     action: 'STATUS_CHANGE',
-                    description: `Alterou status de "${oldLawsuit.status}" para "${lawsuit.status}"`,
-                    old_values: { status: oldLawsuit.status },
-                    new_values: { status: lawsuit.status },
+                    description: `Alterou status de "${oldLawsuit.status}" para "${lawsuit.status}"${justification ? ` | Motivo: ${justification}` : ''}`,
+                    old_values: { status: oldLawsuit.status, justification },
+                    new_values: { status: lawsuit.status, justification },
                     user_id: userId
                 });
             }
@@ -580,7 +580,7 @@ export async function listAssets(personId?: string, lawsuitId?: string, targetUs
     }
 }
 
-export async function saveAsset(asset: Partial<Asset>, targetUserId?: string) {
+export async function saveAsset(asset: Partial<Asset>, targetUserId?: string, justification?: string) {
     try {
         const { credentials, preferences, userId } = await resolveSecurityContext(targetUserId);
         const repo = RepositoryFactory.getAssetRepository(credentials, preferences);
@@ -601,9 +601,9 @@ export async function saveAsset(asset: Partial<Asset>, targetUserId?: string) {
                     entity_type: 'asset',
                     entity_id: saved.id,
                     action: 'STATUS_CHANGE',
-                    description: `Alterou status de "${oldAsset.status}" para "${asset.status}"`,
-                    old_values: { status: oldAsset.status },
-                    new_values: { status: asset.status },
+                    description: `Alterou status de "${oldAsset.status}" para "${asset.status}"${justification ? ` | Motivo: ${justification}` : ''}`,
+                    old_values: { status: oldAsset.status, justification },
+                    new_values: { status: asset.status, justification },
                     user_id: userId
                 });
             }
@@ -741,7 +741,7 @@ export async function listCorporateEntities(searchTerm?: string, targetUserId?: 
     }
 }
 
-export async function saveCorporateEntity(entity: Partial<CorporateEntity>, targetUserId?: string) {
+export async function saveCorporateEntity(entity: Partial<CorporateEntity>, targetUserId?: string, justification?: string) {
     try {
         const { credentials, preferences, userId } = await resolveSecurityContext(targetUserId);
         const repo = RepositoryFactory.getCorporateRepository(credentials, preferences);
@@ -758,13 +758,14 @@ export async function saveCorporateEntity(entity: Partial<CorporateEntity>, targ
         if (oldEntity) {
             // Status Change
             if (entity.status && oldEntity.status !== entity.status) {
+                const description = `Alterou status de "${oldEntity.status}" para "${entity.status}"${justification ? ` - Justificativa: ${justification}` : ''}`;
                 await timelineRepo.save({
                     entity_type: 'corporate',
                     entity_id: saved.id,
                     action: 'STATUS_CHANGE',
-                    description: `Alterou status de "${oldEntity.status}" para "${entity.status}"`,
-                    old_values: { status: oldEntity.status },
-                    new_values: { status: entity.status },
+                    description: description,
+                    old_values: { status: oldEntity.status, justification },
+                    new_values: { status: entity.status, justification },
                     user_id: userId
                 });
             }

@@ -19,6 +19,7 @@ import { NexoVisual } from './nexus/nexus-visual';
 
 const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }> = ({ credentials, user, permissions }) => {
     const { t } = useTranslation();
+    const { preferences, onSelectClient, allClients, selectedClientId, credentials: contextCreds } = useModule();
     const [view, setView] = useState<'kanban' | 'list'>('kanban');
     const [eventView, setEventView] = useState<'calendar' | 'list'>('calendar');
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -36,6 +37,10 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     const [loading, setLoading] = useState(true);
     const [globalDocuments, setGlobalDocuments] = useState<GlobalDocument[]>([]);
     const [isGlobalDocsLoading, setIsGlobalDocsLoading] = useState(false);
+    
+    // Master Selection States
+    const isMaster = user.role === 'Master';
+    const [selectedUserId, setSelectedUserId] = useState<string>(selectedClientId || (isMaster ? '' : user.id));
 
     // UI State
     const [isLawsuitModalOpen, setIsLawsuitModalOpen] = useState(false);
@@ -101,6 +106,14 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         isLoading: boolean;
     } | null>(null);
 
+    const [isJustificationModalOpen, setIsJustificationModalOpen] = useState(false);
+    const [justificationText, setJustificationText] = useState('');
+    const [pendingStatusChange, setPendingStatusChange] = useState<{
+        id: string;
+        type: 'lawsuit' | 'asset' | 'corporate';
+        newStatus: string;
+    } | null>(null);
+
     const handleOpenHistory = async (id: string, type: 'lawsuit' | 'asset' | 'corporate', title: string) => {
         setIsHistoryModalOpen(true);
         setHistoryData({ id, type, title, timeline: [], isLoading: true });
@@ -127,33 +140,51 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     const ASSET_STATUSES = ['Ativo', 'Bloqueado', 'Vendido', 'Em Garantia', 'Alienado'];
     const ENTITY_STATUSES: EntityStatus[] = ['Ativa', 'Baixada', 'Inativa', 'Em Liquidação'];
 
-    const handleQuickStatusUpdate = async (id: string, type: 'lawsuit' | 'asset' | 'corporate', newStatus: string) => {
+    const handleQuickStatusUpdate = (id: string, type: 'lawsuit' | 'asset' | 'corporate', newStatus: string) => {
+        const item = type === 'lawsuit' ? lawsuits.find(l => l.id === id) : type === 'asset' ? assets.find(a => a.id === id) : corporateEntities.find(e => e.id === id);
+        if (item && item.status === newStatus) {
+            setStatusPopover(null);
+            return;
+        }
+
+        setPendingStatusChange({ id, type, newStatus });
+        setJustificationText('');
+        setIsJustificationModalOpen(true);
+        setStatusPopover(null);
+    };
+
+    const handleConfirmStatusChange = async () => {
+        if (!pendingStatusChange) return;
+        const { id, type, newStatus } = pendingStatusChange;
+        
         try {
             if (type === 'lawsuit') {
                 const law = lawsuits.find(l => l.id === id);
                 if (law) {
-                    await saveLawsuit({ ...law, status: newStatus as any }, selectedUserId);
-                    setLawsuits(prev => prev.map(l => l.id === id ? { ...l, status: newStatus as any } : l));
+                    const saved = await saveLawsuit({ ...law, status: newStatus as any }, selectedUserId, justificationText);
+                    setLawsuits(prev => prev.map(l => l.id === id ? saved : l));
                 }
             } else if (type === 'asset') {
                 const asset = assets.find(a => a.id === id);
                 if (asset) {
-                    await saveAsset({ ...asset, status: newStatus as any }, selectedUserId);
-                    setAssets(prev => prev.map(a => a.id === id ? { ...a, status: newStatus as any } : a));
+                    const saved = await saveAsset({ ...asset, status: newStatus as any }, selectedUserId, justificationText);
+                    setAssets(prev => prev.map(a => a.id === id ? saved : a));
                 }
             } else if (type === 'corporate') {
                 const entity = corporateEntities.find(e => e.id === id);
                 if (entity) {
-                    await saveCorporateEntity({ ...entity, status: newStatus as any }, selectedUserId);
-                    setCorporateEntities(prev => prev.map(e => e.id === id ? { ...e, status: newStatus as any } : e));
+                    const saved = await saveCorporateEntity({ ...entity, status: newStatus as any }, selectedUserId, justificationText);
+                    setCorporateEntities(prev => prev.map(e => e.id === id ? saved : e));
                 }
             }
             toast.success(`Status atualizado para ${newStatus}`);
+            setIsJustificationModalOpen(false);
+            setPendingStatusChange(null);
+            setJustificationText('');
         } catch (error) {
             console.error('Error updating status:', error);
             toast.error('Erro ao atualizar status');
         }
-        setStatusPopover(null);
     };
 
     const renderStatusBadge = (id: string, currentStatus: string, type: 'lawsuit' | 'asset' | 'corporate', options: string[]) => {
@@ -248,11 +279,8 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     const [defendantSearch, setDefendantSearch] = useState('');
     const [isAuthorDropdownOpen, setIsAuthorDropdownOpen] = useState(false);
     const [isDefendantDropdownOpen, setIsDefendantDropdownOpen] = useState(false);
-    const { preferences, onSelectClient, allClients, selectedClientId, credentials: contextCreds } = useModule();
 
-    // Master Selection States
-    const isMaster = user.role === 'Master';
-    const [selectedUserId, setSelectedUserId] = useState<string>(selectedClientId || (isMaster ? '' : user.id));
+
 
     // Sync with global selection
     useEffect(() => {
@@ -741,7 +769,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         try {
             const targetUserId = selectedUserId;
             const isNew = !editingLawsuit?.id;
-            const savedLawsuit = await saveLawsuit(editingLawsuit!, targetUserId);
+            const savedLawsuit = await saveLawsuit(editingLawsuit!, targetUserId, justificationText);
 
             // Process Pending Documents if it's a new lawsuit
             if (isNew && pendingLawsuitDocuments.length > 0) {
@@ -785,6 +813,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             setLawsuitTimeline([]);
             setPendingLawsuitDocuments([]);
             setActiveLawsuitTab('basic');
+            setJustificationText('');
             toast.success(t('modules.nexus.modals.lawsuit.success') || 'Processo salvo com sucesso!');
             
             // State mutation
@@ -859,7 +888,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         try {
             const targetUserId = selectedUserId;
             const isNew = !editingAsset?.id;
-            const savedAsset = await saveAsset(editingAsset!, targetUserId);
+            const savedAsset = await saveAsset(editingAsset!, targetUserId, justificationText);
 
             // Process Pending Documents if it's a new asset
             if (isNew && pendingAssetDocuments.length > 0) {
@@ -903,6 +932,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             setAssetTimeline([]);
             setPendingAssetDocuments([]);
             setActiveAssetTab('basic');
+            setJustificationText('');
             toast.success('Ativo salvo com sucesso!');
             
             // State mutation
@@ -933,7 +963,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         console.log('[NEXUS-DEBUG] Executando handleSaveEntity', { isNew, hasPerson: !!personToLink });
 
         try {
-            const savedEntity = await saveCorporateEntity(editingEntity!, targetUserId);
+            const savedEntity = await saveCorporateEntity(editingEntity!, targetUserId, justificationText);
 
             // VÃ­nculo automático de sócio se for criação via CRM
             if (isNew && personToLink) {
@@ -999,6 +1029,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             setEditingEntity(null);
             setPendingCorporateDocuments([]);
             setActiveEntityTab('basic');
+            setJustificationText('');
             toast.success('Entidade salva com sucesso!');
             
             // State mutation
@@ -4089,7 +4120,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             {/* Lawsuit Drawer (Slide-over Pattern) */}
             <AnimatePresence>
                 {isLawsuitModalOpen && (
-                    <div className="fixed inset-0 z-[300] flex justify-end overflow-hidden">
+                    <div key="lawsuit-drawer-overlay" className="fixed inset-0 z-[300] flex justify-end overflow-hidden">
                         {/* Backdrop */}
                         <motion.div
                             initial={{ opacity: 0 }}
@@ -4365,6 +4396,16 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                     </div>
 
                                                     <div>
+                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Justificativa da Mudança (Opcional)</label>
+                                                        <input
+                                                            value={justificationText}
+                                                            onChange={e => setJustificationText(e.target.value)}
+                                                            placeholder="Motivo da alteração de status..."
+                                                            className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white font-bold text-xs"
+                                                        />
+                                                    </div>
+
+                                                    <div className="col-span-2">
                                                         <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Valor da Causa</label>
                                                         <div className="relative">
                                                             <span className="absolute left-6 top-1/2 -translate-y-1/2 font-black text-slate-400">R$</span>
@@ -4892,7 +4933,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             {/* Task Drawer (Slide-over Workflow Pattern) */}
             <AnimatePresence>
                 {isTaskModalOpen && (
-                    <div className="fixed inset-0 z-[300] flex justify-end overflow-hidden">
+                    <div key="task-drawer-overlay" className="fixed inset-0 z-[300] flex justify-end overflow-hidden">
                         {/* Backdrop */}
                         <motion.div
                             initial={{ opacity: 0 }}
@@ -5063,7 +5104,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             {/* Event Drawer */}
             <AnimatePresence>
                 {isEventModalOpen && (
-                    <div className="fixed inset-0 z-[300] flex justify-end overflow-hidden">
+                    <div key="event-drawer-overlay" className="fixed inset-0 z-[300] flex justify-end overflow-hidden">
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -5207,7 +5248,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             {/* Asset Modal (Slide-over) */}
             <AnimatePresence>
                 {isAssetModalOpen && (
-                    <div className="fixed inset-0 z-[300] flex justify-end overflow-hidden">
+                    <div key="asset-modal-overlay" className="fixed inset-0 z-[300] flex justify-end overflow-hidden">
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -5320,6 +5361,16 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                     <ChevronDown size={16} className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                                                 </div>
                                             </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Justificativa da Mudança (Opcional)</label>
+                                            <input
+                                                value={justificationText}
+                                                onChange={e => setJustificationText(e.target.value)}
+                                                placeholder="Motivo da alteração de status..."
+                                                className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white font-bold text-xs"
+                                            />
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-4">
@@ -5614,7 +5665,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             {/* Corporate Entity Modal (The "Big One") */}
             <AnimatePresence>
                 {isEntityModalOpen && (
-                    <div className="fixed inset-0 z-[300] flex justify-end overflow-hidden">
+                    <div key="entity-modal-overlay" className="fixed inset-0 z-[300] flex justify-end overflow-hidden">
                         <motion.div
                             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                             className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm"
@@ -5751,6 +5802,16 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                         {ENTITY_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
                                                     </select>
                                                 </div>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Justificativa da Mudança (Opcional)</label>
+                                                <input
+                                                    value={justificationText}
+                                                    onChange={e => setJustificationText(e.target.value)}
+                                                    placeholder="Motivo da alteração de status..."
+                                                    className="w-full px-8 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl outline-none focus:ring-4 focus:ring-indigo-600/10 font-bold text-xs"
+                                                />
                                             </div>
 
                                             <div>
@@ -6060,7 +6121,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             {/* Shareholder Modal */}
             <AnimatePresence>
                 {isShareholderModalOpen && (
-                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+                    <div key="shareholder-modal-overlay" className="fixed inset-0 z-[110] flex items-center justify-center p-4">
                         <motion.div
                             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                             className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
@@ -6140,7 +6201,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             {/* Document Modal */}
             <AnimatePresence>
                 {isDocumentModalOpen && (
-                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+                    <div key="document-modal-overlay" className="fixed inset-0 z-[110] flex items-center justify-center p-4">
                         <motion.div
                             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                             className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
@@ -6242,7 +6303,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             {/* Lawsuit Document Modal */}
             <AnimatePresence>
                 {isLawsuitDocModalOpen && (
-                    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+                    <div key="lawsuit-doc-modal-overlay" className="fixed inset-0 z-[300] flex items-center justify-center p-4">
                         <motion.div
                             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                             className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
@@ -6348,7 +6409,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             {/* Asset Document Modal */}
             <AnimatePresence>
                 {isAssetDocModalOpen && (
-                    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+                    <div key="asset-doc-modal-overlay" className="fixed inset-0 z-[300] flex items-center justify-center p-4">
                         <motion.div
                             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                             className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
@@ -6454,7 +6515,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             {/* Custom Confirmation Modal */}
             <AnimatePresence>
                 {confirmModal.isOpen && (
-                    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+                    <div key="confirm-modal-overlay" className="fixed inset-0 z-[300] flex items-center justify-center p-4">
                         <motion.div
                             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                             className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
@@ -6510,7 +6571,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             {/* Quick Status Popover */}
             <AnimatePresence>
                 {statusPopover && (
-                    <div className="fixed inset-0 z-[500]">
+                    <div key="status-popover-overlay" className="fixed inset-0 z-[500]">
                         <div 
                             className="absolute inset-0" 
                             onClick={() => setStatusPopover(null)} 
@@ -6530,9 +6591,9 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                             <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-3 py-2 border-b border-slate-50 dark:border-slate-800 mb-1">
                                 {t('common.status')}
                             </div>
-                            {statusPopover.options.map((opt) => (
+                            {statusPopover.options.map((opt, idx) => (
                                 <button
-                                    key={opt}
+                                    key={opt || `status-opt-${idx}`}
                                     onClick={() => handleQuickStatusUpdate(statusPopover.id, statusPopover.type, opt)}
                                     className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-between group ${
                                         statusPopover.currentStatus === opt 
@@ -6549,10 +6610,61 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 )}
             </AnimatePresence>
 
-            {/* History Analysis Modal */}
+            {/* Justification Modal */}
             <AnimatePresence>
+                {isJustificationModalOpen && (
+                    <div key="justification-modal-overlay" className="fixed inset-0 z-[600] flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
+                            onClick={() => { setIsJustificationModalOpen(false); setPendingStatusChange(null); }}
+                        />
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                            className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 p-8"
+                        >
+                            <div className="text-center mb-6">
+                                <div className="w-16 h-16 bg-indigo-50 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4 text-indigo-600">
+                                    <FileText size={32} />
+                                </div>
+                                <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Justificativa da Mudança</h3>
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
+                                    Explique o motivo da alteração de status
+                                </p>
+                            </div>
+
+                            <div className="space-y-4">
+                                <textarea
+                                    value={justificationText}
+                                    onChange={(e) => setJustificationText(e.target.value)}
+                                    placeholder="Ex: Por falta de provas, Acordo realizado, Erro de cadastro..."
+                                    className="w-full h-32 bg-slate-50 dark:bg-slate-800/50 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-4 text-sm font-bold text-slate-700 dark:text-slate-200 focus:border-indigo-500 transition-all outline-none resize-none"
+                                    autoFocus
+                                />
+                                <div className="grid grid-cols-2 gap-3">
+                                    <button
+                                        onClick={() => { setIsJustificationModalOpen(false); setPendingStatusChange(null); }}
+                                        className="py-4 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={handleConfirmStatusChange}
+                                        className="py-4 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2"
+                                    >
+                                        {t('common.confirm')} <ArrowRight size={14} />
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* History Analysis Modal */}
+            <AnimatePresence mode="wait">
                 {isHistoryModalOpen && historyData && (
-                    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+                    <div key="history-modal-overlay" className="fixed inset-0 z-[300] flex items-center justify-center p-4">
                         <motion.div
                             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                             className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
@@ -6598,7 +6710,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         
                                         <div className="space-y-8">
                                             {historyData.timeline.map((entry, idx) => (
-                                                <div key={entry.id || idx} className="relative pl-12">
+                                                <div key={entry.id || `history-entry-${idx}`} className="relative pl-12">
                                                     <div className="absolute left-0 top-1 w-[42px] h-[42px] rounded-full bg-white dark:bg-slate-900 border-2 border-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/10 z-10">
                                                         {entry.action === 'CREATE' ? <Plus size={16} className="text-emerald-500" /> :
                                                          entry.action === 'STATUS_CHANGE' ? <Zap size={16} className="text-amber-500" /> :
@@ -6643,7 +6755,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                     </div>
                 )}
                 <NexoVisual 
-                    isOpen={isNexoVisualOpen}
+                    key="nexo-visual-component"                    isOpen={isNexoVisualOpen}
                     onClose={() => setIsNexoVisualOpen(false)}
                     initialData={nexoData}
                     selectedUserId={selectedUserId}
