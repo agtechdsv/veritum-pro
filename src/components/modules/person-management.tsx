@@ -1019,10 +1019,10 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                             <div className="p-8 border-b border-slate-100 dark:border-slate-800 shrink-0 bg-slate-50/50 dark:bg-slate-800/50">
                                 <div className="flex items-center justify-between mb-6">
                                     <div>
-                                        <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">
-                                            {editingPerson?.id ? t('management.master.persons.modal.titles.edit') : t('management.master.persons.modal.titles.new')}
+                                        <h3 className="text-2xl font-black text-slate-800 dark:text-white tracking-tighter">
+                                            {editingPerson?.id ? t('management.master.persons.modal.titles.edit') : 'Novo Cadastro CRM'}
                                         </h3>
-                                        <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-1">
+                                        <p className="text-[10px] text-slate-500 font-bold mt-1">
                                             {editingPerson?.id ? 'Gestão de Perfis Jurídicos' : 'Novo Integrante no Ecossistema'}
                                         </p>
                                     </div>
@@ -1039,14 +1039,14 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                                     <button
                                         type="button"
                                         onClick={() => setActiveTab('basic')}
-                                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all relative z-10 ${activeTab === 'basic' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black transition-all relative z-10 ${activeTab === 'basic' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                                     >
                                         <User size={14} /> Dados Básicos
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => setActiveTab('advanced')}
-                                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all relative z-10 ${activeTab === 'advanced' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black transition-all relative z-10 ${activeTab === 'advanced' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                                     >
                                         <Zap size={14} /> Avançado
                                     </button>

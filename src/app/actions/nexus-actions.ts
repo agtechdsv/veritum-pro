@@ -1,6 +1,6 @@
 'use server';
 
-import { Lawsuit, Task, CalendarEvent, Credentials, UserPreferences, Asset, CorporateEntity, Shareholder, CorporateDocument, LawsuitDocument, AssetDocument, TimelineEntry, GlobalDocument } from '@/types';
+import { Lawsuit, Task, CalendarEvent, Credentials, UserPreferences, Asset, CorporateEntity, Shareholder, CorporateDocument, LawsuitDocument, AssetDocument, TimelineEntry, GlobalDocument, FinancialTransaction } from '@/types';
 import { RepositoryFactory } from '@/lib/db/repositories/repository-factory';
 import { createMasterServerClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -97,6 +97,76 @@ export async function saveTimelineEntry(entry: Partial<TimelineEntry>, targetUse
     } catch (error: any) {
         console.error('Server Action Error (saveTimelineEntry):', error);
         throw error;
+    }
+}
+
+/* Financial Actions */
+export async function listFinancialTransactions(lawsuitId?: string, personId?: string, targetUserId?: string) {
+    try {
+        const { credentials, preferences } = await resolveSecurityContext(targetUserId);
+        const repo = RepositoryFactory.getFinancialRepository(credentials, preferences);
+        
+        let data: FinancialTransaction[] = [];
+        if (lawsuitId) {
+            data = await repo.listByLawsuit(lawsuitId);
+        } else if (personId) {
+            data = await repo.listByPerson(personId);
+        }
+        
+        return { data };
+    } catch (error: any) {
+        console.error('Server Action Error (listFinancialTransactions):', error);
+        throw error;
+    }
+}
+
+export async function saveFinancialTransaction(transaction: Partial<FinancialTransaction>, targetUserId?: string) {
+    try {
+        const { credentials, preferences, userId } = await resolveSecurityContext(targetUserId);
+        const repo = RepositoryFactory.getFinancialRepository(credentials, preferences);
+        
+        const result = await repo.save({ ...transaction, user_id: userId });
+        
+        // Log to timeline if it's linked to a lawsuit or person
+        if (transaction.lawsuit_id) {
+            const timelineRepo = RepositoryFactory.getTimelineRepository(credentials, preferences);
+            await timelineRepo.save({
+                entity_type: 'lawsuit',
+                entity_id: transaction.lawsuit_id,
+                action: 'FINANCIAL_UPDATE',
+                description: `Transação financeira: ${transaction.title} - ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(transaction.amount || 0)}`,
+                user_id: userId
+            });
+        }
+        
+        return result;
+    } catch (error: any) {
+        console.error('Server Action Error (saveFinancialTransaction):', error);
+        throw error;
+    }
+}
+
+export async function deleteFinancialTransaction(id: string, targetUserId?: string) {
+    try {
+        const { credentials, preferences } = await resolveSecurityContext(targetUserId);
+        const repo = RepositoryFactory.getFinancialRepository(credentials, preferences);
+        await repo.delete(id);
+        return { success: true };
+    } catch (error: any) {
+        console.error('Server Action Error (deleteFinancialTransaction):', error);
+        throw error;
+    }
+}
+
+export async function getFinancialStats(lawsuitId?: string, personId?: string, targetUserId?: string) {
+    try {
+        const { credentials, preferences } = await resolveSecurityContext(targetUserId);
+        const repo = RepositoryFactory.getFinancialRepository(credentials, preferences);
+        const data = await repo.getStats(lawsuitId, personId);
+        return { data, error: null };
+    } catch (error: any) {
+        console.error('Server Action Error (getFinancialStats):', error);
+        return { data: { totalCredits: 0, totalDebits: 0, balance: 0 }, error: error.code || error.message };
     }
 }
 

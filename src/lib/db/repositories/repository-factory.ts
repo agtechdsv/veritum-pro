@@ -18,6 +18,8 @@ import { ICorporateRepository } from './corporate-repository.interface';
 import { SupabaseCorporateRepository } from './supabase-corporate-repository';
 import { ITimelineRepository } from './timeline-repository.interface';
 import { SupabaseTimelineRepository } from './supabase-timeline-repository';
+import { IFinancialRepository } from './financial-repository.interface';
+import { SupabaseFinancialRepository } from './supabase-financial-repository';
 
 /**
  * RepositoryFactory implements the "Brain" logic.
@@ -87,5 +89,13 @@ export class RepositoryFactory {
     static getTimelineRepository(credentials: Credentials, preferences: UserPreferences): ITimelineRepository {
         const client = DatabaseService.getClient(credentials);
         return new SupabaseTimelineRepository(client);
+    }
+
+    /**
+     * Resolves the Financial Repository.
+     */
+    static getFinancialRepository(credentials: Credentials, preferences: UserPreferences): IFinancialRepository {
+        const client = DatabaseService.getClient(credentials);
+        return new SupabaseFinancialRepository(client);
     }
 }
