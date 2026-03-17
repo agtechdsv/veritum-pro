@@ -89,12 +89,17 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
     }, [selectedUserId, searchTerm]);
 
     useEffect(() => {
-        const handleOpenModal = () => {
-            setEditingPerson({ person_type: 'Cliente' });
+        const handleOpenModal = (e: any) => {
+            if (e.detail) {
+                setEditingPerson(e.detail);
+            } else {
+                setEditingPerson({ person_type: 'Cliente' });
+            }
             setIsModalOpen(true);
+            setActiveTab('basic');
         };
-        window.addEventListener('CRM_OPEN_MODAL', handleOpenModal);
-        return () => window.removeEventListener('CRM_OPEN_MODAL', handleOpenModal);
+        window.addEventListener('CRM_OPEN_MODAL', handleOpenModal as any);
+        return () => window.removeEventListener('CRM_OPEN_MODAL', handleOpenModal as any);
     }, []);
 
     const fetchClients = async () => {
@@ -992,7 +997,7 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
             {/* Person Drawer (Slide-over Pattern) */}
             <AnimatePresence>
                 {isModalOpen && (
-                    <div className="fixed inset-0 z-[100] flex justify-end overflow-hidden">
+                    <div className="fixed inset-0 z-[300] flex justify-end overflow-hidden">
                         {/* Backdrop */}
                         <motion.div
                             initial={{ opacity: 0 }}

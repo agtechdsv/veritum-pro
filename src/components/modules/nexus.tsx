@@ -12,287 +12,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from '@/components/ui/toast';
 import { createMasterClient } from '@/lib/supabase/master';
 import Link from 'next/link';
+import { PremiumFileUpload, PremiumCombobox, BlockedTabOverlay, TrendingUp } from './nexus/nexus-components';
+import { NexoVisual } from './nexus/nexus-visual';
 
-// ðŸ’Ž Premium File Upload Component
-const PremiumFileUpload = React.forwardRef<{ upload: () => Promise<string | null> }, {
-    onUploadComplete?: (url: string) => void;
-    onFileSelect?: (file: File | null) => void;
-    bucket: string;
-    path: string;
-    label: string;
-    accept?: string;
-    isManual?: boolean;
-}>(({ onUploadComplete, onFileSelect, bucket, path, label, accept = "*", isManual }, ref) => {
-    const [uploading, setUploading] = useState(false);
-    const [progress, setProgress] = useState(0);
-    const [dragActive, setDragActive] = useState(false);
-    const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const { credentials } = useModule();
-
-    const handleUpload = async (file: File): Promise<string | null> => {
-        if (!file) return null;
-        setUploading(true);
-        setProgress(10);
-
-        try {
-            const supabase = createDynamicClient(credentials.supabaseUrl, credentials.supabaseAnonKey);
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
-            const filePath = `${path}/${fileName}`;
-
-            setProgress(30);
-            const { error: uploadError } = await supabase.storage
-                .from(bucket)
-                .upload(filePath, file);
-
-            if (uploadError) throw uploadError;
-
-            setProgress(70);
-            const { data: { publicUrl } } = supabase.storage
-                .from(bucket)
-                .getPublicUrl(filePath);
-
-            setProgress(100);
-            if (onUploadComplete) onUploadComplete(publicUrl);
-            return publicUrl;
-        } catch (error: any) {
-            console.error('Upload error:', error);
-            toast.error('Erro ao carregar arquivo: ' + error.message);
-            return null;
-        } finally {
-            setTimeout(() => {
-                setUploading(false);
-                setProgress(0);
-            }, 1000);
-        }
-    };
-
-    React.useImperativeHandle(ref, () => ({
-        upload: async () => {
-            if (selectedFile) {
-                return await handleUpload(selectedFile);
-            }
-            return null;
-        }
-    }));
-
-    const onSelect = (file: File) => {
-        if (isManual) {
-            setSelectedFile(file);
-            if (onFileSelect) onFileSelect(file);
-        } else {
-            handleUpload(file);
-        }
-    };
-
-    return (
-        <div 
-            className={`relative border-2 border-dashed rounded-3xl p-8 transition-all flex flex-col items-center justify-center gap-4 ${
-                dragActive ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/10' : 'border-slate-200 dark:border-slate-800'
-            } ${uploading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-indigo-400'} ${selectedFile ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/10' : ''}`}
-            onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
-            onDragLeave={() => setDragActive(false)}
-            onDrop={(e) => {
-                e.preventDefault();
-                setDragActive(false);
-                if (e.dataTransfer.files?.[0]) onSelect(e.dataTransfer.files[0]);
-            }}
-            onClick={() => {
-                if (!uploading) {
-                    const input = document.createElement('input');
-                    input.type = 'file';
-                    input.accept = accept;
-                    input.onchange = (e) => {
-                        const file = (e.target as HTMLInputElement).files?.[0];
-                        if (file) onSelect(file);
-                    };
-                    input.click();
-                }
-            }}
-        >
-            {uploading ? (
-                <div className="flex flex-col items-center gap-3">
-                    <Loader2 className="animate-spin text-indigo-600" size={32} />
-                    <div className="w-48 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                        <motion.div 
-                            className="h-full bg-indigo-600"
-                            initial={{ width: 0 }}
-                            animate={{ width: `${progress}%` }}
-                        />
-                    </div>
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{progress}% Carregando...</span>
-                </div>
-            ) : selectedFile ? (
-                <div className="flex flex-col items-center gap-2">
-                    <div className="p-4 bg-emerald-100 dark:bg-emerald-900/20 text-emerald-600 rounded-2xl">
-                        <Check size={24} />
-                    </div>
-                    <div className="text-center">
-                        <p className="text-sm font-black text-slate-700 dark:text-slate-200 uppercase tracking-tight truncate max-w-[200px]">{selectedFile.name}</p>
-                        <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest mt-1">Clique para trocar o arquivo</p>
-                    </div>
-                </div>
-            ) : (
-                <>
-                    <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 rounded-2xl">
-                        <Upload size={24} />
-                    </div>
-                    <div className="text-center">
-                        <p className="text-sm font-black text-slate-700 dark:text-slate-200 uppercase tracking-tight">{label}</p>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Arraste ou clique para selecionar</p>
-                    </div>
-                </>
-            )}
-        </div>
-    );
-});
-const PremiumCombobox: React.FC<{
-    value: string;
-    onChange: (val: string) => void;
-    options: string[];
-    placeholder: string;
-    disabled?: boolean;
-    creatable?: boolean;
-}> = ({ value, onChange, options, placeholder, disabled, creatable }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
-    const containerRef = React.useRef<HTMLDivElement>(null);
-
-    // Sync search term with value when closed
-    useEffect(() => {
-        if (!isOpen) setSearchTerm(value);
-    }, [value, isOpen]);
-
-    // Close on click outside
-    useEffect(() => {
-        const handleClickOutside = (e: MouseEvent) => {
-            if (containerRef.current && !containerRef.current.contains(e.target as Node)) setIsOpen(false);
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
-
-    const normalize = (str: string) =>
-        (str || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-
-    const filteredOptions = options.filter(opt =>
-        normalize(opt).includes(normalize(searchTerm))
-    ).slice(0, 50);
-
-    const showAddOption = creatable && searchTerm && !options.some(opt => opt.toLowerCase() === searchTerm.toLowerCase());
-
-    return (
-        <div ref={containerRef} className="relative w-full">
-            <div className="relative">
-                <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={e => {
-                        setSearchTerm(e.target.value);
-                        if (!isOpen) setIsOpen(true);
-                    }}
-                    onFocus={() => !disabled && setIsOpen(true)}
-                    placeholder={placeholder}
-                    disabled={disabled}
-                    className={`w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 font-bold transition-all ${disabled ? 'opacity-50 grayscale cursor-not-allowed' : 'cursor-text'}`}
-                />
-                <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
-                    {searchTerm && (
-                        <button
-                            type="button"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onChange('');
-                                setSearchTerm('');
-                            }}
-                            className="p-1 hover:text-rose-500 transition-colors pointer-events-auto"
-                        >
-                            <XCircle size={14} className="text-slate-300" />
-                        </button>
-                    )}
-                    <ChevronDown size={14} className={`text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-                </div>
-            </div>
-
-            <AnimatePresence>
-                {isOpen && !disabled && (
-                    <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="absolute z-[110] w-full mt-2 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden"
-                    >
-                        <div className="max-h-64 overflow-y-auto no-scrollbar">
-                            {showAddOption && (
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        onChange(searchTerm.toUpperCase());
-                                        setIsOpen(false);
-                                    }}
-                                    className="w-full px-6 py-4 text-left hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all border-b border-slate-50 dark:border-slate-800 group"
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-1.5 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 rounded-lg group-hover:scale-110 transition-transform">
-                                            <Plus size={14} />
-                                        </div>
-                                        <div>
-                                            <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest block">Cadastrar Novo</span>
-                                            <span className="text-sm font-black text-slate-800 dark:text-white uppercase">{searchTerm}</span>
-                                        </div>
-                                    </div>
-                                </button>
-                            )}
-
-                            {filteredOptions.length > 0 ? (
-                                filteredOptions.map(opt => (
-                                    <button
-                                        key={opt}
-                                        type="button"
-                                        onClick={() => {
-                                            onChange(opt);
-                                            setIsOpen(false);
-                                        }}
-                                        className={`w-full px-6 py-4 text-left hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-sm font-bold uppercase tracking-tight flex items-center justify-between group ${value === opt ? 'bg-indigo-50/50 dark:bg-indigo-900/10 text-indigo-600' : 'text-slate-600 dark:text-slate-300'}`}
-                                    >
-                                        {opt}
-                                        {value === opt && <CheckCircle2 size={16} className="text-indigo-600" />}
-                                    </button>
-                                ))
-                            ) : !showAddOption && (
-                                <div className="p-8 text-center">
-                                    <Search size={24} className="mx-auto text-slate-200 mb-2" />
-                                    <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Nenhum resultado encontrado</p>
-                                </div>
-                            )}
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </div>
-    );
-};
-
-// ðŸ”’ Blocked Tab Content Overlay (For the "Chicken and Egg" problem)
-const BlockedTabOverlay: React.FC<{ message: string }> = ({ message }) => (
-    <div className="py-24 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[2.5rem] bg-slate-50/50 dark:bg-slate-900/50 animate-in fade-in duration-500">
-        <div className="w-20 h-20 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-500 flex items-center justify-center mb-8 shadow-inner border border-amber-100 dark:border-amber-800">
-            <LockIcon size={32} />
-        </div>
-        <h4 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter mb-3">CONTEÃšDO BLOQUEADO</h4>
-        <p className="text-slate-500 font-bold text-center max-w-[320px] mb-8 leading-relaxed">{message}</p>
-        
-        <div className="flex items-center gap-3 px-6 py-3 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm animate-pulse">
-            <AlertTriangle size={16} className="text-amber-500" />
-            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">SALVE O REGISTRO PRIMEIRO</span>
-        </div>
-    </div>
-);
-
-// Helper for KPI area
-const TrendingUp = ({ size }: { size: number }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-);
+// Sub-components extracted to ./nexus/nexus-components.tsx
 
 const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }> = ({ credentials, user, permissions }) => {
     const { t } = useTranslation();
@@ -334,6 +57,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     const [assetTimeline, setAssetTimeline] = useState<TimelineEntry[]>([]);
     const [isLawsuitTimelineLoading, setIsLawsuitTimelineLoading] = useState(false);
     const [isAssetTimelineLoading, setIsAssetTimelineLoading] = useState(false);
+    const [visualRefreshTrigger, setVisualRefreshTrigger] = useState(0);
     const [activeTaskTab, setActiveTaskTab] = useState<'basic' | 'advanced'>('basic');
     const [processViewStyle, setProcessViewStyle] = useState<'grid' | 'list' | 'kanban'>('grid');
     const [assetViewStyle, setAssetViewStyle] = useState<'grid' | 'list' | 'kanban'>('grid');
@@ -350,7 +74,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     const [editingDocument, setEditingDocument] = useState<Partial<CorporateDocument> | null>(null);
     const [isNexoVisualOpen, setIsNexoVisualOpen] = useState(false);
     const [isNexoVisualLoading, setIsNexoVisualLoading] = useState(false);
-    const [nexoData, setNexoData] = useState<{ origin_type: 'lawsuit' | 'corporate' | 'asset' | 'task' | 'document' | 'person', id: string, title: string, data: any } | null>(null);
+    const [nexoData, setNexoData] = useState<{ origin_type: 'lawsuit' | 'corporate' | 'asset' | 'task' | 'document' | 'person' | 'lawsuit_document' | 'asset_document' | 'corporate_document', id: string, title: string, data: any } | null>(null);
     const [isLawsuitDocModalOpen, setIsLawsuitDocModalOpen] = useState(false);
     const [editingLawsuitDoc, setEditingLawsuitDoc] = useState<Partial<LawsuitDocument> | null>(null);
     const [lawsuitDocFile, setLawsuitDocFile] = useState<File | null>(null);
@@ -479,7 +203,10 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     const extractStoragePath = (url: string, bucket: string) => {
         try {
             const parts = url.split(`${bucket}/`);
-            if (parts.length > 1) return parts[1];
+            if (parts.length > 1) {
+                // Strip query parameters
+                return parts[1].split('?')[0];
+            }
             return null;
         } catch (e) {
             return null;
@@ -635,7 +362,6 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 setIsLoadingCities(true);
                 try {
                     const data = await getCitiesByState(editingLawsuit.state as string);
-                    console.log(`[Nexus] Cidades carregadas para ${editingLawsuit.state}:`, data.length);
                     setCities(data);
                 } catch (err) {
                     console.error('Error fetching cities:', err);
@@ -772,55 +498,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         }
     }, [editingEntity?.id, selectedUserId, activeEntityTab]);
 
-    // ðŸ§  NEXO VISUAL: Auto-fetch detailed sub-data if not present
-    useEffect(() => {
-        if (isNexoVisualOpen && nexoData?.id) {
-            const { origin_type, id } = nexoData;
-            const targetUserId = selectedUserId;
-
-            setIsNexoVisualLoading(true);
-
-            const performFetch = async () => {
-                try {
-                    if (origin_type === 'corporate') {
-                        const [sResult, dResult] = await Promise.all([
-                            listShareholders(id, targetUserId),
-                            listCorporateDocuments(id, targetUserId)
-                        ]);
-                        if (sResult.data) setShareholders(sResult.data);
-                        if (dResult.data) setCorporateDocuments(dResult.data);
-                    } else if (origin_type === 'lawsuit') {
-                        const result = await listLawsuitDocuments(id, targetUserId);
-                        if (result.data) setLawsuitDocuments(result.data);
-                    } else if (origin_type === 'asset') {
-                        const result = await listAssetDocuments(id, targetUserId);
-                        if (result.data) setAssetDocuments(result.data);
-                    } else if (origin_type === 'person') {
-                        // Navegação profunda: buscar participações societárias da pessoa
-                        const { listPersonParticipations } = await import('@/app/actions/nexus-actions');
-                        const result = await listPersonParticipations(id, targetUserId);
-                        if (result.data && result.data.length > 0) {
-                            // Mapeamos para o formato de Shareholder esperado para renderizar no mapa
-                            setShareholders(result.data.map((s: any) => ({
-                                ...s,
-                                shareholder_name: s.entity?.legal_name || 'Holding Desconhecida'
-                            })));
-                        } else {
-                            // Se não há participações, limpamos para permitir outros filtros (como processos do responsável)
-                            setShareholders([]);
-                        }
-                    }
-                } catch (error) {
-                    console.error('Error fetching Nexo Visual sub-data:', error);
-                } finally {
-                    // Mantemos o loading por um tempinho para a animaÃ§Ã£o inicial do mapa respirar
-                    setTimeout(() => setIsNexoVisualLoading(false), 1200);
-                }
-            };
-
-            performFetch();
-        }
-    }, [isNexoVisualOpen, nexoData?.id, selectedUserId]);
+    // Nexo Visual logic moved to sub-component
 
     const handleCreateLawsuitFromCRM = (personId: string) => {
         // Switch to lawsuits tab
@@ -1060,6 +738,11 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             // State mutation
             if (!isNew) {
                 setLawsuits(prev => prev.map(l => l.id === savedLawsuit.id ? savedLawsuit : l));
+                // Force NexoVisual update if it's the current center
+                if (nexoData?.origin_type === 'lawsuit' && nexoData.id === savedLawsuit.id) {
+                    setNexoData({ ...nexoData, data: savedLawsuit, title: savedLawsuit.case_title || savedLawsuit.cnj_number || nexoData.title });
+                }
+                setVisualRefreshTrigger(prev => prev + 1);
             } else {
                 setLawsuits(prev => [savedLawsuit, ...prev]);
             }
@@ -1086,6 +769,11 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             } else {
                 setTasks(prev => [savedTask, ...prev]);
             }
+
+            if (nexoData?.origin_type === 'task' && nexoData.id === savedTask.id) {
+                setNexoData({ ...nexoData, data: savedTask, title: savedTask.title });
+            }
+            setVisualRefreshTrigger(prev => prev + 1);
         } catch (err) {
             console.error('Error saving task:', err);
             toast.error(t('modules.nexus.modals.task.error') || 'Erro ao salvar tarefa');
@@ -1171,6 +859,11 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             } else {
                 setAssets(prev => [savedAsset, ...prev]);
             }
+
+            if (nexoData?.origin_type === 'asset' && nexoData.id === savedAsset.id) {
+                setNexoData({ ...nexoData, data: savedAsset, title: savedAsset.title });
+            }
+            setVisualRefreshTrigger(prev => prev + 1);
         } catch (err) {
             console.error('Error saving asset:', err);
             toast.error('Erro ao salvar ativo');
@@ -1262,6 +955,11 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             } else {
                 setCorporateEntities(prev => [savedEntity, ...prev]);
             }
+
+            if (nexoData?.origin_type === 'corporate' && nexoData.id === savedEntity.id) {
+                setNexoData({ ...nexoData, data: savedEntity, title: savedEntity.legal_name });
+            }
+            setVisualRefreshTrigger(prev => prev + 1);
             
             // Refresh geral para garantir que o QSA apareÃ§a na prÃ³xima abertura
             if (isNew && personToLink) {
@@ -1346,9 +1044,21 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
 
             // EXISTING ENTITY logic (Trigger manual upload first)
             let fileUrl = editingDocument?.file_url;
+            const oldFileUrl = editingDocument?.file_url;
+            
             if (corporateDocUploadRef.current) {
                 const uploadedUrl = await corporateDocUploadRef.current.upload();
-                if (uploadedUrl) fileUrl = uploadedUrl;
+                if (uploadedUrl) {
+                    fileUrl = uploadedUrl;
+                    // Delete old file if replaced
+                    if (oldFileUrl && oldFileUrl !== uploadedUrl) {
+                        const oldPath = extractStoragePath(oldFileUrl, 'nexus-documents');
+                        if (oldPath) {
+                            const supabase = createDynamicClient(credentials.supabaseUrl, credentials.supabaseAnonKey);
+                            await supabase.storage.from('nexus-documents').remove([oldPath]);
+                        }
+                    }
+                }
             }
 
             if (!fileUrl) {
@@ -1359,7 +1069,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             const docData = {
                 ...editingDocument,
                 file_url: fileUrl,
-                entity_id: editingEntity.id
+                entity_id: editingEntity?.id || editingDocument?.entity_id
             } as CorporateDocument;
 
             const savedDoc = await saveCorporateDocument(docData, targetUserId);
@@ -1374,6 +1084,11 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             } else {
                 setCorporateDocuments(prev => [savedDoc, ...prev]);
             }
+
+            if (nexoData?.origin_type === 'corporate_document' && nexoData.id === savedDoc.id) {
+                setNexoData({ ...nexoData, data: savedDoc, title: savedDoc.title });
+            }
+            setVisualRefreshTrigger(prev => prev + 1);
         } catch (err) {
             console.error('Error saving document:', err);
             toast.error('Erro ao salvar documento');
@@ -1408,9 +1123,21 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
 
             // EXISTING LAWSUIT logic (Trigger manual upload first)
             let fileUrl = editingLawsuitDoc?.file_url;
+            const oldFileUrl = editingLawsuitDoc?.file_url;
+
             if (lawsuitDocUploadRef.current) {
                 const uploadedUrl = await lawsuitDocUploadRef.current.upload();
-                if (uploadedUrl) fileUrl = uploadedUrl;
+                if (uploadedUrl) {
+                    fileUrl = uploadedUrl;
+                    // Delete old file if replaced
+                    if (oldFileUrl && oldFileUrl !== uploadedUrl) {
+                        const oldPath = extractStoragePath(oldFileUrl, 'nexus-documents');
+                        if (oldPath) {
+                            const supabase = createDynamicClient(credentials.supabaseUrl, credentials.supabaseAnonKey);
+                            await supabase.storage.from('nexus-documents').remove([oldPath]);
+                        }
+                    }
+                }
             }
 
             if (!fileUrl) {
@@ -1421,7 +1148,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             const docData = {
                 ...editingLawsuitDoc,
                 file_url: fileUrl,
-                lawsuit_id: editingLawsuit.id
+                lawsuit_id: editingLawsuit?.id || editingLawsuitDoc?.lawsuit_id
             } as LawsuitDocument;
 
             const savedDoc = await saveLawsuitDocument(docData, targetUserId);
@@ -1436,6 +1163,11 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             } else {
                 setLawsuitDocuments(prev => [savedDoc, ...prev]);
             }
+
+            if (nexoData?.origin_type === 'lawsuit_document' && nexoData.id === savedDoc.id) {
+                setNexoData({ ...nexoData, data: savedDoc, title: savedDoc.title });
+            }
+            setVisualRefreshTrigger(prev => prev + 1);
         } catch (err) {
             console.error('Error saving lawsuit document:', err);
             toast.error('Erro ao salvar documento do processo');
@@ -1548,9 +1280,21 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
 
             // EXISTING ASSET logic (Trigger manual upload first)
             let fileUrl = editingAssetDoc?.file_url;
+            const oldFileUrl = editingAssetDoc?.file_url;
+
             if (assetDocUploadRef.current) {
                 const uploadedUrl = await assetDocUploadRef.current.upload();
-                if (uploadedUrl) fileUrl = uploadedUrl;
+                if (uploadedUrl) {
+                    fileUrl = uploadedUrl;
+                    // Delete old file if replaced
+                    if (oldFileUrl && oldFileUrl !== uploadedUrl) {
+                        const oldPath = extractStoragePath(oldFileUrl, 'nexus-documents');
+                        if (oldPath) {
+                            const supabase = createDynamicClient(credentials.supabaseUrl, credentials.supabaseAnonKey);
+                            await supabase.storage.from('nexus-documents').remove([oldPath]);
+                        }
+                    }
+                }
             }
 
             if (!fileUrl) {
@@ -1561,7 +1305,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             const docData = {
                 ...editingAssetDoc,
                 file_url: fileUrl,
-                asset_id: editingAsset.id
+                asset_id: editingAsset?.id || editingAssetDoc?.asset_id
             } as AssetDocument;
 
             const savedDoc = await saveAssetDocument(docData, targetUserId);
@@ -1576,6 +1320,11 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             } else {
                 setAssetDocuments(prev => [savedDoc, ...prev]);
             }
+
+            if (nexoData?.origin_type === 'asset_document' && nexoData.id === savedDoc.id) {
+                setNexoData({ ...nexoData, data: savedDoc, title: savedDoc.title });
+            }
+            setVisualRefreshTrigger(prev => prev + 1);
         } catch (err) {
             console.error('Error saving asset document:', err);
             toast.error('Erro ao salvar documento do ativo');
@@ -2008,7 +1757,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                     onChange={e => setFilterResponsibleId(e.target.value)}
                     className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
                 >
-                    <option value="">ðŸ‘¤ Todos os Membros</option>
+                    <option value="">👤 Todos os Membros</option>
                     {team.map(t => <option key={t.id} value={t.id}>{t.full_name}</option>)}
                 </select>
             </div>
@@ -2065,7 +1814,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                     onChange={e => setLawsuitLawyerFilter(e.target.value)}
                     className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
                 >
-                    <option value="">ðŸ‘¤ Todos os Advogados</option>
+                    <option value="">👤 Todos os Advogados</option>
                     {team.map(t => <option key={t.id} value={t.id}>{t.full_name}</option>)}
                 </select>
             </div>
@@ -2258,7 +2007,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 </div>
             </div>
 
-            {/* ðŸ’Ž MAIN CONTENT AREA - Nexus 2.0 Router */}
+            {/* 💎 MAIN CONTENT AREA - Nexus 2.0 Router */}
             <div className="flex-1 flex flex-col overflow-hidden">
                 {activeTab === 'overview' && (
                     <div className="flex-1 flex flex-col pt-0 overflow-y-auto no-scrollbar animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -2395,7 +2144,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         <div className="absolute -right-8 -bottom-8 w-40 h-40 bg-white/10 blur-3xl rounded-full group-hover:scale-150 transition-transform duration-1000" />
                                         <div className="relative z-10">
                                             <h3 className="text-lg font-black uppercase tracking-tight mb-2">Power User Nexus</h3>
-                                            <p className="text-indigo-100 text-sm font-medium mb-6 leading-relaxed opacity-80">VocÃª atingiu 84% de eficácia na gestão de ativos e processos este mês.</p>
+                                            <p className="text-indigo-100 text-sm font-medium mb-6 leading-relaxed opacity-80">Você atingiu 84% de eficácia na gestão de ativos e processos este mês.</p>
                                             <div className="flex items-center gap-2">
                                                 <div className="px-4 py-2 bg-white/20 backdrop-blur-md rounded-xl text-xs font-black uppercase tracking-widest">Nível 12</div>
                                                 <div className="px-4 py-2 bg-emerald-500 rounded-xl text-xs font-black uppercase tracking-widest">+5.2k XP</div>
@@ -3552,7 +3301,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                         <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Ativo</th>
                                                         <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Tipo</th>
                                                         <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Valor</th>
-                                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">VÃ­nculo</th>
+                                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Vínculo</th>
                                                         <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
                                                         <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Ações</th>
                                                     </tr>
@@ -3756,7 +3505,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         Entidades & Holdings
                                     </h1>
                                     <p className="text-slate-500 font-bold tracking-wide mt-1">
-                                        GestÃ£o de pessoas jurÃ­dicas, participaÃ§Ãµes e governanÃ§a
+                                        Gestão de pessoas jurídicas, participações e governança
                                     </p>
                                 </div>
                                 <div className="mt-4 md:mt-0 flex items-center gap-4">
@@ -4239,7 +3988,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             {/* Lawsuit Drawer (Slide-over Pattern) */}
             <AnimatePresence>
                 {isLawsuitModalOpen && (
-                    <div className="fixed inset-0 z-[100] flex justify-end overflow-hidden">
+                    <div className="fixed inset-0 z-[300] flex justify-end overflow-hidden">
                         {/* Backdrop */}
                         <motion.div
                             initial={{ opacity: 0 }}
@@ -4828,7 +4577,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             {/* Task Drawer (Slide-over Pattern) */}
             <AnimatePresence>
                 {isTaskModalOpen && (
-                    <div className="fixed inset-0 z-[100] flex justify-end overflow-hidden">
+                    <div className="fixed inset-0 z-[300] flex justify-end overflow-hidden">
                         {/* Backdrop */}
                         <motion.div
                             initial={{ opacity: 0 }}
@@ -4999,7 +4748,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             {/* Event Drawer */}
             <AnimatePresence>
                 {isEventModalOpen && (
-                    <div className="fixed inset-0 z-[100] flex justify-end overflow-hidden">
+                    <div className="fixed inset-0 z-[300] flex justify-end overflow-hidden">
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -5143,7 +4892,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             {/* Asset Modal (Slide-over) */}
             <AnimatePresence>
                 {isAssetModalOpen && (
-                    <div className="fixed inset-0 z-[100] flex justify-end overflow-hidden">
+                    <div className="fixed inset-0 z-[300] flex justify-end overflow-hidden">
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -5550,7 +5299,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             {/* Corporate Entity Modal (The "Big One") */}
             <AnimatePresence>
                 {isEntityModalOpen && (
-                    <div className="fixed inset-0 z-[100] flex justify-end overflow-hidden">
+                    <div className="fixed inset-0 z-[300] flex justify-end overflow-hidden">
                         <motion.div
                             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                             className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm"
@@ -6089,7 +5838,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                             <form onSubmit={handleSaveDocument}>
                                 <div className="p-8 border-b border-slate-100 dark:border-slate-800">
                                     <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">
-                                        Novo Documento
+                                        {editingDocument?.id ? 'Editar Documento' : 'Novo Documento'}
                                     </h3>
                                 </div>
                                 <div className="p-8 space-y-6">
@@ -6178,7 +5927,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             {/* Lawsuit Document Modal */}
             <AnimatePresence>
                 {isLawsuitDocModalOpen && (
-                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
                         <motion.div
                             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                             className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
@@ -6191,7 +5940,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                             <form onSubmit={handleSaveLawsuitDocument}>
                                 <div className="p-8 border-b border-slate-100 dark:border-slate-800">
                                     <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">
-                                        Novo Documento do Processo
+                                        {editingLawsuitDoc?.id ? 'Editar Documento do Processo' : 'Novo Documento do Processo'}
                                     </h3>
                                 </div>
 
@@ -6284,7 +6033,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             {/* Asset Document Modal */}
             <AnimatePresence>
                 {isAssetDocModalOpen && (
-                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
                         <motion.div
                             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                             className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
@@ -6297,7 +6046,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                             <form onSubmit={handleSaveAssetDocument}>
                                 <div className="p-8 border-b border-slate-100 dark:border-slate-800">
                                     <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">
-                                        Novo Documento do Ativo
+                                        {editingAssetDoc?.id ? 'Editar Documento do Ativo' : 'Novo Documento do Ativo'}
                                     </h3>
                                 </div>
 
@@ -6488,7 +6237,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             {/* History Analysis Modal */}
             <AnimatePresence>
                 {isHistoryModalOpen && historyData && (
-                    <div className="fixed inset-0 z-[250] flex items-center justify-center p-4">
+                    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
                         <motion.div
                             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                             className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
@@ -6578,301 +6327,72 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                         </motion.div>
                     </div>
                 )}
-                {isNexoVisualOpen && nexoData && (
-                    <motion.div 
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[200] bg-slate-950/95 backdrop-blur-2xl flex flex-col overflow-hidden"
-                    >
-                        {/* Header */}
-                        <div className="p-8 flex items-center justify-between border-b border-white/5 relative z-10 bg-slate-950/50">
-                            <div>
-                                <div className="flex items-center gap-3">
-                                    <div className="p-3 bg-indigo-500/20 text-indigo-400 rounded-2xl">
-                                        <Network size={24} />
-                                    </div>
-                                    <h2 className="text-3xl font-black text-white uppercase tracking-tighter">Nexo Visual</h2>
-                                </div>
-                                <p className="text-[10px] text-indigo-400/60 font-black uppercase tracking-[0.2em] mt-2 flex items-center gap-2">
-                                    <Shield size={10} /> Mapeamento de Inteligência Veritum PRO
-                                </p>
-                            </div>
-                            <div className="flex items-center gap-6">
-                                <AnimatePresence>
-                                    {isNexoVisualLoading && (
-                                        <motion.div 
-                                            initial={{ opacity: 0, scale: 0.9 }}
-                                            animate={{ opacity: 1, scale: 1 }}
-                                            exit={{ opacity: 0, scale: 0.9 }}
-                                            className="flex items-center gap-4 px-5 py-2.5 bg-indigo-500/5 rounded-2xl border border-indigo-500/20 mr-2 backdrop-blur-md"
-                                        >
-                                            <div className="flex gap-1">
-                                                {[0, 1, 2].map((i) => (
-                                                    <motion.div
-                                                        key={i}
-                                                        animate={{ 
-                                                            height: [4, 12, 4],
-                                                            opacity: [0.3, 1, 0.3]
-                                                        }}
-                                                        transition={{ 
-                                                            duration: 0.8, 
-                                                            repeat: Infinity, 
-                                                            delay: i * 0.15 
-                                                        }}
-                                                        className="w-1 bg-indigo-400 rounded-full"
-                                                    />
-                                                ))}
-                                            </div>
-                                            <div className="flex flex-col">
-                                                <span className="text-[9px] font-black text-indigo-400 uppercase tracking-[0.25em] animate-pulse">
-                                                    Sincronizando Deep Data
-                                                </span>
-                                                <span className="text-[7px] font-bold text-white/30 uppercase tracking-widest mt-0.5">
-                                                    Mapeando Conexões Veritum...
-                                                </span>
-                                            </div>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-                                <div className="text-right hidden md:block">
-                                    <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Sujeito Central</p>
-                                    <p className="text-sm font-bold text-white uppercase">{nexoData.title}</p>
-                                </div>
-                                <button 
-                                    onClick={() => setIsNexoVisualOpen(false)}
-                                    className="p-4 text-white/20 hover:text-white hover:bg-white/10 rounded-full transition-all border border-white/5 shadow-2xl"
-                                >
-                                    <XCircle size={32} />
-                                </button>
-                            </div>
-                        </div>
+                <NexoVisual 
+                    isOpen={isNexoVisualOpen}
+                    onClose={() => setIsNexoVisualOpen(false)}
+                    initialData={nexoData}
+                    selectedUserId={selectedUserId}
+                    persons={persons}
+                    team={team}
+                    assets={assets}
+                    lawsuits={lawsuits}
+                    tasks={tasks}
+                    corporateEntities={corporateEntities}
+                    onEdit={(type, data, category) => {
+                        // 1. Logic for Roles: "Opening the modal to which they belong"
+                        if (category && ['Autor', 'Réu', 'Responsável', 'Proprietário', 'Sócio', 'Gestão', 'Origem'].includes(category)) {
+                             if (nexoData?.origin_type === 'lawsuit') { 
+                                 setEditingLawsuit(nexoData.data); 
+                                 setIsLawsuitModalOpen(true); 
+                                 return; 
+                             }
+                             if (nexoData?.origin_type === 'asset') { 
+                                 setEditingAsset(nexoData.data); 
+                                 setIsAssetModalOpen(true); 
+                                 return; 
+                             }
+                             if (nexoData?.origin_type === 'corporate') { 
+                                 setEditingEntity(nexoData.data); 
+                                 setIsEntityModalOpen(true); 
+                                 return; 
+                             }
+                        }
 
-                        {/* Interactive Canvas */}
-                        <div className="flex-1 relative overflow-hidden flex items-center justify-center p-20 cursor-grab active:cursor-grabbing">
-                            {(() => {
-                                const radius = 300; // Define radius once here
-                                const neighbors: any[] = [];
-                                const { origin_type, id, data } = nexoData;
-                                
-                                if (origin_type === 'lawsuit') {
-                                    const author = persons.find(p => p.id === data.author_id);
-                                    if (author) neighbors.push({ label: author.full_name, icon: UserIcon, hex: '#3b82f6', bg: 'bg-blue-500', cat: 'Autor', type: 'person', data: author });
-
-                                    const def = persons.find(p => p.id === data.defendant_id);
-                                    if (def) neighbors.push({ label: def.full_name, icon: UserIcon, hex: '#f43f5e', bg: 'bg-rose-500', cat: 'Réu', type: 'person', data: def });
-                                    const lawyer = team.find(t => t.id === data.responsible_lawyer_id);
-                                    if (lawyer) neighbors.push({ label: lawyer.full_name, icon: Briefcase, hex: '#f59e0b', bg: 'bg-amber-500', cat: 'Responsável', type: 'person', data: lawyer });
-                                    assets.filter(a => a.lawsuit_id === id).forEach(a => neighbors.push({ label: a.title, icon: Shield, hex: '#10b981', bg: 'bg-emerald-500', cat: 'Ativo', type: 'asset', data: a }));
-                                    lawsuitDocuments.filter(d => d.lawsuit_id === id).forEach(d => neighbors.push({ label: d.title, icon: FileText, hex: '#64748b', bg: 'bg-slate-500', cat: 'Documento', type: 'document', data: d }));
-                                    tasks.filter(t => t.lawsuit_id === id).forEach(t => neighbors.push({ label: t.title, icon: CheckCircle2, hex: '#8b5cf6', bg: 'bg-purple-500', cat: 'Tarefa', type: 'task', data: t }));
-                                } else if (origin_type === 'corporate') {
-                                    shareholders.filter(s => s.entity_id === id).forEach(s => {
-                                        let neighborData = null;
-                                        let neighborType: any = null;
-                                        if (s.person_shareholder_id) {
-                                            neighborData = persons.find(p => p.id === s.person_shareholder_id);
-                                            neighborType = 'person';
-                                        } else if (s.corporate_shareholder_id) {
-                                            neighborData = corporateEntities.find(e => e.id === s.corporate_shareholder_id);
-                                            neighborType = 'corporate';
-                                        }
-                                        neighbors.push({ label: s.shareholder_name, icon: Users, hex: '#3b82f6', bg: 'bg-blue-500', cat: 'Sócio', type: neighborType, data: neighborData || s });
-                                    });
-                                    corporateDocuments.filter(d => d.entity_id === id).forEach(d => neighbors.push({ label: d.title, icon: FileText, hex: '#64748b', bg: 'bg-slate-500', cat: 'Documento', type: 'document', data: d }));
-                                } else if (origin_type === 'person') {
-                                    lawsuits.filter(l => l.author_id === id || l.defendant_id === id).forEach(l => neighbors.push({ label: l.case_title || l.cnj_number, icon: Scale, hex: '#8b5cf6', bg: 'bg-purple-500', cat: 'Processo', type: 'lawsuit', data: l }));
-                                    
-                                    // Gestão: Processos onde a pessoa é a responsável técnica (Team Member)
-                                    lawsuits.filter(l => l.responsible_lawyer_id === id).forEach(l => neighbors.push({ label: l.case_title || l.cnj_number, icon: Briefcase, hex: '#f59e0b', bg: 'bg-amber-500', cat: 'Gestão', type: 'lawsuit', data: l }));
-                                    
-                                    assets.filter(a => a.person_id === id).forEach(a => neighbors.push({ label: a.title, icon: Shield, hex: '#10b981', bg: 'bg-emerald-500', cat: 'Ativo', type: 'asset', data: a }));
-                                    shareholders.forEach(s => {
-                                        const entity = (s as any).entity || corporateEntities.find(e => e.id === s.entity_id);
-                                        if (entity) neighbors.push({ label: entity.legal_name, icon: Building2, hex: '#3b82f6', bg: 'bg-blue-500', cat: 'Sociedade/PJ', type: 'corporate', data: entity });
-                                    });
-                                    tasks.filter(t => t.responsible_id === id).forEach(t => neighbors.push({ label: t.title, icon: CheckCircle2, hex: '#f59e0b', bg: 'bg-amber-500', cat: 'Tarefa', type: 'task', data: t }));
-                                } else if (origin_type === 'asset') {
-                                    const owner = persons.find(p => p.id === data.person_id);
-                                    if (owner) neighbors.push({ label: owner.full_name, icon: UserIcon, hex: '#3b82f6', bg: 'bg-blue-500', cat: 'Proprietário', type: 'person', data: owner });
-                                    const lawsuit = lawsuits.find(l => l.id === data.lawsuit_id);
-                                    if (lawsuit) neighbors.push({ label: lawsuit.case_title || lawsuit.cnj_number, hex: '#8b5cf6', icon: Scale, bg: 'bg-purple-500', cat: 'Processo', type: 'lawsuit', data: lawsuit });
-                                    assetDocuments.filter(d => d.asset_id === id).forEach(d => neighbors.push({ label: d.title, icon: FileText, hex: '#64748b', bg: 'bg-slate-500', cat: 'Documento', type: 'document', data: d }));
-                                } else if (origin_type === 'task') {
-                                    const lawsuit = lawsuits.find(l => l.id === data.lawsuit_id);
-                                    if (lawsuit) neighbors.push({ label: lawsuit.case_title || lawsuit.cnj_number, hex: '#8b5cf6', icon: Scale, bg: 'bg-purple-500', cat: 'Processo', type: 'lawsuit', data: lawsuit });
-                                    const resp = team.find(t => t.id === data.responsible_id);
-                                    if (resp) neighbors.push({ label: resp.full_name, icon: Briefcase, hex: '#f59e0b', bg: 'bg-amber-500', cat: 'Responsável', type: 'person', data: resp });
-                                } else if (origin_type === 'document') {
-                                    // Detect origin based on available IDs (handles specific document types or global ones)
-                                    const oType = data.origin_type || (data.lawsuit_id ? 'lawsuit' : data.asset_id ? 'asset' : data.entity_id ? 'corporate' : null);
-                                    const oId = data.origin_id || data.lawsuit_id || data.asset_id || data.entity_id;
-
-                                    if (oType === 'lawsuit') {
-                                        const law = lawsuits.find(l => l.id === oId);
-                                        if (law) neighbors.push({ label: law.case_title || law.cnj_number, hex: '#8b5cf6', icon: Scale, bg: 'bg-purple-500', cat: 'Origem', type: 'lawsuit', data: law });
-                                    } else if (oType === 'corporate') {
-                                        const entity = corporateEntities.find(e => e.id === oId);
-                                        if (entity) neighbors.push({ label: entity.legal_name, icon: Building2, hex: '#3b82f6', bg: 'bg-blue-500', cat: 'Origem', type: 'corporate', data: entity });
-                                    } else if (oType === 'asset') {
-                                        const asset = assets.find(a => a.id === oId);
-                                        if (asset) neighbors.push({ label: asset.title, icon: Shield, hex: '#10b981', bg: 'bg-emerald-500', cat: 'Origem', type: 'asset', data: asset });
-                                    }
-                                }
-                                
-                                return (
-                                    <motion.div 
-                                        key={nexoData.id} // Forces a fresh mount of the entire orbit when changing selection
-                                        className="relative w-full h-full flex items-center justify-center"
-                                    >
-                                        {/* SVG Background Lines */}
-                                        <svg className="absolute inset-0 w-full h-full pointer-events-none">
-                                            <defs>
-                                                <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                                                    <stop offset="0%" stopColor="#6366f1" stopOpacity="0.8" />
-                                                    <stop offset="100%" stopColor="#6366f1" stopOpacity="0.1" />
-                                                </linearGradient>
-                                            </defs>
-                                            {!isNexoVisualLoading && neighbors.map((n, i) => {
-                                                const angle = (i / neighbors.length) * 2 * Math.PI;
-                                                const x2 = Math.cos(angle) * radius;
-                                                const y2 = Math.sin(angle) * radius;
-                                                const nodeKey = `line-${n.type}-${n.data.id || n.label}-${nexoData.id}`;
-                                                return (
-                                                    <motion.line
-                                                        key={nodeKey}
-                                                        initial={{ pathLength: 0, opacity: 0 }}
-                                                        animate={{ pathLength: 1, opacity: 1 }}
-                                                        transition={{ 
-                                                            duration: 0.8, 
-                                                            delay: 0.1 + i * 0.05,
-                                                            opacity: { duration: 0.3 }
-                                                        }}
-                                                        x1="50%" y1="50%"
-                                                        x2={`calc(50% + ${x2}px)`} y2={`calc(50% + ${y2}px)`}
-                                                        stroke={n.hex}
-                                                        strokeWidth="2"
-                                                        strokeDasharray="4 4"
-                                                        className="opacity-20"
-                                                    />
-                                                );
-                                            })}
-                                        </svg>
-
-                                        {/* Center Node */}
-                                        <div className="relative z-20">
-                                            {/* Neural Pulse Effect while loading */}
-                                            <AnimatePresence>
-                                                {isNexoVisualLoading && (
-                                                    <>
-                                                        <motion.div
-                                                            initial={{ scale: 0.8, opacity: 0 }}
-                                                            animate={{ scale: [1, 1.8], opacity: [0.5, 0] }}
-                                                            exit={{ opacity: 0 }}
-                                                            transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }}
-                                                            className="absolute inset-0 rounded-full border-2 border-indigo-500/50 pointer-events-none"
-                                                        />
-                                                        <motion.div
-                                                            initial={{ scale: 0.8, opacity: 0 }}
-                                                            animate={{ scale: [1, 2.4], opacity: [0.3, 0] }}
-                                                            exit={{ opacity: 0 }}
-                                                            transition={{ duration: 2, repeat: Infinity, ease: "easeOut", delay: 0.5 }}
-                                                            className="absolute inset-0 rounded-full border border-indigo-400/30 pointer-events-none"
-                                                        />
-                                                    </>
-                                                )}
-                                            </AnimatePresence>
-
-                                            <motion.div
-                                                key={`center-${nexoData.id}`}
-                                                drag
-                                                dragConstraints={{ left: -100, right: 100, top: -100, bottom: 100 }}
-                                                initial={{ scale: 0, rotate: -180 }}
-                                                animate={{ scale: 1, rotate: 0 }}
-                                                transition={{ type: 'spring', damping: 15 }}
-                                                className="relative w-48 h-48 bg-white dark:bg-slate-900 rounded-full border-4 border-indigo-600 shadow-[0_0_60px_rgba(79,70,229,0.3)] flex flex-col items-center justify-center p-6 text-center cursor-pointer group"
-                                            >
-                                                <div className="absolute inset-0 rounded-full bg-indigo-600 opacity-0 group-hover:opacity-5 transition-opacity" />
-                                                {nexoData.origin_type === 'lawsuit' ? <Scale size={40} className="text-indigo-600 mb-2" /> : 
-                                                nexoData.origin_type === 'corporate' ? <Building2 size={40} className="text-indigo-600 mb-2" /> :
-                                                nexoData.origin_type === 'asset' ? <Shield size={40} className="text-indigo-600 mb-2" /> :
-                                                nexoData.origin_type === 'task' ? <CheckCircle2 size={40} className="text-indigo-600 mb-2" /> :
-                                                nexoData.origin_type === 'person' ? <UserIcon size={40} className="text-indigo-600 mb-2" /> :
-                                                <FileText size={40} className="text-indigo-600 mb-2" />}
-                                                <h4 className="text-xs font-black text-slate-800 dark:text-white uppercase leading-tight line-clamp-2">
-                                                    {nexoData.title}
-                                                </h4>
-                                                <div className="mt-2 px-2 py-0.5 bg-indigo-50 dark:bg-indigo-900/30 rounded-full text-[8px] font-black text-indigo-600 uppercase tracking-widest border border-indigo-100 dark:border-indigo-800">
-                                                    Principal
-                                                </div>
-                                            </motion.div>
-                                        </div>
-
-                                        {/* Orbiting Nodes */}
-                                        {!isNexoVisualLoading && neighbors.map((n, i) => {
-                                            const angle = (i / neighbors.length) * 2 * Math.PI;
-                                            const x = Math.cos(angle) * radius;
-                                            const y = Math.sin(angle) * radius;
-                                            const nodeKey = `node-${n.type}-${n.data.id || n.label}-${nexoData.id}`;
-                                            return (
-                                                <motion.div
-                                                    key={nodeKey}
-                                                    initial={{ scale: 0 }}
-                                                    animate={{ scale: 1 }}
-                                                    style={{ 
-                                                        x, 
-                                                        y,
-                                                        position: 'absolute'
-                                                    }}
-                                                    transition={{ 
-                                                        scale: { type: 'spring', damping: 15, stiffness: 200, delay: 0.3 + i * 0.1 },
-                                                        default: { duration: 0 } // Prevents x/y from animating (sliding)
-                                                    }}
-                                                    onClick={() => n.type && n.data && handleOpenNexoVisual(n.type, n.data)}
-                                                    className="absolute w-40 p-4 bg-white/10 backdrop-blur-md border border-white/10 rounded-3xl flex flex-col items-center text-center group cursor-pointer hover:bg-white/20 hover:border-white/30 transition-all hover:scale-105 shadow-2xl z-30"
-                                                >
-                                                    <div className={`p-3 ${n.bg} text-white rounded-2xl mb-3 shadow-lg group-hover:scale-110 transition-transform`}>
-                                                        <n.icon size={20} />
-                                                    </div>
-                                                    <span className="text-[9px] font-black text-white/50 uppercase tracking-[0.2em] mb-1">{n.cat}</span>
-                                                    <span className="text-[10px] font-bold text-white line-clamp-2 leading-tight">
-                                                        {n.label}
-                                                    </span>
-                                                    {n.type && (
-                                                        <div className="mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            <div className="px-2 py-0.5 bg-white/10 rounded-full text-[7px] font-black text-white uppercase tracking-widest">Explorar</div>
-                                                        </div>
-                                                    )}
-                                                </motion.div>
-                                            );
-                                        })}
-                                    </motion.div>
-                                );
-                            })()}
-                        </div>
-
-                        {/* Footer Tips */}
-                        <div className="p-8 flex justify-between items-center relative z-10 bg-slate-950/50 border-t border-white/5">
-                            <div className="flex gap-4">
-                                <div className="flex items-center gap-2 group">
-                                    <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
-                                    <span className="text-[10px] font-black text-white/40 uppercase tracking-widest transition-colors group-hover:text-white/60">Pessoas</span>
-                                </div>
-                                <div className="flex items-center gap-2 group">
-                                    <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
-                                    <span className="text-[10px] font-black text-white/40 uppercase tracking-widest transition-colors group-hover:text-white/60">Ativos</span>
-                                </div>
-                                <div className="flex items-center gap-2 group">
-                                    <div className="w-2 h-2 rounded-full bg-slate-500 shadow-[0_0_10px_rgba(100,116,139,0.5)]" />
-                                    <span className="text-[10px] font-black text-white/40 uppercase tracking-widest transition-colors group-hover:text-white/60">Documentos</span>
-                                </div>
-                            </div>
-                            <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest flex items-center gap-2 animate-pulse">
-                                <Zap size={10} /> Visualização em Tempo Real (Nexus Engine)
-                            </p>
-                        </div>
-                    </motion.div>
-                )}
+                        if (type === 'lawsuit') { setEditingLawsuit(data); setIsLawsuitModalOpen(true); }
+                        else if (type === 'asset') { setEditingAsset(data); setIsAssetModalOpen(true); }
+                        else if (type === 'corporate') { setEditingEntity(data); setIsEntityModalOpen(true); }
+                        else if (type === 'task') { setEditingTask(data); setIsTaskModalOpen(true); }
+                        else if (type === 'person') { 
+                            setActiveTab('pessoas');
+                            setTimeout(() => {
+                                window.dispatchEvent(new CustomEvent('CRM_OPEN_MODAL', { detail: data }));
+                            }, 100);
+                        }
+                        else if (type === 'lawsuit_document') {
+                            setEditingLawsuitDoc(data);
+                            const law = lawsuits.find(l => l.id === data.lawsuit_id);
+                            if (law) setEditingLawsuit(law);
+                            setIsLawsuitDocModalOpen(true);
+                        }
+                        else if (type === 'asset_document') {
+                            setEditingAssetDoc(data);
+                            const asset = assets.find(a => a.id === data.asset_id);
+                            if (asset) setEditingAsset(asset);
+                            setIsAssetDocModalOpen(true);
+                        }
+                        else if (type === 'corporate_document') {
+                            setEditingDocument(data);
+                            const entity = corporateEntities.find(e => e.id === data.entity_id);
+                            if (entity) {
+                                setEditingEntity(entity);
+                                setIsEntityModalOpen(true);
+                            } else {
+                                setIsDocumentModalOpen(true);
+                            }
+                        }
+                    }}
+                    refreshTrigger={visualRefreshTrigger}
+                />
             </AnimatePresence>
         </div>
     );
