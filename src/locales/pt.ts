@@ -23,6 +23,8 @@ export const pt = {
         loadingEcosystem: 'Carregando ecossistema...',
         selectLanguage: 'Selecionar Idioma',
         confirm: 'Confirmar',
+        viewAll: 'Ver Todos',
+        context: 'Contexto',
         new: 'Nova',
         person: 'Pessoa',
         basic: 'Dados Básicos',
@@ -31,7 +33,90 @@ export const pt = {
         status: 'Status',
         event: 'Tarefa',
         processes: 'Processos',
-        deleting: 'Excluindo...'
+        deleting: 'Excluindo...',
+        intelligenceWidget: {
+            loading: 'Sincronizando Insight IA...',
+            urgencyRisk: 'Urgência / Risco',
+            attention: 'Atenção',
+            trendOpportunity: 'Tendência / Oportunidade',
+            detectedIn: 'Detectado em',
+            publication: 'Publicação',
+            noTitle: 'Insight sem título',
+            hideReasoning: 'Ocultar Raciocínio IA',
+            showReasoning: 'Ver Raciocínio Estratégico',
+            explore: 'Explorar'
+        },
+        viewStyle: {
+            cards: 'Visão de Cards',
+            list: 'Visão de Lista',
+            kanban: 'Visão Kanban'
+        },
+        statuses: {
+            lawsuit: {
+                active: 'Ativo',
+                suspended: 'Suspenso',
+                archived: 'Arquivado',
+                closed: 'Encerrado'
+            },
+            task: {
+                todo: 'A Fazer',
+                doing: 'Em Andamento',
+                done: 'Concluído',
+                late: 'Atrasado'
+            },
+            asset: {
+                active: 'Ativo',
+                blocked: 'Bloqueado',
+                sold: 'Vendido',
+                collateral: 'Em Garantia',
+                alienated: 'Alienado'
+            },
+            entity: {
+                active: 'Ativa',
+                closed: 'Baixada',
+                inactive: 'Inativa',
+                liquidation: 'Em Liquidação'
+            }
+        },
+        types: {
+            asset: {
+                realEstate: 'Imóvel',
+                vehicle: 'Veículo',
+                bankAccount: 'Conta Bancária',
+                lawsuit: 'Ação Judicial',
+                corporate: 'Empresa / Quotas',
+                others: 'Outros'
+            },
+            entity: {
+                ltda: 'LTDA',
+                sa: 'SA',
+                eireli: 'EIRELI',
+                mei: 'MEI',
+                holding: 'Holding',
+                association: 'Associação',
+                others: 'Outros'
+            }
+        },
+        today: 'Hoje',
+        empty: 'Nenhum registro encontrado.',
+        clearFilters: 'Limpar Filtros',
+        filters: {
+            allMembers: 'Todos os Membros',
+            allProcesses: 'Todos os Processos',
+            allStatuses: 'Todos os Status',
+            allTypes: 'Todos os Tipos',
+            allOrigins: 'Todas as Origens',
+            allLawyers: 'Todos os Advogados'
+        },
+        placeholders: {
+            search: 'Buscar por título...'
+        },
+        deleteConfirm: {
+            title: 'Excluir {item}',
+            message: 'Tem certeza que deseja excluir este {item}? Esta ação não pode ser desfeita.',
+            success: '{item} excluído com sucesso!',
+            error: 'Erro ao excluir {item}'
+        }
     },
     nav: {
         home: 'Início',
@@ -262,11 +347,47 @@ export const pt = {
         nexus: {
             label: 'Nexus',
             title: 'NEXUS PRO',
-            subtitle: 'Núcleo Operacional & Gestão de Processos',
-            description: 'Kanban Jurídico e automação de tarefas recorrentes',
+            subtitle: 'Núcleo Operacional e Gestão de Casos',
             views: {
                 kanban: 'Kanban',
-                list: 'Lista'
+                list: 'Lista',
+                calendar: 'Calendário'
+            },
+            tabs: {
+                overview: 'Visão Geral',
+                people: 'Pessoas',
+                processes: 'Processos',
+                tasks: 'Tarefas',
+                calendar: 'Agenda',
+                assets: 'Ativos',
+                corporate: 'Societário',
+                documents: 'Documentos'
+            },
+            overview: {
+                subtitle: 'Monitoramento em tempo real do ecossistema Nexus',
+                powerUser: {
+                    title: 'Power User Nexus',
+                    description: 'Você atingiu 84% de eficácia na gestão de ativos e processos este mês.',
+                    level: 'Nível 12'
+                },
+                recommendedActions: {
+                    title: 'Ações Recomendadas',
+                    reviewDeadlines: 'Revisar Prazos',
+                    registerAssets: 'Cadastrar Ativos',
+                    mapQSA: 'Mapear QSA',
+                    syncCRM: 'Sincronizar CRM'
+                },
+                status: {
+                    label: 'Status',
+                    syncing: 'Sincronizando...',
+                    synced: 'Sincronizado'
+                },
+                metricsTrends: {
+                    urgent: 'Urgente',
+                    queue: 'Em Fila',
+                    productivity: 'Produtividade'
+                },
+                assetDistribution: 'Distribuição de Ativos'
             },
             newLawsuit: 'Novo Processo',
             newTask: 'Agendar Tarefa',
@@ -274,7 +395,83 @@ export const pt = {
                 active: 'Processos Ativos',
                 deadlines: 'Prazos 24h',
                 pending: 'Média Pendente',
-                completion: 'Taxa de Conclusão'
+                completion: 'Taxa de Entrega'
+            },
+            processes: {
+                subtitle: 'Pipeline jurídico e acompanhamento automatizado',
+                totalCount: 'Total de {count} Processos',
+                noCnj: 'Sem Número CNJ',
+                historyAnalysis: 'Análise de Histórico',
+                authorFallback: 'Defesa',
+                viewMindMap: 'Ver Mapa Mental (Nexo Visual)',
+                searchPlaceholder: 'Buscar por Número ou Título...',
+                labelValue: 'VALOR DA CAUSA'
+            },
+            assets: {
+                title: 'ATIVOS & GARANTIAS',
+                subtitle: 'Controle patrimonial vinculado a Pessoas e Processos',
+                searchPlaceholder: 'Buscar por título ou descrição...',
+                estimatedValue: 'VALOR ESTIMADO',
+                types: {
+                    RealEstate: 'Imóvel',
+                    Vehicle: 'Veículo',
+                    Corporate: 'Empresa / Quotas',
+                    Others: 'Outros',
+                    BankAccount: 'Conta Bancária',
+                    Lawsuit: 'Ação Judicial'
+                },
+                newAsset: 'Vincular Novo Ativo/Garantia'
+            },
+            tasks: {
+                subtitle: 'Kanban Jurídico e automação de tarefas recorrentes',
+                searchPlaceholder: 'Buscar por título...',
+                defaultTitle: 'Andamento de Processo',
+                statusAwaiting: 'A Fazer',
+                priorityMedium: 'Média'
+            },
+            calendar: {
+                subtitle: 'Visualização cronológica de compromissos',
+                tabs: {
+                    cal: 'Calendário',
+                    list: 'Lista'
+                },
+                noEvents: 'Nenhum evento encontrado.',
+                defaultType: 'Audiência'
+            },
+            documents: {
+                title: 'DOCUMENTOS',
+                subtitle: 'Repositório centralizado de documentos',
+                searchPlaceholder: 'Buscar por nome, tipo ou origem (Processo/Ativo)...',
+                allOrigins: 'Todas as Origens'
+            },
+            empty: {
+                processes: 'Nenhum processo localizado.',
+                tasks: 'Nenhuma tarefa localizada.',
+                assets: 'Nenhum ativo localizado.',
+                syncing: 'Sincronizando processos...',
+                assetsSyncing: 'Sincronizando ativos...'
+            },
+            finance: {
+                title: 'Financeiro do Processo',
+                subtitle: 'Gestão de Honorários e Custos',
+                fees: 'Honorários / Entradas',
+                costs: 'Custos / Saídas',
+                balance: 'Saldo Final',
+                addCost: 'Lançar Custos',
+                addFee: 'Lançar Honorários',
+                newTransaction: 'Novo Lançamento',
+                editTransaction: 'Editar Lançamento',
+                description: 'Título / Descrição',
+                placeholderDescription: 'Ex: Taxas Judiciais ou Protocolo',
+                value: 'Valor (R$)',
+                date: 'Data',
+                confirm: 'Confirmar Lançamento',
+                loading: 'Consultando extrato...',
+                empty: 'Sem movimentações para este processo.',
+                statusList: {
+                    paid: 'Pago',
+                    pending: 'Pendente'
+                }
             },
             kanban: {
                 todo: 'A Fazer',
@@ -282,7 +479,7 @@ export const pt = {
                 done: 'Concluído',
                 late: 'Atrasado',
                 loading: 'Carregando...',
-                deleteConfirm: 'Tem certeza que deseja arquivar este processo? Ele poderá ser recuperado pelo administrador.',
+                deleteConfirm: 'Tem certeza que deseja arquivar este caso? Ele poderá ser recuperado pelo administrador.',
                 deleteConfirmTitle: 'Excluir Processo',
                 deleteSuccess: 'Processo excluído corretamente',
                 deleteError: 'Erro ao excluir processo'
@@ -331,11 +528,30 @@ export const pt = {
                     success: 'Processo salvo com sucesso!',
                     validation: {
                         cnj: 'Número CNJ Inválido! Use o formato: 0000000-00.0000.0.00.0000'
+                    },
+                    advanced: {
+                        riskProbability: 'Probabilidade de Êxito',
+                        riskProvision: 'Provisão de Risco (R$)',
+                        probHigh: 'Provável ✅',
+                        probMedium: 'Possível ⚖️',
+                        probLow: 'Remoto ⚠️'
+                    },
+                    timeline: {
+                        title: 'Histórico do Processo',
+                        auditDesc: 'Trilha de auditoria e alterações de status',
+                        emptyAudit: 'O histórico de auditoria será gerado automaticamente após a criação deste processo no sistema.',
+                        loadingAudit: 'Carregando histórico...',
+                        noEvents: 'Nenhum evento registrado ainda.'
                     }
                 },
                 task: {
-                    title: 'Agendar Tarefa',
-                    subtitle: 'Vinculação estrita: Equipe & Processos.',
+                    title: 'Nova Tarefa',
+                    titleEdit: 'Editar Tarefa',
+                    subtitle: 'Workflow & Gestão de Prazos',
+                    tabs: {
+                        basic: 'Dados Básicos',
+                        advanced: 'Avançado'
+                    },
                     labelTitle: 'Título da Tarefa',
                     placeholderTitle: 'Ex: Protocolar Petição Inicial',
                     labelLawsuit: 'Vincular a Processo (Nexus)',
@@ -378,28 +594,59 @@ export const pt = {
                     success: 'Evento criado com sucesso!',
                     titleEdit: 'Editar Evento',
                     save: 'Criar Evento'
+                },
+                asset: {
+                    title: 'Cadastro de Ativo',
+                    titleEdit: 'Editar Ativo',
+                    subtitle: 'Controle patrimonial e garantias.',
+                    labelTitle: 'Título/Identificação do Ativo',
+                    placeholderTitle: 'Ex: Imóvel Manhattan ou BMW X5',
+                    labelType: 'Tipo de Ativo',
+                    labelStatus: 'Status',
+                    labelValue: 'Valor Estimado (R$)',
+                    labelDescription: 'Descrição Detalhada',
+                    placeholderDescription: 'Ex: Imóvel matriculado sob o nº...',
+                    cancel: 'Cancelar',
+                    save: 'Salvar Ativo'
+                },
+                corporate: {
+                    title: 'Cadastro de Entidade Corporativa',
+                    titleEdit: 'Editar Entidade',
+                    subtitle: 'Gestão de QSA e Documentos Societários.',
+                    labelLegalName: 'Razão Social',
+                    placeholderLegalName: 'Ex: Veritum Tech LTDA',
+                    labelTradingName: 'Nome Fantasia / Alias',
+                    placeholderTradingName: 'Ex: Veritum Pro',
+                    labelCnpj: 'CNPJ',
+                    labelType: 'Tipo de Entidade',
+                    labelStatus: 'Status',
+                    labelTaxRegime: 'Regime Tributário',
+                    cancel: 'Cancelar',
+                    save: 'Salvar Entidade'
+                },
+                shareholder: {
+                    title: 'Associar Sócio',
+                    subtitle: 'Vinculando pessoas ao capital social.',
+                    labelPerson: 'Pessoa (CRM)',
+                    selectPerson: 'Selecione uma pessoa...',
+                    labelPercentage: 'Participação (%)',
+                    labelShares: 'Qtd de Cotas/Ações',
+                    labelShareType: 'Tipo de Cota (Quotas/Ações)',
+                    labelPosition: 'Cargo/Função',
+                    labelIsAdmin: 'É Administrador?',
+                    cancel: 'Cancelar',
+                    save: 'Salvar Sócio'
+                },
+                document: {
+                    title: 'Anexar Documento',
+                    subtitle: 'Repositório de arquivos para este registro.',
+                    labelTitle: 'Título do Documento',
+                    labelType: 'Tipo de Documento',
+                    placeholderType: 'Ex: Contrato Social, Procuração',
+                    labelFile: 'Upload de Arquivo',
+                    cancel: 'Cancelar',
+                    save: 'Salvar Documento'
                 }
-            },
-            tabs: {
-                overview: 'Visão Geral',
-                people: 'Pessoas',
-                processes: 'Processos',
-                tasks: 'Tarefas',
-                calendar: 'Agenda',
-                assets: 'Ativos',
-                corporate: 'Societário'
-            },
-            empty: {
-                processes: 'Nenhum processo localizado.',
-                tasks: 'Nenhuma tarefa localizada.',
-                assets: 'Nenhum ativo localizado.',
-                syncing: 'Sincronizando processos...',
-                assetsSyncing: 'Sincronizando ativos...'
-            },
-            comingSoon: {
-                title: 'Em Breve no Nexus Pro',
-                assetsSubtitle: 'O controle total de seus ativos e garantias processuais virá para cá.',
-                corporateSubtitle: 'A gestão societária e de contratos será centralizada aqui.'
             }
         },
         scriptor: {
@@ -678,7 +925,9 @@ export const pt = {
             masterFilter: {
                 self: 'Master (Meus Usuários)',
                 clients: 'Sócios-Administradores Privados',
-                selectClient: 'Selecione um Cliente'
+                selectClient: 'Selecione Cliente',
+                selectClientPlaceholder: 'Selecione um Cliente',
+                clientsGroup: 'CLIENTES (SÓCIOS ADM)'
             },
             tabs: {
                 team: 'Membros da Equipe',
@@ -1490,6 +1739,10 @@ export const pt = {
                         edit: 'Editar Cadastro',
                         new: 'Novo Cadastro CRM'
                     },
+                    subtitles: {
+                        edit: 'Gestão de Perfil Jurídico',
+                        new: 'Novo Cadastro CRM'
+                    },
                     sections: {
                         classification: 'Tipo de Classificação',
                         advanced: 'Ver Detalhes Avançados (RG, Endereço, Histórico)',
@@ -1517,7 +1770,10 @@ export const pt = {
                         ctps: 'CTPS (Carteira de Trabalho)',
                         pis: 'PIS / NIT',
                         history: 'Histórico de Funções / Notas',
-                        historyPlaceholder: 'Detalhes relevantes para o processo trabalhista/cível...'
+                        historyPlaceholder: 'Detalhes relevantes para o processo trabalhista/cível...',
+                        ufPlaceholder: 'Selecione uma UF...',
+                        ctpsPlaceholder: '000.000 / Series 000-A',
+                        pisPlaceholder: '000.000.000-00'
                     },
                     actions: {
                         cancel: 'Cancelar',
@@ -1563,7 +1819,9 @@ export const pt = {
                     email: 'E-mail',
                     newLawsuit: 'Novo Processo',
                     generateDocs: 'Gerar Documentos',
-                    viewLawsuits: 'Ver Processos'
+                    viewLawsuits: 'Ver Processos',
+                    registerAsset: 'Cadastrar Ativo',
+                    registerCorporate: 'Cadastrar Empresa'
                 },
                 stats: {
                     label: 'Base de Dados CRM',
@@ -2600,5 +2858,5 @@ export const pt = {
     footer: {
         copyright: '© {year} Veritum PRO - Todos os direitos reservados'
     }
-}
+};
 export default pt;

@@ -8,6 +8,8 @@ import {
     Scale, BookOpen, Clock
 } from 'lucide-react';
 
+import { useTranslation } from '@/contexts/language-context';
+
 interface Props {
     credentials: Credentials;
     limit?: number;
@@ -15,6 +17,7 @@ interface Props {
 }
 
 const IntelligenceWidget: React.FC<Props> = ({ credentials, limit = 3, moduleContext }) => {
+    const { t } = useTranslation();
     const [alerts, setAlerts] = useState<(GoldenAlert & { clipping?: Clipping, knowledge?: KnowledgeArticle })[]>([]);
     const [loading, setLoading] = useState(true);
     const [expandedAlertaId, setExpandedAlertaId] = useState<string | null>(null);
@@ -55,21 +58,21 @@ const IntelligenceWidget: React.FC<Props> = ({ credentials, limit = 3, moduleCon
             border: 'border-rose-200 dark:border-rose-800',
             text: 'text-rose-600 dark:text-rose-400',
             icon: <AlertCircle className="text-rose-500" size={18} />,
-            label: 'Urgência / Risco'
+            label: t('common.intelligenceWidget.urgencyRisk')
         };
         if (priority === 'Medium') return {
             bg: 'bg-amber-50 dark:bg-amber-900/20',
             border: 'border-amber-200 dark:border-amber-800',
             text: 'text-amber-600 dark:text-amber-400',
             icon: <Info className="text-amber-500" size={18} />,
-            label: 'Atenção / Atenção'
+            label: t('common.intelligenceWidget.attention')
         };
         return {
             bg: 'bg-indigo-50 dark:bg-indigo-900/20',
             border: 'border-indigo-200 dark:border-indigo-800',
             text: 'text-indigo-600 dark:text-indigo-400',
             icon: <TrendingUp className="text-indigo-500" size={18} />,
-            label: 'Tendência / Oportunidade'
+            label: t('common.intelligenceWidget.trendOpportunity')
         };
     };
 
@@ -77,7 +80,7 @@ const IntelligenceWidget: React.FC<Props> = ({ credentials, limit = 3, moduleCon
         <div className="w-full h-32 flex items-center justify-center bg-slate-50 dark:bg-slate-900/50 rounded-[2rem] border border-dashed border-slate-200 dark:border-slate-800">
             <div className="flex items-center gap-3 text-slate-400 animate-pulse">
                 <Brain size={20} className="animate-bounce" />
-                <span className="text-xs font-black uppercase tracking-widest">Sincronizando Insight IA...</span>
+                <span className="text-xs font-black uppercase tracking-widest">{t('common.intelligenceWidget.loading')}</span>
             </div>
         </div>
     );
@@ -92,7 +95,7 @@ const IntelligenceWidget: React.FC<Props> = ({ credentials, limit = 3, moduleCon
                 </h3>
                 {moduleContext && (
                     <span className="text-[10px] font-bold text-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 px-3 py-1 rounded-full border border-indigo-100 dark:border-indigo-800">
-                        Contexto: {moduleContext}
+                        {t('common.context')}: {moduleContext}
                     </span>
                 )}
             </div>
@@ -123,10 +126,10 @@ const IntelligenceWidget: React.FC<Props> = ({ credentials, limit = 3, moduleCon
                             <div className="p-6 space-y-4">
                                 <div className="space-y-2">
                                     <div className="flex items-center gap-2 text-[8px] font-bold text-slate-400 uppercase tracking-tight">
-                                        <Scale size={12} /> Detectado em {alert.clipping?.source || 'Publicação'}
+                                        <Scale size={12} /> {t('common.intelligenceWidget.detectedIn')} {alert.clipping?.source || t('common.intelligenceWidget.publication')}
                                     </div>
                                     <h4 className="text-sm font-black text-slate-800 dark:text-white leading-tight line-clamp-2 min-h-[2.5rem]">
-                                        {alert.clipping?.content || 'Insight sem título'}
+                                        {alert.clipping?.content || t('common.intelligenceWidget.noTitle')}
                                     </h4>
                                 </div>
 
@@ -136,7 +139,7 @@ const IntelligenceWidget: React.FC<Props> = ({ credentials, limit = 3, moduleCon
                                         onClick={() => setExpandedAlertaId(isExpanded ? null : alert.id)}
                                         className="w-full flex items-center justify-between text-[9px] font-black uppercase tracking-widest text-indigo-600 hover:text-indigo-700 transition-colors py-1"
                                     >
-                                        {isExpanded ? 'Ocultar Raciocínio IA' : 'Ver Raciocínio Estratégico'}
+                                        {isExpanded ? t('common.intelligenceWidget.hideReasoning') : t('common.intelligenceWidget.showReasoning')}
                                         {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                                     </button>
 
@@ -159,7 +162,7 @@ const IntelligenceWidget: React.FC<Props> = ({ credentials, limit = 3, moduleCon
                                 {/* Action Bar */}
                                 <div className="flex items-center gap-2 pt-2 border-t border-slate-50 dark:border-slate-800">
                                     <button className="flex-1 bg-slate-900 text-white dark:bg-white dark:text-slate-900 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest hover:scale-105 transition-all flex items-center justify-center gap-1.5 shadow-lg">
-                                        Explorar <ArrowRight size={14} />
+                                        {t('common.intelligenceWidget.explore')} <ArrowRight size={14} />
                                     </button>
                                 </div>
                             </div>

@@ -8,6 +8,7 @@ export const en = {
         edit: 'Edit',
         error: 'Error',
         success: 'Success',
+        actions: 'Actions',
         veritumPro: 'VERITUM PRO',
         backToHome: 'Back to Home',
         privacy: 'Privacy',
@@ -23,6 +24,8 @@ export const en = {
         loadingEcosystem: 'Loading ecosystem...',
         selectLanguage: 'Select Language',
         confirm: 'Confirm',
+        viewAll: 'View All',
+        context: 'Context',
         new: 'New',
         person: 'Person',
         basic: 'Basic Data',
@@ -31,7 +34,92 @@ export const en = {
         status: 'Status',
         event: 'Task',
         processes: 'Processes',
-        deleting: 'Deleting...'
+        deleting: 'Deleting...',
+        today: 'Today',
+        empty: 'Empty',
+        clearFilters: 'Clear Filters',
+        filters: {
+            allStatuses: 'All Statuses',
+            allTypes: 'All Types',
+            allMembers: 'All Members',
+            allProcesses: 'All Processes',
+            allOrigins: 'All Origins',
+            allLawyers: 'All Lawyers'
+        },
+        placeholders: {
+            search: 'Search...'
+        },
+        intelligenceWidget: {
+            loading: 'Syncing AI Insight...',
+            urgencyRisk: 'Urgency / Risk',
+            attention: 'Attention',
+            trendOpportunity: 'Trend / Opportunity',
+            detectedIn: 'Detected in',
+            publication: 'Publication',
+            noTitle: 'Untitled insight',
+            hideReasoning: 'Hide AI Reasoning',
+            showReasoning: 'View Strategic Reasoning',
+            explore: 'Explore'
+        },
+        viewStyle: {
+            cards: 'Card View',
+            list: 'List View',
+            kanban: 'Kanban View'
+        },
+        statuses: {
+            lawsuit: {
+                active: 'Active',
+                suspended: 'Suspended',
+                archived: 'Archived',
+                closed: 'Closed'
+            },
+            task: {
+                todo: 'To Do',
+                doing: 'In Progress',
+                done: 'Done',
+                late: 'Overdue'
+            },
+            asset: {
+                active: 'Active',
+                blocked: 'Blocked',
+                sold: 'Sold',
+                collateral: 'Collateral',
+                alienated: 'Alienated'
+            },
+            entity: {
+                active: 'Active',
+                closed: 'Closed',
+                inactive: 'Inactive',
+                liquidation: 'In Liquidation'
+            }
+        },
+        types: {
+            asset: {
+                realEstate: 'Real Estate',
+                vehicle: 'Vehicle',
+                bankAccount: 'Bank Account',
+                lawsuit: 'Lawsuit',
+                corporate: 'Company / Shares',
+                others: 'Others'
+            },
+            entity: {
+                ltda: 'LTDA',
+                sa: 'SA',
+                eireli: 'EIRELI',
+                mei: 'MEI',
+                holding: 'Holding',
+                association: 'Association',
+                others: 'Others'
+            }
+        },
+        deleteConfirm: {
+            title: 'Delete {item}',
+            message: 'Are you sure you want to delete this {item}? This action cannot be undone.',
+            success: '{item} deleted successfully!',
+            error: 'Error deleting {item}'
+        },
+        systemFallback: 'System',
+        noData: 'No data'
     },
     nav: {
         home: 'Home',
@@ -225,7 +313,72 @@ export const en = {
             subtitle: 'Operational Core & Case Management',
             views: {
                 kanban: 'Kanban',
-                list: 'List'
+                list: 'List',
+                calendar: 'Calendar'
+            },
+            tabs: {
+                overview: 'Overview',
+                people: 'People',
+                processes: 'Cases',
+                tasks: 'Tasks',
+                calendar: 'Calendar',
+                assets: 'Assets',
+                corporate: 'Corporate',
+                documents: 'Documents'
+            },
+            corporate: {
+                title: 'ENTITIES & HOLDINGS',
+                subtitle: 'Management of legal entities, shares and governance',
+                searchPlaceholder: 'Search entity...',
+                newEntity: 'New Entity',
+                empty: 'No entities found.',
+                labels: {
+                    type: 'Type',
+                    regime: 'Regime',
+                    capital: 'Social Capital',
+                    noTradingName: 'No trading name'
+                },
+                actions: {
+                    manageQSA: 'Manage QSA',
+                    uploadSocialContract: 'Upload Social Contract',
+                    viewHistory: 'History Analysis'
+                },
+                table: {
+                    headers: {
+                        entity: 'Entity',
+                        cnpj: 'Tax ID (CNPJ)',
+                        type: 'Type',
+                        capital: 'Capital',
+                        status: 'Status',
+                        actions: 'Actions'
+                    }
+                }
+            },
+            overview: {
+                subtitle: 'Real-time monitoring of the Nexus ecosystem',
+                powerUser: {
+                    title: 'Power User Nexus',
+                    description: 'You have achieved 84% effectiveness in asset and case management this month.',
+                    level: 'Level 12'
+                },
+                recommendedActions: {
+                    title: 'Recommended Actions',
+                    reviewDeadlines: 'Review Deadlines',
+                    registerAssets: 'Register Assets',
+                    mapQSA: 'Map QSA',
+                    syncCRM: 'Sync CRM'
+                },
+                status: {
+                    label: 'Status',
+                    syncing: 'Syncing...',
+                    synced: 'Synced'
+                },
+                metricsTrends: {
+                    urgent: 'Urgent',
+                    queue: 'In Queue',
+                    productivity: 'Productivity'
+                },
+                assetDistribution: 'Asset Distribution'
             },
             newLawsuit: 'New Case',
             newTask: 'Schedule Task',
@@ -234,6 +387,86 @@ export const en = {
                 deadlines: '24h Deadlines',
                 pending: 'Avg Pending',
                 completion: 'Completion Rate'
+            },
+            processes: {
+                subtitle: 'Legal pipeline and automated case tracking',
+                totalCount: 'Total of {count} Cases',
+                noCnj: 'No Case Number',
+                historyAnalysis: 'History Analysis',
+                authorFallback: 'Defense',
+                viewMindMap: 'View Mind Map (Nexo Visual)',
+                searchPlaceholder: 'Search by Case Number or Title...',
+                labelValue: 'CASE VALUE'
+            },
+            assets: {
+                title: 'ASSETS & GUARANTEES',
+                subtitle: 'Wealth control linked to People and Cases',
+                searchPlaceholder: 'Search by title or description...',
+                estimatedValue: 'ESTIMATED VALUE',
+                types: {
+                    RealEstate: 'Real Estate',
+                    Vehicle: 'Vehicle',
+                    Corporate: 'Corporate / Shares',
+                    Others: 'Others',
+                    BankAccount: 'Bank Account',
+                    Lawsuit: 'Lawsuit'
+                },
+                newAsset: 'Link New Asset/Guarantee'
+            },
+            tasks: {
+                subtitle: 'Legal Kanban and recurring task automation',
+                searchPlaceholder: 'Search by title...',
+                defaultTitle: 'Case Progress',
+                statusAwaiting: 'To Do',
+                priorityMedium: 'Medium'
+            },
+            calendar: {
+                subtitle: 'Chronological view of appointments',
+                tabs: {
+                    cal: 'Calendar',
+                    list: 'List'
+                },
+                noEvents: 'No events found.',
+                defaultType: 'Hearing'
+            },
+            documents: {
+                title: 'DOCUMENTS',
+                subtitle: 'Centralized document repository',
+                searchPlaceholder: 'Search by name, type or origin (Case/Asset)...',
+                allOrigins: 'All Origins',
+                loading: 'Consolidating global documents...',
+                empty: 'No documents found',
+                emptySubtitle: 'Try adjusting your filters or global search.',
+                eventDate: 'Event Date'
+            },
+            empty: {
+                processes: 'No processes found.',
+                tasks: 'No tasks found.',
+                assets: 'No assets found.',
+                syncing: 'Syncing processes...',
+                assetsSyncing: 'Syncing assets...'
+            },
+            finance: {
+                title: 'Case Finance',
+                subtitle: 'Fee & Cost Management',
+                fees: 'Fees / Income',
+                costs: 'Costs / Expenses',
+                balance: 'Final Balance',
+                addCost: 'Record Costs',
+                addFee: 'Record Fees',
+                newTransaction: 'New Entry',
+                editTransaction: 'Edit Entry',
+                description: 'Title / Description',
+                placeholderDescription: 'Ex: Court Fees or Protocol',
+                value: 'Value',
+                date: 'Date',
+                confirm: 'Confirm Entry',
+                loading: 'Checking statement...',
+                empty: 'No transactions for this case.',
+                statusList: {
+                    paid: 'Paid',
+                    pending: 'Pending'
+                }
             },
             kanban: {
                 todo: 'To Do',
@@ -290,11 +523,30 @@ export const en = {
                     success: 'Case saved successfully!',
                     validation: {
                         cnj: 'Invalid CNJ Number! Use the format: 0000000-00.0000.0.00.0000'
+                    },
+                    advanced: {
+                        riskProbability: 'Likelihood of Success',
+                        riskProvision: 'Risk Provision ($)',
+                        probHigh: 'Probable ✅',
+                        probMedium: 'Possible ⚖️',
+                        probLow: 'Remote ⚠️'
+                    },
+                    timeline: {
+                        title: 'Case History',
+                        auditDesc: 'Audit trail and status changes',
+                        emptyAudit: 'The audit trail will be generated automatically after this case is created in the system.',
+                        loadingAudit: 'Loading history...',
+                        noEvents: 'No events recorded yet.'
                     }
                 },
                 task: {
-                    title: 'Schedule Task',
-                    subtitle: 'Strict linking: Team & Cases.',
+                    title: 'New Task',
+                    titleEdit: 'Edit Task',
+                    subtitle: 'Workflow & Deadline Management',
+                    tabs: {
+                        basic: 'Basic Data',
+                        advanced: 'Advanced'
+                    },
                     labelTitle: 'Task Title',
                     placeholderTitle: 'Ex: File Initial Petition',
                     labelLawsuit: 'Link to Case (Nexus)',
@@ -337,27 +589,62 @@ export const en = {
                     success: 'Event created successfully!',
                     titleEdit: 'Edit Event',
                     save: 'Create Event'
+                },
+                asset: {
+                    title: 'Asset Registration',
+                    titleEdit: 'Edit Asset',
+                    subtitle: 'Wealth control and guarantees.',
+                    labelTitle: 'Asset Title/Identification',
+                    placeholderTitle: 'Ex: Property Manhattan or BMW X5',
+                    labelType: 'Asset Type',
+                    labelStatus: 'Status',
+                    labelValue: 'Estimated Value ($)',
+                    labelDescription: 'Detailed Description',
+                    placeholderDescription: 'Ex: Property registered at...',
+                    cancel: 'Cancel',
+                    save: 'Save Asset'
+                },
+                corporate: {
+                    title: 'Corporate Entity Registration',
+                    titleEdit: 'Edit Entity',
+                    subtitle: 'QSA and Corporate Documents Management.',
+                    labelLegalName: 'Legal Name',
+                    placeholderLegalName: 'Ex: Veritum Tech LTDA',
+                    labelTradingName: 'Trading Name / Alias',
+                    placeholderTradingName: 'Ex: Veritum Pro',
+                    labelCnpj: 'CNPJ (Brazil)',
+                    labelType: 'Entity Type',
+                    labelStatus: 'Status',
+                    labelTaxRegime: 'Tax Regime',
+                    cancel: 'Cancel',
+                    save: 'Save Entity'
+                },
+                shareholder: {
+                    title: 'Associate Shareholder',
+                    subtitle: 'Linking persons to corporate capital.',
+                    labelPerson: 'Person (CRM)',
+                    selectPerson: 'Select a person...',
+                    labelPercentage: 'Ownership (%)',
+                    labelShares: 'Shares Count',
+                    labelShareType: 'Share Type (Quotas/Actions)',
+                    labelPosition: 'Position/Role',
+                    labelIsAdmin: 'Is Administrator?',
+                    cancel: 'Cancel',
+                    save: 'Save Shareholder'
+                },
+                document: {
+                    title: 'Attach Document',
+                    newAssetTitle: 'New Asset Document',
+                    editAssetTitle: 'Edit Asset Document',
+                    subtitle: 'File repository for this record.',
+                    labelFile: 'File Upload',
+                    labelTitle: 'Document Title',
+                    labelType: 'Document Type',
+                    placeholderTitle: 'Ex: Property Deed, Invoice...',
+                    placeholderType: 'Ex: Contract, Power of Attorney',
+                    cancel: 'Cancel',
+                    save: 'Save Document'
                 }
-            },
-            tabs: {
-                people: 'People',
-                processes: 'Cases',
-                tasks: 'Tasks',
-                calendar: 'Calendar',
-                assets: 'Assets',
-                corporate: 'Corporate'
-            },
-            empty: {
-                processes: 'No processes found.',
-                tasks: 'No tasks found.',
-                assets: 'No assets found.',
-                syncing: 'Syncing processes...',
-                assetsSyncing: 'Syncing assets...'
-            },
-            comingSoon: {
-                title: 'Coming Soon to Nexus Pro',
-                assetsSubtitle: 'Total control of your assets and procedural guarantees will come here.',
-                corporateSubtitle: 'Corporate management and long-term contracts will be centralized here.'
             }
         },
         scriptor: {
@@ -665,7 +952,9 @@ export const en = {
             masterFilter: {
                 self: 'Master (My Users)',
                 clients: 'Private Partner-Administrators',
-                selectClient: 'Select a Client'
+                selectClient: 'Select Client',
+                selectClientPlaceholder: 'Select a Client',
+                clientsGroup: 'CLIENTS (ADMIN PARTNERS)'
             },
             tabs: {
                 team: 'Team Members',
@@ -1458,12 +1747,17 @@ export const en = {
                     Reclamado: 'Defendant',
                     Testemunha: 'Witness',
                     Preposto: 'Corporate Representative',
-                    'Advogado Adverso': 'Opposing Counsel'
+                    'Advogado Adverso': 'Opposing Counsel',
+                    Geral: 'General'
                 },
                 modal: {
                     titles: {
                         edit: 'Edit Entry',
                         new: 'New CRM Entry'
+                    },
+                    subtitles: {
+                        edit: 'Legal Profile Management',
+                        new: 'New Member in the Ecosystem'
                     },
                     sections: {
                         classification: 'Classification Type',
@@ -1492,7 +1786,10 @@ export const en = {
                         ctps: 'Labor ID (CTPS)',
                         pis: 'Social Security ID (PIS)',
                         history: 'History of Roles / Notes',
-                        historyPlaceholder: 'Relevant details for labor/civil processes...'
+                        historyPlaceholder: 'Relevant details for labor/civil processes...',
+                        ufPlaceholder: 'ST',
+                        ctpsPlaceholder: '000.000 / Series 000-A',
+                        pisPlaceholder: '000.00000.00-0'
                     },
                     actions: {
                         cancel: 'Cancel',
@@ -1516,7 +1813,28 @@ export const en = {
                     actions: {
                         generate: 'Generate Document',
                         download: 'Download PDF',
-                        preview: 'Preview Draft'
+                        preview: 'Preview Draft',
+                        back: 'Back',
+                        print: 'Print / Generate PDF from Preview'
+                    },
+                    tabs: {
+                        master: 'Master Templates',
+                        office: 'Office Templates'
+                    },
+                    placeholders: {
+                        activePole: 'Active Pole',
+                        general: 'General',
+                        feeAgreement: 'Fee Agreement',
+                        indigency: 'Indigency',
+                        dataProtection: 'Data Protection',
+                        repasse: 'Power Transfer',
+                        qualification: 'Qualification and Notes',
+                        residenceProof: 'Under Faith Proof',
+                        paymentReceipt: 'Installment Receipt'
+                    },
+                    messages: {
+                        noCustomTemplates: 'No custom templates in this office.',
+                        autoFillData: 'The data for {{name}} ({{document}}) will be automatically inserted into the variable fields of the template.'
                     }
                 },
                 actions: {
@@ -1525,7 +1843,9 @@ export const en = {
                     email: 'Email',
                     newLawsuit: 'New Lawsuit',
                     generateDocs: 'Generate Documents',
-                    viewLawsuits: 'View Lawsuits'
+                    viewLawsuits: 'View Lawsuits',
+                    registerAsset: 'Register New Asset/Guarantee',
+                    registerCorporate: 'Register as Corporate Entity'
                 },
                 validations: {
                     invalidDocument: 'Invalid Document Format! Use 000.000.000-00 or 00.000.000/0000-00'

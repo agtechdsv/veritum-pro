@@ -300,7 +300,7 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
     const replaceTags = (content: string, person: Person, org: any) => {
         let result = content;
         const today = new Date().toLocaleDateString('pt-BR');
-        
+
         const tags: Record<string, string> = {
             '{{nome_cliente}}': person.full_name || '',
             '{{cpf}}': person.document || '',
@@ -576,18 +576,18 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
         // Content
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
-        
+
         const contentStr = template.content || '';
         const processed = replaceTags(contentStr, selectedPersonForDoc as Person, orgData);
         const cleanContent = processed.replace(/<br\s*[\/]?>/gi, '\n').replace(/<[^>]+>/g, '');
-        
+
         const lines = doc.splitTextToSize(cleanContent, 180);
-        
+
         let yPos = 70;
         lines.forEach((line: string) => {
             if (yPos > 270) {
                 doc.addPage();
-                yPos = 20; 
+                yPos = 20;
             }
             doc.text(line, 15, yPos, { align: 'justify', maxWidth: 180 });
             yPos += 5;
@@ -599,7 +599,7 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
             doc.addPage();
             footerY = 40;
         }
-        
+
         doc.line(60, footerY, 150, footerY);
         doc.setFont('helvetica', 'bold');
         doc.text(p.full_name, (210 - doc.getTextWidth(p.full_name)) / 2, footerY + 5);
@@ -741,14 +741,14 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                     <button
                         onClick={() => setViewStyle('grid')}
                         className={`p-2 rounded-lg transition-all ${viewStyle === 'grid' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-                        title="Visualização em Cards"
+                        title={t('common.viewStyle.cards')}
                     >
                         <LayoutGrid size={18} />
                     </button>
                     <button
                         onClick={() => setViewStyle('list')}
                         className={`p-2 rounded-lg transition-all ${viewStyle === 'list' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-                        title="Visualização em Lista"
+                        title={t('common.viewStyle.list')}
                     >
                         <List size={18} />
                     </button>
@@ -768,147 +768,147 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                     ) : filteredPersons.map(person => (
                         <div key={person.id} className="bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden flex flex-col justify-between h-full">
                             <div>
-                            <div className="flex items-start justify-between mb-5">
-                                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${person.person_type === 'Cliente' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 border border-emerald-100 dark:border-emerald-800' :
-                                    person.person_type === 'Advogado Adverso' ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 border border-rose-100 dark:border-rose-800' :
-                                        'bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700'
-                                    }`}>
-                                    {t(`management.master.persons.types.${person.person_type}`)}
-                                </span>
-                                <div className="flex gap-2">
-                                    {onOpenNexoVisual && (
+                                <div className="flex items-start justify-between mb-5">
+                                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${person.person_type === 'Cliente' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 border border-emerald-100 dark:border-emerald-800' :
+                                        person.person_type === 'Advogado Adverso' ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 border border-rose-100 dark:border-rose-800' :
+                                            'bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700'
+                                        }`}>
+                                        {t(`management.master.persons.types.${person.person_type}`)}
+                                    </span>
+                                    <div className="flex gap-2">
+                                        {onOpenNexoVisual && (
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); onOpenNexoVisual(person); }}
+                                                className="p-1.5 text-indigo-600 bg-indigo-50 dark:bg-indigo-900/40 rounded-lg hover:bg-indigo-100 hover:scale-110 active:scale-95 transition-all shadow-sm border border-indigo-100 dark:border-indigo-800/50"
+                                                title={t('modules.nexus.processes.viewMindMap')}
+                                            >
+                                                <Network size={14} />
+                                            </button>
+                                        )}
                                         <button
-                                            onClick={(e) => { e.stopPropagation(); onOpenNexoVisual(person); }}
-                                            className="p-1.5 text-indigo-600 bg-indigo-50 dark:bg-indigo-900/40 rounded-lg hover:bg-indigo-100 hover:scale-110 active:scale-95 transition-all shadow-sm border border-indigo-100 dark:border-indigo-800/50"
-                                            title="Ver Mapa Mental (Nexo Visual)"
+                                            onClick={() => { setEditingPerson(person); setIsModalOpen(true); setActiveTab('basic'); }}
+                                            className="p-1 px-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all cursor-pointer"
                                         >
-                                            <Network size={14} />
+                                            <Pencil size={14} />
                                         </button>
-                                    )}
-                                    <button
-                                        onClick={() => { setEditingPerson(person); setIsModalOpen(true); setActiveTab('basic'); }}
-                                        className="p-1 px-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all cursor-pointer"
-                                    >
-                                        <Pencil size={14} />
-                                    </button>
-                                    <button
-                                        onClick={() => handleSoftDelete(person.id)}
-                                        className="p-4 -m-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all cursor-pointer"
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
+                                        <button
+                                            onClick={() => handleSoftDelete(person.id)}
+                                            className="p-4 -m-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all cursor-pointer"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <h3 className="font-bold text-slate-800 dark:text-white text-xl mb-1 truncate pr-4">{person.full_name}</h3>
-                            <p className="text-xs text-slate-400 font-mono mb-5 flex items-center gap-1.5 grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all">
-                                <FileText size={12} /> {person.document}
-                            </p>
+                                <h3 className="font-bold text-slate-800 dark:text-white text-xl mb-1 truncate pr-4">{person.full_name}</h3>
+                                <p className="text-xs text-slate-400 font-mono mb-5 flex items-center gap-1.5 grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all">
+                                    <FileText size={12} /> {person.document}
+                                </p>
 
-                            <div className="space-y-3 mb-6">
-                                <button
-                                    onClick={() => openEmail(person.email)}
-                                    className="flex items-center gap-3 text-slate-500 dark:text-slate-400 text-sm hover:text-indigo-600 transition-colors w-full group/link cursor-pointer"
-                                >
-                                    <div className="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg group-hover/link:bg-indigo-50 dark:group-hover/link:bg-indigo-900/30 transition-colors">
-                                        <Mail size={14} className="text-slate-400 group-hover/link:text-indigo-600" />
-                                    </div>
-                                    <span className="truncate font-medium">{person.email || t('common.notApplicable')}</span>
-                                </button>
-
-                                <button
-                                    onClick={() => openWhatsApp(person.phone)}
-                                    className="flex items-center gap-3 text-slate-500 dark:text-slate-400 text-sm hover:text-emerald-600 transition-colors w-full group/link cursor-pointer"
-                                >
-                                    <div className="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg group-hover/link:bg-emerald-50 dark:group-hover/link:bg-emerald-900/30 transition-colors">
-                                        <MessageCircle size={14} className="text-slate-400 group-hover/link:text-emerald-600" />
-                                    </div>
-                                    <span className="truncate font-medium">{person.phone || t('common.notApplicable')}</span>
-                                </button>
-
-                                {person.address && (
+                                <div className="space-y-3 mb-6">
                                     <button
-                                        onClick={() => openMaps(person.address)}
+                                        onClick={() => openEmail(person.email)}
                                         className="flex items-center gap-3 text-slate-500 dark:text-slate-400 text-sm hover:text-indigo-600 transition-colors w-full group/link cursor-pointer"
                                     >
                                         <div className="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg group-hover/link:bg-indigo-50 dark:group-hover/link:bg-indigo-900/30 transition-colors">
-                                            <MapPin size={14} className="text-slate-400 group-hover/link:text-indigo-600" />
+                                            <Mail size={14} className="text-slate-400 group-hover/link:text-indigo-600" />
                                         </div>
-                                        <span className="truncate font-medium text-left leading-tight">
-                                            {person.address.street ? `${person.address.street}, ${person.address.number || ''}` : t('common.notApplicable')}
-                                        </span>
+                                        <span className="truncate font-medium">{person.email || t('common.notApplicable')}</span>
                                     </button>
-                                )}
-                            </div>
-                        </div>
 
-                        <div className="pt-5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between mt-auto">
-                            <div className="flex flex-col">
-                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('management.master.persons.stats.activeLawsuits')}</span>
-                                <div className="flex items-center gap-1.5 mt-0.5">
-                                    <Scale size={14} className="text-indigo-600" />
-                                    <span className="text-sm font-black text-slate-700 dark:text-slate-200">0</span>
+                                    <button
+                                        onClick={() => openWhatsApp(person.phone)}
+                                        className="flex items-center gap-3 text-slate-500 dark:text-slate-400 text-sm hover:text-emerald-600 transition-colors w-full group/link cursor-pointer"
+                                    >
+                                        <div className="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg group-hover/link:bg-emerald-50 dark:group-hover/link:bg-emerald-900/30 transition-colors">
+                                            <MessageCircle size={14} className="text-slate-400 group-hover/link:text-emerald-600" />
+                                        </div>
+                                        <span className="truncate font-medium">{person.phone || t('common.notApplicable')}</span>
+                                    </button>
+
+                                    {person.address && (
+                                        <button
+                                            onClick={() => openMaps(person.address)}
+                                            className="flex items-center gap-3 text-slate-500 dark:text-slate-400 text-sm hover:text-indigo-600 transition-colors w-full group/link cursor-pointer"
+                                        >
+                                            <div className="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg group-hover/link:bg-indigo-50 dark:group-hover/link:bg-indigo-900/30 transition-colors">
+                                                <MapPin size={14} className="text-slate-400 group-hover/link:text-indigo-600" />
+                                            </div>
+                                            <span className="truncate font-medium text-left leading-tight">
+                                                {person.address.street ? `${person.address.street}, ${person.address.number || ''}` : t('common.notApplicable')}
+                                            </span>
+                                        </button>
+                                    )}
                                 </div>
                             </div>
 
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() => handleGenerateDocs(person)}
-                                    className="p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-900 hover:text-white dark:hover:bg-white dark:hover:text-slate-950 transition-all shadow-sm cursor-pointer"
-                                    title={t('management.master.persons.actions.generateDocs')}
-                                >
-                                    <FileDown size={18} />
-                                </button>
-                                {onNewAsset && (
-                                    <button
-                                        onClick={() => onNewAsset(person.id)}
-                                        className="p-2.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-xl hover:bg-emerald-600 hover:text-white transition-all shadow-sm cursor-pointer"
-                                        title="Registrar Novo Ativo/Garantia"
-                                    >
-                                        <Zap size={18} />
-                                    </button>
-                                )}
-                                {onNewCorporateEntity && (
-                                    <button
-                                        onClick={() => onNewCorporateEntity(person)}
-                                        className="p-2.5 bg-amber-50 dark:bg-amber-900/20 text-amber-600 rounded-xl hover:bg-amber-600 hover:text-white transition-all shadow-sm cursor-pointer"
-                                        title="Registrar como Entidade Societária"
-                                    >
-                                        <Briefcase size={18} />
-                                    </button>
-                                )}
-                                <button
-                                    onClick={() => onNewLawsuit?.(person.id)}
-                                    className="p-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-indigo-600/20 cursor-pointer"
-                                    title={t('management.master.persons.actions.newLawsuit')}
-                                >
-                                    <ArrowUpRight size={18} />
-                                </button>
-                            </div>
-                        </div>
+                            <div className="pt-5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between mt-auto">
+                                <div className="flex flex-col">
+                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('management.master.persons.stats.activeLawsuits')}</span>
+                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                        <Scale size={14} className="text-indigo-600" />
+                                        <span className="text-sm font-black text-slate-700 dark:text-slate-200">0</span>
+                                    </div>
+                                </div>
 
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-500/5 to-transparent rounded-full -mr-16 -mt-16 group-hover:from-indigo-500/10 transition-all duration-500"></div>
-                    </div>
-                ))}
-            </div>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => handleGenerateDocs(person)}
+                                        className="p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-900 hover:text-white dark:hover:bg-white dark:hover:text-slate-950 transition-all shadow-sm cursor-pointer"
+                                        title={t('management.master.persons.actions.generateDocs')}
+                                    >
+                                        <FileDown size={18} />
+                                    </button>
+                                    {onNewAsset && (
+                                        <button
+                                            onClick={() => onNewAsset(person.id)}
+                                            className="p-2.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-xl hover:bg-emerald-600 hover:text-white transition-all shadow-sm cursor-pointer"
+                                            title={t('management.master.persons.actions.registerAsset')}
+                                        >
+                                            <Zap size={18} />
+                                        </button>
+                                    )}
+                                    {onNewCorporateEntity && (
+                                        <button
+                                            onClick={() => onNewCorporateEntity(person)}
+                                            className="p-2.5 bg-amber-50 dark:bg-amber-900/20 text-amber-600 rounded-xl hover:bg-amber-600 hover:text-white transition-all shadow-sm cursor-pointer"
+                                            title={t('management.master.persons.actions.registerCorporate')}
+                                        >
+                                            <Briefcase size={18} />
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={() => onNewLawsuit?.(person.id)}
+                                        className="p-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-indigo-600/20 cursor-pointer"
+                                        title={t('management.master.persons.actions.newLawsuit')}
+                                    >
+                                        <ArrowUpRight size={18} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-500/5 to-transparent rounded-full -mr-16 -mt-16 group-hover:from-indigo-500/10 transition-all duration-500"></div>
+                        </div>
+                    ))}
+                </div>
             ) : (
                 <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
-                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Pessoa</th>
-                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Documento</th>
-                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Contato</th>
-                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Classificação</th>
-                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Ações</th>
+                                <tr>
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('management.master.persons.table.member')}</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('management.master.persons.modal.fields.document')}</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('management.master.persons.table.contact')}</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('management.master.persons.table.classification')}</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">{t('common.actions')}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
                                 {isLoading ? (
-                                    <tr><td colSpan={5} className="p-8 text-center text-slate-400">Carregando...</td></tr>
+                                    <tr><td colSpan={5} className="p-8 text-center text-slate-400">{t('common.loading')}</td></tr>
                                 ) : filteredPersons.length === 0 ? (
-                                    <tr><td colSpan={5} className="p-8 text-center text-slate-400">Nenhum registro encontrado.</td></tr>
+                                    <tr><td colSpan={5} className="p-8 text-center text-slate-400">{t('management.master.persons.table.empty')}</td></tr>
                                 ) : filteredPersons.map(person => (
                                     <tr key={person.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors group">
                                         <td className="px-6 py-4">
@@ -926,7 +926,7 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                                                 person.person_type === 'Advogado Adverso' ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 border border-rose-100 dark:border-rose-800' :
                                                     'bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700'
                                                 }`}>
-                                                {person.person_type || 'Geral'}
+                                                {t(`management.master.persons.types.${person.person_type || 'Geral'}`)}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
@@ -935,7 +935,7 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                                                     <button
                                                         onClick={() => onOpenNexoVisual(person)}
                                                         className="p-2 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
-                                                        title="Ver Mapa Mental (Nexo Visual)"
+                                                        title={t('modules.nexus.processes.viewMindMap')}
                                                     >
                                                         <Network size={16} />
                                                     </button>
@@ -943,7 +943,7 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                                                 <button
                                                     onClick={() => handleGenerateDocs(person)}
                                                     className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all"
-                                                    title="Gerar Documento"
+                                                    title={t('management.master.persons.actions.generateDocs')}
                                                 >
                                                     <FileDown size={16} />
                                                 </button>
@@ -951,7 +951,7 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                                                     <button
                                                         onClick={() => onNewAsset(person.id)}
                                                         className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-all"
-                                                        title="Novo Ativo/Garantia"
+                                                        title={t('management.master.persons.actions.registerAsset')}
                                                     >
                                                         <Zap size={16} />
                                                     </button>
@@ -960,7 +960,7 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                                                     <button
                                                         onClick={() => onNewCorporateEntity(person)}
                                                         className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-all"
-                                                        title="Nova Entidade Societária"
+                                                        title={t('management.master.persons.actions.registerCorporate')}
                                                     >
                                                         <Briefcase size={16} />
                                                     </button>
@@ -968,7 +968,7 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                                                 <button
                                                     onClick={() => onNewLawsuit?.(person.id)}
                                                     className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
-                                                    title="Novo Processo"
+                                                    title={t('management.master.persons.actions.newLawsuit')}
                                                 >
                                                     <ArrowUpRight size={16} />
                                                 </button>
@@ -1020,10 +1020,10 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                                 <div className="flex items-center justify-between mb-6">
                                     <div>
                                         <h3 className="text-2xl font-black text-slate-800 dark:text-white tracking-tighter">
-                                            {editingPerson?.id ? t('management.master.persons.modal.titles.edit') : 'Novo Cadastro CRM'}
+                                            {editingPerson?.id ? t('management.master.persons.modal.titles.edit') : t('management.master.persons.modal.titles.new')}
                                         </h3>
                                         <p className="text-[10px] text-slate-500 font-bold mt-1">
-                                            {editingPerson?.id ? 'Gestão de Perfis Jurídicos' : 'Novo Integrante no Ecossistema'}
+                                            {editingPerson?.id ? t('management.master.persons.modal.subtitles.edit') : t('management.master.persons.modal.subtitles.new')}
                                         </p>
                                     </div>
                                     <button
@@ -1035,20 +1035,20 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                                 </div>
 
                                 {/* Tab Switcher */}
-                                <div className="flex bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl relative">
+                                <div className="relative flex bg-slate-100 dark:bg-slate-950 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-inner">
                                     <button
                                         type="button"
                                         onClick={() => setActiveTab('basic')}
                                         className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black transition-all relative z-10 ${activeTab === 'basic' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                                     >
-                                        <User size={14} /> Dados Básicos
+                                        <User size={14} /> {t('common.basic')}
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => setActiveTab('advanced')}
                                         className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black transition-all relative z-10 ${activeTab === 'advanced' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                                     >
-                                        <Zap size={14} /> Avançado
+                                        <Zap size={14} /> {t('common.advanced')}
                                     </button>
                                     <div
                                         className={`absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-white dark:bg-slate-950 rounded-xl shadow-sm transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${activeTab === 'advanced' ? 'translate-x-full' : 'translate-x-0'}`}
@@ -1061,10 +1061,9 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                                 <div className="flex-1 overflow-y-auto p-8 no-scrollbar">
                                     <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
                                         {activeTab === 'basic' ? (
-                                            <div className="space-y-8">
-                                                {/* Classification Selection */}
+                                            <div className="space-y-6">
                                                 <div>
-                                                    <label className="block text-[11px] font-bold text-slate-400 mb-4 px-1">Tipo de Classificação</label>
+                                                    <label className="block text-[11px] font-bold text-slate-400 mb-4 px-1">{t('management.master.persons.modal.sections.classification')}</label>
                                                     <div className="grid grid-cols-3 gap-2">
                                                         {['Cliente', 'Reclamado', 'Testemunha', 'Preposto', 'Advogado Adverso'].map(type => (
                                                             <button
@@ -1076,72 +1075,70 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                                                                     : 'bg-white dark:bg-slate-950 text-slate-500 border-slate-200 dark:border-slate-800 hover:border-indigo-300'
                                                                     }`}
                                                             >
-                                                                {type}
+                                                                {t(`management.master.persons.types.${type}`)}
                                                             </button>
                                                         ))}
                                                     </div>
                                                 </div>
 
-                                                <div className="space-y-6">
+                                                <div>
+                                                    <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">{t('management.master.persons.modal.fields.name')}</label>
+                                                    <input
+                                                        required
+                                                        value={editingPerson?.full_name || ''}
+                                                        onChange={e => setEditingPerson({ ...editingPerson, full_name: e.target.value })}
+                                                        className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white font-bold text-lg"
+                                                        placeholder={t('management.master.persons.modal.fields.namePlaceholder')}
+                                                    />
+                                                </div>
+
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <div>
-                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Nome Completo</label>
+                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">{t('management.master.persons.modal.fields.document')}</label>
                                                         <input
                                                             required
-                                                            value={editingPerson?.full_name || ''}
-                                                            onChange={e => setEditingPerson({ ...editingPerson, full_name: e.target.value })}
-                                                            className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white font-bold text-lg"
-                                                            placeholder="Digite o nome completo"
+                                                            value={editingPerson?.document || ''}
+                                                            onChange={e => setEditingPerson({ ...editingPerson, document: formatDocument(e.target.value) })}
+                                                            className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white font-bold font-mono"
+                                                            placeholder={t('management.master.persons.modal.fields.documentPlaceholder')}
                                                         />
                                                     </div>
-
-                                                    <div className="grid grid-cols-2 gap-4">
-                                                        <div>
-                                                            <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Documento (CPF/CNPJ)</label>
-                                                            <input
-                                                                required
-                                                                value={editingPerson?.document || ''}
-                                                                onChange={e => setEditingPerson({ ...editingPerson, document: formatDocument(e.target.value) })}
-                                                                className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white font-bold font-mono"
-                                                                placeholder="000.000.000-00"
-                                                            />
-                                                        </div>
-
-                                                        <div>
-                                                            <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Telefone</label>
-                                                            <input
-                                                                value={editingPerson?.phone || ''}
-                                                                onChange={e => setEditingPerson({ ...editingPerson, phone: formatPhone(e.target.value) })}
-                                                                className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white font-bold"
-                                                                placeholder="(00) 00000-0000"
-                                                            />
-                                                        </div>
-                                                    </div>
-
                                                     <div>
-                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">E-mail</label>
+                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">{t('management.master.persons.modal.fields.phone')}</label>
                                                         <input
-                                                            type="email"
-                                                            value={editingPerson?.email || ''}
-                                                            onChange={e => setEditingPerson({ ...editingPerson, email: e.target.value })}
+                                                            value={editingPerson?.phone || ''}
+                                                            onChange={e => setEditingPerson({ ...editingPerson, phone: formatPhone(e.target.value) })}
                                                             className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white font-bold"
-                                                            placeholder="exemplo@email.com"
+                                                            placeholder={t('management.master.persons.modal.fields.phonePlaceholder')}
                                                         />
                                                     </div>
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">{t('management.master.persons.modal.fields.email')}</label>
+                                                    <input
+                                                        type="email"
+                                                        value={editingPerson?.email || ''}
+                                                        onChange={e => setEditingPerson({ ...editingPerson, email: e.target.value })}
+                                                        className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white font-bold"
+                                                        placeholder={t('management.master.persons.modal.fields.emailPlaceholder')}
+                                                    />
                                                 </div>
                                             </div>
                                         ) : (
                                             <div className="space-y-8 animate-in fade-in duration-300">
                                                 <div className="grid grid-cols-2 gap-4">
                                                     <div>
-                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">RG</label>
+                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">{t('management.master.persons.modal.fields.rg')}</label>
                                                         <input
                                                             value={editingPerson?.rg || ''}
                                                             onChange={e => setEditingPerson({ ...editingPerson, rg: e.target.value })}
                                                             className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 font-bold"
+                                                            placeholder="RG"
                                                         />
                                                     </div>
                                                     <div>
-                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">CEP</label>
+                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">{t('management.master.persons.modal.fields.cep')}</label>
                                                         <input
                                                             value={editingPerson?.address?.cep || ''}
                                                             onChange={e => {
@@ -1157,7 +1154,7 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
 
                                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                                     <div className="md:col-span-2">
-                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Logradouro (Rua/Avenida)</label>
+                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">{t('management.master.persons.modal.fields.street')}</label>
                                                         <input
                                                             value={editingPerson?.address?.street || ''}
                                                             onChange={e => setEditingPerson({ ...editingPerson, address: { ...editingPerson?.address, street: e.target.value } })}
@@ -1165,7 +1162,7 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                                                         />
                                                     </div>
                                                     <div>
-                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Nº</label>
+                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">{t('management.master.persons.modal.fields.number')}</label>
                                                         <input
                                                             value={editingPerson?.address?.number || ''}
                                                             onChange={e => setEditingPerson({ ...editingPerson, address: { ...editingPerson?.address, number: e.target.value } })}
@@ -1176,7 +1173,7 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
 
                                                 <div className="grid grid-cols-2 gap-4">
                                                     <div>
-                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Complemento</label>
+                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">{t('management.master.persons.modal.fields.complement')}</label>
                                                         <input
                                                             value={editingPerson?.address?.complement || ''}
                                                             onChange={e => setEditingPerson({ ...editingPerson, address: { ...editingPerson?.address, complement: e.target.value } })}
@@ -1184,7 +1181,7 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                                                         />
                                                     </div>
                                                     <div>
-                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Bairro</label>
+                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">{t('management.master.persons.modal.fields.neighborhood')}</label>
                                                         <input
                                                             value={editingPerson?.address?.neighborhood || ''}
                                                             onChange={e => setEditingPerson({ ...editingPerson, address: { ...editingPerson?.address, neighborhood: e.target.value } })}
@@ -1195,7 +1192,7 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
 
                                                 <div className="grid grid-cols-4 gap-4">
                                                     <div className="col-span-3">
-                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Cidade</label>
+                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">{t('management.master.persons.modal.fields.city')}</label>
                                                         <input
                                                             value={editingPerson?.address?.city || ''}
                                                             onChange={e => setEditingPerson({ ...editingPerson, address: { ...editingPerson?.address, city: e.target.value } })}
@@ -1203,13 +1200,13 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                                                         />
                                                     </div>
                                                     <div>
-                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Estado (UF)</label>
+                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">{t('management.master.persons.modal.fields.state')}</label>
                                                         <select
                                                             value={editingPerson?.address?.state || ''}
                                                             onChange={e => setEditingPerson({ ...editingPerson, address: { ...editingPerson?.address, state: e.target.value } })}
                                                             className="w-full px-3 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 font-black text-center pr-8"
                                                         >
-                                                            <option value="">UF</option>
+                                                            <option value="">{t('management.master.persons.modal.fields.ufPlaceholder')}</option>
                                                             {['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'].map(uf => (
                                                                 <option key={uf} value={uf}>{uf}</option>
                                                             ))}
@@ -1219,7 +1216,7 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
 
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <div>
-                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Estado Civil</label>
+                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">{t('management.master.persons.modal.fields.maritalStatus')}</label>
                                                         <input
                                                             value={editingPerson?.legal_data?.marital_status || ''}
                                                             onChange={e => setEditingPerson({ ...editingPerson, legal_data: { ...editingPerson?.legal_data, marital_status: e.target.value } })}
@@ -1227,7 +1224,7 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                                                         />
                                                     </div>
                                                     <div>
-                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Profissão</label>
+                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">{t('management.master.persons.modal.fields.profession')}</label>
                                                         <input
                                                             value={editingPerson?.legal_data?.profession || ''}
                                                             onChange={e => setEditingPerson({ ...editingPerson, legal_data: { ...editingPerson?.legal_data, profession: e.target.value } })}
@@ -1238,33 +1235,33 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
 
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <div>
-                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">CTPS</label>
+                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">{t('management.master.persons.modal.fields.ctps')}</label>
                                                         <input
                                                             value={editingPerson?.ctps || ''}
                                                             onChange={e => setEditingPerson({ ...editingPerson, ctps: e.target.value })}
                                                             className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 font-black text-indigo-600 dark:text-indigo-400"
-                                                            placeholder="000.000 / Série 000-A"
+                                                            placeholder={t('management.master.persons.modal.fields.ctpsPlaceholder')}
                                                         />
                                                     </div>
                                                     <div>
-                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">PIS/NIT</label>
+                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">{t('management.master.persons.modal.fields.pis')}</label>
                                                         <input
                                                             value={editingPerson?.pis || ''}
                                                             onChange={e => setEditingPerson({ ...editingPerson, pis: e.target.value })}
                                                             className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 font-black text-indigo-600 dark:text-indigo-400"
-                                                            placeholder="000.00000.00-0"
+                                                            placeholder={t('management.master.persons.modal.fields.pisPlaceholder')}
                                                         />
                                                     </div>
                                                 </div>
 
                                                 <div>
-                                                    <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Histórico / Observações</label>
+                                                    <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">{t('management.master.persons.modal.fields.history')}</label>
                                                     <textarea
                                                         rows={4}
                                                         value={editingPerson?.legal_data?.history || ''}
                                                         onChange={e => setEditingPerson({ ...editingPerson, legal_data: { ...editingPerson?.legal_data, history: e.target.value } })}
                                                         className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 font-bold resize-none"
-                                                        placeholder="Digite observações importantes sobre este cadastro..."
+                                                        placeholder={t('management.master.persons.modal.fields.historyPlaceholder')}
                                                     />
                                                 </div>
                                             </div>
@@ -1303,23 +1300,23 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                                 <Trash2 size={32} />
                             </div>
                             <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">
-                                {t('management.master.persons.confirmations.softDeleteTitle') || 'Excluir Integrante?'}
+                                {t('management.master.persons.confirmations.softDeleteTitle')}
                             </h3>
                             <p className="text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">
-                                {t('management.master.persons.confirmations.softDeleteMessage', { name: deleteConfirmName }) || `Você tem certeza que deseja excluir "${deleteConfirmName}"? Esta ação é irreversível.`}
+                                {t('management.master.persons.confirmations.softDeleteMessage', { name: deleteConfirmName })}
                             </p>
                             <div className="grid grid-cols-2 gap-3">
                                 <button
                                     onClick={() => { setDeleteConfirmId(null); setDeleteConfirmName(null); }}
                                     className="px-6 py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl font-bold hover:bg-slate-200 transition-all"
                                 >
-                                    {t('common.cancel') || 'Cancelar'}
+                                    {t('common.cancel')}
                                 </button>
                                 <button
                                     onClick={confirmDelete}
                                     className="px-6 py-3 bg-rose-600 text-white rounded-2xl font-bold hover:bg-rose-700 shadow-xl shadow-rose-600/30 transition-all flex items-center justify-center gap-2"
                                 >
-                                    <Trash2 size={18} /> {t('common.delete') || 'Sim, Excluir'}
+                                    <Trash2 size={18} /> {t('common.delete')}
                                 </button>
                             </div>
                         </div>
@@ -1351,10 +1348,10 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                                     </div>
                                     <div>
                                         <h2 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">
-                                            {viewMode === 'list' ? t('management.master.persons.docGen.title') : selectedTemplate?.title || 'Preview de Documento'}
+                                            {viewMode === 'list' ? t('management.master.persons.docGen.title') : selectedTemplate?.title || t('management.master.persons.docGen.previewTitle')}
                                         </h2>
                                         <p className="text-slate-500 font-medium text-xs">
-                                            {viewMode === 'list' ? t('management.master.persons.docGen.subtitle') : 'Revise o conteúdo gerado para este documento.'}
+                                            {viewMode === 'list' ? t('management.master.persons.docGen.subtitle') : t('management.master.persons.docGen.previewSubtitle')}
                                         </p>
                                     </div>
                                 </div>
@@ -1364,7 +1361,7 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                                             onClick={() => { setViewMode('list'); setPdfPreviewUrl(null); }}
                                             className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-full text-xs font-bold uppercase tracking-widest hover:bg-slate-200"
                                         >
-                                            Voltar
+                                            {t('management.master.persons.docGen.actions.back')}
                                         </button>
                                     )}
                                     <button
@@ -1382,13 +1379,13 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                                         onClick={() => setDocActiveTab('master')}
                                         className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${docActiveTab === 'master' ? 'bg-white dark:bg-slate-800 text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                                     >
-                                        Modelos Master
+                                        {t('management.master.persons.docGen.tabs.master')}
                                     </button>
                                     <button
                                         onClick={() => setDocActiveTab('office')}
                                         className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${docActiveTab === 'office' ? 'bg-white dark:bg-slate-800 text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                                     >
-                                        Modelos do Escritório
+                                        {t('management.master.persons.docGen.tabs.office')}
                                     </button>
                                 </div>
                             )}
@@ -1398,15 +1395,15 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         {docActiveTab === 'master' && (
                                             <>
-                                                {[ 
-                                                    { key: 'procuracao', icon: ScrollText, color: 'indigo', title: t('management.master.persons.docGen.templates.procuracao'), sub: selectedPersonForDoc?.person_type === 'Cliente' ? 'Polo Ativo' : 'Geral' },
-                                                    { key: 'contrato', icon: Scale, color: 'emerald', title: t('management.master.persons.docGen.templates.contrato'), sub: 'Pacto de Honorários' },
-                                                    { key: 'declaracao', icon: FileText, color: 'amber', title: t('management.master.persons.docGen.templates.declaracao'), sub: 'Hipossuficiência' },
-                                                    { key: 'lgpd', icon: ShieldCheck, color: 'blue', title: t('management.master.persons.docGen.templates.lgpd'), sub: 'Proteção de Dados' },
-                                                    { key: 'substabelecimento', icon: ArrowUpRight, color: 'violet', title: t('management.master.persons.docGen.templates.substabelecimento'), sub: 'Repasse de Poderes' },
-                                                    { key: 'entrevista', icon: Briefcase, color: 'pink', title: t('management.master.persons.docGen.templates.entrevista'), sub: 'Qualificação e Notas' },
-                                                    { key: 'residencia', icon: MapPin, color: 'cyan', title: t('management.master.persons.docGen.templates.residencia'), sub: 'Comprovante Sob Fé' },
-                                                    { key: 'recibo', icon: Zap, color: 'emerald', title: t('management.master.persons.docGen.templates.recibo'), sub: 'Quitação de Parcelas' }
+                                                {[
+                                                    { key: 'procuracao', icon: ScrollText, color: 'indigo', title: t('management.master.persons.docGen.templates.procuracao'), sub: selectedPersonForDoc?.person_type === 'Cliente' ? t('management.master.persons.docGen.placeholders.activePole') : t('management.master.persons.docGen.placeholders.general') },
+                                                    { key: 'contrato', icon: Scale, color: 'emerald', title: t('management.master.persons.docGen.templates.contrato'), sub: t('management.master.persons.docGen.placeholders.feeAgreement') },
+                                                    { key: 'declaracao', icon: FileText, color: 'amber', title: t('management.master.persons.docGen.templates.declaracao'), sub: t('management.master.persons.docGen.placeholders.indigency') },
+                                                    { key: 'lgpd', icon: ShieldCheck, color: 'blue', title: t('management.master.persons.docGen.templates.lgpd'), sub: t('management.master.persons.docGen.placeholders.dataProtection') },
+                                                    { key: 'substabelecimento', icon: ArrowUpRight, color: 'violet', title: t('management.master.persons.docGen.templates.substabelecimento'), sub: t('management.master.persons.docGen.placeholders.repasse') },
+                                                    { key: 'entrevista', icon: Briefcase, color: 'pink', title: t('management.master.persons.docGen.templates.entrevista'), sub: t('management.master.persons.docGen.placeholders.qualification') },
+                                                    { key: 'residencia', icon: MapPin, color: 'cyan', title: t('management.master.persons.docGen.templates.residencia'), sub: t('management.master.persons.docGen.placeholders.residenceProof') },
+                                                    { key: 'recibo', icon: Zap, color: 'emerald', title: t('management.master.persons.docGen.templates.recibo'), sub: t('management.master.persons.docGen.placeholders.paymentReceipt') }
                                                 ].map((nt) => {
                                                     const colorClasses: Record<string, string> = {
                                                         indigo: 'text-indigo-600 border-indigo-500 hover:ring-indigo-500/10',
@@ -1419,7 +1416,7 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                                                     };
                                                     return (
                                                         <div key={nt.key} className="relative group">
-                                                            <div className={`flex flex-col items-start p-6 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl h-full transition-all group-hover:scale-[1.02] group-hover:shadow-lg`}> 
+                                                            <div className={`flex flex-col items-start p-6 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl h-full transition-all group-hover:scale-[1.02] group-hover:shadow-lg`}>
                                                                 <div className="p-3 bg-white dark:bg-slate-900 rounded-2xl shadow-sm mb-4"><nt.icon size={20} className={colorClasses[nt.color]?.split(' ')[0]} /></div>
                                                                 <span className="font-black text-slate-800 dark:text-white text-sm uppercase tracking-tight mb-1">{nt.title}</span>
                                                                 <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">{nt.sub}</span>
@@ -1427,15 +1424,15 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                                                             {/* Overlay */}
                                                             <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px] rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 p-4 z-10">
                                                                 <button onClick={() => { generatePDF(nt.key); setTimeout(() => setIsDocModalOpen(false), 1000); }} className="w-full py-2.5 bg-white text-slate-900 rounded-xl text-xs font-black uppercase tracking-widest shadow-xl hover:bg-slate-100 transition-colors">
-                                                                    Baixar PDF
+                                                                    {t('management.master.persons.docGen.actions.download')}
                                                                 </button>
-                                                                <button onClick={() => { 
+                                                                <button onClick={() => {
                                                                     const blobUrl = (generatePDF(nt.key, true) as any).toString();
-                                                                    setSelectedTemplate({title: nt.title});
+                                                                    setSelectedTemplate({ title: nt.title });
                                                                     setPdfPreviewUrl(blobUrl);
                                                                     setViewMode('preview');
                                                                 }} className="w-full py-2.5 bg-slate-800/80 backdrop-blur-md text-white border border-white/10 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-colors">
-                                                                    Preview PDF
+                                                                    {t('management.master.persons.docGen.actions.preview')}
                                                                 </button>
                                                             </div>
                                                         </div>
@@ -1443,7 +1440,7 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                                                 })}
                                             </>
                                         )}
-                                        
+
                                         {/* Dynamic Templates matching the active tab */}
                                         {dbTemplates.filter(t => (docActiveTab === 'master' ? t.is_standard : !t.is_standard)).map((template) => (
                                             <div key={template.id} className="relative group">
@@ -1455,7 +1452,7 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                                                         {template.title}
                                                     </span>
                                                     <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">
-                                                        {template.category || 'Geral'}
+                                                        {template.category || t('management.master.persons.docGen.placeholders.general')}
                                                     </span>
                                                 </div>
                                                 {/* Overlay */}
@@ -1464,18 +1461,18 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                                                         downloadDBTemplateAsPDF(template);
                                                         setTimeout(() => setIsDocModalOpen(false), 1000);
                                                     }} className="w-full py-2.5 bg-white text-slate-900 rounded-xl text-xs font-black uppercase tracking-widest shadow-xl hover:bg-slate-100 transition-colors">
-                                                        Baixar PDF
+                                                        {t('management.master.persons.docGen.actions.download')}
                                                     </button>
                                                     <button onClick={() => {
                                                         const processed = replaceTags(template.content, selectedPersonForDoc as Person, orgData);
                                                         setProcessedContent(processed);
                                                         setSelectedTemplate(template);
-                                                        
+
                                                         const blobUrl = (downloadDBTemplateAsPDF(template, true) as any).toString();
                                                         setPdfPreviewUrl(blobUrl);
                                                         setViewMode('preview');
                                                     }} className="w-full py-2.5 bg-slate-800/80 backdrop-blur-md text-white border border-white/10 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-colors">
-                                                        Preview PDF
+                                                        {t('management.master.persons.docGen.actions.preview')}
                                                     </button>
                                                 </div>
                                             </div>
@@ -1483,7 +1480,7 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
 
                                         {docActiveTab === 'office' && dbTemplates.filter(t => !t.is_standard).length === 0 && (
                                             <div className="col-span-2 text-center p-8 bg-slate-50 dark:bg-slate-900/50 rounded-3xl border border-dashed border-slate-200 dark:border-slate-800">
-                                                <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Nenhum modelo customizado neste escritório.</p>
+                                                <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">{t('management.master.persons.docGen.messages.noCustomTemplates')}</p>
                                             </div>
                                         )}
                                     </div>
@@ -1498,11 +1495,11 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                                                 <div className="p-6 bg-slate-50 dark:bg-slate-800/30 rounded-3xl border border-slate-100 dark:border-slate-800">
                                                     <div className="prose dark:prose-invert max-w-none text-sm font-serif" dangerouslySetInnerHTML={{ __html: processedContent }} />
                                                 </div>
-                                                <button 
+                                                <button
                                                     onClick={printDocument}
                                                     className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-indigo-700 transition shadow-xl shadow-indigo-600/20"
                                                 >
-                                                    Imprimir / Gerar PDF deste Preview
+                                                    {t('management.master.persons.docGen.actions.print')}
                                                 </button>
                                             </>
                                         )}
@@ -1514,9 +1511,7 @@ const PersonManagement: React.FC<Props> = ({ credentials, preferences, currentUs
                                 <div className="p-8 bg-slate-50 dark:bg-slate-950/50 border-t border-slate-100 dark:border-slate-800">
                                     <div className="flex items-center gap-3 text-slate-500 text-xs font-bold bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-4 rounded-2xl">
                                         <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
-                                        <span>
-                                            Os dados de <strong>{selectedPersonForDoc?.full_name}</strong> ({selectedPersonForDoc?.document || 'S/ Doc'}) serão inseridos automaticamente nos campos variáveis do modelo.
-                                        </span>
+                                        <span dangerouslySetInnerHTML={{ __html: t('management.master.persons.docGen.messages.autoFillData', { name: selectedPersonForDoc?.full_name, document: selectedPersonForDoc?.document || 'S/ Doc' }) }} />
                                     </div>
                                 </div>
                             )}
