@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Network, Shield, XCircle, Scale, Building2, User as UserIcon, 
     Briefcase, FileText, CheckCircle2, Users, Zap, Search, 
-    Maximize2, Minimize2, ChevronRight, Info, Pencil
+    Maximize2, Minimize2, ChevronRight, Info, Pencil, AlertCircle
 } from 'lucide-react';
 import { 
     Lawsuit, LawsuitDocument, Task, Person, TeamMember, Asset, 
@@ -44,6 +44,7 @@ export const NexoVisual: React.FC<NexoVisualProps> = ({
     refreshTrigger = 0
 }) => {
     const [isLoading, setIsLoading] = useState(false);
+    const [isExpanding, setIsExpanding] = useState(false);
     const [nexoData, setNexoData] = useState(initialData);
     const [zoom, setZoom] = useState(1);
     const [searchTerm, setSearchTerm] = useState('');
@@ -58,20 +59,40 @@ export const NexoVisual: React.FC<NexoVisualProps> = ({
     const [lawsuitDocuments, setLawsuitDocuments] = useState<LawsuitDocument[]>([]);
     const [assetDocuments, setAssetDocuments] = useState<AssetDocument[]>([]);
 
+    // Determine if we should hide the current view to prevent partial layout snaps
+    const shouldHideContent = isLoading && !isExpanding;
+
     // Reset nexoData when initialData changes from parent
     useEffect(() => {
         if (initialData) {
             setNexoData(initialData);
             setZoom(1);
             setSelectedNode(null);
+            setExpandedNodeIds(new Set());
+            setExpandedSubData({});
+            setSearchTerm('');
+            setIsExpanding(false); // New Foco always starts a clean loading session
         }
     }, [initialData]);
+
+    // Reset all states when modal opens
+    useEffect(() => {
+        if (isOpen) {
+            setZoom(1);
+            setSearchTerm('');
+            setSelectedNode(null);
+            setExpandedNodeIds(new Set());
+            setExpandedSubData({});
+            setIsExpanding(false);
+        }
+    }, [isOpen]);
 
     // Fetch detailed sub-data for the current node
     useEffect(() => {
         if (isOpen && nexoData?.id) {
             const { origin_type, id } = nexoData;
             setIsLoading(true);
+            setIsExpanding(false); // Reset isExpanding for main node loads
 
             const performFetch = async () => {
                 try {
@@ -124,6 +145,7 @@ export const NexoVisual: React.FC<NexoVisualProps> = ({
         else if (type === 'document') title = data.title;
         else if (data.shareholder_name) title = data.shareholder_name;
 
+        setIsExpanding(false); // Navigate is a focus change, hide while loading
         setNexoData({
             origin_type: type as any,
             id: data.id,
@@ -134,6 +156,8 @@ export const NexoVisual: React.FC<NexoVisualProps> = ({
         setExpandedNodeIds(new Set());
         setExpandedSubData({});
     };
+
+    const [tempMessage, setTempMessage] = useState<string | null>(null);
 
     const handleExpandToggle = async (node: any) => {
         const { type, data } = node;
@@ -148,23 +172,33 @@ export const NexoVisual: React.FC<NexoVisualProps> = ({
 
         // Expand
         setExpandedNodeIds(new Set(expandedNodeIds).add(id));
+        setIsExpanding(true); // Mark as additive loading
         setIsLoading(true);
 
         try {
+            let hasNewConnections = false;
+
             if (type === 'corporate') {
                 const [sResult, dResult] = await Promise.all([
                     listShareholders(id, selectedUserId),
                     listCorporateDocuments(id, selectedUserId)
                 ]);
+                const shares = sResult.data || [];
+                const docs = dResult.data || [];
+                if (shares.length > 0 || docs.length > 0) hasNewConnections = true;
+                
                 setExpandedSubData(prev => ({ 
                     ...prev, 
                     [id]: { 
-                        shareholders: sResult.data || [], 
-                        corporateDocuments: dResult.data || [] 
+                        shareholders: shares, 
+                        corporateDocuments: docs 
                     } 
                 }));
             } else if (type === 'person') {
                 const result = await listPersonParticipations(id, selectedUserId);
+                const participations = result.data || [];
+                if (participations.length > 0) hasNewConnections = true;
+
                 if (result.data) {
                     setExpandedSubData(prev => ({ 
                         ...prev, 
@@ -178,15 +212,25 @@ export const NexoVisual: React.FC<NexoVisualProps> = ({
                 }
             } else if (type === 'lawsuit') {
                 const result = await listLawsuitDocuments(id, selectedUserId);
+                const docs = result.data || [];
+                if (docs.length > 0) hasNewConnections = true;
                 if (result.data) setExpandedSubData(prev => ({ ...prev, [id]: { lawsuitDocuments: result.data } }));
             } else if (type === 'asset') {
                 const result = await listAssetDocuments(id, selectedUserId);
+                const docs = result.data || [];
+                if (docs.length > 0) hasNewConnections = true;
                 if (result.data) setExpandedSubData(prev => ({ ...prev, [id]: { assetDocuments: result.data } }));
+            }
+
+            if (!hasNewConnections) {
+                setTempMessage(`Nenhuma conexão adicional para "${node.label}"`);
+                setTimeout(() => setTempMessage(null), 3500);
             }
         } catch (error) {
             console.error('Error in expand fetch:', error);
         } finally {
             setIsLoading(false);
+            // Don't reset isExpanding here, it's safer to keep it additive until next focus
         }
     };
 
@@ -544,7 +588,7 @@ export const NexoVisual: React.FC<NexoVisualProps> = ({
                         >
                             {/* SVG Connections Layout */}
                             <svg className="absolute inset-0 w-full h-full pointer-events-none">
-                                {finalNodesToRender.map((n, i) => {
+                                {!shouldHideContent && finalNodesToRender.map((n, i) => {
                                     const nodeKey = `line-${n.type}-${n.data?.id || n.label}-${nexoData.id}-${i}`;
                                     
                                     // Calculate coordinates relative to parent or center
@@ -622,7 +666,7 @@ export const NexoVisual: React.FC<NexoVisualProps> = ({
                             </div>
 
                             {/* Peripheral Connected Nodes */}
-                            {finalNodesToRender.map((n, i) => {
+                            {!shouldHideContent && finalNodesToRender.map((n, i) => {
                                 const x = n.x;
                                 const y = n.y;
                                 const nodeKey = `node-${n.type}-${n.data?.id || n.label}-${nexoData.id}-${i}`;
@@ -642,7 +686,7 @@ export const NexoVisual: React.FC<NexoVisualProps> = ({
                                         }}
                                         onClick={() => setSelectedNode(n)}
                                         onDoubleClick={() => n.type && n.data && handleNavigate(n.type, n.data)}
-                                        className={`absolute ${isSecondary ? 'w-36' : 'w-44'} p-4 ${isSelected ? 'bg-indigo-600/20 border-indigo-400/50 ring-4 ring-indigo-500/20' : 'bg-slate-900/60 border-white/10'} backdrop-blur-xl border rounded-[2rem] flex flex-col items-center text-center group cursor-pointer hover:bg-slate-800/80 hover:border-indigo-500/50 transition-all shadow-2xl z-30`}
+                                        className={`absolute ${isSecondary ? 'w-36' : 'w-44'} p-4 ${isSelected ? 'bg-indigo-600/20 border-indigo-400/50 ring-4 ring-indigo-500/20' : 'bg-slate-900/60 border-white/10'} backdrop-blur-xl border rounded-[2rem] flex flex-col items-center text-center group cursor-pointer hover:bg-slate-800/80 hover:border-indigo-500/50 shadow-2xl z-30 transition-[background-color,border-color,box-shadow]`}
                                     >
                                         <div className={`p-4 ${n.bg} text-white rounded-[1.2rem] mb-3 shadow-xl group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 relative`}>
                                             <n.icon size={isSecondary ? 18 : 22} />
@@ -715,6 +759,26 @@ export const NexoVisual: React.FC<NexoVisualProps> = ({
                         </div>
                     </div>
                 </div>
+
+                {/* Feedback Notification (Toast) */}
+                <AnimatePresence>
+                    {tempMessage && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 50, x: '-50%' }}
+                            animate={{ opacity: 1, y: 0, x: '-50%' }}
+                            exit={{ opacity: 0, y: 50, x: '-50%' }}
+                            className="fixed bottom-32 left-1/2 z-[400] bg-slate-900 border border-white/10 px-8 py-5 rounded-[2.5rem] flex items-center gap-5 shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-3xl"
+                        >
+                            <div className="p-3 bg-amber-500/20 text-amber-500 rounded-2xl">
+                                <AlertCircle size={24} strokeWidth={2.5} />
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1">Aviso do Sistema</span>
+                                <span className="text-xs font-bold text-white/90">{tempMessage}</span>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </motion.div>
         </AnimatePresence>
     );
