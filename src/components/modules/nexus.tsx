@@ -16,6 +16,8 @@ import { PremiumFileUpload, PremiumCombobox, BlockedTabOverlay, TrendingUp } fro
 import { NexoVisual } from './nexus/nexus-visual';
 import { TaskModal } from './nexus/modals/TaskModal';
 import { LawsuitModal } from './nexus/modals/LawsuitModal';
+import { CrmModal } from './nexus/modals/CrmModal';
+
 
 // Sub-components extracted to ./nexus/nexus-components.tsx
 
@@ -53,6 +55,9 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     const [isEventModalOpen, setIsEventModalOpen] = useState(false);
     const [isAssetModalOpen, setIsAssetModalOpen] = useState(false);
     const [editingAsset, setEditingAsset] = useState<Partial<Asset> | null>(null);
+    const [isCrmModalOpen, setIsCrmModalOpen] = useState(false);
+    const [editingPerson, setEditingPerson] = useState<Partial<Person> | null>(null);
+    const [activeCrmTab, setActiveCrmTab] = useState<'basic' | 'advanced'>('basic');
     const [activeTab, setActiveTab] = useState<'overview' | 'pessoas' | 'processos' | 'tarefas' | 'agenda' | 'ativos' | 'societario' | 'documentos'>('overview');
     const [searchTerm, setSearchTerm] = useState('');
     const [activeAssetTab, setActiveAssetTab] = useState<'basic' | 'advanced' | 'docs' | 'timeline'>('basic');
@@ -295,6 +300,21 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             setSelectedUserId(selectedClientId);
         }
     }, [selectedClientId]);
+
+    useEffect(() => {
+        const handleOpenModal = (e: any) => {
+            const detail = e.detail;
+            if (detail) {
+                setEditingPerson(detail);
+            } else {
+                setEditingPerson({ person_type: 'Cliente' });
+            }
+            setActiveCrmTab('basic');
+            setIsCrmModalOpen(true);
+        };
+        window.addEventListener('CRM_OPEN_MODAL', handleOpenModal as any);
+        return () => window.removeEventListener('CRM_OPEN_MODAL', handleOpenModal as any);
+    }, []);
 
     // Cascading & Searchable States
     const [cities, setCities] = useState<string[]>([]);
@@ -571,6 +591,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     }, [editingEntity?.id, selectedUserId, activeEntityTab]);
 
     // Nexo Visual logic moved to sub-component
+
 
     const handleCreateLawsuitFromCRM = (personId: string) => {
         // Switch to lawsuits tab
@@ -4257,7 +4278,6 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 handleDeleteLawsuitDocument={handleDeleteLawsuitDocument}
                 setPendingLawsuitDocuments={setPendingLawsuitDocuments}
                 handleFetchLawsuitFinances={handleFetchLawsuitFinances}
-                setAiLawsuitSummary={setAiLawsuitSummary}
                 formatCNJ={formatCNJ}
                 ESFERAS={ESFERAS}
                 UFS={UFS}
@@ -4270,6 +4290,18 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 handleDeleteFinancialTransaction={handleDeleteFinancialTransaction}
                 isLawsuitTimelineLoading={isLawsuitTimelineLoading}
                 formatCurrency={formatCurrency}
+                setAiLawsuitSummary={setAiLawsuitSummary}
+            />
+
+            <CrmModal
+                isCrmModalOpen={isCrmModalOpen}
+                setIsCrmModalOpen={setIsCrmModalOpen}
+                editingPerson={editingPerson}
+                setEditingPerson={setEditingPerson}
+                activeCrmTab={activeCrmTab}
+                setActiveCrmTab={setActiveCrmTab}
+                selectedUserId={selectedUserId}
+                onSuccess={fetchAll}
             />
 
             {/* Task Drawer (Slide-over Workflow Pattern) */}
