@@ -1,5 +1,10 @@
 export const pt = {
     common: {
+        apply: 'Aplicar',
+        dateRange: {
+            start: 'Data Inicial',
+            end: 'Data Final'
+        },
         loading: 'Carregando...',
         back: 'Voltar',
         save: 'Salvar',
@@ -385,7 +390,11 @@ export const pt = {
                 metricsTrends: {
                     urgent: 'Urgente',
                     queue: 'Em Fila',
-                    productivity: 'Produtividade'
+                    productivity: 'Produtividade',
+                    revenue: 'Faturamento',
+                    expenses: 'Despesas',
+                    net: 'Líquido',
+                    performance: 'Performance'
                 },
                 assetDistribution: 'Distribuição de Ativos'
             },
@@ -457,6 +466,9 @@ export const pt = {
                 fees: 'Honorários / Entradas',
                 costs: 'Custos / Saídas',
                 balance: 'Saldo Final',
+                roi: 'ROI (Retorno)',
+                filtersTitle: 'Filtros Financeiros',
+                filtersSubtitle: 'Ajuste o período para análise de performance',
                 addCost: 'Lançar Custos',
                 addFee: 'Lançar Honorários',
                 newTransaction: 'Novo Lançamento',
@@ -542,6 +554,13 @@ export const pt = {
                         emptyAudit: 'O histórico de auditoria será gerado automaticamente após a criação deste processo no sistema.',
                         loadingAudit: 'Carregando histórico...',
                         noEvents: 'Nenhum evento registrado ainda.'
+                    },
+                    ai: {
+                        tab: 'Inteligência Artificial',
+                        title: 'Inteligência Artificial',
+                        subtitle: 'Análise e insights gerados por IA',
+                        loading: 'Gerando insights...',
+                        empty: 'Nenhum insight gerado ainda.'
                     }
                 },
                 task: {
@@ -646,6 +665,13 @@ export const pt = {
                     labelFile: 'Upload de Arquivo',
                     cancel: 'Cancelar',
                     save: 'Salvar Documento'
+                },
+                justification: {
+                    title: 'Justificativa da Mudança',
+                    subtitle: 'Explique o motivo da alteração de status',
+                    placeholder: 'Ex: Por falta de provas, Acordo realizado, Erro de cadastro...',
+                    label: 'Justificativa da Mudança (Opcional)',
+                    modalPlaceholder: 'Motivo da alteração de status...'
                 }
             }
         },

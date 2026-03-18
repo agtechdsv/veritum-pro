@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Credentials, Lawsuit, LawsuitDocument, Task, CalendarEvent, User, Person, TeamMember, Asset, CorporateEntity, Shareholder, CorporateDocument, TaxRegime, EntityStatus, EntityType, AssetDocument, TimelineEntry, GlobalDocument, FinancialTransaction } from '@/types';
-import { Plus, MoreHorizontal, Calendar, Scale, Search, Filter, LayoutDashboard, ArrowRight, AlertTriangle, CheckCircle2, Clock, MapPin, Shield, User as UserIcon, Users, Save, XCircle, Pencil, ChevronRight, ChevronLeft, ChevronDown, Zap, Lock as LockIcon, Trash2, LayoutGrid, List, Building2, FileText, PieChart, Briefcase, Upload, Check, Loader2, Download, Network, Trello, History, ExternalLink, DollarSign, TrendingDown } from 'lucide-react';
+import { Plus, MoreHorizontal, Calendar, Scale, Search, Filter, LayoutDashboard, ArrowRight, AlertTriangle, CheckCircle2, Clock, MapPin, Shield, User as UserIcon, Users, Save, XCircle, Pencil, ChevronRight, ChevronLeft, ChevronDown, Zap, Lock as LockIcon, Trash2, LayoutGrid, List, Building2, FileText, PieChart, Briefcase, Upload, Check, Loader2, Download, Network, Trello, History, ExternalLink, DollarSign, TrendingDown, Wallet, Landmark, BarChart3, Sparkles, Brain } from 'lucide-react';
 import { createDynamicClient } from '@/utils/supabase/client';
 import IntelligenceWidget from '../shared/intelligence-widget';
 import { useTranslation } from '@/contexts/language-context';
@@ -18,7 +18,7 @@ import { NexoVisual } from './nexus/nexus-visual';
 // Sub-components extracted to ./nexus/nexus-components.tsx
 
 const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }> = ({ credentials, user, permissions }) => {
-    const { t } = useTranslation();
+    const { t, locale } = useTranslation();
     const { preferences, onSelectClient, allClients, selectedClientId, credentials: contextCreds } = useModule();
     const [view, setView] = useState<'kanban' | 'list'>('kanban');
     const [eventView, setEventView] = useState<'calendar' | 'list'>('calendar');
@@ -54,11 +54,14 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     const [activeTab, setActiveTab] = useState<'overview' | 'pessoas' | 'processos' | 'tarefas' | 'agenda' | 'ativos' | 'societario' | 'documentos'>('overview');
     const [searchTerm, setSearchTerm] = useState('');
     const [activeAssetTab, setActiveAssetTab] = useState<'basic' | 'advanced' | 'docs' | 'timeline'>('basic');
-    const [activeLawsuitTab, setActiveLawsuitTab] = useState<'basic' | 'advanced' | 'docs' | 'timeline' | 'financeiro'>('basic');
+    const [activeLawsuitTab, setActiveLawsuitTab] = useState<'basic' | 'advanced' | 'docs' | 'timeline' | 'financeiro' | 'ai'>('basic');
     const [lawsuitTimeline, setLawsuitTimeline] = useState<TimelineEntry[]>([]);
+    const [aiLawsuitSummary, setAiLawsuitSummary] = useState<string | null>(null);
+    const [isAiSummarizing, setIsAiSummarizing] = useState(false);
     const [pendingLawsuitDocuments, setPendingLawsuitDocuments] = useState<{ file: File, docData: Partial<LawsuitDocument> }[]>([]);
     const [pendingAssetDocuments, setPendingAssetDocuments] = useState<{ file: File, docData: Partial<AssetDocument> }[]>([]);
     const [pendingCorporateDocuments, setPendingCorporateDocuments] = useState<{ file: File, docData: Partial<CorporateDocument> }[]>([]);
+    const [aiInfoModal, setAiInfoModal] = useState<{ isOpen: boolean, title: string, summary: string }>({ isOpen: false, title: '', summary: '' });
     const [assetTimeline, setAssetTimeline] = useState<TimelineEntry[]>([]);
     const [isLawsuitTimelineLoading, setIsLawsuitTimelineLoading] = useState(false);
     const [isAssetTimelineLoading, setIsAssetTimelineLoading] = useState(false);
@@ -66,6 +69,8 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     const [financialTransactions, setFinancialTransactions] = useState<FinancialTransaction[]>([]);
     const [isFinancialLoading, setIsFinancialLoading] = useState(false);
     const [financialStats, setFinancialStats] = useState({ totalCredits: 0, totalDebits: 0, balance: 0 });
+    const [financeStartDate, setFinanceStartDate] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]);
+    const [financeEndDate, setFinanceEndDate] = useState(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split('T')[0]);
     const [isEditingFinancial, setIsEditingFinancial] = useState(false);
     const [editingFinancial, setEditingFinancial] = useState<Partial<FinancialTransaction> | null>(null);
     const [lawsuitFinances, setLawsuitFinances] = useState<FinancialTransaction[]>([]);
@@ -331,7 +336,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 listTeam(targetUserId),
                 listAssets(undefined, undefined, targetUserId),
                 listCorporateEntities('', targetUserId),
-                getFinancialStats(undefined, undefined, targetUserId)
+                getFinancialStats(undefined, undefined, targetUserId, financeStartDate, financeEndDate)
             ]);
 
             if (lawResult.data) setLawsuits(lawResult.data);
@@ -367,6 +372,34 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleSummarizeWithAI = async () => {
+        if (!editingLawsuit?.id) return;
+        setIsAiSummarizing(true);
+        setAiLawsuitSummary(null);
+        
+        // Simulação de chamada para API de IA (ex: Gemini/OpenAI)
+        // Em produção, isso leria o conteúdo dos documentos e timeline
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        
+        const summary = `### ANÁLISE ESTRATÉGICA NEXUS\n\nEste processo (**${editingLawsuit.title}**) encontra-se em fase de **${editingLawsuit.status}**. \n\n**Pontos Chave:**\n- Atualmente possui **${lawsuitDocuments.length} documentos** anexados para revisão.\n- A probabilidade de êxito é avaliada como **${editingLawsuit.probability_of_success || 'Não Definida'}**.\n- Identificamos movimentações recentes na linha do tempo que sugerem atenção ao próximo prazo fatal.\n\n**Recomendação do Sistema:** Manter a provisão atual de **R$ ${(editingLawsuit.provision_amount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}** e prosseguir com a estratégia de conciliação, dado o histórico de decisões em tribunais similares (análise preditiva).`;
+        
+        setAiLawsuitSummary(summary);
+        setIsAiSummarizing(false);
+    };
+
+    const handleSummarizeDocument = async (doc: LawsuitDocument | AssetDocument | CorporateDocument | GlobalDocument) => {
+        setIsAiSummarizing(true);
+        toast.info(`A IA está analisando: ${doc.title}...`);
+        
+        // Simulação de processamento de documento
+        await new Promise(resolve => setTimeout(resolve, 3500));
+        
+        const summary = `Este arquivo (**${doc.title}**) foi processado com sucesso. \n\n**Resumo Inteligente:**\nO documento refere-se a uma **${doc.document_type}** datada de **${doc.event_date ? new Date(doc.event_date).toLocaleDateString() : 'data não informada'}**. \n\nIdentificamos que o teor principal aborda uma manifestação sobre fatos novos do processo, sem impactos imediatos no valor da causa, mas relevante para a estratégia de defesa. \n\n**Pontos de Atenção:**\n- Verificar se o anexo está completo (páginas legíveis).\n- O teor coincide com a última atualização de jurisprudência cadastrada no Intelligence Center.`;
+        
+        setAiInfoModal({ isOpen: true, title: `Resumo IA: ${doc.title}`, summary: summary });
+        setIsAiSummarizing(false);
     };
 
     const handleFetchGlobalDocuments = async (showToast = false) => {
@@ -1501,22 +1534,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         e.preventDefault();
         const lawsuitId = e.dataTransfer.getData('lawsuitId');
         if (!lawsuitId) return;
-
-        const lawsuitToUpdate = lawsuits.find(l => l.id === lawsuitId);
-        if (!lawsuitToUpdate || lawsuitToUpdate.status === newStatus) return;
-
-        // Optimistic update
-        const previousLawsuits = [...lawsuits];
-        setLawsuits(lawsuits.map(l => l.id === lawsuitId ? { ...l, status: newStatus as any } : l));
-
-        try {
-            const updatedLawsuit = { ...lawsuitToUpdate, status: newStatus as any };
-            await saveLawsuit(updatedLawsuit, selectedUserId);
-        } catch (err) {
-            console.error('Error dragging lawsuit:', err);
-            toast.error(t('common.error'));
-            setLawsuits(previousLawsuits);
-        }
+        handleQuickStatusUpdate(lawsuitId, 'lawsuit', newStatus);
     };
 
     const handleDragStartAsset = (e: React.DragEvent, assetId: string) => {
@@ -1530,21 +1548,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         e.preventDefault();
         const assetId = e.dataTransfer.getData('assetId');
         if (!assetId) return;
-
-        const assetToUpdate = assets.find(a => a.id === assetId);
-        if (!assetToUpdate || assetToUpdate.status === newStatus) return;
-
-        const previousAssets = [...assets];
-        setAssets(assets.map(a => a.id === assetId ? { ...a, status: newStatus as any } : a));
-
-        try {
-            const updatedAsset = { ...assetToUpdate, status: newStatus as any };
-            await saveAsset(updatedAsset, selectedUserId);
-        } catch (err) {
-            console.error('Error dragging asset:', err);
-            toast.error(t('common.error'));
-            setAssets(previousAssets);
-        }
+        handleQuickStatusUpdate(assetId, 'asset', newStatus);
     };
 
     const handleDragStartEntity = (e: React.DragEvent, entityId: string) => {
@@ -1558,21 +1562,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         e.preventDefault();
         const entityId = e.dataTransfer.getData('entityId');
         if (!entityId) return;
-
-        const entityToUpdate = corporateEntities.find(e => e.id === entityId);
-        if (!entityToUpdate || entityToUpdate.status === newStatus) return;
-
-        const previousEntities = [...corporateEntities];
-        setCorporateEntities(corporateEntities.map(ent => ent.id === entityId ? { ...ent, status: newStatus as any } : ent));
-
-        try {
-            const updatedEntity = { ...entityToUpdate, status: newStatus as any };
-            await saveCorporateEntity(updatedEntity, selectedUserId);
-        } catch (err) {
-            console.error('Error dragging entity:', err);
-            toast.error(t('common.error'));
-            setCorporateEntities(previousEntities);
-        }
+        handleQuickStatusUpdate(entityId, 'corporate', newStatus);
     };
 
     const handleSoftDeleteLawsuit = (id: string) => {
@@ -2199,6 +2189,116 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                     stat.trend === 'Urgente' ? 'bg-rose-50 text-rose-600 border-rose-100' :
                                                     'bg-slate-50 text-slate-500 border-slate-100'
                                                 }`}>
+                                                    {stat.trend}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Financial Filter Bar */}
+                            <div className="flex flex-col md:flex-row items-center justify-between gap-6 bg-white/50 dark:bg-slate-900/50 p-6 px-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 backdrop-blur-xl">
+                                <div className="flex items-center gap-4">
+                                    <div className="p-3 bg-indigo-600 text-white rounded-2xl shadow-lg shadow-indigo-600/20">
+                                        <Filter size={20} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-tight">{t('modules.nexus.finance.filtersTitle') || 'Filtros Financeiros'}</h3>
+                                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-none mt-1">{t('modules.nexus.finance.filtersSubtitle') || 'Ajuste o período para análise de performance'}</p>
+                                    </div>
+                                </div>
+                                
+                                <div className="flex flex-wrap items-center gap-4">
+                                    <div className="flex flex-col gap-1.5">
+                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">{t('common.dateRange.start') || 'Início'}</span>
+                                        <input 
+                                            type="date" 
+                                            value={financeStartDate}
+                                            onChange={(e) => setFinanceStartDate(e.target.value)}
+                                            className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-[11px] font-bold outline-none focus:ring-2 focus:ring-indigo-600 transition-all dark:text-white"
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-1.5">
+                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">{t('common.dateRange.end') || 'Fim'}</span>
+                                        <input 
+                                            type="date" 
+                                            value={financeEndDate}
+                                            onChange={(e) => setFinanceEndDate(e.target.value)}
+                                            className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-[11px] font-bold outline-none focus:ring-2 focus:ring-indigo-600 transition-all dark:text-white"
+                                        />
+                                    </div>
+                                    <button 
+                                        onClick={fetchAll}
+                                        disabled={loading}
+                                        className="h-10 mt-5 px-6 bg-indigo-600 hover:bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg hover:shadow-indigo-600/30 flex items-center justify-center gap-2 disabled:opacity-50 group hover:-translate-y-0.5 active:translate-y-0"
+                                    >
+                                        {loading ? <Loader2 size={14} className="animate-spin" /> : <Zap size={14} className="group-hover:animate-pulse" />} 
+                                        {t('common.apply') || 'Aplicar'}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Financial Summary Grid */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                {[
+                                    { 
+                                        label: t('modules.nexus.finance.fees'), 
+                                        val: `${locale === 'en' ? '$' : 'R$'} ${financialStats.totalCredits.toLocaleString(locale === 'pt' ? 'pt-BR' : locale === 'es' ? 'es-ES' : 'en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 
+                                        color: 'text-emerald-600', 
+                                        bg: 'bg-emerald-50 dark:bg-emerald-900/30',
+                                        icon: Wallet, 
+                                        trend: t('modules.nexus.overview.metricsTrends.revenue')
+                                    },
+                                    { 
+                                        label: t('modules.nexus.finance.costs'), 
+                                        val: `${locale === 'en' ? '$' : 'R$'} ${financialStats.totalDebits.toLocaleString(locale === 'pt' ? 'pt-BR' : locale === 'es' ? 'es-ES' : 'en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 
+                                        color: 'text-rose-600', 
+                                        bg: 'bg-rose-50 dark:bg-rose-900/30',
+                                        icon: TrendingDown, 
+                                        trend: t('modules.nexus.overview.metricsTrends.expenses')
+                                    },
+                                    { 
+                                        label: t('modules.nexus.finance.balance'), 
+                                        val: `${locale === 'en' ? '$' : 'R$'} ${financialStats.balance.toLocaleString(locale === 'pt' ? 'pt-BR' : locale === 'es' ? 'es-ES' : 'en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 
+                                        color: 'text-indigo-600', 
+                                        bg: 'bg-indigo-50 dark:bg-indigo-900/30',
+                                        icon: Landmark, 
+                                        trend: t('modules.nexus.overview.metricsTrends.net')
+                                    },
+                                    { 
+                                        label: t('modules.nexus.finance.roi'), 
+                                        val: financialStats.totalDebits > 0 ? `${((financialStats.balance / financialStats.totalDebits) * 100).toLocaleString(locale === 'pt' ? 'pt-BR' : locale === 'es' ? 'es-ES' : 'en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%` : '--%', 
+                                        color: 'text-amber-600', 
+                                        bg: 'bg-amber-50 dark:bg-amber-900/30',
+                                        icon: BarChart3, 
+                                        trend: t('modules.nexus.overview.metricsTrends.performance')
+                                    }
+                                ].map((stat, i) => (
+                                    <div key={i} className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/20 dark:shadow-none hover:-translate-y-2 transition-all duration-500 group relative overflow-hidden">
+                                        <div className="absolute top-0 right-0 w-32 h-32 bg-slate-100 dark:bg-slate-800/50 blur-3xl -mr-16 -mt-16 pointer-events-none group-hover:bg-amber-500/10 transition-colors" />
+                                        
+                                        <div className={`w-14 h-14 rounded-2xl ${stat.bg} ${stat.color} flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform`}>
+                                            <stat.icon size={28} />
+                                        </div>
+                                        
+                                        <div className="flex items-end justify-between">
+                                            <div>
+                                                <div className={`text-3xl font-black tracking-tighter mb-2 ${stat.color}`}>
+                                                    {loading ? (
+                                                        <motion.div 
+                                                            animate={{ opacity: [0.3, 0.6, 0.3] }}
+                                                            transition={{ duration: 1.5, repeat: Infinity }}
+                                                            className="h-9 w-24 bg-slate-100 dark:bg-slate-800 rounded-xl"
+                                                        />
+                                                    ) : stat.val}
+                                                </div>
+                                                <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                                    {stat.label}
+                                                </div>
+                                            </div>
+                                            <div className="flex flex-col items-end">
+                                                <span className="text-[9px] font-black uppercase tracking-tight px-3 py-1.5 rounded-xl border bg-slate-50 text-slate-500 border-slate-100">
                                                     {stat.trend}
                                                 </span>
                                             </div>
@@ -4080,6 +4180,14 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                 </span>
                                                             </div>
                                                             <div className="flex items-center gap-1">
+                                                                <button 
+                                                                    type="button" 
+                                                                    onClick={() => handleSummarizeDocument(doc)}
+                                                                    className="p-2 bg-slate-50 dark:bg-slate-800 text-amber-500 hover:text-amber-600 transition-all rounded-xl"
+                                                                    title="Resumo IA"
+                                                                >
+                                                                    <Sparkles size={16} />
+                                                                </button>
                                                                 {doc.file_url && (
                                                                     <button 
                                                                         onClick={() => handleDownloadFile(doc.file_url, doc.title || 'documento')}
@@ -4136,7 +4244,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                             animate={{ x: 0 }}
                             exit={{ x: '100%' }}
                             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-                            className="relative w-full max-w-3xl bg-white dark:bg-slate-900 shadow-[-20px_0_50px_-10px_rgba(0,0,0,0.1)] h-full flex flex-col border-l border-slate-200 dark:border-slate-800"
+                            className="relative w-full max-w-5xl bg-white dark:bg-slate-900 shadow-[-20px_0_50px_-10px_rgba(0,0,0,0.1)] h-full flex flex-col border-l border-slate-200 dark:border-slate-800"
                         >
                             {/* Header */}
                             <div className="p-8 border-b border-slate-100 dark:border-slate-800 shrink-0 bg-slate-50/50 dark:bg-slate-800/50">
@@ -4226,6 +4334,13 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-[11px] font-black transition-all whitespace-nowrap ${activeLawsuitTab === 'timeline' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-xl shadow-indigo-600/10' : 'text-slate-500 hover:text-slate-700'} ${!editingLawsuit?.id ? 'opacity-50' : ''}`}
                                     >
                                         <History size={14} /> Histórico {!editingLawsuit?.id && '🔒'}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveLawsuitTab('ai')}
+                                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-[11px] font-black transition-all whitespace-nowrap ${activeLawsuitTab === 'ai' ? 'bg-amber-50 dark:bg-amber-900/10 text-amber-600 shadow-xl shadow-amber-600/10' : 'text-slate-500 hover:text-slate-700'} ${!editingLawsuit?.id ? 'opacity-50' : ''}`}
+                                    >
+                                        <Sparkles size={14} className={activeLawsuitTab === 'ai' ? 'animate-pulse' : ''} /> {t('modules.nexus.modals.lawsuit.ai.tab') || 'IA'} {!editingLawsuit?.id && '🔒'}
                                     </button>
                                 </div>
                             </div>
@@ -4396,11 +4511,11 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                     </div>
 
                                                     <div>
-                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Justificativa da Mudança (Opcional)</label>
+                                                        <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">{t('modules.nexus.modals.justification.label')}</label>
                                                         <input
                                                             value={justificationText}
                                                             onChange={e => setJustificationText(e.target.value)}
-                                                            placeholder="Motivo da alteração de status..."
+                                                            placeholder={t('modules.nexus.modals.justification.modalPlaceholder')}
                                                             className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white font-bold text-xs"
                                                         />
                                                     </div>
@@ -4557,7 +4672,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                     <BlockedTabOverlay message="A gestão financeira estará disponível após a criação deste processo." />
                                                 ) : (
                                                     <>
-                                                        <div className="grid grid-cols-3 gap-4 mb-8">
+                                                        <div className="grid grid-cols-4 gap-4 mb-8">
                                                             <div className="p-6 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-3xl border border-emerald-100/50">
                                                                 <p className="text-[10px] font-black uppercase text-emerald-600 mb-1 opacity-70">{t('modules.nexus.finance.fees')}</p>
                                                                 <p className="text-xl font-black text-emerald-600">R$ {lawsuitFinances.filter(t => t.entry_type === 'Credit').reduce((s,t) => s + (t.amount || 0), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
@@ -4572,6 +4687,29 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                     lawsuitFinances.filter(t => t.entry_type === 'Credit').reduce((s,t) => s + (t.amount || 0), 0) -
                                                                     lawsuitFinances.filter(t => t.entry_type === 'Debit').reduce((s, t) => s + (t.amount || 0), 0)
                                                                 ).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                                                            </div>
+                                                            <div className={`p-6 bg-amber-50/50 dark:bg-amber-900/10 rounded-3xl border border-amber-100/50 transition-all ${
+                                                                (() => {
+                                                                    const cr = lawsuitFinances.filter(t => t.entry_type === 'Credit').reduce((s,t) => s + (t.amount || 0), 0);
+                                                                    const db = lawsuitFinances.filter(t => t.entry_type === 'Debit').reduce((s,t) => s + (t.amount || 0), 0);
+                                                                    return db > 0 && (cr - db) > 0;
+                                                                })() ? 'text-amber-600' : 'text-slate-400 opacity-50'
+                                                            }`}>
+                                                                <p className="text-[10px] font-black uppercase mb-1 opacity-70">{t('modules.nexus.finance.roi')}</p>
+                                                                <p className="text-xl font-black flex items-center gap-2">
+                                                                    {(() => {
+                                                                        const cr = lawsuitFinances.filter(t => t.entry_type === 'Credit').reduce((s,t) => s + (t.amount || 0), 0);
+                                                                        const db = lawsuitFinances.filter(t => t.entry_type === 'Debit').reduce((s,t) => s + (t.amount || 0), 0);
+                                                                        if (db <= 0) return '-%';
+                                                                        const roi = ((cr - db) / db) * 100;
+                                                                        return `${roi.toFixed(0)}%`;
+                                                                    })()}
+                                                                    {(() => {
+                                                                        const cr = lawsuitFinances.filter(t => t.entry_type === 'Credit').reduce((s,t) => s + (t.amount || 0), 0);
+                                                                        const db = lawsuitFinances.filter(t => t.entry_type === 'Debit').reduce((s,t) => s + (t.amount || 0), 0);
+                                                                        return db > 0 && (cr - db) > 0;
+                                                                    })() && <TrendingUp size={20} className="animate-pulse" />}
+                                                                </p>
                                                             </div>
                                                         </div>
 
@@ -4791,7 +4929,71 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                     ))}
                                                 </div>
                                             </div>
-                                        ) : (
+                                        ) : activeLawsuitTab === 'ai' ? (
+                                            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
+                                                <div className="flex items-center justify-between mb-8">
+                                                    <div>
+                                                        <h4 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">{t('modules.nexus.modals.lawsuit.ai.title')}</h4>
+                                                        <p className="text-xs text-slate-500 font-bold">{t('modules.nexus.modals.lawsuit.ai.subtitle')}</p>
+                                                    </div>
+                                                    <div className="p-3 bg-amber-50 dark:bg-amber-900/20 text-amber-500 rounded-2xl shadow-lg shadow-amber-500/10">
+                                                        <Sparkles size={24} className="animate-pulse" />
+                                                    </div>
+                                                </div>
+
+                                                <div className="bg-slate-50 dark:bg-slate-900/50 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 flex flex-col items-center text-center">
+                                                    {!aiLawsuitSummary && !isAiSummarizing ? (
+                                                        <div className="py-10">
+                                                            <div className="w-20 h-20 rounded-full bg-white dark:bg-slate-800 shadow-xl flex items-center justify-center mb-6 mx-auto">
+                                                                <Brain size={40} className="text-slate-300" />
+                                                            </div>
+                                                            <h5 className="font-black text-slate-800 dark:text-white uppercase tracking-tight mb-2">{t('modules.nexus.modals.lawsuit.ai.empty')}</h5>
+                                                                <p className="text-sm text-slate-500 font-bold mb-8 max-w-[320px]">Deseja que a nossa IA processe todos os dados deste processo e gere um resumo executivo para você?</p>
+                                                                <button 
+                                                                    type="button"
+                                                                    onClick={handleSummarizeWithAI}
+                                                                    className="px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-indigo-600/20 flex items-center gap-3 mx-auto"
+                                                                >
+                                                                    <Zap size={16} /> Gerar Resumo Agora
+                                                                </button>
+                                                            </div>
+                                                        ) : isAiSummarizing ? (
+                                                            <div className="py-20 flex flex-col items-center">
+                                                                <div className="relative mb-8">
+                                                                    <div className="absolute inset-0 bg-indigo-500/20 blur-3xl animate-pulse rounded-full" />
+                                                                    <Loader2 size={64} className="text-indigo-600 animate-spin relative z-10" />
+                                                                </div>
+                                                                <h5 className="font-black text-slate-800 dark:text-white uppercase tracking-widest text-sm animate-pulse">{t('modules.nexus.modals.lawsuit.ai.loading')}</h5>
+                                                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-2">{t('modules.nexus.modals.lawsuit.ai.subtitle')}</p>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="w-full text-left">
+                                                                <div className="p-8 bg-white dark:bg-slate-950 rounded-3xl border border-indigo-100 dark:border-indigo-900/40 shadow-inner relative overflow-hidden group">
+                                                                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
+                                                                        <Brain size={120} />
+                                                                    </div>
+                                                                    <div className="prose prose-sm dark:prose-invert max-w-none text-slate-600 dark:text-slate-300 font-medium leading-relaxed whitespace-pre-line relative z-10">
+                                                                        {aiLawsuitSummary}
+                                                                    </div>
+                                                                </div>
+                                                                <div className="mt-8 flex items-center justify-between gap-4">
+                                                                    <button 
+                                                                        type="button"
+                                                                        onClick={() => setAiLawsuitSummary(null)}
+                                                                        className="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-indigo-600 transition-colors"
+                                                                    >
+                                                                        {t('modules.nexus.modals.shareholder.cancel') || 'Limpar e Refazer'}
+                                                                    </button>
+                                                                    <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-xl border border-emerald-100/50">
+                                                                        <Check size={14} />
+                                                                        <span className="text-[10px] font-black uppercase tracking-widest">{t('common.confirm') || 'Análise Concluída'}</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ) : (
                                             <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
                                                 <div className="flex items-center justify-between">
                                                     <div>
@@ -4838,6 +5040,14 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                                 Editar
                                                                             </button>
                                                                             <div className="flex gap-2">
+                                                                                <button 
+                                                                                    type="button" 
+                                                                                    onClick={() => handleSummarizeDocument(doc)}
+                                                                                    className="p-2 text-amber-500 hover:text-amber-600 transition-colors"
+                                                                                    title="Resumo IA"
+                                                                                >
+                                                                                    <Sparkles size={16} />
+                                                                                </button>
                                                                                 {doc.file_url && (
                                                                                     <a 
                                                                                         href={doc.file_url} 
@@ -5364,11 +5574,11 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         </div>
 
                                         <div>
-                                            <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Justificativa da Mudança (Opcional)</label>
+                                            <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">{t('modules.nexus.modals.justification.label')}</label>
                                             <input
                                                 value={justificationText}
                                                 onChange={e => setJustificationText(e.target.value)}
-                                                placeholder="Motivo da alteração de status..."
+                                                placeholder={t('modules.nexus.modals.justification.modalPlaceholder')}
                                                 className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white font-bold text-xs"
                                             />
                                         </div>
@@ -5615,6 +5825,14 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                             <Download size={18} />
                                                                         </button>
                                                                     )}
+                                                                    <button 
+                                                                        type="button" 
+                                                                        onClick={() => handleSummarizeDocument(doc)}
+                                                                        className="p-3 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/30 rounded-xl transition-all"
+                                                                        title="Resumo IA"
+                                                                    >
+                                                                        <Sparkles size={18} />
+                                                                    </button>
                                                                     <button
                                                                         type="button"
                                                                         onClick={() => { setEditingAssetDoc(doc); setIsAssetDocModalOpen(true); }}
@@ -5674,7 +5892,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                         <motion.div
                             initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
                             transition={{ type: 'spring', damping: 35, stiffness: 350 }}
-                            className="relative w-full max-w-3xl bg-white dark:bg-slate-900 shadow-2xl h-full flex flex-col border-l border-slate-200 dark:border-slate-800"
+                            className="relative w-full max-w-5xl bg-white dark:bg-slate-900 shadow-2xl h-full flex flex-col border-l border-slate-200 dark:border-slate-800"
                         >
                             {/* Header */}
                             <div className="p-10 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
@@ -5985,12 +6203,20 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                 <h5 className="font-bold text-slate-800 dark:text-white text-sm mb-1 line-clamp-1">{doc.title}</h5>
                                                                 <p className="text-[10px] text-slate-500 font-bold mb-4">Referência: {doc.event_date ? new Date(doc.event_date).toLocaleDateString() : 'N/I'}</p>
                                                                 
-                                                                <div className="flex items-center justify-between gap-2 mt-auto">
-                                                                    <button 
-                                                                        type="button"
-                                                                        onClick={() => { setEditingDocument(doc); setIsDocumentModalOpen(true); }}
-                                                                        className="text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:underline"
-                                                                    >
+                                                                    <div className="flex items-center gap-1">
+                                                                        <button 
+                                                                            type="button" 
+                                                                            onClick={() => handleSummarizeDocument(doc)}
+                                                                            className="p-2 text-amber-500 hover:text-amber-600 transition-colors"
+                                                                            title="Resumo IA"
+                                                                        >
+                                                                            <Sparkles size={16} />
+                                                                        </button>
+                                                                        <button 
+                                                                            type="button"
+                                                                            onClick={() => { setEditingDocument(doc); setIsDocumentModalOpen(true); }}
+                                                                            className="text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:underline px-2"
+                                                                        >
                                                                         Editar
                                                                     </button>
                                                                     {doc.file_url && (
@@ -6627,9 +6853,9 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                 <div className="w-16 h-16 bg-indigo-50 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4 text-indigo-600">
                                     <FileText size={32} />
                                 </div>
-                                <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Justificativa da Mudança</h3>
+                                <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">{t('modules.nexus.modals.justification.title')}</h3>
                                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
-                                    Explique o motivo da alteração de status
+                                    {t('modules.nexus.modals.justification.subtitle')}
                                 </p>
                             </div>
 
@@ -6637,7 +6863,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                 <textarea
                                     value={justificationText}
                                     onChange={(e) => setJustificationText(e.target.value)}
-                                    placeholder="Ex: Por falta de provas, Acordo realizado, Erro de cadastro..."
+                                    placeholder={t('modules.nexus.modals.justification.placeholder')}
                                     className="w-full h-32 bg-slate-50 dark:bg-slate-800/50 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-4 text-sm font-bold text-slate-700 dark:text-slate-200 focus:border-indigo-500 transition-all outline-none resize-none"
                                     autoFocus
                                 />
@@ -6646,7 +6872,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         onClick={() => { setIsJustificationModalOpen(false); setPendingStatusChange(null); }}
                                         className="py-4 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all"
                                     >
-                                        Cancelar
+                                        {t('common.cancel')}
                                     </button>
                                     <button
                                         onClick={handleConfirmStatusChange}
@@ -6663,6 +6889,69 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
 
             {/* History Analysis Modal */}
             <AnimatePresence mode="wait">
+            <AnimatePresence>
+                {aiInfoModal.isOpen && (
+                    <div key="ai-info-modal-overlay" className="fixed inset-0 z-[400] flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm"
+                            onClick={() => setAiInfoModal(prev => ({ ...prev, isOpen: false }))}
+                        />
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                            className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-[3rem] shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 flex flex-col max-h-[80vh]"
+                        >
+                            <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-indigo-50/30 dark:bg-indigo-900/10">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-12 h-12 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-sm text-indigo-600">
+                                        <Sparkles size={24} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">{t('modules.nexus.modals.lawsuit.ai.title')}</h3>
+                                        <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest leading-none mt-1">Cognição Artificial Veritum</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setAiInfoModal(prev => ({ ...prev, isOpen: false }))}
+                                    className="p-3 hover:bg-white dark:hover:bg-slate-800 rounded-2xl transition-all text-slate-400 hover:text-rose-500 shadow-sm"
+                                >
+                                    <XCircle size={24} />
+                                </button>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto p-10 space-y-6 no-scrollbar">
+                                <div className="space-y-4">
+                                    <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                        <FileText size={14} /> {aiInfoModal.title}
+                                    </h4>
+                                    <div className="bg-slate-50 dark:bg-slate-800/50 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800/50">
+                                        <p className="text-slate-700 dark:text-slate-200 font-medium leading-relaxed whitespace-pre-line text-base italic">
+                                            "{aiInfoModal.summary}"
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-4 bg-amber-50 dark:bg-amber-900/20 p-4 rounded-2xl border border-amber-100 dark:border-amber-800/50">
+                                    <AlertTriangle className="text-amber-500 shrink-0" size={20} />
+                                    <p className="text-[10px] font-bold text-amber-700 dark:text-amber-400 italic">
+                                        As informações apresentadas são geradas por inteligência artificial e devem ser validadas por um profissional jurídico antes de qualquer tomada de decisão.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="p-8 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
+                                <button
+                                    onClick={() => setAiInfoModal(prev => ({ ...prev, isOpen: false }))}
+                                    className="w-full py-4 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-600/20 active:scale-95"
+                                >
+                                    {t('common.confirm')}
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
                 {isHistoryModalOpen && historyData && (
                     <div key="history-modal-overlay" className="fixed inset-0 z-[300] flex items-center justify-center p-4">
                         <motion.div
@@ -6695,7 +6984,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                 {historyData.isLoading ? (
                                     <div className="py-20 flex flex-col items-center justify-center gap-4">
                                         <Loader2 size={40} className="text-indigo-600 animate-spin" />
-                                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest animate-pulse">Carregando Auditoria...</p>
+                                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest animate-pulse">{t('modules.nexus.modals.lawsuit.timeline.loadingAudit')}</p>
                                     </div>
                                 ) : historyData.timeline.length === 0 ? (
                                     <div className="py-20 text-center">

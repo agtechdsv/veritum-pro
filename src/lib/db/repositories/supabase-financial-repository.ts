@@ -66,11 +66,13 @@ export class SupabaseFinancialRepository implements IFinancialRepository {
         if (error) throw error;
     }
 
-    async getStats(lawsuitId?: string, personId?: string): Promise<{ totalCredits: number; totalDebits: number; balance: number }> {
+    async getStats(lawsuitId?: string, personId?: string, startDate?: string, endDate?: string): Promise<{ totalCredits: number; totalDebits: number; balance: number }> {
         let query = this.client.from('financial_transactions').select('amount, entry_type');
         
         if (lawsuitId) query = query.eq('lawsuit_id', lawsuitId);
         if (personId) query = query.eq('person_id', personId);
+        if (startDate) query = query.gte('transaction_date', startDate);
+        if (endDate) query = query.lte('transaction_date', endDate);
         
         const { data, error } = await query;
         if (error) throw error;

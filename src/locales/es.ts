@@ -1,5 +1,10 @@
 export const es = {
     "common": {
+        "apply": 'Aplicar',
+        "dateRange": {
+            "start": "Fecha Inicial",
+            "end": "Fecha Final"
+        },
         "loading": "Cargando...",
         "back": "Volver",
         "save": "Guardar",
@@ -339,7 +344,11 @@ export const es = {
                 "metricsTrends": {
                     "urgent": "Urgente",
                     "queue": "En Cola",
-                    "productivity": "Productividad"
+                    "productivity": "Productividad",
+                    "revenue": "Facturación",
+                    "expenses": "Gastos",
+                    "net": "Neto",
+                    "performance": "Performance"
                 },
                 "assetDistribution": "Distribución de Activos"
             },
@@ -411,6 +420,9 @@ export const es = {
                 "fees": "Honorarios / Ingresos",
                 "costs": "Costos / Salidas",
                 "balance": "Saldo Final",
+                "roi": "ROI (Retorno)",
+                "filtersTitle": "Filtros Financieros",
+                "filtersSubtitle": "Ajuste el período para análisis de rendimiento",
                 "addCost": "Registrar Costos",
                 "addFee": "Registrar Honorarios",
                 "newTransaction": "Nuevo Registro",
@@ -496,6 +508,13 @@ export const es = {
                         "emptyAudit": "El rastro de auditoría se generará automáticamente después de que se cree este proceso en el sistema.",
                         "loadingAudit": "Cargando historial...",
                         "noEvents": "Todavía no hay eventos registrados."
+                    },
+                    "ai": {
+                        "tab": "Inteligencia Artificial",
+                        "title": "Inteligencia Artificial",
+                        "subtitle": "Análisis e insights generados por IA",
+                        "loading": "Generando insights...",
+                        "empty": "No hay insights generados todavía."
                     }
                 },
                 "task": {
@@ -600,6 +619,13 @@ export const es = {
                     "labelFile": "Carga de Archivo",
                     "cancel": "Cancelar",
                     "save": "Guardar Documento"
+                },
+                "justification": {
+                    "title": "Justificación del Cambio",
+                    "subtitle": "Explique el motivo del cambio de estado",
+                    "placeholder": "Ej: Falta de pruebas, Acuerdo realizado, Error de registro...",
+                    "label": "Justificación del Cambio (Opcional)",
+                    "modalPlaceholder": "Motivo del cambio de estado..."
                 }
             }
         },

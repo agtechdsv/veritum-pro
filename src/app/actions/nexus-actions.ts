@@ -158,11 +158,11 @@ export async function deleteFinancialTransaction(id: string, targetUserId?: stri
     }
 }
 
-export async function getFinancialStats(lawsuitId?: string, personId?: string, targetUserId?: string) {
+export async function getFinancialStats(lawsuitId?: string, personId?: string, targetUserId?: string, startDate?: string, endDate?: string) {
     try {
         const { credentials, preferences } = await resolveSecurityContext(targetUserId);
         const repo = RepositoryFactory.getFinancialRepository(credentials, preferences);
-        const data = await repo.getStats(lawsuitId, personId);
+        const data = await repo.getStats(lawsuitId, personId, startDate, endDate);
         return { data, error: null };
     } catch (error: any) {
         console.error('Server Action Error (getFinancialStats):', error);
