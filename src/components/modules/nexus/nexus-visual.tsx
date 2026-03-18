@@ -49,6 +49,8 @@ export const NexoVisual: React.FC<NexoVisualProps> = ({
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedNode, setSelectedNode] = useState<any>(null);
     const containerRef = useRef<HTMLDivElement>(null);
+    const [expandedNodeIds, setExpandedNodeIds] = useState<Set<string>>(new Set());
+    const [expandedSubData, setExpandedSubData] = useState<Record<string, { shareholders?: Shareholder[], lawsuitDocuments?: LawsuitDocument[], assetDocuments?: AssetDocument[], corporateDocuments?: CorporateDocument[] }>>({});
     
     // Sub-data states for the current exploration session
     const [shareholders, setShareholders] = useState<Shareholder[]>([]);
@@ -129,6 +131,63 @@ export const NexoVisual: React.FC<NexoVisualProps> = ({
             data: data
         });
         setSelectedNode(null);
+        setExpandedNodeIds(new Set());
+        setExpandedSubData({});
+    };
+
+    const handleExpandToggle = async (node: any) => {
+        const { type, data } = node;
+        const id = data.id;
+
+        if (expandedNodeIds.has(id)) {
+            const nextNodeIds = new Set(expandedNodeIds);
+            nextNodeIds.delete(id);
+            setExpandedNodeIds(nextNodeIds);
+            return;
+        }
+
+        // Expand
+        setExpandedNodeIds(new Set(expandedNodeIds).add(id));
+        setIsLoading(true);
+
+        try {
+            if (type === 'corporate') {
+                const [sResult, dResult] = await Promise.all([
+                    listShareholders(id, selectedUserId),
+                    listCorporateDocuments(id, selectedUserId)
+                ]);
+                setExpandedSubData(prev => ({ 
+                    ...prev, 
+                    [id]: { 
+                        shareholders: sResult.data || [], 
+                        corporateDocuments: dResult.data || [] 
+                    } 
+                }));
+            } else if (type === 'person') {
+                const result = await listPersonParticipations(id, selectedUserId);
+                if (result.data) {
+                    setExpandedSubData(prev => ({ 
+                        ...prev, 
+                        [id]: { 
+                            shareholders: result.data.map((s: any) => ({
+                                ...s,
+                                shareholder_name: s.entity?.legal_name || 'Holding Desconhecida'
+                            })) 
+                        } 
+                    }));
+                }
+            } else if (type === 'lawsuit') {
+                const result = await listLawsuitDocuments(id, selectedUserId);
+                if (result.data) setExpandedSubData(prev => ({ ...prev, [id]: { lawsuitDocuments: result.data } }));
+            } else if (type === 'asset') {
+                const result = await listAssetDocuments(id, selectedUserId);
+                if (result.data) setExpandedSubData(prev => ({ ...prev, [id]: { assetDocuments: result.data } }));
+            }
+        } catch (error) {
+            console.error('Error in expand fetch:', error);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     if (!isOpen || !nexoData) return null;
@@ -160,79 +219,127 @@ export const NexoVisual: React.FC<NexoVisualProps> = ({
     })();
 
     const baseRadius = 240;
-    const neighbors: any[] = [];
-    const { origin_type, id } = nexoData;
-    const data = currentData; // Use the live data for neighbor calculation
-    
-    // Neighbors Calculation Logic
-    if (origin_type === 'lawsuit') {
-        const author = persons.find(p => p.id === data.author_id);
-        if (author) neighbors.push({ label: author.full_name, icon: UserIcon, hex: '#3b82f6', bg: 'bg-blue-500', cat: 'Autor', type: 'person', data: author });
+    const getRawConnections = (_type: string, _id: string, _data: any, _subData: { shareholders?: Shareholder[], lawsuitDocuments?: LawsuitDocument[], assetDocuments?: AssetDocument[], corporateDocuments?: CorporateDocument[] } = {}) => {
+        const results: any[] = [];
+        const { shareholders: subS = [], lawsuitDocuments: subLD = [], assetDocuments: subAD = [], corporateDocuments: subCD = [] } = _subData;
 
-        const def = persons.find(p => p.id === data.defendant_id);
-        if (def) neighbors.push({ label: def.full_name, icon: UserIcon, hex: '#f43f5e', bg: 'bg-rose-500', cat: 'Réu', type: 'person', data: def });
-        
-        const lawyer = team.find(t => t.id === data.responsible_lawyer_id);
-        if (lawyer) neighbors.push({ label: lawyer.full_name, icon: Briefcase, hex: '#f59e0b', bg: 'bg-amber-500', cat: 'Responsável', type: 'person', data: lawyer });
-        
-        assets.filter(a => a.lawsuit_id === id).forEach(a => neighbors.push({ label: a.title, icon: Shield, hex: '#10b981', bg: 'bg-emerald-500', cat: 'Ativo', type: 'asset', data: a }));
-        lawsuitDocuments.filter(d => d.lawsuit_id === id).forEach(d => neighbors.push({ label: d.title, icon: FileText, hex: '#64748b', bg: 'bg-slate-500', cat: 'Documento', type: 'lawsuit_document', data: d }));
-        tasks.filter(t => t.lawsuit_id === id).forEach(t => neighbors.push({ label: t.title, icon: CheckCircle2, hex: '#8b5cf6', bg: 'bg-purple-500', cat: 'Tarefa', type: 'task', data: t }));
-    } else if (origin_type === 'corporate') {
-        shareholders.filter(s => s.entity_id === id).forEach(s => {
-            let neighborData = null;
-            let neighborType: any = null;
-            if (s.person_shareholder_id) {
-                neighborData = persons.find(p => p.id === s.person_shareholder_id);
-                neighborType = 'person';
-            } else if (s.corporate_shareholder_id) {
-                neighborData = corporateEntities.find(e => e.id === s.corporate_shareholder_id);
-                neighborType = 'corporate';
+        if (_type === 'lawsuit') {
+            const author = persons.find(p => p.id === _data.author_id);
+            if (author) results.push({ label: author.full_name, icon: UserIcon, hex: '#3b82f6', bg: 'bg-blue-500', cat: 'Autor', type: 'person', data: author });
+            const def = persons.find(p => p.id === _data.defendant_id);
+            if (def) results.push({ label: def.full_name, icon: UserIcon, hex: '#f43f5e', bg: 'bg-rose-500', cat: 'Réu', type: 'person', data: def });
+            const lawyer = team.find(t => t.id === _data.responsible_lawyer_id);
+            if (lawyer) results.push({ label: lawyer.full_name, icon: Briefcase, hex: '#f59e0b', bg: 'bg-amber-500', cat: 'Responsável', type: 'person', data: lawyer });
+            assets.filter(a => a.lawsuit_id === _id).forEach(a => results.push({ label: a.title, icon: Shield, hex: '#10b981', bg: 'bg-emerald-500', cat: 'Ativo', type: 'asset', data: a }));
+            // Use subLD if provided (for expanded nodes), else the main lawsuitDocuments state
+            const docsToUse = subLD.length > 0 ? subLD : lawsuitDocuments;
+            docsToUse.filter(d => d.lawsuit_id === _id).forEach(d => results.push({ label: d.title, icon: FileText, hex: '#64748b', bg: 'bg-slate-500', cat: 'Documento', type: 'lawsuit_document', data: d }));
+            tasks.filter(t => t.lawsuit_id === _id).forEach(t => results.push({ label: t.title, icon: CheckCircle2, hex: '#8b5cf6', bg: 'bg-purple-500', cat: 'Tarefa', type: 'task', data: t }));
+        } else if (_type === 'corporate') {
+            const sToUse = subS.length > 0 ? subS : shareholders;
+            sToUse.filter(s => s.entity_id === _id).forEach(s => {
+                let neighborData = null;
+                let neighborType: any = null;
+                if (s.person_shareholder_id) {
+                    neighborData = persons.find(p => p.id === s.person_shareholder_id);
+                    neighborType = 'person';
+                } else if (s.corporate_shareholder_id) {
+                    neighborData = corporateEntities.find(e => e.id === s.corporate_shareholder_id);
+                    neighborType = 'corporate';
+                }
+                results.push({ label: s.shareholder_name, icon: Users, hex: '#3b82f6', bg: 'bg-blue-500', cat: 'Sócio', type: neighborType, data: neighborData || s });
+            });
+            const dToUse = subCD.length > 0 ? subCD : corporateDocuments;
+            dToUse.filter(d => d.entity_id === _id).forEach(d => results.push({ label: d.title, icon: FileText, hex: '#64748b', bg: 'bg-slate-500', cat: 'Documento', type: 'corporate_document', data: d }));
+        } else if (_type === 'person') {
+            lawsuits.filter(l => l.author_id === _id || l.defendant_id === _id).forEach(l => results.push({ label: l.case_title || l.cnj_number, icon: Scale, hex: '#8b5cf6', bg: 'bg-purple-500', cat: 'Processo', type: 'lawsuit', data: l }));
+            lawsuits.filter(l => l.responsible_lawyer_id === _id).forEach(l => results.push({ label: l.case_title || l.cnj_number, icon: Briefcase, hex: '#f59e0b', bg: 'bg-amber-500', cat: 'Gestão', type: 'lawsuit', data: l }));
+            assets.filter(a => a.person_id === _id).forEach(a => results.push({ label: a.title, icon: Shield, hex: '#10b981', bg: 'bg-emerald-500', cat: 'Ativo', type: 'asset', data: a }));
+            const sToUse = subS.length > 0 ? subS : shareholders;
+            sToUse.forEach(s => {
+                const entity = (s as any).entity || corporateEntities.find(e => e.id === s.entity_id);
+                if (entity) results.push({ label: entity.legal_name, icon: Building2, hex: '#3b82f6', bg: 'bg-blue-500', cat: 'Sociedade/PJ', type: 'corporate', data: entity });
+            });
+            tasks.filter(t => t.responsible_id === _id).forEach(t => results.push({ label: t.title, icon: CheckCircle2, hex: '#f59e0b', bg: 'bg-amber-500', cat: 'Tarefa', type: 'task', data: t }));
+        } else if (_type === 'asset') {
+            const owner = persons.find(p => p.id === _data.person_id);
+            if (owner) results.push({ label: owner.full_name, icon: UserIcon, hex: '#3b82f6', bg: 'bg-blue-500', cat: 'Proprietário', type: 'person', data: owner });
+            const lawsuit = lawsuits.find(l => l.id === _data.lawsuit_id);
+            if (lawsuit) results.push({ label: lawsuit.case_title || lawsuit.cnj_number, hex: '#8b5cf6', icon: Scale, bg: 'bg-purple-500', cat: 'Processo', type: 'lawsuit', data: lawsuit });
+            const dToUse = subAD.length > 0 ? subAD : assetDocuments;
+            dToUse.filter(d => d.asset_id === _id).forEach(d => results.push({ label: d.title, icon: FileText, hex: '#64748b', bg: 'bg-slate-500', cat: 'Documento', type: 'asset_document', data: d }));
+        } else if (_type === 'task') {
+            const lawsuit = lawsuits.find(l => l.id === _data.lawsuit_id);
+            if (lawsuit) results.push({ label: lawsuit.case_title || lawsuit.cnj_number, hex: '#8b5cf6', icon: Scale, bg: 'bg-purple-500', cat: 'Processo', type: 'lawsuit', data: lawsuit });
+            const resp = team.find(t => t.id === _data.responsible_id);
+            if (resp) results.push({ label: resp.full_name, icon: UserIcon, hex: '#f59e0b', bg: 'bg-amber-500', cat: 'Responsável', type: 'person', data: resp });
+        } else if (_type === 'document' || _type === 'lawsuit_document' || _type === 'asset_document' || _type === 'corporate_document') {
+            const oType = _data.origin_type || (_data.lawsuit_id ? 'lawsuit' : _data.asset_id ? 'asset' : _data.entity_id ? 'corporate' : null);
+            const oId = _data.origin_id || _data.lawsuit_id || _data.asset_id || _data.entity_id;
+            if (oType === 'lawsuit') {
+                const law = lawsuits.find(l => l.id === oId);
+                if (law) results.push({ label: law.case_title || law.cnj_number, hex: '#8b5cf6', icon: Scale, bg: 'bg-purple-500', cat: 'Origem', type: 'lawsuit', data: law });
+            } else if (oType === 'corporate') {
+                const entity = corporateEntities.find(e => e.id === oId);
+                if (entity) results.push({ label: entity.legal_name, icon: Building2, hex: '#3b82f6', bg: 'bg-blue-500', cat: 'Origem', type: 'corporate', data: entity });
+            } else if (oType === 'asset') {
+                const asset = assets.find(a => a.id === oId);
+                if (asset) results.push({ label: asset.title, icon: Shield, hex: '#10b981', bg: 'bg-emerald-500', cat: 'Origem', type: 'asset', data: asset });
             }
-            neighbors.push({ label: s.shareholder_name, icon: Users, hex: '#3b82f6', bg: 'bg-blue-500', cat: 'Sócio', type: neighborType, data: neighborData || s });
-        });
-        corporateDocuments.filter(d => d.entity_id === id).forEach(d => neighbors.push({ label: d.title, icon: FileText, hex: '#64748b', bg: 'bg-slate-500', cat: 'Documento', type: 'corporate_document', data: d }));
-    } else if (origin_type === 'person') {
-        lawsuits.filter(l => l.author_id === id || l.defendant_id === id).forEach(l => neighbors.push({ label: l.case_title || l.cnj_number, icon: Scale, hex: '#8b5cf6', bg: 'bg-purple-500', cat: 'Processo', type: 'lawsuit', data: l }));
-        lawsuits.filter(l => l.responsible_lawyer_id === id).forEach(l => neighbors.push({ label: l.case_title || l.cnj_number, icon: Briefcase, hex: '#f59e0b', bg: 'bg-amber-500', cat: 'Gestão', type: 'lawsuit', data: l }));
-        assets.filter(a => a.person_id === id).forEach(a => neighbors.push({ label: a.title, icon: Shield, hex: '#10b981', bg: 'bg-emerald-500', cat: 'Ativo', type: 'asset', data: a }));
-        shareholders.forEach(s => {
-            const entity = (s as any).entity || corporateEntities.find(e => e.id === s.entity_id);
-            if (entity) neighbors.push({ label: entity.legal_name, icon: Building2, hex: '#3b82f6', bg: 'bg-blue-500', cat: 'Sociedade/PJ', type: 'corporate', data: entity });
-        });
-        tasks.filter(t => t.responsible_id === id).forEach(t => neighbors.push({ label: t.title, icon: CheckCircle2, hex: '#f59e0b', bg: 'bg-amber-500', cat: 'Tarefa', type: 'task', data: t }));
-    } else if (origin_type === 'asset') {
-        const owner = persons.find(p => p.id === data.person_id);
-        if (owner) neighbors.push({ label: owner.full_name, icon: UserIcon, hex: '#3b82f6', bg: 'bg-blue-500', cat: 'Proprietário', type: 'person', data: owner });
-        const lawsuit = lawsuits.find(l => l.id === data.lawsuit_id);
-        if (lawsuit) neighbors.push({ label: lawsuit.case_title || lawsuit.cnj_number, hex: '#8b5cf6', icon: Scale, bg: 'bg-purple-500', cat: 'Processo', type: 'lawsuit', data: lawsuit });
-        assetDocuments.filter(d => d.asset_id === id).forEach(d => neighbors.push({ label: d.title, icon: FileText, hex: '#64748b', bg: 'bg-slate-500', cat: 'Documento', type: 'asset_document', data: d }));
-    } else if (origin_type === 'task') {
-        const lawsuit = lawsuits.find(l => l.id === data.lawsuit_id);
-        if (lawsuit) neighbors.push({ label: lawsuit.case_title || lawsuit.cnj_number, hex: '#8b5cf6', icon: Scale, bg: 'bg-purple-500', cat: 'Processo', type: 'lawsuit', data: lawsuit });
-        const resp = team.find(t => t.id === data.responsible_id);
-        if (resp) neighbors.push({ label: resp.full_name, icon: UserIcon, hex: '#f59e0b', bg: 'bg-amber-500', cat: 'Responsável', type: 'person', data: resp });
-    } else if (origin_type === 'document' || origin_type === 'lawsuit_document' || origin_type === 'asset_document' || origin_type === 'corporate_document') {
-        const oType = data.origin_type || (data.lawsuit_id ? 'lawsuit' : data.asset_id ? 'asset' : data.entity_id ? 'corporate' : null);
-        const oId = data.origin_id || data.lawsuit_id || data.asset_id || data.entity_id;
-
-        if (oType === 'lawsuit') {
-            const law = lawsuits.find(l => l.id === oId);
-            if (law) neighbors.push({ label: law.case_title || law.cnj_number, hex: '#8b5cf6', icon: Scale, bg: 'bg-purple-500', cat: 'Origem', type: 'lawsuit', data: law });
-        } else if (oType === 'corporate') {
-            const entity = corporateEntities.find(e => e.id === oId);
-            if (entity) neighbors.push({ label: entity.legal_name, icon: Building2, hex: '#3b82f6', bg: 'bg-blue-500', cat: 'Origem', type: 'corporate', data: entity });
-        } else if (oType === 'asset') {
-            const asset = assets.find(a => a.id === oId);
-            if (asset) neighbors.push({ label: asset.title, icon: Shield, hex: '#10b981', bg: 'bg-emerald-500', cat: 'Origem', type: 'asset', data: asset });
         }
-    }
+        return results;
+    };
+
+    const mainNeighbors = getRawConnections(nexoData.origin_type, nexoData.id, currentData);
+    
+    // Add sub-neighbors for expanded nodes
+    const neighbors: any[] = [...mainNeighbors];
+    
+    mainNeighbors.forEach(mn => {
+        if (mn.data?.id && expandedNodeIds.has(mn.data.id)) {
+            const sub = getRawConnections(mn.type, mn.data.id, mn.data, expandedSubData[mn.data.id] || {});
+            sub.forEach(sn => {
+                // Avoid pointing back to the center or duplicates in the same expansion
+                if (sn.data?.id !== nexoData.id) {
+                    neighbors.push({ ...sn, parentId: mn.data.id });
+                }
+            });
+        }
+    });
 
     // Filter neighbors based on search
     const filteredNeighbors = searchTerm 
-        ? neighbors.filter(n => n.label.toLowerCase().includes(searchTerm.toLowerCase()) || n.cat.toLowerCase().includes(searchTerm.toLowerCase()))
+        ? neighbors.filter((n: any) => n.label.toLowerCase().includes(searchTerm.toLowerCase()) || n.cat.toLowerCase().includes(searchTerm.toLowerCase()))
         : neighbors;
 
+    // Pre-calculate positions for all nodes in the workspace
+    const mainNodesList = filteredNeighbors.filter((n: any) => !n.parentId);
+    const nodesWithCoords: any[] = mainNodesList.map((n: any, i: number) => {
+        const angle = (i / mainNodesList.length) * 2 * Math.PI;
+        const radius = baseRadius + (i % 2 === 0 ? 0 : 60);
+        const x = Math.cos(angle) * radius;
+        const y = Math.sin(angle) * radius;
+        return { ...n, x, y, angle, depth: 1 };
+    });
+
+    const finalNodesToRender: any[] = [...nodesWithCoords];
+    nodesWithCoords.forEach((pNode: any) => {
+        const children = filteredNeighbors.filter((cn: any) => cn.parentId === pNode.data?.id);
+        if (children.length > 0) {
+            children.forEach((cn: any, ci: number) => {
+                const fanSize = Math.PI / 2.5; // 72 degrees fan
+                const startAngle = pNode.angle - fanSize/2;
+                const step = children.length > 1 ? fanSize / (children.length - 1) : 0;
+                const cAngle = startAngle + ci * step;
+                const sRadius = 160;
+                const x = pNode.x + Math.cos(cAngle) * sRadius;
+                const y = pNode.y + Math.sin(cAngle) * sRadius;
+                finalNodesToRender.push({ ...cn, x, y, depth: 2, parentX: pNode.x, parentY: pNode.y });
+            });
+        }
+    });
+
+    // Filter final nodes if search term present (already filtered in filteredNeighbors, but this ensures consistency)
     const renderCenterIcon = () => {
         const iconSize = 48;
         const colorClass = "text-indigo-600 mb-2";
@@ -314,7 +421,15 @@ export const NexoVisual: React.FC<NexoVisualProps> = ({
                             )}
                         </AnimatePresence>
                         
+                        {/* Add Reset Position Button next to Zoom */}
                         <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-2xl p-1">
+                            <button 
+                                onClick={() => { setZoom(1); setExpandedNodeIds(new Set()); setExpandedSubData({}); }}
+                                className="p-2 text-white/40 hover:text-white hover:bg-white/10 rounded-xl transition-all mr-1 border-r border-white/5"
+                                title="Resetar Mapa"
+                            >
+                                <Zap size={14} className="rotate-180" />
+                            </button>
                             <button 
                                 onClick={() => setZoom(prev => Math.max(0.5, prev - 0.1))}
                                 className="p-2 text-white/40 hover:text-white hover:bg-white/10 rounded-xl transition-all"
@@ -369,18 +484,37 @@ export const NexoVisual: React.FC<NexoVisualProps> = ({
                                         </div>
                                     </div>
 
-                                    <div className="flex gap-3">
+                                    <div className="flex flex-col gap-2">
+                                        <div className="flex gap-3">
+                                            <button 
+                                                onClick={() => handleNavigate(selectedNode.type, selectedNode.data)}
+                                                className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2 group"
+                                            >
+                                                Focar Conexão <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                                            </button>
+                                            <button 
+                                                onClick={() => setSelectedNode(null)}
+                                                className="p-3.5 bg-white/10 text-white/60 hover:text-white rounded-2xl border border-white/10 transition-all"
+                                            >
+                                                <XCircle size={18} />
+                                            </button>
+                                        </div>
+                                        
+                                        {/* New Expandir Button */}
                                         <button 
-                                            onClick={() => handleNavigate(selectedNode.type, selectedNode.data)}
-                                            className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2 group"
+                                            disabled={isLoading}
+                                            onClick={() => handleExpandToggle(selectedNode)}
+                                            className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border ${
+                                                expandedNodeIds.has(selectedNode.data?.id)
+                                                    ? 'bg-rose-500/10 border-rose-500/20 text-rose-500 hover:bg-rose-500/20'
+                                                    : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500 hover:bg-emerald-500/20'
+                                            }`}
                                         >
-                                            Focar Conexão <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
-                                        </button>
-                                        <button 
-                                            onClick={() => setSelectedNode(null)}
-                                            className="p-3.5 bg-white/10 text-white/60 hover:text-white rounded-2xl border border-white/10 transition-all"
-                                        >
-                                            <XCircle size={18} />
+                                            {expandedNodeIds.has(selectedNode.data?.id) ? (
+                                                <><Minimize2 size={14} /> Recolher Ramo</>
+                                            ) : (
+                                                <><Maximize2 size={14} /> Expandir Conexões</>
+                                            )}
                                         </button>
                                     </div>
                                     {onEdit && selectedNode.type && (
@@ -403,36 +537,40 @@ export const NexoVisual: React.FC<NexoVisualProps> = ({
                     >
                         <motion.div 
                             key={nexoData.id} 
+                            drag
+                            dragMomentum={false}
                             style={{ scale: zoom }}
-                            className="relative w-full h-full flex items-center justify-center transition-transform duration-300 ease-out"
+                            className="relative w-full h-full flex items-center justify-center cursor-grab active:cursor-grabbing"
                         >
                             {/* SVG Connections Layout */}
                             <svg className="absolute inset-0 w-full h-full pointer-events-none">
-                                {!isLoading && filteredNeighbors.map((n, i) => {
-                                    const angle = (i / filteredNeighbors.length) * 2 * Math.PI;
-                                    const radius = baseRadius + (i % 2 === 0 ? 0 : 60);
-                                    const x2 = Math.cos(angle) * radius;
-                                    const y2 = Math.sin(angle) * radius;
+                                {finalNodesToRender.map((n, i) => {
                                     const nodeKey = `line-${n.type}-${n.data?.id || n.label}-${nexoData.id}-${i}`;
                                     
+                                    // Calculate coordinates relative to parent or center
+                                    const x1 = n.parentId ? `calc(50% + ${n.parentX}px)` : "50%";
+                                    const y1 = n.parentId ? `calc(50% + ${n.parentY}px)` : "50%";
+                                    const x2 = `calc(50% + ${n.x}px)`;
+                                    const y2 = `calc(50% + ${n.y}px)`;
+
                                     return (
                                         <motion.line
                                             key={nodeKey}
                                             initial={{ pathLength: 0, opacity: 0 }}
                                             animate={{ pathLength: 1, opacity: 0.15 }}
-                                            transition={{ duration: 1, delay: 0.2 + i * 0.04 }}
-                                            x1="50%" y1="50%"
-                                            x2={`calc(50% + ${x2}px)`} y2={`calc(50% + ${y2}px)`}
+                                            transition={{ duration: 1, delay: 0.2 + (i % 10) * 0.04 }}
+                                            x1={x1} y1={y1}
+                                            x2={x2} y2={y2}
                                             stroke={n.hex}
                                             strokeWidth="2"
-                                            strokeDasharray="8 8"
+                                            strokeDasharray={n.parentId ? "4 4" : "8 8"}
                                         />
                                     );
                                 })}
                             </svg>
 
                             {/* Center Subject Node */}
-                            <div className="relative z-50">
+                            <div className="relative z-[60]">
                                 <AnimatePresence>
                                     {isLoading && (
                                         <>
@@ -484,30 +622,30 @@ export const NexoVisual: React.FC<NexoVisualProps> = ({
                             </div>
 
                             {/* Peripheral Connected Nodes */}
-                            {!isLoading && filteredNeighbors.map((n, i) => {
-                                const angle = (i / filteredNeighbors.length) * 2 * Math.PI;
-                                const radius = baseRadius + (i % 2 === 0 ? 0 : 60);
-                                const x = Math.cos(angle) * radius;
-                                const y = Math.sin(angle) * radius;
+                            {finalNodesToRender.map((n, i) => {
+                                const x = n.x;
+                                const y = n.y;
                                 const nodeKey = `node-${n.type}-${n.data?.id || n.label}-${nexoData.id}-${i}`;
                                 const isSelected = selectedNode?.label === n.label;
+                                const isSecondary = n.depth === 2;
                                 
                                 return (
                                     <motion.div
                                         key={nodeKey}
                                         initial={{ scale: 0, opacity: 0 }}
-                                        animate={{ scale: 1, opacity: 1 }}
+                                        animate={{ scale: isSecondary ? 0.85 : 1, opacity: 1 }}
+                                        whileHover={{ zIndex: 100, scale: (isSecondary ? 0.85 : 1) * 1.05 }}
                                         style={{ x, y, position: 'absolute' }}
                                         transition={{ 
-                                            scale: { type: 'spring', damping: 12, stiffness: 180, delay: 0.3 + i * 0.05 },
-                                            opacity: { duration: 0.4, delay: 0.3 + i * 0.05 }
+                                            scale: { type: 'spring', damping: 12, stiffness: 180, delay: 0.1 + (i % 12) * 0.05 },
+                                            opacity: { duration: 0.4, delay: 0.1 + (i % 12) * 0.05 }
                                         }}
                                         onClick={() => setSelectedNode(n)}
                                         onDoubleClick={() => n.type && n.data && handleNavigate(n.type, n.data)}
-                                        className={`absolute w-44 p-4 ${isSelected ? 'bg-indigo-600/20 border-indigo-400/50 ring-4 ring-indigo-500/20' : 'bg-slate-900/60 border-white/10'} backdrop-blur-xl border rounded-[2.5rem] flex flex-col items-center text-center group cursor-pointer hover:bg-slate-800/80 hover:border-indigo-500/50 transition-all hover:scale-105 shadow-2xl z-30`}
+                                        className={`absolute ${isSecondary ? 'w-36' : 'w-44'} p-4 ${isSelected ? 'bg-indigo-600/20 border-indigo-400/50 ring-4 ring-indigo-500/20' : 'bg-slate-900/60 border-white/10'} backdrop-blur-xl border rounded-[2rem] flex flex-col items-center text-center group cursor-pointer hover:bg-slate-800/80 hover:border-indigo-500/50 transition-all shadow-2xl z-30`}
                                     >
                                         <div className={`p-4 ${n.bg} text-white rounded-[1.2rem] mb-3 shadow-xl group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 relative`}>
-                                            <n.icon size={22} />
+                                            <n.icon size={isSecondary ? 18 : 22} />
                                             {n.type && (
                                                 <div className="absolute -top-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center text-indigo-600 shadow-sm border border-indigo-50">
                                                     <Info size={10} strokeWidth={3} />
@@ -515,7 +653,7 @@ export const NexoVisual: React.FC<NexoVisualProps> = ({
                                             )}
                                         </div>
                                         <span className={`text-[8px] font-black uppercase tracking-[0.25em] mb-1.5 transition-colors ${isSelected ? 'text-indigo-400' : 'text-white/40 group-hover:text-indigo-400'}`}>{n.cat}</span>
-                                        <span className="text-[10px] font-bold text-white line-clamp-2 leading-tight px-2 group-hover:scale-105 transition-transform">
+                                        <span className={`${isSecondary ? 'text-[9px]' : 'text-[10px]'} font-bold text-white line-clamp-2 leading-tight px-2 group-hover:scale-105 transition-transform`}>
                                             {n.label}
                                         </span>
                                         
@@ -529,11 +667,13 @@ export const NexoVisual: React.FC<NexoVisualProps> = ({
                                             </button>
                                         )}
 
-                                        <div className="mt-3 opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0">
-                                            <div className="flex items-center gap-1.5 px-3 py-1 bg-white/10 rounded-full text-[7px] font-black text-white uppercase tracking-widest hover:bg-white/20">
-                                                Detalhes
+                                        {!isSecondary && (
+                                            <div className="mt-3 opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0">
+                                                <div className="flex items-center gap-1.5 px-3 py-1 bg-white/10 rounded-full text-[7px] font-black text-white uppercase tracking-widest hover:bg-white/20">
+                                                    Detalhes
+                                                </div>
                                             </div>
-                                        </div>
+                                        )}
                                     </motion.div>
                                 );
                             })}
