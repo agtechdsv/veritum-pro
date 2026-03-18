@@ -17,6 +17,10 @@ import { NexoVisual } from './nexus/nexus-visual';
 import { TaskModal } from './nexus/modals/TaskModal';
 import { LawsuitModal } from './nexus/modals/LawsuitModal';
 import { CrmModal } from './nexus/modals/CrmModal';
+import { AssetModal } from './nexus/modals/AssetModal';
+import { CorporateEntityModal } from './nexus/modals/CorporateEntityModal';
+import { DocumentsTab } from './nexus/tabs/DocumentsTab';
+
 
 
 // Sub-components extracted to ./nexus/nexus-components.tsx
@@ -1823,35 +1827,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
 
     const uniqueDocTypes = Array.from(new Set(globalDocuments.map(d => d.document_type))).sort();
 
-    const renderOriginBadge = (origin: 'lawsuit' | 'asset' | 'corporate', name: string) => {
-        const icons = {
-            lawsuit: <Scale size={12} className="text-white" />,
-            asset: <Shield size={12} className="text-white" />,
-            corporate: <Building2 size={12} className="text-white" />
-        };
-        const colors = {
-            lawsuit: 'bg-indigo-500',
-            asset: 'bg-emerald-500',
-            corporate: 'bg-amber-500'
-        };
-        const labels = {
-            lawsuit: t('modules.nexus.tabs.processes'),
-            asset: t('modules.nexus.tabs.assets'),
-            corporate: t('modules.nexus.tabs.corporate')
-        };
 
-        return (
-            <div className="flex items-center gap-2">
-                <div className={`p-1.5 rounded-lg shrink-0 ${colors[origin]}`}>
-                    {icons[origin]}
-                </div>
-                <div className="flex flex-col min-w-0">
-                    <span className="text-[8px] font-black uppercase text-slate-400 leading-none mb-0.5">{labels[origin]}</span>
-                    <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 truncate max-w-[150px]">{name}</span>
-                </div>
-            </div>
-        );
-    };
 
     const renderFilterBar = () => (
         <div className="flex gap-4 mb-6 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in slide-in-from-top-2">
@@ -1994,54 +1970,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         </div>
     );
 
-    const renderGlobalDocumentsFilterBar = () => (
-        <div className="flex gap-4 mb-6 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in slide-in-from-top-2">
-            <div className="flex-1">
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                    <input
-                        type="text"
-                        placeholder={t('modules.nexus.documents.searchPlaceholder')}
-                        value={docSearch}
-                        onChange={e => setDocSearch(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
-                    />
-                </div>
-            </div>
-            <div className="w-48">
-                <select
-                    value={docOriginFilter}
-                    onChange={e => setDocOriginFilter(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
-                >
-                    <option value="">📌 {t('modules.nexus.documents.allOrigins')}</option>
-                    <option value="lawsuit">⚖️ {t('modules.nexus.tabs.processes')}</option>
-                    <option value="asset">🛡️ {t('modules.nexus.tabs.assets')}</option>
-                    <option value="corporate">🏢 {t('modules.nexus.tabs.corporate')}</option>
-                </select>
-            </div>
-            <div className="w-56">
-                <select
-                    value={docTypeFilter}
-                    onChange={e => setDocTypeFilter(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
-                >
-                    <option value="">📄 {t('common.filters.allTypes')}</option>
-                    {uniqueDocTypes.map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
-            </div>
-            {(docSearch || docOriginFilter || docTypeFilter) && (
-                <button
-                    onClick={() => { setDocSearch(''); setDocOriginFilter(''); setDocTypeFilter(''); }}
-                    className="px-4 py-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all flex items-center gap-2 border border-transparent hover:border-rose-200 dark:hover:border-rose-800"
-                    title={t('common.clearFilters')}
-                >
-                    <Filter size={16} />
-                    <XCircle size={14} className="-ml-1" />
-                </button>
-            )}
-        </div>
-    );
+
 
     return (
         <div className="flex flex-col h-full space-y-6 high-density">
@@ -4116,137 +4045,27 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                         </div>
                     </div>
                 )}
-                
+
                 {activeTab === 'documentos' && (
-                    <div className="flex-1 overflow-hidden flex flex-col min-h-0">
-                         {renderGlobalDocumentsFilterBar()}
-                         
-                         <div className="flex-1 overflow-y-auto pr-2 no-scrollbar">
-                            <AnimatePresence mode="wait">
-                                {isGlobalDocsLoading ? (
-                                    <motion.div 
-                                        key="loading"
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        exit={{ opacity: 0 }}
-                                        className="h-full flex flex-col items-center justify-center py-20"
-                                    >
-                                        <Loader2 size={48} className="text-indigo-600 animate-spin mb-4" />
-                                        <p className="text-slate-500 font-black uppercase tracking-widest text-[10px]">Consolidando documentos globais...</p>
-                                    </motion.div>
-                                ) : filteredGlobalDocuments.length === 0 ? (
-                                    <motion.div 
-                                        key="empty"
-                                        initial={{ opacity: 0, scale: 0.9 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        className="h-full flex flex-col items-center justify-center py-20 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[3rem] bg-slate-50/50 dark:bg-slate-900/50"
-                                    >
-                                        <FileText size={64} className="text-slate-200 dark:text-slate-800 mb-4" />
-                                        <h3 className="text-lg font-black text-slate-400 uppercase tracking-tighter">Nenhum documento encontrado</h3>
-                                        <p className="text-sm text-slate-400 font-medium mt-1">Tente ajustar seus filtros ou busca global.</p>
-                                    </motion.div>
-                                ) : (
-                                    <motion.div 
-                                        key="grid"
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-10"
-                                    >
-                                        {filteredGlobalDocuments.map((doc, idx) => (
-                                            <motion.div
-                                                key={doc.id}
-                                                initial={{ opacity: 0, y: 20 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ delay: idx * 0.05 }}
-                                                className="bg-white dark:bg-slate-950 p-5 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 hover:border-indigo-200 dark:hover:border-indigo-900/40 hover:shadow-2xl hover:shadow-indigo-500/10 transition-all group relative overflow-hidden"
-                                            >
-                                                <div className="flex justify-between items-start mb-6">
-                                                    <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 rounded-2xl group-hover:scale-110 transition-transform">
-                                                        <FileText size={20} />
-                                                    </div>
-                                                    <div className="flex items-center gap-1.5">
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); handleOpenNexoVisual('document', doc); }}
-                                                            className="p-1.5 text-indigo-600 bg-indigo-50 dark:bg-indigo-900/40 rounded-xl hover:bg-indigo-100 hover:scale-110 active:scale-95 transition-all shadow-sm border border-indigo-100 dark:border-indigo-800/50"
-                                                            title="Ver Mapa Mental (Nexo Visual)"
-                                                        >
-                                                            <Network size={14} />
-                                                        </button>
-                                                        <button 
-                                                            onClick={() => doc.file_url && window.open(doc.file_url, '_blank')}
-                                                            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all"
-                                                            title="Visualizar Documento"
-                                                        >
-                                                            <ExternalLink size={18} />
-                                                        </button>
-                                                    </div>
-                                                </div>
-
-                                                <div className="space-y-4">
-                                                    <div>
-                                                        <h4 className="font-black text-slate-800 dark:text-white text-sm line-clamp-1 group-hover:text-indigo-600 transition-colors capitalize">
-                                                            {doc.title}
-                                                        </h4>
-                                                        <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mt-1 block">
-                                                            {doc.document_type}
-                                                        </span>
-                                                    </div>
-
-                                                    <div className="pt-4 border-t border-slate-50 dark:border-slate-800/50 flex flex-col gap-3">
-                                                        {renderOriginBadge(doc.origin_type, doc.origin_name || 'N/A')}
-                                                        
-                                                        <div className="flex items-center justify-between mt-2">
-                                                            <div className="flex flex-col">
-                                                                <span className="text-[8px] font-black uppercase text-slate-400 leading-none mb-0.5 whitespace-nowrap">Data do Evento</span>
-                                                                <span className="text-[10px] font-bold text-slate-500">
-                                                                    {doc.event_date ? new Date(doc.event_date).toLocaleDateString('pt-BR') : 'Sem Data'}
-                                                                </span>
-                                                            </div>
-                                                            <div className="flex items-center gap-1">
-                                                                <button 
-                                                                    type="button" 
-                                                                    onClick={() => handleSummarizeDocument(doc)}
-                                                                    className="p-2 bg-slate-50 dark:bg-slate-800 text-amber-500 hover:text-amber-600 transition-all rounded-xl"
-                                                                    title="Resumo IA"
-                                                                >
-                                                                    <Sparkles size={16} />
-                                                                </button>
-                                                                {doc.file_url && (
-                                                                    <button 
-                                                                        onClick={() => handleDownloadFile(doc.file_url, doc.title || 'documento')}
-                                                                        className="p-2 bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all rounded-xl"
-                                                                        title="Fazer Download"
-                                                                    >
-                                                                        <Download size={16} />
-                                                                    </button>
-                                                                )}
-                                                                <button 
-                                                                    onClick={() => handleEditGlobalDocumentOrigin(doc)}
-                                                                    className="p-2 bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all rounded-xl"
-                                                                    title={doc.origin_type === 'lawsuit' ? 'Ir para o Processo' : doc.origin_type === 'asset' ? 'Ir para o Ativo' : 'Ir para o Societário'}
-                                                                >
-                                                                    <ArrowRight size={16} />
-                                                                </button>
-                                                                <button 
-                                                                    onClick={() => handleDeleteGlobalDocument(doc)}
-                                                                    className="p-2 bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all rounded-xl"
-                                                                    title="Excluir Documento"
-                                                                >
-                                                                    <Trash2 size={16} />
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </motion.div>
-                                        ))}
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-                         </div>
-                    </div>
+                    <DocumentsTab
+                        docSearch={docSearch}
+                        setDocSearch={setDocSearch}
+                        docOriginFilter={docOriginFilter}
+                        setDocOriginFilter={setDocOriginFilter}
+                        docTypeFilter={docTypeFilter}
+                        setDocTypeFilter={setDocTypeFilter}
+                        isGlobalDocsLoading={isGlobalDocsLoading}
+                        filteredGlobalDocuments={filteredGlobalDocuments}
+                        uniqueDocTypes={uniqueDocTypes}
+                        handleOpenNexoVisual={handleOpenNexoVisual}
+                        handleSummarizeDocument={handleSummarizeDocument}
+                        handleDownloadFile={handleDownloadFile}
+                        handleEditGlobalDocumentOrigin={handleEditGlobalDocumentOrigin}
+                        handleDeleteGlobalDocument={handleDeleteGlobalDocument}
+                    />
                 )}
             </div>
+
 
             <LawsuitModal
                 isLawsuitModalOpen={isLawsuitModalOpen}
@@ -4291,6 +4110,12 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 isLawsuitTimelineLoading={isLawsuitTimelineLoading}
                 formatCurrency={formatCurrency}
                 setAiLawsuitSummary={setAiLawsuitSummary}
+                isLawsuitDocModalOpen={isLawsuitDocModalOpen}
+                editingLawsuitDoc={editingLawsuitDoc}
+                handleSaveLawsuitDocument={handleSaveLawsuitDocument}
+                lawsuitDocUploadRef={lawsuitDocUploadRef}
+                lawsuitDocFile={lawsuitDocFile}
+                setLawsuitDocFile={setLawsuitDocFile}
             />
 
             <CrmModal
@@ -4464,1287 +4289,83 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             </AnimatePresence>
 
             {/* Asset Modal (Slide-over) */}
-            <AnimatePresence>
-                {isAssetModalOpen && (
-                    <div key="asset-modal-overlay" className="fixed inset-0 z-[300] flex justify-end overflow-hidden">
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm"
-                            onClick={() => { setIsAssetModalOpen(false); setAssetTimeline([]); setActiveAssetTab('basic'); }}
-                        />
-                        <motion.div
-                            initial={{ x: '100%' }}
-                            animate={{ x: 0 }}
-                            exit={{ x: '100%' }}
-                            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-                            className="relative w-full max-w-lg bg-white dark:bg-slate-900 shadow-[-20px_0_50px_-10px_rgba(0,0,0,0.1)] h-full flex flex-col border-l border-slate-200 dark:border-slate-800"
-                        >
-                            <div className="p-8 border-b border-slate-100 dark:border-slate-800 shrink-0 bg-slate-50/50 dark:bg-slate-800/50">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <h3 className="text-2xl font-black text-slate-800 dark:text-white tracking-tighter">
-                                            {editingAsset?.id ? 'Novo Ativo' : 'Novo Ativo'}
-                                        </h3>
-                                        <p className="text-[10px] text-slate-500 font-bold mt-1">
-                                            Gestão Patrimonial & Garantias
-                                        </p>
-                                    </div>
-                                    <button
-                                        onClick={() => { setIsAssetModalOpen(false); setAssetTimeline([]); setActiveAssetTab('basic'); }}
-                                        className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all"
-                                    >
-                                        <XCircle size={28} />
-                                    </button>
-                                </div>
-                                
-                                {/* Asset Modal Tabs */}
-                                <div className="mt-8">
-                                    <div className="flex bg-slate-100 dark:bg-slate-800/80 p-1 rounded-2xl">
-                                        <button
-                                            type="button"
-                                            onClick={() => setActiveAssetTab('basic')}
-                                            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black transition-all ${activeAssetTab === 'basic' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-xl' : 'text-slate-500 hover:text-slate-700'}`}
-                                        >
-                                            <Building2 size={14} /> Dados Básicos
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setActiveAssetTab('docs')}
-                                            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black transition-all ${activeAssetTab === 'docs' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-xl' : 'text-slate-500 hover:text-slate-700'}`}
-                                        >
-                                            <FileText size={14} /> Documentos
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setActiveAssetTab('timeline')}
-                                            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black transition-all ${activeAssetTab === 'timeline' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-xl' : 'text-slate-500 hover:text-slate-700'} ${!editingAsset?.id ? 'opacity-50' : ''}`}
-                                        >
-                                            <History size={14} /> Histórico {!editingAsset?.id && '🔒'}
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <form onSubmit={handleSaveAsset} className="flex-1 flex flex-col overflow-hidden">
-                                <div className="flex-1 overflow-y-auto no-scrollbar p-8">
-                                    {activeAssetTab === 'basic' ? (
-                                        <div className="space-y-6 animate-in fade-in duration-500">
-                                        <div>
-                                            <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Título do Ativo *</label>
-                                            <input
-                                                type="text"
-                                                required
-                                                value={editingAsset?.title || ''}
-                                                onChange={e => setEditingAsset({ ...editingAsset, title: e.target.value })}
-                                                className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 font-bold transition-all"
-                                                placeholder="Ex: Apartamento Copacabana, Hilux 2023..."
-                                            />
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Tipo de Ativo</label>
-                                                <div className="relative">
-                                                    <select
-                                                        value={editingAsset?.asset_type || 'Outros'}
-                                                        onChange={e => setEditingAsset({ ...editingAsset, asset_type: e.target.value as any })}
-                                                        className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 font-bold appearance-none cursor-pointer"
-                                                    >
-                                                        <option value="Imóvel">Imóvel</option>
-                                                        <option value="Veículo">Veículo</option>
-                                                        <option value="Conta Bancária">Conta Bancária</option>
-                                                        <option value="Ação Judicial">Ação Judicial</option>
-                                                        <option value="Empresa / Quotas">Empresa / Quotas</option>
-                                                        <option value="Outros">Outros</option>
-                                                    </select>
-                                                    <ChevronDown size={16} className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Status</label>
-                                                <div className="relative">
-                                                    <select
-                                                        value={editingAsset?.status || 'Ativo'}
-                                                        onChange={e => setEditingAsset({ ...editingAsset, status: e.target.value as any })}
-                                                        className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 font-bold appearance-none cursor-pointer"
-                                                    >
-                                                        <option value="Ativo">Ativo</option>
-                                                        <option value="Bloqueado">Bloqueado</option>
-                                                        <option value="Vendido">Vendido</option>
-                                                        <option value="Em Garantia">Em Garantia</option>
-                                                        <option value="Alienado">Alienado</option>
-                                                    </select>
-                                                    <ChevronDown size={16} className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">{t('modules.nexus.modals.justification.label')}</label>
-                                            <input
-                                                value={justificationText}
-                                                onChange={e => setJustificationText(e.target.value)}
-                                                placeholder={t('modules.nexus.modals.justification.modalPlaceholder')}
-                                                className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white font-bold text-xs"
-                                            />
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Valor Estimado (R$)</label>
-                                                <input
-                                                    type="text"
-                                                    value={editingAsset?.value ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(editingAsset.value).replace('R$', '').trim() : ''}
-                                                    onChange={e => {
-                                                        const rawValue = e.target.value.replace(/\D/g, '');
-                                                        if (!rawValue) {
-                                                            setEditingAsset({ ...editingAsset, value: undefined });
-                                                            return;
-                                                        }
-                                                        setEditingAsset({ ...editingAsset, value: parseInt(rawValue, 10) / 100 });
-                                                    }}
-                                                    className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 font-bold"
-                                                    placeholder="0,00"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Doc / Registro / Matrícula</label>
-                                                <input
-                                                    type="text"
-                                                    value={editingAsset?.registration_number || ''}
-                                                    onChange={e => setEditingAsset({ ...editingAsset, registration_number: e.target.value })}
-                                                    className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 font-bold"
-                                                    placeholder="Ex: Matrícula 1234..."
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-1 gap-4">
-                                            <div>
-                                                <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Vincular a Pessoa (Cliente/Proprietário)</label>
-                                                <div className="relative">
-                                                    <select
-                                                        value={editingAsset?.person_id || ''}
-                                                        onChange={e => setEditingAsset({ ...editingAsset, person_id: e.target.value })}
-                                                        className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 font-bold appearance-none cursor-pointer text-sm"
-                                                    >
-                                                        <option value="">Nenhum</option>
-                                                        {persons.map(p => (
-                                                            <option key={p.id} value={p.id}>{p.full_name}</option>
-                                                        ))}
-                                                    </select>
-                                                    <ChevronDown size={16} className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                                                </div>
-                                            </div>
-
-                                            <div>
-                                                <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Vincular a Processo</label>
-                                                <div className="relative">
-                                                    <select
-                                                        value={editingAsset?.lawsuit_id || ''}
-                                                        onChange={e => setEditingAsset({ ...editingAsset, lawsuit_id: e.target.value })}
-                                                        className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 font-bold appearance-none cursor-pointer text-sm"
-                                                    >
-                                                        <option value="">Nenhum processo referenciado</option>
-                                                        {lawsuits.map(law => (
-                                                            <option key={law.id} value={law.id}>{law.cnj_number || law.case_title}</option>
-                                                        ))}
-                                                    </select>
-                                                    <ChevronDown size={16} className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Descrição / Notas</label>
-                                            <textarea
-                                                rows={4}
-                                                value={editingAsset?.description || ''}
-                                                onChange={e => setEditingAsset({ ...editingAsset, description: e.target.value })}
-                                                className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-600 font-bold resize-none"
-                                            />
-                                        </div>
-                                    </div>
-                                    ) : activeAssetTab === 'timeline' ? (
-                                        <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-500">
-                                            <div className="flex items-center justify-between mb-8">
-                                                <div>
-                                                    <h4 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Histórico do Ativo</h4>
-                                                    <p className="text-xs text-slate-500 font-bold">Auditoria de movimentações e garantias</p>
-                                                </div>
-                                                <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 rounded-2xl">
-                                                    <History size={24} />
-                                                </div>
-                                            </div>
-
-                                            <div className="relative">
-                                                {!editingAsset?.id ? (
-                                                    <BlockedTabOverlay message="O histórico de auditoria do patrimônio será liberado após o registro inicial do ativo." />
-                                                ) : isAssetTimelineLoading ? (
-                                                    <div className="py-20 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[2.5rem] bg-slate-50/50 dark:bg-slate-900/50">
-                                                        <Loader2 size={48} className="text-indigo-500 mb-4 animate-spin" />
-                                                        <p className="text-slate-500 font-black uppercase tracking-widest text-[10px]">Carregando histórico...</p>
-                                                    </div>
-                                                ) : assetTimeline.length === 0 ? (
-                                                    <div className="py-20 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[2.5rem] bg-slate-50/50 dark:bg-slate-900/50">
-                                                        <Clock size={48} className="text-slate-300 mb-4" />
-                                                        <p className="text-slate-400 font-bold italic">Nenhum evento registrado ainda.</p>
-                                                    </div>
-                                                ) : assetTimeline.map((entry, idx) => (
-                                                    <div key={entry.id} className="relative pl-10 pb-10 group">
-                                                        {idx < assetTimeline.length - 1 && (
-                                                            <div className="absolute left-[15px] top-8 bottom-0 w-[2px] bg-slate-100 dark:bg-slate-800 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/30 transition-colors" />
-                                                        )}
-                                                        
-                                                        <div className={`absolute left-0 top-0 w-8 h-8 rounded-2xl z-10 flex items-center justify-center shadow-sm border ${
-                                                            entry.action === 'STATUS_CHANGE' 
-                                                                ? 'bg-amber-50 border-amber-200 text-amber-600 dark:bg-amber-900/20 dark:border-amber-800' 
-                                                                : entry.action === 'CREATE'
-                                                                ? 'bg-emerald-50 border-emerald-200 text-emerald-600 dark:bg-emerald-900/20 dark:border-emerald-800'
-                                                                : 'bg-indigo-50 border-indigo-200 text-indigo-600 dark:bg-indigo-900/20 dark:border-indigo-800'
-                                                        }`}>
-                                                            {entry.action === 'STATUS_CHANGE' ? <Zap size={14} /> : entry.action === 'CREATE' ? <Plus size={14} /> : <Clock size={14} />}
-                                                        </div>
-
-                                                        <div className="bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 p-6 rounded-[2rem] shadow-sm hover:shadow-md transition-all hover:border-indigo-200 dark:hover:border-indigo-900/40">
-                                                            <div className="flex justify-between items-center mb-3">
-                                                                <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${
-                                                                    entry.action === 'STATUS_CHANGE' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'
-                                                                }`}>
-                                                                    {entry.action}
-                                                                </span>
-                                                                <span className="text-[10px] font-bold text-slate-400">
-                                                                    {entry.created_at ? new Date(entry.created_at).toLocaleString('pt-BR') : 'Agora'}
-                                                                </span>
-                                                            </div>
-                                                            <p className="text-sm font-bold text-slate-700 dark:text-slate-200 leading-relaxed uppercase tracking-tight">
-                                                                {entry.description}
-                                                            </p>
-                                                            <div className="mt-4 flex items-center gap-2">
-                                                                <div className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
-                                                                    <UserIcon size={10} className="text-slate-500" />
-                                                                </div>
-                                                                <span className="text-[10px] text-slate-500 font-bold">Por: <span className="text-indigo-600 dark:text-indigo-400">
-                                                                    {(() => {
-                                                                        if (!entry.user_id) return entry.user_name || 'Sistema';
-                                                                        const member = team.find(m => m.id === entry.user_id);
-                                                                        if (member) return member.full_name;
-                                                                        if (entry.user_id === user.id) return user.name;
-                                                                        return entry.user_name || 'Sistema';
-                                                                    })()}
-                                                                </span></span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
-                                            <div className="flex items-center justify-between">
-                                                <div>
-                                                    <h4 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Documentos do Ativo</h4>
-                                                    <p className="text-xs text-slate-500 font-bold">Matrículas, CRLVs e Avaliações</p>
-                                                </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => { setEditingAssetDoc({ document_type: 'Matrícula', event_date: new Date().toISOString() }); setIsAssetDocModalOpen(true); }}
-                                                    className="p-4 bg-indigo-600 text-white rounded-2xl flex items-center gap-2 hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20"
-                                                    title="Novo Documento"
-                                                >
-                                                    <Plus size={20} />
-                                                    <span className="text-[10px] font-black uppercase tracking-widest">Novo</span>
-                                                </button>
-                                            </div>
-
-                                            <div className="grid grid-cols-1 gap-4">
-                                                {assetDocuments.length === 0 && pendingAssetDocuments.length === 0 ? (
-                                                    <div className="py-20 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[2.5rem] bg-slate-50/50 dark:bg-slate-900/50">
-                                                        <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 mb-4">
-                                                            <FileText size={32} />
-                                                        </div>
-                                                        <p className="text-slate-500 font-bold">Nenhum documento anexado ao ativo</p>
-                                                        <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">Anexe certidões, laudos ou fotos</p>
-                                                    </div>
-                                                ) : (
-                                                    <>
-                                                        {/* Pending Documents */}
-                                                        {pendingAssetDocuments.map((pending, idx) => (
-                                                            <div key={`pending-${idx}`} className="group bg-amber-50/30 dark:bg-amber-900/10 p-6 rounded-[2.5rem] border border-amber-200/50 dark:border-amber-800/50 flex items-center justify-between shadow-sm animate-in slide-in-from-left-4 duration-300">
-                                                                <div className="flex items-center gap-5">
-                                                                    <div className="w-14 h-14 rounded-2xl bg-amber-100 dark:bg-amber-900/40 text-amber-600 flex items-center justify-center shadow-inner">
-                                                                        <FileText size={28} />
-                                                                    </div>
-                                                                    <div>
-                                                                        <h5 className="font-black text-slate-800 dark:text-white uppercase tracking-tighter text-sm italic">{pending.docData.title}</h5>
-                                                                        <div className="flex items-center gap-3 mt-1">
-                                                                            <span className="px-2 py-0.5 bg-amber-100 dark:bg-amber-900/60 text-[8px] font-black text-amber-700 dark:text-amber-400 rounded-lg uppercase tracking-widest animate-pulse">
-                                                                                Aguardando Salvamento
-                                                                            </span>
-                                                                            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">
-                                                                                {pending.docData.document_type}
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div className="flex items-center gap-2">
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => setPendingAssetDocuments(prev => prev.filter((_, i) => i !== idx))}
-                                                                        className="p-3 text-rose-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-xl transition-all"
-                                                                        title="Remover da fila"
-                                                                    >
-                                                                        <Trash2 size={18} />
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        ))}
-
-                                                        {/* Saved Documents */}
-                                                        {assetDocuments.map(doc => (
-                                                            <div key={doc.id} className="group bg-slate-50 dark:bg-slate-950 p-6 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 hover:border-indigo-500/30 transition-all flex items-center justify-between shadow-sm hover:shadow-xl hover:shadow-indigo-500/5">
-                                                                <div className="flex items-center gap-5">
-                                                                    <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform">
-                                                                        <FileText size={28} />
-                                                                    </div>
-                                                                    <div>
-                                                                        <h5 className="font-black text-slate-800 dark:text-white uppercase tracking-tighter text-sm">{doc.title}</h5>
-                                                                        <div className="flex items-center gap-3 mt-1">
-                                                                            <span className="px-2 py-0.5 bg-slate-200 dark:bg-slate-800 text-[9px] font-black text-slate-600 dark:text-slate-400 rounded-lg uppercase tracking-widest">
-                                                                                {doc.document_type}
-                                                                            </span>
-                                                                            {doc.event_date && (
-                                                                                <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1">
-                                                                                    <Calendar size={10} /> {new Date(doc.event_date).toLocaleDateString('pt-BR')}
-                                                                                </span>
-                                                                            )}
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div className="flex items-center gap-2">
-                                                                    {doc.file_url && (
-                                                                        <button
-                                                                            onClick={() => handleDownloadFile(doc.file_url!, doc.title || 'documento')}
-                                                                            className="p-3 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-xl transition-all"
-                                                                            title="Fazer Download"
-                                                                        >
-                                                                            <Download size={18} />
-                                                                        </button>
-                                                                    )}
-                                                                    <button 
-                                                                        type="button" 
-                                                                        onClick={() => handleSummarizeDocument(doc)}
-                                                                        className="p-3 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/30 rounded-xl transition-all"
-                                                                        title="Resumo IA"
-                                                                    >
-                                                                        <Sparkles size={18} />
-                                                                    </button>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => { setEditingAssetDoc(doc); setIsAssetDocModalOpen(true); }}
-                                                                        className="p-3 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 rounded-xl transition-all"
-                                                                    >
-                                                                        <Pencil size={18} />
-                                                                    </button>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => handleDeleteAssetDocument(doc.id)}
-                                                                        className="p-3 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-xl transition-all"
-                                                                    >
-                                                                        <Trash2 size={18} />
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </>
-                                                )}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {(activeAssetTab !== 'docs' || !editingAsset?.id) && (
-                                    <div className="p-8 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0 flex gap-4">
-                                        <button
-                                            type="button"
-                                            onClick={() => { setIsAssetModalOpen(false); setActiveAssetTab('basic'); }}
-                                            className="flex-1 px-8 py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-200 transition-all text-xs"
-                                        >
-                                            Cancelar
-                                        </button>
-                                        <button
-                                            type="submit"
-                                            className="flex-[2] px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-600/30 transition-all flex items-center justify-center gap-2 text-xs"
-                                        >
-                                            <Save size={20} /> {editingAsset?.id ? 'Salvar Ativo' : 'Criar Ativo Agora'}
-                                        </button>
-                                    </div>
-                                )}
-                            </form>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
+            <AssetModal
+                isOpen={isAssetModalOpen}
+                onClose={() => { setIsAssetModalOpen(false); setActiveAssetTab('basic'); }}
+                editingAsset={editingAsset}
+                setEditingAsset={setEditingAsset}
+                activeTab={activeAssetTab}
+                setActiveTab={setActiveAssetTab}
+                handleSaveAsset={handleSaveAsset}
+                persons={persons}
+                lawsuits={lawsuits}
+                justificationText={justificationText}
+                setJustificationText={setJustificationText}
+                assetTimeline={assetTimeline}
+                setAssetTimeline={setAssetTimeline}
+                isTimelineLoading={isAssetTimelineLoading}
+                team={team}
+                user={user}
+                assetDocuments={assetDocuments}
+                pendingAssetDocuments={pendingAssetDocuments}
+                setPendingAssetDocuments={setPendingAssetDocuments}
+                isAssetDocModalOpen={isAssetDocModalOpen}
+                setIsAssetDocModalOpen={setIsAssetDocModalOpen}
+                editingAssetDoc={editingAssetDoc}
+                setEditingAssetDoc={setEditingAssetDoc}
+                handleSaveAssetDocument={handleSaveAssetDocument}
+                assetDocUploadRef={assetDocUploadRef}
+                assetDocFile={assetDocFile}
+                setAssetDocFile={setAssetDocFile}
+                handleDownloadFile={handleDownloadFile}
+                handleSummarizeDocument={handleSummarizeDocument}
+                handleDeleteAssetDocument={handleDeleteAssetDocument}
+            />
 
             {/* Corporate Entity Modal (The "Big One") */}
-            <AnimatePresence>
-                {isEntityModalOpen && (
-                    <div key="entity-modal-overlay" className="fixed inset-0 z-[300] flex justify-end overflow-hidden">
-                        <motion.div
-                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                            className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm"
-                            onClick={() => { setIsEntityModalOpen(false); setActiveEntityTab('basic'); }}
-                        />
-                        <motion.div
-                            initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
-                            transition={{ type: 'spring', damping: 35, stiffness: 350 }}
-                            className="relative w-full max-w-5xl bg-white dark:bg-slate-900 shadow-2xl h-full flex flex-col border-l border-slate-200 dark:border-slate-800"
-                        >
-                            {/* Header */}
-                            <div className="p-10 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
-                                <div className="flex items-center justify-between mb-8">
-                                    <div>
-                                        <h3 className="text-3xl font-black text-slate-800 dark:text-white tracking-tighter">
-                                            {editingEntity?.id ? 'Nova Entidade' : 'Nova Entidade'}
-                                        </h3>
-                                        <p className="text-[10px] text-slate-500 font-bold mt-1 flex items-center gap-2">
-                                            <Shield size={12} className="text-indigo-600" /> Governança & Estrutura Societária
-                                        </p>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        {editingEntity?.id && (
-                                            <button
-                                                onClick={() => handleOpenNexoVisual('corporate', editingEntity)}
-                                                className="p-2 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/20 dark:hover:bg-indigo-900/40 rounded-2xl transition-all shadow-sm"
-                                                title="Ver Mapa Mental (Nexo Visual)"
-                                            >
-                                                <Network size={28} className="p-1" />
-                                            </button>
-                                        )}
-                                        <button
-                                            onClick={() => { setIsEntityModalOpen(false); setActiveEntityTab('basic'); }}
-                                            className="p-3 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-2xl transition-all"
-                                        >
-                                            <XCircle size={32} />
-                                        </button>
-                                    </div>
-                                </div>
+            <CorporateEntityModal
+                isOpen={isEntityModalOpen}
+                onClose={() => { setIsEntityModalOpen(false); setActiveEntityTab('basic'); }}
+                editingEntity={editingEntity}
+                setEditingEntity={setEditingEntity}
+                activeTab={activeEntityTab}
+                setActiveTab={setActiveEntityTab}
+                handleSaveEntity={handleSaveEntity}
+                handleOpenNexoVisual={handleOpenNexoVisual}
+                shareholders={shareholders}
+                corporateDocuments={corporateDocuments}
+                pendingCorporateDocuments={pendingCorporateDocuments}
+                setPendingCorporateDocuments={setPendingCorporateDocuments}
+                corporateTimeline={corporateTimeline}
+                isTimelineLoading={isCorporateTimelineLoading}
+                team={team}
+                user={user}
+                justificationText={justificationText}
+                setJustificationText={setJustificationText}
+                handleDeleteShareholder={handleDeleteShareholder}
+                handleDeleteDocument={handleDeleteDocument}
+                handleDownloadFile={handleDownloadFile}
+                handleSummarizeDocument={handleSummarizeDocument}
+                isShareholderModalOpen={isShareholderModalOpen}
+                setIsShareholderModalOpen={setIsShareholderModalOpen}
+                editingShareholder={editingShareholder}
+                setEditingShareholder={setEditingShareholder}
+                handleSaveShareholder={handleSaveShareholder}
+                isDocumentModalOpen={isDocumentModalOpen}
+                setIsDocumentModalOpen={setIsDocumentModalOpen}
+                editingDocument={editingDocument}
+                setEditingDocument={setEditingDocument}
+                handleSaveDocument={handleSaveDocument}
+                corporateDocUploadRef={corporateDocUploadRef}
+                setCorporateDocFile={setCorporateDocFile}
+                ENTITY_TYPES={ENTITY_TYPES}
+                TAX_REGIMES={TAX_REGIMES}
+                ENTITY_STATUSES={ENTITY_STATUSES}
+                formatCurrency={formatCurrency}
+            />
 
-                                {/* Premium Tabs */}
-                                <div className="flex bg-slate-100 dark:bg-slate-800/80 p-1.5 rounded-[2.5rem] w-full">
-                                    {[
-                                        { id: 'basic', label: 'Dados Gerais', icon: Building2 },
-                                        { id: 'qsa', label: 'Quadro Societário', icon: Users, isLocked: !editingEntity?.id && shareholders.length === 0 },
-                                        { id: 'docs', label: 'Documentos', icon: FileText },
-                                        { id: 'timeline', label: 'Histórico', icon: History, isLocked: !editingEntity?.id },
-                                    ].map(tab => (
-                                        <button
-                                            key={tab.id}
-                                            onClick={() => setActiveEntityTab(tab.id as any)}
-                                            className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-3xl text-xs font-black transition-all whitespace-nowrap ${activeEntityTab === tab.id ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-xl' : 'text-slate-500 hover:text-slate-700'} ${tab.isLocked ? 'opacity-50' : ''}`}
-                                        >
-                                            <tab.icon size={16} /> {tab.label} {tab.isLocked && '🔒'}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
 
-                            <form onSubmit={handleSaveEntity} className="flex-1 flex flex-col overflow-hidden">
-                                <div className="flex-1 overflow-y-auto no-scrollbar p-10">
-                                    {activeEntityTab === 'basic' && (
-                                        <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
-                                            <div className="grid grid-cols-1 gap-6">
-                                                <div>
-                                                    <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Razão Social *</label>
-                                                    <input
-                                                        required value={editingEntity?.legal_name || ''}
-                                                        onChange={e => setEditingEntity({ ...editingEntity, legal_name: e.target.value })}
-                                                        className="w-full px-8 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl outline-none focus:ring-4 focus:ring-indigo-600/10 font-black transition-all text-lg"
-                                                        placeholder="Ex: HOLDING PATRIMONIAL LTDA"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Nome Fantasia</label>
-                                                    <input
-                                                        value={editingEntity?.trading_name || ''}
-                                                        onChange={e => setEditingEntity({ ...editingEntity, trading_name: e.target.value })}
-                                                        className="w-full px-8 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl outline-none focus:ring-4 focus:ring-indigo-600/10 font-bold"
-                                                        placeholder="Ex: NOME DO GRUPO"
-                                                    />
-                                                </div>
-                                            </div>
 
-                                            <div className="grid grid-cols-2 gap-6">
-                                                <div>
-                                                    <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">CNPJ</label>
-                                                    <input
-                                                        value={editingEntity?.cnpj || ''}
-                                                        onChange={e => setEditingEntity({ ...editingEntity, cnpj: e.target.value })}
-                                                        className="w-full px-8 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl outline-none font-black text-indigo-600"
-                                                        placeholder="00.000.000/0000-00"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Inscrição Estadual</label>
-                                                    <input
-                                                        value={editingEntity?.state_registration || ''}
-                                                        onChange={e => setEditingEntity({ ...editingEntity, state_registration: e.target.value })}
-                                                        className="w-full px-8 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl outline-none"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <div className="grid grid-cols-3 gap-6">
-                                                <div>
-                                                    <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Tipo</label>
-                                                    <select
-                                                        value={editingEntity?.entity_type || 'LTDA'}
-                                                        onChange={e => setEditingEntity({ ...editingEntity, entity_type: e.target.value as any })}
-                                                        className="w-full px-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl outline-none font-bold"
-                                                    >
-                                                        {ENTITY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                                                    </select>
-                                                </div>
-                                                <div>
-                                                    <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Regime Tributário</label>
-                                                    <select
-                                                        value={editingEntity?.tax_regime || ''}
-                                                        onChange={e => setEditingEntity({ ...editingEntity, tax_regime: e.target.value as any })}
-                                                        className="w-full px-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl outline-none font-bold"
-                                                    >
-                                                        <option value="">Selecione...</option>
-                                                        {TAX_REGIMES.map(r => <option key={r} value={r}>{r}</option>)}
-                                                    </select>
-                                                </div>
-                                                <div>
-                                                    <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Status</label>
-                                                    <select
-                                                        value={editingEntity?.status || 'Ativa'}
-                                                        onChange={e => setEditingEntity({ ...editingEntity, status: e.target.value as any })}
-                                                        className="w-full px-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl outline-none font-bold"
-                                                    >
-                                                        {ENTITY_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-                                                    </select>
-                                                </div>
-                                            </div>
-
-                                            <div>
-                                                <label className="block text-[11px] font-bold text-slate-400 mb-2 px-1">Justificativa da Mudança (Opcional)</label>
-                                                <input
-                                                    value={justificationText}
-                                                    onChange={e => setJustificationText(e.target.value)}
-                                                    placeholder="Motivo da alteração de status..."
-                                                    className="w-full px-8 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl outline-none focus:ring-4 focus:ring-indigo-600/10 font-bold text-xs"
-                                                />
-                                            </div>
-
-                                            <div>
-                                                <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Capital Social Total (R$)</label>
-                                                <div className="relative">
-                                                    <div className="absolute left-8 top-1/2 -translate-y-1/2 text-slate-400 font-bold">R$</div>
-                                                    <input
-                                                        type="text"
-                                                        value={editingEntity?.total_capital ? formatCurrency(editingEntity.total_capital) : ''}
-                                                        onChange={e => {
-                                                            const raw = e.target.value.replace(/\D/g, '');
-                                                            setEditingEntity({ ...editingEntity, total_capital: raw ? parseInt(raw, 10) / 100 : 0 });
-                                                        }}
-                                                        className="w-full pl-16 pr-8 py-5 bg-indigo-50/50 dark:bg-indigo-950/20 border-2 border-indigo-100 dark:border-indigo-900/50 rounded-3xl outline-none font-black text-xl text-indigo-600"
-                                                        placeholder="0,00"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {activeEntityTab === 'qsa' && (
-                                        <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
-                                            <div className="flex items-center justify-between">
-                                                <div>
-                                                    <h4 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Composição do Capital</h4>
-                                                    <p className="text-xs text-slate-500 font-bold">Sócios, acionistas e participações diretas</p>
-                                                </div>
-                                                {editingEntity?.id && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => { setEditingShareholder({ shareholder_type: 'Person', ownership_percentage: 0 }); setIsShareholderModalOpen(true); }}
-                                                        className="p-4 bg-slate-900 text-white dark:bg-white dark:text-slate-900 rounded-2xl flex items-center gap-2 hover:scale-105 transition-all shadow-lg active:scale-95"
-                                                        title="Adicionar Sócio"
-                                                    >
-                                                        <Plus size={20} />
-                                                    </button>
-                                                )}
-                                            </div>
-
-                                            {!editingEntity?.id && shareholders.length === 0 ? (
-                                                <BlockedTabOverlay message="O Quadro Societário requer que a empresa exista primeiro na base de dados." />
-                                            ) : (
-                                                <div className="bg-slate-50 dark:bg-slate-800/30 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 overflow-hidden">
-                                                <table className="w-full text-left">
-                                                    <thead>
-                                                        <tr className="bg-slate-100/50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
-                                                            <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Sócio</th>
-                                                            <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Participação (%)</th>
-                                                            <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Cotas/Ações</th>
-                                                            <th className="px-8 py-5 text-right"></th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                                        {shareholders.length === 0 ? (
-                                                            <tr>
-                                                                <td colSpan={4} className="px-8 py-12 text-center text-slate-400 font-bold italic">Nenhum sócio vinculado a esta entidade.</td>
-                                                            </tr>
-                                                        ) : shareholders.map(s => (
-                                                            <tr key={s.id} className="group hover:bg-white dark:hover:bg-slate-800/50 transition-all">
-                                                                <td className="px-8 py-6 font-bold text-slate-700 dark:text-slate-200">
-                                                                    <div className="flex items-center gap-3">
-                                                                        <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 rounded-xl flex items-center justify-center font-black">
-                                                                            {s.shareholder_name?.charAt(0)}
-                                                                        </div>
-                                                                        <div>
-                                                                            <span className="block">{s.shareholder_name}</span>
-                                                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{s.shareholder_type === 'Person' ? 'Pessoa Física' : 'Holding / PJ'}</span>
-                                                                        </div>
-                                                                    </div>
-                                                                </td>
-                                                                <td className="px-8 py-6">
-                                                                    <div className="flex items-center gap-3">
-                                                                        <div className="flex-1 h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden w-24">
-                                                                            <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${s.ownership_percentage}%` }} />
-                                                                        </div>
-                                                                        <span className="font-black text-indigo-600">{s.ownership_percentage}%</span>
-                                                                    </div>
-                                                                </td>
-                                                                <td className="px-8 py-6 font-bold text-slate-600 dark:text-slate-400">
-                                                                    {new Intl.NumberFormat('pt-BR').format(s.shares_count || 0)}
-                                                                </td>
-                                                                <td className="px-8 py-6 text-right">
-                                                                    <div className="flex items-center justify-end gap-1">
-                                                                        <button 
-                                                                            type="button"
-                                                                            onClick={() => { setEditingShareholder(s); setIsShareholderModalOpen(true); }}
-                                                                            className="p-2 text-slate-300 hover:text-indigo-500 transition-colors"
-                                                                        >
-                                                                            <Pencil size={16} />
-                                                                        </button>
-                                                                        <button 
-                                                                            type="button"
-                                                                            onClick={() => handleDeleteShareholder(s.id)}
-                                                                            className="p-2 text-slate-300 hover:text-rose-500 transition-colors"
-                                                                        >
-                                                                            <Trash2 size={16} />
-                                                                        </button>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-
-                                    {activeEntityTab === 'docs' && (
-                                        <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
-                                            <div className="flex items-center justify-between">
-                                                <div>
-                                                    <h4 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Atos & Contratos</h4>
-                                                    <p className="text-xs text-slate-500 font-bold">Atas, Estatutos e Documentos de Governança</p>
-                                                </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => { setEditingDocument({ document_type: 'Contrato Social', event_date: new Date().toISOString() }); setIsDocumentModalOpen(true); }}
-                                                    className="p-4 bg-indigo-600 text-white rounded-2xl flex items-center gap-2 hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20"
-                                                >
-                                                    <Plus size={20} /> Novo Documento
-                                                </button>
-                                            </div>
-
-                                            <div className="grid grid-cols-2 gap-4">
-                                                {corporateDocuments.length === 0 && pendingCorporateDocuments.length === 0 ? (
-                                                    <div className="col-span-full py-20 text-center text-slate-400 font-bold italic border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-[2.5rem]">
-                                                        Nenhum documento anexado.
-                                                    </div>
-                                                ) : (
-                                                    <>
-                                                        {/* Pending Documents */}
-                                                        {pendingCorporateDocuments.map((pending, idx) => (
-                                                            <div key={`pending-corp-${idx}`} className="bg-amber-50/30 dark:bg-amber-900/10 p-6 rounded-3xl border border-amber-200/50 dark:border-amber-800/50 hover:border-amber-500/30 transition-all group animate-in zoom-in-95 duration-300">
-                                                                <div className="flex justify-between items-start mb-4">
-                                                                    <div className="p-3 bg-white dark:bg-slate-800 rounded-2xl text-amber-600 shadow-sm animate-pulse">
-                                                                        <FileText size={20} />
-                                                                    </div>
-                                                                    <span className="text-[8px] font-black text-amber-700 bg-amber-100 dark:bg-amber-900/60 px-3 py-1 rounded-full border border-amber-200 uppercase tracking-widest">
-                                                                        Pendente
-                                                                    </span>
-                                                                </div>
-                                                                <h5 className="font-bold text-slate-800 dark:text-white text-sm mb-1 line-clamp-1 italic">{pending.docData.title}</h5>
-                                                                <p className="text-[10px] text-slate-500 font-bold mb-4">Tipo: {pending.docData.document_type || 'N/I'}</p>
-                                                                
-                                                                <div className="flex items-center justify-end">
-                                                                    <button 
-                                                                        type="button"
-                                                                        onClick={() => setPendingCorporateDocuments(prev => prev.filter((_, i) => i !== idx))}
-                                                                        className="p-2 text-rose-400 hover:text-rose-600 transition-colors"
-                                                                        title="Remover"
-                                                                    >
-                                                                        <Trash2 size={16} />
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        ))}
-
-                                                        {/* Saved Documents */}
-                                                        {corporateDocuments.map(doc => (
-                                                            <div key={doc.id} className="bg-slate-50 dark:bg-slate-800/30 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 hover:border-indigo-200 transition-all group">
-                                                                <div className="flex justify-between items-start mb-4">
-                                                                    <div className="p-3 bg-white dark:bg-slate-800 rounded-2xl text-indigo-600 shadow-sm">
-                                                                        <FileText size={20} />
-                                                                    </div>
-                                                                    <span className="text-[9px] font-black text-slate-400 capitalize bg-white dark:bg-slate-800 px-3 py-1 rounded-full border border-slate-100 dark:border-slate-700">
-                                                                        {doc.document_type}
-                                                                    </span>
-                                                                </div>
-                                                                <h5 className="font-bold text-slate-800 dark:text-white text-sm mb-1 line-clamp-1">{doc.title}</h5>
-                                                                <p className="text-[10px] text-slate-500 font-bold mb-4">Referência: {doc.event_date ? new Date(doc.event_date).toLocaleDateString() : 'N/I'}</p>
-                                                                
-                                                                    <div className="flex items-center gap-1">
-                                                                        <button 
-                                                                            type="button" 
-                                                                            onClick={() => handleSummarizeDocument(doc)}
-                                                                            className="p-2 text-amber-500 hover:text-amber-600 transition-colors"
-                                                                            title="Resumo IA"
-                                                                        >
-                                                                            <Sparkles size={16} />
-                                                                        </button>
-                                                                        <button 
-                                                                            type="button"
-                                                                            onClick={() => { setEditingDocument(doc); setIsDocumentModalOpen(true); }}
-                                                                            className="text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:underline px-2"
-                                                                        >
-                                                                        Editar
-                                                                    </button>
-                                                                    {doc.file_url && (
-                                                                        <button 
-                                                                            onClick={() => handleDownloadFile(doc.file_url!, doc.title || 'documento')}
-                                                                            className="p-2 text-slate-400 hover:text-indigo-600 transition-colors"
-                                                                            title="Fazer Download"
-                                                                        >
-                                                                            <Download size={16} />
-                                                                        </button>
-                                                                    )}
-                                                                    <button 
-                                                                        type="button"
-                                                                        onClick={() => handleDeleteDocument(doc.id)}
-                                                                        className="p-2 text-slate-300 hover:text-rose-500 transition-all"
-                                                                    >
-                                                                        <Trash2 size={16} />
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </>
-                                                )}
-                                            </div>
-                                    </div>
-                                    )}
-
-                                    {activeEntityTab === 'timeline' && (
-                                        <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
-                                            <div className="flex items-center justify-between mb-8">
-                                                <div>
-                                                    <h4 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Histórico da Entidade</h4>
-                                                    <p className="text-xs text-slate-500 font-bold">Trilha de auditoria e registros de governança</p>
-                                                </div>
-                                                <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 rounded-3xl">
-                                                    <History size={28} />
-                                                </div>
-                                            </div>
-
-                                            <div className="relative">
-                                                {!editingEntity?.id ? (
-                                                    <BlockedTabOverlay message="O histórico será gerado após o registro da entidade." />
-                                                ) : isCorporateTimelineLoading ? (
-                                                    <div className="py-20 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[3rem] bg-slate-50/50 dark:bg-slate-900/50">
-                                                        <Loader2 size={48} className="text-indigo-500 mb-4 animate-spin" />
-                                                        <p className="text-slate-500 font-black uppercase tracking-widest text-[10px]">Carregando histórico...</p>
-                                                    </div>
-                                                ) : corporateTimeline.length === 0 ? (
-                                                    <div className="py-20 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[3rem] bg-slate-50/50 dark:bg-slate-900/50">
-                                                        <Clock size={48} className="text-slate-300 mb-4" />
-                                                        <p className="text-slate-400 font-bold italic">Nenhum evento registrado ainda.</p>
-                                                    </div>
-                                                ) : corporateTimeline.map((entry, idx) => (
-                                                    <div key={entry.id} className="relative pl-12 pb-12 group">
-                                                        {idx < corporateTimeline.length - 1 && (
-                                                            <div className="absolute left-[19px] top-10 bottom-0 w-[2px] bg-slate-100 dark:bg-slate-800 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/30 transition-colors" />
-                                                        )}
-                                                        
-                                                        <div className={`absolute left-0 top-0 w-10 h-10 rounded-[1.25rem] z-10 flex items-center justify-center shadow-sm border ${
-                                                            entry.action === 'STATUS_CHANGE' 
-                                                                ? 'bg-amber-50 border-amber-200 text-amber-600 dark:bg-amber-900/20 dark:border-amber-800' 
-                                                                : entry.action === 'CREATE'
-                                                                ? 'bg-emerald-50 border-emerald-200 text-emerald-600 dark:bg-emerald-900/20 dark:border-emerald-800'
-                                                                : 'bg-indigo-50 border-indigo-200 text-indigo-600 dark:bg-indigo-900/20 dark:border-indigo-800'
-                                                        }`}>
-                                                            {entry.action === 'STATUS_CHANGE' ? <Zap size={16} /> : entry.action === 'CREATE' ? <Plus size={16} /> : <Clock size={16} />}
-                                                        </div>
-
-                                                        <div className="bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 p-8 rounded-[2.5rem] shadow-sm hover:shadow-xl hover:border-indigo-200 transition-all">
-                                                            <div className="flex justify-between items-center mb-4">
-                                                                <span className={`text-[9px] font-black uppercase tracking-widest px-4 py-1.5 rounded-xl ${
-                                                                    entry.action === 'STATUS_CHANGE' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'
-                                                                }`}>
-                                                                    {entry.action}
-                                                                </span>
-                                                                <span className="text-[10px] font-bold text-slate-400">
-                                                                    {entry.created_at ? new Date(entry.created_at).toLocaleString('pt-BR') : 'Agora'}
-                                                                </span>
-                                                            </div>
-                                                            <p className="text-base font-bold text-slate-700 dark:text-slate-200 leading-relaxed uppercase tracking-tight">
-                                                                {entry.description}
-                                                            </p>
-                                                            <div className="mt-6 flex items-center gap-3 pt-4 border-t border-slate-50 dark:border-slate-800">
-                                                                <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
-                                                                    <UserIcon size={12} className="text-slate-500" />
-                                                                </div>
-                                                                <span className="text-xs text-slate-500 font-bold">Responsável: <span className="text-indigo-600 dark:text-indigo-400">
-                                                                    {(() => {
-                                                                        if (!entry.user_id) return entry.user_name || 'Sistema';
-                                                                        const member = team.find(m => m.id === entry.user_id);
-                                                                        if (member) return member.full_name;
-                                                                        if (entry.user_id === user.id) return user.name;
-                                                                        return entry.user_name || 'Sistema';
-                                                                    })()}
-                                                                </span></span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="p-10 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0 flex gap-4">
-                                    <button
-                                        type="button"
-                                        onClick={() => { setIsEntityModalOpen(false); setActiveEntityTab('basic'); }}
-                                        className="flex-1 px-8 py-5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-3xl font-black uppercase tracking-widest hover:bg-slate-200 transition-all text-xs"
-                                    >
-                                        Fechar
-                                    </button>
-                                    {(activeEntityTab === 'basic' || !editingEntity?.id) && (
-                                        <button
-                                            type="submit"
-                                            className="flex-[2] px-8 py-5 bg-indigo-600 text-white rounded-3xl font-black uppercase tracking-widest hover:bg-indigo-700 shadow-2xl shadow-indigo-600/30 transition-all flex items-center justify-center gap-2 text-xs"
-                                        >
-                                            <Save size={20} /> {editingEntity?.id ? 'Salvar Alterações' : 'Criar Entidade Agora'}
-                                        </button>
-                                    )}
-                                </div>
-                            </form>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
-
-            {/* Shareholder Modal */}
-            <AnimatePresence>
-                {isShareholderModalOpen && (
-                    <div key="shareholder-modal-overlay" className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-                        <motion.div
-                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                            className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
-                            onClick={() => setIsShareholderModalOpen(false)}
-                        />
-                        <motion.div
-                            initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-                            className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800"
-                        >
-                            <form onSubmit={handleSaveShareholder}>
-                                <div className="p-8 border-b border-slate-100 dark:border-slate-800">
-                                    <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">
-                                        Dados do Sócio
-                                    </h3>
-                                </div>
-                                <div className="p-8 space-y-6">
-                                    <div>
-                                        <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Nome do Sócio / Empresa *</label>
-                                        <input
-                                            required value={editingShareholder?.shareholder_name || ''}
-                                            onChange={e => setEditingShareholder({ ...editingShareholder, shareholder_name: e.target.value })}
-                                            className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-600/10 font-bold"
-                                        />
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Tipo de Sócio</label>
-                                            <select
-                                                value={editingShareholder?.shareholder_type || 'Person'}
-                                                onChange={e => setEditingShareholder({ ...editingShareholder, shareholder_type: e.target.value as any })}
-                                                className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none font-bold"
-                                            >
-                                                <option value="Person">Pessoa Física</option>
-                                                <option value="Entity">Holding / Pessoa Jurídica</option>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Participação (%)</label>
-                                            <input
-                                                type="number" step="0.01"
-                                                value={editingShareholder?.ownership_percentage || ''}
-                                                onChange={e => setEditingShareholder({ ...editingShareholder, ownership_percentage: parseFloat(e.target.value) })}
-                                                className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none font-black text-indigo-600"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Quantidade de Cotas/Ações</label>
-                                        <input
-                                            type="number"
-                                            value={editingShareholder?.shares_count || ''}
-                                            onChange={e => setEditingShareholder({ ...editingShareholder, shares_count: e.target.value ? parseInt(e.target.value) : 0 })}
-                                            className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none"
-                                        />
-                                    </div>
-                                </div>
-                                <div className="p-8 bg-slate-50 dark:bg-slate-800/50 flex gap-4">
-                                    <button
-                                        type="button" onClick={() => setIsShareholderModalOpen(false)}
-                                        className="flex-1 py-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-[10px] font-black uppercase tracking-widest"
-                                    >
-                                        Cancelar
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        className="flex-[2] py-4 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-600/20"
-                                    >
-                                        Confirmar Sócio
-                                    </button>
-                                </div>
-                            </form>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
-
-            {/* Document Modal */}
-            <AnimatePresence>
-                {isDocumentModalOpen && (
-                    <div key="document-modal-overlay" className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-                        <motion.div
-                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                            className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
-                            onClick={() => setIsDocumentModalOpen(false)}
-                        />
-                        <motion.div
-                            initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-                            className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800"
-                        >
-                            <form onSubmit={handleSaveDocument}>
-                                <div className="p-8 border-b border-slate-100 dark:border-slate-800">
-                                    <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">
-                                        {editingDocument?.id ? 'Editar Documento' : 'Novo Documento'}
-                                    </h3>
-                                </div>
-                                <div className="p-8 space-y-6">
-                                    <div>
-                                        <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Título do Documento *</label>
-                                        <input
-                                            required value={editingDocument?.title || ''}
-                                            onChange={e => setEditingDocument({ ...editingDocument, title: e.target.value })}
-                                            className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-600/10 font-bold"
-                                        />
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Tipo</label>
-                                            <select
-                                                value={editingDocument?.document_type || 'Contrato Social'}
-                                                onChange={e => setEditingDocument({ ...editingDocument, document_type: e.target.value as any })}
-                                                className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none font-bold"
-                                            >
-                                                <option value="Contrato Social">Contrato Social</option>
-                                                <option value="Ata">Ata</option>
-                                                <option value="Estatuto">Estatuto</option>
-                                                <option value="Acordo de Sócios">Acordo de Sócios</option>
-                                                <option value="Planilha">Planilha</option>
-                                                <option value="Outros">Outros</option>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Data de Referência</label>
-                                            <input
-                                                type="date"
-                                                value={editingDocument?.event_date ? new Date(editingDocument.event_date).toISOString().split('T')[0] : ''}
-                                                onChange={e => setEditingDocument({ ...editingDocument, event_date: e.target.value })}
-                                                className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none font-bold"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Upload do Documento</label>
-                                        <PremiumFileUpload 
-                                            ref={corporateDocUploadRef}
-                                            isManual={true}
-                                            bucket="nexus-documents"
-                                            path={`corporate/${editingEntity?.id || 'temp'}`}
-                                            label="Arraste o documento aqui ou clique para selecionar"
-                                            onFileSelect={(file) => {
-                                                setCorporateDocFile(file);
-                                                if (file && !editingDocument?.title) {
-                                                    setEditingDocument({ ...editingDocument, title: file.name.split('.')[0] });
-                                                }
-                                            }}
-                                            onUploadComplete={(url) => setEditingDocument({ ...editingDocument, file_url: url })}
-                                        />
-                                        {editingDocument?.file_url && (
-                                            <div className="mt-4 flex items-center gap-3 p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 rounded-2xl animate-in zoom-in-95 duration-300">
-                                                <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                                                    <Check size={18} />
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Documento Carregado</p>
-                                                    <p className="text-[10px] text-emerald-600/70 truncate font-mono">{editingDocument.file_url}</p>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="p-8 bg-slate-50 dark:bg-slate-800/50 flex gap-4">
-                                    <button
-                                        type="button" onClick={() => setIsDocumentModalOpen(false)}
-                                        className="flex-1 py-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-[10px] font-black uppercase tracking-widest"
-                                    >
-                                        Cancelar
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        className="flex-[2] py-4 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-600/20"
-                                    >
-                                        Salvar Documento
-                                    </button>
-                                </div>
-                            </form>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
-            {/* Lawsuit Document Modal */}
-            <AnimatePresence>
-                {isLawsuitDocModalOpen && (
-                    <div key="lawsuit-doc-modal-overlay" className="fixed inset-0 z-[300] flex items-center justify-center p-4">
-                        <motion.div
-                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                            className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
-                            onClick={() => setIsLawsuitDocModalOpen(false)}
-                        />
-                        <motion.div
-                            initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-                            className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800"
-                        >
-                            <form onSubmit={handleSaveLawsuitDocument}>
-                                <div className="p-8 border-b border-slate-100 dark:border-slate-800">
-                                    <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">
-                                        {editingLawsuitDoc?.id ? 'Editar Documento do Processo' : 'Novo Documento do Processo'}
-                                    </h3>
-                                </div>
-
-                                <div className="p-8 space-y-6">
-                                    <div>
-                                        <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Título do Documento</label>
-                                        <input
-                                            required
-                                            value={editingLawsuitDoc?.title || ''}
-                                            onChange={e => setEditingLawsuitDoc({ ...editingLawsuitDoc, title: e.target.value })}
-                                            className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white font-bold"
-                                            placeholder="Ex: Petição de Juntada"
-                                        />
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Tipo</label>
-                                            <select
-                                                value={editingLawsuitDoc?.document_type || 'Petição Inicial'}
-                                                onChange={e => setEditingLawsuitDoc({ ...editingLawsuitDoc, document_type: e.target.value as any })}
-                                                className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white font-bold"
-                                            >
-                                                <option value="Petição Inicial">Petição Inicial</option>
-                                                <option value="Procuração">Procuração</option>
-                                                <option value="Contestação">Contestação</option>
-                                                <option value="Sentença">Sentença</option>
-                                                <option value="Acórdão">Acórdão</option>
-                                                <option value="Prova">Prova</option>
-                                                <option value="Outros">Outros</option>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Data de Referência</label>
-                                            <input
-                                                type="date"
-                                                value={editingLawsuitDoc?.event_date?.split('T')[0] || ''}
-                                                onChange={e => setEditingLawsuitDoc({ ...editingLawsuitDoc, event_date: e.target.value })}
-                                                className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white font-bold"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Upload do Documento</label>
-                                        <PremiumFileUpload
-                                            ref={lawsuitDocUploadRef}
-                                            isManual={true}
-                                            onUploadComplete={(url) => setEditingLawsuitDoc({ ...editingLawsuitDoc, file_url: url })}
-                                            onFileSelect={(file) => {
-                                                setLawsuitDocFile(file);
-                                                if (file && !editingLawsuitDoc?.title) {
-                                                    setEditingLawsuitDoc({ ...editingLawsuitDoc, title: file.name.split('.')[0] });
-                                                }
-                                            }}
-                                            bucket="nexus-documents"
-                                            path={`lawsuits/${editingLawsuit?.id}`}
-                                            label="Arraste o PDF do documento aqui"
-                                            accept="application/pdf,image/*"
-                                        />
-                                        {editingLawsuitDoc?.file_url && (
-                                            <div className="mt-2 flex items-center gap-2 text-emerald-600 font-bold text-xs bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-xl">
-                                                <CheckCircle2 size={16} /> Arquivo pronto para salvar
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div className="p-8 bg-slate-50 dark:bg-slate-800/50 flex gap-4">
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsLawsuitDocModalOpen(false)}
-                                        className="flex-1 px-8 py-4 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-100 transition-all text-xs"
-                                    >
-                                        {t('common.cancel')}
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        className="flex-[2] px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-600/30 transition-all text-xs"
-                                    >
-                                        {t('modules.nexus.modals.document.save')}
-                                    </button>
-                                </div>
-                            </form>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
-
-            {/* Asset Document Modal */}
-            <AnimatePresence>
-                {isAssetDocModalOpen && (
-                    <div key="asset-doc-modal-overlay" className="fixed inset-0 z-[300] flex items-center justify-center p-4">
-                        <motion.div
-                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                            className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
-                            onClick={() => setIsAssetDocModalOpen(false)}
-                        />
-                        <motion.div
-                            initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-                            className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800"
-                        >
-                            <form onSubmit={handleSaveAssetDocument}>
-                                <div className="p-8 border-b border-slate-100 dark:border-slate-800">
-                                    <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">
-                                        {editingAssetDoc?.id ? t('modules.nexus.modals.document.editAssetTitle') : t('modules.nexus.modals.document.newAssetTitle')}
-                                    </h3>
-                                </div>
-
-                                <div className="p-8 space-y-6">
-                                    <div>
-                                        <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">{t('modules.nexus.modals.document.labelTitle')} *</label>
-                                        <input
-                                            required
-                                            value={editingAssetDoc?.title || ''}
-                                            onChange={e => setEditingAssetDoc({ ...editingAssetDoc, title: e.target.value })}
-                                            className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white font-bold"
-                                            placeholder={t('modules.nexus.modals.document.placeholderTitle')}
-                                        />
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">{t('common.type')}</label>
-                                            <select
-                                                value={editingAssetDoc?.document_type || 'Matrícula'}
-                                                onChange={e => setEditingAssetDoc({ ...editingAssetDoc, document_type: e.target.value as any })}
-                                                className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white font-bold"
-                                            >
-                                                <option value="Matrícula">Matrícula</option>
-                                                <option value="Escritura">Escritura</option>
-                                                <option value="CRLV">CRLV</option>
-                                                <option value="Contrato Compra e Venda">Contrato Compra e Venda</option>
-                                                <option value="Laudo de Avaliação">Laudo de Avaliação</option>
-                                                <option value="Fotos">Fotos</option>
-                                                <option value="Outros">Outros</option>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">{t('common.referenceDate')}</label>
-                                            <input
-                                                type="date"
-                                                value={editingAssetDoc?.event_date?.split('T')[0] || ''}
-                                                onChange={e => setEditingAssetDoc({ ...editingAssetDoc, event_date: e.target.value })}
-                                                className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white font-bold"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">{t('modules.nexus.modals.document.labelFile')}</label>
-                                        <PremiumFileUpload
-                                            ref={assetDocUploadRef}
-                                            isManual={true}
-                                            onUploadComplete={(url) => setEditingAssetDoc({ ...editingAssetDoc, file_url: url })}
-                                            onFileSelect={(file) => {
-                                                setAssetDocFile(file);
-                                                if (file && !editingAssetDoc?.title) {
-                                                    setEditingAssetDoc({ ...editingAssetDoc, title: file.name.split('.')[0] });
-                                                }
-                                            }}
-                                            bucket="nexus-documents"
-                                            path={`assets/${editingAsset?.id}`}
-                                            label={t('modules.nexus.modals.document.labelFile')}
-                                            accept="application/pdf,image/*"
-                                        />
-                                        {editingAssetDoc?.file_url && (
-                                            <div className="mt-2 flex items-center gap-2 text-emerald-600 font-bold text-xs bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-xl">
-                                                <CheckCircle2 size={16} /> {t('common.success')}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div className="p-8 bg-slate-50 dark:bg-slate-800/50 flex gap-4">
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsAssetDocModalOpen(false)}
-                                        className="flex-1 px-8 py-4 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-100 transition-all text-xs"
-                                    >
-                                        {t('common.cancel')}
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        className="flex-[2] px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-600/30 transition-all text-xs"
-                                    >
-                                        {t('modules.nexus.modals.document.save')}
-                                    </button>
-                                </div>
-                            </form>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
 
             {/* Custom Confirmation Modal */}
             <AnimatePresence>
@@ -5897,7 +4518,6 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
 
             {/* History Analysis Modal */}
             <AnimatePresence mode="wait">
-            <AnimatePresence>
                 {aiInfoModal.isOpen && (
                     <div key="ai-info-modal-overlay" className="fixed inset-0 z-[400] flex items-center justify-center p-4">
                         <motion.div
@@ -6117,7 +4737,6 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                     }}
                     refreshTrigger={visualRefreshTrigger}
                 />
-            </AnimatePresence>
         </div>
     );
 };

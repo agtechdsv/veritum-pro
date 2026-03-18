@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Save, XCircle, Calendar, AlertTriangle, Network, Shield, FileText, Zap, DollarSign, History, Sparkles, Brain, Loader2, Plus, Download, Trash2, Check, User as UserIcon, Clock, Search, TrendingUp, TrendingDown } from 'lucide-react';
-import { PremiumCombobox, BlockedTabOverlay } from '../nexus-components';
+import { Save, XCircle, Calendar, AlertTriangle, Network, Shield, FileText, Zap, DollarSign, History, Sparkles, Brain, Loader2, Plus, Download, Trash2, Check, User as UserIcon, Clock, Search, TrendingUp, TrendingDown, CheckCircle2 } from 'lucide-react';
+import { PremiumCombobox, BlockedTabOverlay, PremiumFileUpload } from '../nexus-components';
 import { useTranslation } from '@/contexts/language-context';
 
 
@@ -50,12 +50,32 @@ interface LawsuitModalProps {
     handleDeleteFinancialTransaction: any;
     isLawsuitTimelineLoading: boolean;
     setAiLawsuitSummary: any;
+    isLawsuitDocModalOpen: boolean;
+    editingLawsuitDoc: Partial<LawsuitDocument> | null;
+    handleSaveLawsuitDocument: (e: React.FormEvent) => void;
+    lawsuitDocUploadRef: React.RefObject<any>;
+    lawsuitDocFile: File | null;
+    setLawsuitDocFile: (file: File | null) => void;
 }
 
 export const LawsuitModal = (props: LawsuitModalProps) => {
 
 const { t } = useTranslation();
-const { isLawsuitModalOpen, setIsLawsuitModalOpen, setLawsuitTimeline, setActiveLawsuitTab, editingLawsuit, handleOpenNexoVisual, setActiveTab, setEditingAsset, setIsAssetModalOpen, activeLawsuitTab, persons, setEditingLawsuit, isLoadingCities, cities, handleSaveLawsuit, lawsuitTimeline, team, user, aiLawsuitSummary, isAiSummarizing, handleSummarizeWithAI, lawsuitDocuments, pendingLawsuitDocuments, setEditingLawsuitDoc, setIsLawsuitDocModalOpen, handleSummarizeDocument, handleDeleteLawsuitDocument, setPendingLawsuitDocuments, handleFetchLawsuitFinances, formatCurrency, formatCNJ, ESFERAS, UFS, TRIBUNAIS, RITOS, chambers, lawsuitFinances, isFinancialLoading, handleSaveFinancialTransaction, handleDeleteFinancialTransaction, isLawsuitTimelineLoading, setAiLawsuitSummary } = props;
+const { 
+    isLawsuitModalOpen, setIsLawsuitModalOpen, setLawsuitTimeline, setActiveLawsuitTab, 
+    editingLawsuit, handleOpenNexoVisual, setActiveTab, setEditingAsset, 
+    setIsAssetModalOpen, activeLawsuitTab, persons, setEditingLawsuit, 
+    isLoadingCities, cities, handleSaveLawsuit, lawsuitTimeline, team, user, 
+    aiLawsuitSummary, isAiSummarizing, handleSummarizeWithAI, lawsuitDocuments, 
+    pendingLawsuitDocuments, setEditingLawsuitDoc, setIsLawsuitDocModalOpen, 
+    handleSummarizeDocument, handleDeleteLawsuitDocument, setPendingLawsuitDocuments, 
+    handleFetchLawsuitFinances, formatCurrency, formatCNJ, ESFERAS, UFS, 
+    TRIBUNAIS, RITOS, chambers, lawsuitFinances, isFinancialLoading, 
+    handleSaveFinancialTransaction, handleDeleteFinancialTransaction, 
+    isLawsuitTimelineLoading, setAiLawsuitSummary, isLawsuitDocModalOpen,
+    editingLawsuitDoc, handleSaveLawsuitDocument, lawsuitDocUploadRef,
+    lawsuitDocFile, setLawsuitDocFile
+} = props;
 
     const [authorSearch, setAuthorSearch] = React.useState('');
     const [isAuthorDropdownOpen, setIsAuthorDropdownOpen] = React.useState(false);
