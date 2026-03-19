@@ -447,6 +447,34 @@ export const pt = {
                 noEvents: 'Nenhum evento encontrado.',
                 defaultType: 'Audiência'
             },
+            corporate: {
+                title: 'ENTIDADES E HOLDINGS',
+                subtitle: 'Gestão de entidades legais, ações e governança',
+                searchPlaceholder: 'Buscar entidade...',
+                newEntity: 'Nova Entidade',
+                empty: 'Nenhuma entidade encontrada.',
+                labels: {
+                    type: 'Tipo',
+                    regime: 'Regime',
+                    capital: 'Capital Social',
+                    noTradingName: 'Sem nome comercial'
+                },
+                actions: {
+                    manageQSA: 'Gerenciar QSA',
+                    uploadSocialContract: 'Upload Contrato Social',
+                    viewHistory: 'Análise de Histórico'
+                },
+                table: {
+                    headers: {
+                        entity: 'Entidade',
+                        cnpj: 'CNPJ',
+                        type: 'Tipo',
+                        capital: 'Capital',
+                        status: 'Status',
+                        actions: 'Ações'
+                    }
+                }
+            },
             documents: {
                 title: 'DOCUMENTOS',
                 subtitle: 'Repositório centralizado de documentos',
