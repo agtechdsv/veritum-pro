@@ -18,8 +18,11 @@ import { TaskModal } from './nexus/modals/TaskModal';
 import { LawsuitModal } from './nexus/modals/LawsuitModal';
 import { CrmModal } from './nexus/modals/CrmModal';
 import { AssetModal } from './nexus/modals/AssetModal';
+import { LawsuitsTab } from './nexus/tabs/LawsuitsTab';
 import { CorporateEntityModal } from './nexus/modals/CorporateEntityModal';
 import { DocumentsTab } from './nexus/tabs/DocumentsTab';
+import { CrmTab } from './nexus/tabs/CrmTab';
+import { TasksTab } from './nexus/tabs/TasksTab';
 
 
 
@@ -1876,52 +1879,6 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         </div>
     );
 
-    const renderLawsuitFilterBar = () => (
-        <div className="flex gap-4 mb-6 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in slide-in-from-top-2">
-            <div className="flex-1">
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                    <input
-                        type="text"
-                        placeholder={t('modules.nexus.processes.searchPlaceholder')}
-                        value={lawsuitSearch}
-                        onChange={e => setLawsuitSearch(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
-                    />
-                </div>
-            </div>
-            <div className="w-48">
-                <select
-                    value={lawsuitStatusFilter}
-                    onChange={e => setLawsuitStatusFilter(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
-                >
-                    <option value="">⚖️ {t('common.filters.allStatuses')}</option>
-                    {Object.entries(t('common.statuses.lawsuit', { returnObjects: true }) as Record<string, string>).map(([key, val]) => <option key={key} value={val}>{val}</option>)}
-                </select>
-            </div>
-            <div className="w-64">
-                <select
-                    value={lawsuitLawyerFilter}
-                    onChange={e => setLawsuitLawyerFilter(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
-                >
-                    <option value="">👤 {t('common.filters.allLawyers')}</option>
-                    {team.map(t => <option key={t.id} value={t.id}>{t.full_name}</option>)}
-                </select>
-            </div>
-            {(lawsuitSearch || lawsuitStatusFilter || lawsuitLawyerFilter) && (
-                <button
-                    onClick={() => { setLawsuitSearch(''); setLawsuitStatusFilter(''); setLawsuitLawyerFilter(''); }}
-                    className="px-4 py-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all flex items-center gap-2 border border-transparent hover:border-rose-200 dark:hover:border-rose-800"
-                    title={t('common.clearFilters')}
-                >
-                    <Filter size={16} />
-                    <XCircle size={14} className="-ml-1" />
-                </button>
-            )}
-        </div>
-    );
 
     const renderAssetFilterBar = () => (
         <div className="flex gap-4 mb-6 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in slide-in-from-top-2">
@@ -2342,772 +2299,83 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                     </div>
                 )}
                 {activeTab === 'pessoas' && (
-                    <div className="flex-1 flex flex-col pt-0 overflow-y-auto no-scrollbar animate-in fade-in slide-in-from-bottom-4 duration-700">
-                        <div className="flex flex-col h-full space-y-6">
-                            {/* Header Pessoas */}
-                            <div className="flex flex-col md:flex-row pb-6 mb-2 mt-4 px-8 border-b-4 border-slate-100 dark:border-slate-800">
-                                <div className="flex-1">
-                                    <h1 className="text-4xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">
-                                        {t('management.master.persons.title')}
-                                    </h1>
-                                    <p className="text-slate-500 font-bold tracking-wide mt-1">
-                                        {t('management.users.subtitle')}
-                                    </p>
-                                </div>
-                                <div className="mt-4 md:mt-0 flex items-center gap-4">
-                                    <button
-                                        onClick={() => {
-                                            window.dispatchEvent(new CustomEvent('CRM_OPEN_MODAL'));
-                                        }}
-                                        className="bg-slate-800 hover:bg-emerald-600 dark:bg-white dark:hover:bg-emerald-500 dark:text-slate-900 text-white font-black uppercase tracking-widest text-[10px] px-6 py-3 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-xl hover:shadow-emerald-500/30 hover:-translate-y-1"
-                                    >
-                                        <Plus size={14} /> {t('common.new')} {t('common.person')}
-                                    </button>
-                                </div>
-                            </div>
-
-                            <PersonManagement
-                                credentials={credentials}
-                                preferences={preferences!}
-                                currentUser={user}
-                                isEmbedded={true}
-                                externalPersons={persons}
-                                externalLoading={loading}
-                                masterSelectedUserId={selectedUserId}
-                                onRefresh={fetchAll}
-                                onNewLawsuit={handleCreateLawsuitFromCRM}
-                                onNewCorporateEntity={handleCreateCorporateEntityFromCRM}
-                                onOpenNexoVisual={p => handleOpenNexoVisual('person', p)}
-                            />
-                        </div>
-                    </div>
+                    <CrmTab
+                        t={t}
+                        credentials={credentials}
+                        preferences={preferences}
+                        user={user}
+                        persons={persons}
+                        loading={loading}
+                        selectedUserId={selectedUserId}
+                        fetchAll={fetchAll}
+                        handleCreateLawsuitFromCRM={handleCreateLawsuitFromCRM}
+                        handleCreateCorporateEntityFromCRM={handleCreateCorporateEntityFromCRM}
+                        handleOpenNexoVisual={handleOpenNexoVisual}
+                    />
                 )}
 
                 {activeTab === 'processos' && (
-                    <div className="flex-1 flex flex-col pt-0 overflow-y-auto no-scrollbar animate-in fade-in slide-in-from-bottom-4 duration-700">
-                        <div className="flex flex-col h-full space-y-6">
-                            {/* Header Processos */}
-                            <div className="flex flex-col md:flex-row pb-6 mb-2 mt-4 px-8 border-b-4 border-slate-100 dark:border-slate-800">
-                                <div className="flex-1">
-                                    <h1 className="text-4xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">
-                                        {t('modules.nexus.title')}
-                                    </h1>
-                                    <p className="text-slate-500 font-bold tracking-wide mt-1">
-                                        Total de {lawsuits.length} {t('common.processes')}
-                                    </p>
-                                </div>
-                                <div className="mt-4 md:mt-0 flex items-center gap-4">
-                                    <div className="flex bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl border border-slate-200 dark:border-slate-800">
-                                        <button
-                                            onClick={() => setProcessViewStyle('grid')}
-                                            className={`p-2 rounded-lg transition-all ${processViewStyle === 'grid' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-                                            title="Visualização em Cards"
-                                        >
-                                            <LayoutGrid size={18} />
-                                        </button>
-                                        <button
-                                            onClick={() => setProcessViewStyle('list')}
-                                            className={`p-2 rounded-lg transition-all ${processViewStyle === 'list' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-                                            title="Visualização em Lista"
-                                        >
-                                            <List size={18} />
-                                        </button>
-                                        <button
-                                            onClick={() => setProcessViewStyle('kanban')}
-                                            className={`p-2 rounded-lg transition-all ${processViewStyle === 'kanban' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-                                            title="Visualização em Kanban"
-                                        >
-                                            <Trello size={18} />
-                                        </button>
-                                    </div>
-                                    <button
-                                        onClick={() => { 
-                                            setEditingLawsuit({ status: 'Ativo' }); 
-                                            setPendingLawsuitDocuments([]);
-                                            setIsLawsuitModalOpen(true); 
-                                            setActiveLawsuitTab('basic'); 
-                                        }}
-                                        className="bg-slate-800 hover:bg-indigo-600 dark:bg-white dark:hover:bg-indigo-500 dark:text-slate-900 text-white font-black uppercase tracking-widest text-[10px] px-6 py-3 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-xl hover:shadow-indigo-500/30 hover:-translate-y-1"
-                                    >
-                                        <Plus size={14} /> Novo Processo
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="flex-1 px-8 pb-8 h-[calc(100vh-280px)]">
-                                {renderLawsuitFilterBar()}
-                                <AnimatePresence mode="wait">
-                                    {processViewStyle === 'kanban' ? (
-                                        <motion.div
-                                            key="process-kanban"
-                                            initial={{ opacity: 0, x: 20 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            exit={{ opacity: 0, x: -20 }}
-                                            className="h-full flex gap-6 overflow-x-auto no-scrollbar pb-4"
-                                        >
-                                            {LAWSUIT_STATUSES.map(status => (
-                                                <div 
-                                                    key={status} 
-                                                    className="flex-shrink-0 w-80 bg-slate-100/40 dark:bg-slate-950/40 rounded-[2rem] p-4 border border-slate-200 dark:border-slate-900 flex flex-col gap-4"
-                                                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('bg-indigo-50/50', 'dark:bg-indigo-900/10', 'border-indigo-300', 'dark:border-indigo-800/50'); }}
-                                                    onDragLeave={(e) => { e.currentTarget.classList.remove('bg-indigo-50/50', 'dark:bg-indigo-900/10', 'border-indigo-300', 'dark:border-indigo-800/50'); }}
-                                                    onDrop={(e) => { e.preventDefault(); e.currentTarget.classList.remove('bg-indigo-50/50', 'dark:bg-indigo-900/10', 'border-indigo-300', 'dark:border-indigo-800/50'); handleDropLawsuit(e, status); }}
-                                                >
-                                                    <div className="flex items-center justify-between px-2 mb-2">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className={`w-2 h-2 rounded-full ${
-                                                                status === 'Ativo' ? 'bg-emerald-500' :
-                                                                status === 'Encerrado' ? 'bg-rose-500' :
-                                                                status === 'Arquivado' ? 'bg-slate-400' : 'bg-amber-500'
-                                                            }`} />
-                                                            <h3 className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">{status}</h3>
-                                                            <span className="ml-2 px-2 py-0.5 bg-white dark:bg-slate-800 rounded-lg text-[10px] border border-slate-200 dark:border-slate-800 font-bold">
-                                                                {filteredLawsuits.filter(l => l.status === status).length}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex-1 overflow-y-auto no-scrollbar space-y-4 px-1 pb-6">
-                                                        {filteredLawsuits.filter(l => l.status === status).length === 0 ? (
-                                                            <div className="py-20 text-center text-[10px] font-bold text-slate-300 italic uppercase tracking-widest">Vazio</div>
-                                                        ) : (
-                                                            filteredLawsuits.filter(l => l.status === status).map(law => (
-                                                                <div 
-                                                                    key={law.id} 
-                                                                    draggable
-                                                                    onDragStart={(e) => {
-                                                                        handleDragStartLawsuit(e, law.id);
-                                                                        e.currentTarget.classList.add('opacity-50');
-                                                                    }}
-                                                                    onDragEnd={(e) => {
-                                                                        e.currentTarget.classList.remove('opacity-50');
-                                                                    }}
-                                                                    className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group cursor-pointer"
-                                                                    onClick={() => { setEditingLawsuit(law); setIsLawsuitModalOpen(true); setActiveLawsuitTab('basic'); }}
-                                                                >
-                                                                    <div className="flex justify-between items-start mb-2">
-                                                                        <div className="text-[8px] font-mono font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-tight truncate">{law.cnj_number || 'Sem CNJ'}</div>
-                                                                        <div className="flex items-center gap-1.5">
-                                                                            <div className="flex gap-1 transition-all">
-                                                                                <button
-                                                                                    onClick={(e) => { e.stopPropagation(); handleOpenHistory(law.id, 'lawsuit', law.case_title || 'Sem Título'); }}
-                                                                                    className="p-1 text-slate-400 hover:text-indigo-600 bg-slate-50 dark:bg-slate-800 rounded cursor-pointer"
-                                                                                    title="Análise de Histórico"
-                                                                                >
-                                                                                    <History size={12} />
-                                                                                </button>
-                                                                                <button
-                                                                                    onClick={(e) => { e.stopPropagation(); setEditingLawsuit(law); setIsLawsuitModalOpen(true); setActiveLawsuitTab('basic'); }}
-                                                                                    className="p-1 text-slate-400 hover:text-indigo-600 bg-slate-50 dark:bg-slate-800 rounded cursor-pointer"
-                                                                                    title={t('common.edit')}
-                                                                                >
-                                                                                    <Pencil size={12} />
-                                                                                </button>
-                                                                                <button
-                                                                                    onClick={(e) => { e.stopPropagation(); handleSoftDeleteLawsuit(law.id); }}
-                                                                                    className="p-1 text-slate-400 hover:text-red-600 bg-slate-50 dark:bg-slate-800 rounded cursor-pointer"
-                                                                                    title={t('common.delete')}
-                                                                                >
-                                                                                    <Trash2 size={12} />
-                                                                                </button>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                    <h4 className="font-bold text-slate-800 dark:text-white text-xs mb-3 line-clamp-2 leading-snug uppercase tracking-tight">{law.case_title}</h4>
-                                                                    
-                                                                    <div className="flex items-center gap-2 mb-4">
-                                                                        <div className="w-6 h-6 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 flex items-center justify-center font-black text-[9px]">
-                                                                            {persons.find(p => p.id === law.author_id)?.full_name?.charAt(0) || 'C'}
-                                                                        </div>
-                                                                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 truncate">
-                                                                            {persons.find(p => p.id === law.author_id)?.full_name || 'Contestação'}
-                                                                        </span>
-                                                                    </div>
-
-                                                                    <div className="flex items-center justify-between pt-3 border-t border-slate-50 dark:border-slate-800">
-                                                                        <div className="text-[9px] font-black text-emerald-600 dark:text-emerald-400">
-                                                                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(law.value || 0)}
-                                                                        </div>
-                                                                        <div className="flex items-center gap-1.5">
-                                                                            <button
-                                                                                onClick={(e) => { e.stopPropagation(); handleOpenNexoVisual('lawsuit', law); }}
-                                                                                className="p-1 px-1.5 text-indigo-600 bg-indigo-50 dark:bg-indigo-900/40 rounded-lg hover:bg-indigo-100 hover:scale-110 active:scale-95 transition-all shadow-sm border border-indigo-100 dark:border-indigo-800/50"
-                                                                                title="Ver Mapa Mental (Nexo Visual)"
-                                                                            >
-                                                                                <Network size={12} />
-                                                                            </button>
-                                                                             {renderStatusBadge(law.id, law.status, 'lawsuit', LAWSUIT_STATUSES)}
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            ))
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </motion.div>
-                                    ) : processViewStyle === 'list' ? (
-                                        <motion.div 
-                                            key="process-list"
-                                            initial={{ opacity: 0, scale: 0.98 }}
-                                            animate={{ opacity: 1, scale: 1 }}
-                                            exit={{ opacity: 0, scale: 0.98 }}
-                                            transition={{ duration: 0.3 }}
-                                            className="flex-1 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden flex flex-col"
-                                        >
-                                            <div className="overflow-x-auto">
-                                                <table className="w-full text-left border-collapse">
-                                                    <thead>
-                                                        <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
-                                                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.table.headers.cnj')}</th>
-                                                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.modals.lawsuit.labelTitle')}</th>
-                                                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('common.client')}</th>
-                                                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('common.status')}</th>
-                                                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.modals.lawsuit.labelValue')}</th>
-                                                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">{t('modules.nexus.table.headers.actions')}</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
-                                                        {loading ? (
-                                                            <tr>
-                                                                <td colSpan={6} className="px-6 py-20 text-center">
-                                                                    <div className="flex flex-col items-center gap-3">
-                                                                        <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-full text-slate-300 animate-pulse"><Scale size={40} /></div>
-                                                                        <p className="font-bold text-slate-400 animate-pulse">{t('modules.nexus.empty.syncing')}</p>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                        ) : filteredLawsuits.length === 0 ? (
-                                                            <tr>
-                                                                <td colSpan={6} className="px-6 py-20 text-center">
-                                                                    <div className="flex flex-col items-center gap-3">
-                                                                        <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-full text-slate-300"><Scale size={40} /></div>
-                                                                        <p className="font-bold text-slate-400">{t('modules.nexus.empty.processes')}</p>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                        ) : filteredLawsuits.map((law) => (
-                                                            <tr key={law.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors group">
-                                                                <td className="px-6 py-4">
-                                                                    <div className="font-mono text-sm font-bold text-indigo-600 dark:text-indigo-400">{law.cnj_number}</div>
-                                                                </td>
-                                                                <td className="px-6 py-4">
-                                                                    <div className="font-bold text-slate-700 dark:text-slate-200">{law.case_title}</div>
-                                                                    <div className="text-[10px] text-slate-400 font-bold uppercase">{law.sphere}</div>
-                                                                </td>
-                                                                <td className="px-6 py-4">
-                                                                    <div className="flex items-center gap-2">
-                                                                        <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 flex items-center justify-center font-black text-xs">
-                                                                            {persons.find(p => p.id === law.author_id)?.full_name?.charAt(0) || 'C'}
-                                                                        </div>
-                                                                        <span className="font-bold text-slate-600 dark:text-slate-300 text-sm">
-                                                                            {persons.find(p => p.id === law.author_id)?.full_name || 'Contestação'}
-                                                                        </span>
-                                                                    </div>
-                                                                </td>
-                                                                <td className="px-6 py-4">
-                                                                    {renderStatusBadge(law.id, law.status, 'lawsuit', LAWSUIT_STATUSES)}
-                                                                </td>
-                                                                <td className="px-6 py-4">
-                                                                    <div className="font-black text-slate-800 dark:text-white">
-                                                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(law.value || 0)}
-                                                                    </div>
-                                                                </td>
-                                                                <td className="px-6 py-4">
-                                                                    <div className="flex items-center justify-end gap-1 transition-all">
-                                                                         <button
-                                                                             onClick={(e) => { e.stopPropagation(); handleOpenNexoVisual('lawsuit', law); }}
-                                                                             className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
-                                                                             title="Ver Mapa Mental (Nexo Visual)"
-                                                                         >
-                                                                             <Network size={18} />
-                                                                         </button>
-                                                                         <button
-                                                                             onClick={(e) => {
-                                                                                 e.stopPropagation();
-                                                                                 setActiveTab('tarefas');
-                                                                                 setEditingTask({
-                                                                                     status: 'A Fazer',
-                                                                                     lawsuit_id: law.id,
-                                                                                     responsible_id: law.responsible_lawyer_id || '',
-                                                                                     title: `${law.author_id ? (persons.find(p => p.id === law.author_id)?.full_name + ' - ') : ''}Andamento de Processo`,
-                                                                                     priority: 'Média'
-                                                                                 });
-                                                                                 setTimeout(() => {
-                                                                                     setIsTaskModalOpen(true);
-                                                                                     setActiveTaskTab('basic');
-                                                                                 }, 300);
-                                                                             }}
-                                                                             className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-all"
-                                                                             title={t('modules.nexus.newTask')}
-                                                                         >
-                                                                             <Zap size={18} />
-                                                                         </button>
-                                                                         <button
-                                                                             onClick={(e) => {
-                                                                                 e.stopPropagation();
-                                                                                 setActiveTab('ativos');
-                                                                                 setEditingAsset({
-                                                                                     status: 'Ativo',
-                                                                                     lawsuit_id: law.id,
-                                                                                     person_id: law.author_id || '',
-                                                                                     asset_type: 'Outros'
-                                                                                 });
-                                                                                 setTimeout(() => {
-                                                                                     setIsAssetModalOpen(true);
-                                                                                 }, 300);
-                                                                             }}
-                                                                             className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
-                                                                             title="Vincular Novo Ativo/Garantia"
-                                                                         >
-                                                                             <Shield size={18} />
-                                                                         </button>
-                                                                        <button
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                handleOpenHistory(law.id, 'lawsuit', law.case_title || 'Sem Título');
-                                                                            }}
-                                                                            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
-                                                                            title="Ver Histórico de Auditoria"
-                                                                        >
-                                                                            <History size={18} />
-                                                                        </button>
-                                                                        <button
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                setEditingLawsuit(law);
-                                                                                setEditingLawsuitDoc({
-                                                                                    document_type: 'Petição Inicial',
-                                                                                    event_date: new Date().toISOString()
-                                                                                });
-                                                                                setIsLawsuitDocModalOpen(true);
-                                                                            }}
-                                                                            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
-                                                                            title="Upload Rápido de Documento"
-                                                                        >
-                                                                            <Upload size={18} />
-                                                                        </button>
-                                                                        <button
-                                                                            onClick={() => { setEditingLawsuit(law); setIsLawsuitModalOpen(true); setActiveLawsuitTab('basic'); }}
-                                                                            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
-                                                                            title={t('common.edit')}
-                                                                        >
-                                                                            <Pencil size={18} />
-                                                                        </button>
-                                                                        <button
-                                                                            onClick={(e) => { e.stopPropagation(); handleSoftDeleteLawsuit(law.id); }}
-                                                                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
-                                                                            title={t('common.delete')}
-                                                                        >
-                                                                            <Trash2 size={18} />
-                                                                        </button>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </motion.div>
-                                    ) : (
-                                        <motion.div
-                                            key="process-grid"
-                                            initial={{ opacity: 0, scale: 0.98 }}
-                                            animate={{ opacity: 1, scale: 1 }}
-                                            exit={{ opacity: 0, scale: 0.98 }}
-                                            transition={{ duration: 0.3 }}
-                                            className="flex-1 overflow-y-auto no-scrollbar pb-8"
-                                        >
-                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                                {loading ? (
-                                                    <div className="col-span-full py-20 text-center animate-pulse text-slate-400 font-bold">{t('modules.nexus.empty.syncing')}</div>
-                                                ) : filteredLawsuits.length === 0 ? (
-                                                    <div className="col-span-full py-20 text-center text-slate-400 font-bold italic">{t('modules.nexus.empty.processes')}</div>
-                                                ) : filteredLawsuits.map((law) => {
-                                                    const author = persons.find(p => p.id === law.author_id);
-                                                    return (
-                                                        <div key={law.id} className="bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden flex flex-col h-full">
-                                                            <div className="flex justify-between items-start mb-4">
-                                                                <div className="flex flex-col">
-                                                                    <span className="text-[10px] font-mono font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-tight">{law.cnj_number}</span>
-                                                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">{law.sphere}</span>
-                                                                </div>
-                                                                <div className="flex items-center gap-2">
-                                                                    <button
-                                                                        onClick={(e) => { e.stopPropagation(); handleOpenNexoVisual('lawsuit', law); }}
-                                                                        className="p-1.5 text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg hover:bg-indigo-100 hover:scale-110 active:scale-95 transition-all shadow-sm border border-indigo-100 dark:border-indigo-800/50"
-                                                                        title="Ver Mapa Mental (Nexo Visual)"
-                                                                    >
-                                                                        <Network size={12} />
-                                                                    </button>
-                                                                    {renderStatusBadge(law.id, law.status, 'lawsuit', LAWSUIT_STATUSES)}
-                                                                </div>
-                                                            </div>
-
-                                                            <h3 className="font-bold text-slate-800 dark:text-white text-lg mb-4 line-clamp-2 leading-tight">{law.case_title}</h3>
-
-                                                            <div className="flex flex-col gap-2 mb-6">
-                                                                {author && (
-                                                                    <div className="flex items-center gap-2 text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-900/10 p-2 rounded-xl">
-                                                                        <UserIcon size={12} /> <span className="truncate">{author.full_name}</span>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-
-                                                            <div className="mt-auto pt-4 border-t border-slate-50 dark:border-slate-800 flex items-center justify-between">
-                                                                <div className="flex flex-col">
-                                                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Valor da Causa</span>
-                                                                    <span className="text-sm font-black text-slate-800 dark:text-white">
-                                                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(law.value || 0)}
-                                                                    </span>
-                                                                </div>
-                                                                <div className="flex gap-1">
-                                                                    <button
-                                                                        onClick={() => {
-                                                                            setActiveTab('tarefas');
-                                                                            setEditingTask({
-                                                                                status: 'A Fazer',
-                                                                                lawsuit_id: law.id,
-                                                                                responsible_id: law.responsible_lawyer_id || '',
-                                                                                title: `${law.author_id ? (persons.find(p => p.id === law.author_id)?.full_name + ' - ') : ''}Andamento de Processo`,
-                                                                                priority: 'Média'
-                                                                            });
-                                                                            setTimeout(() => {
-                                                                                setIsTaskModalOpen(true);
-                                                                                setActiveTaskTab('basic');
-                                                                            }, 300);
-                                                                        }}
-                                                                        className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-all"
-                                                                        title={t('modules.nexus.newTask')}
-                                                                    >
-                                                                        <Zap size={16} />
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => {
-                                                                            setActiveTab('ativos');
-                                                                            setEditingAsset({
-                                                                                status: 'Ativo',
-                                                                                lawsuit_id: law.id,
-                                                                                person_id: law.author_id || '',
-                                                                                asset_type: 'Outros'
-                                                                            });
-                                                                            setTimeout(() => {
-                                                                                setIsAssetModalOpen(true);
-                                                                            }, 300);
-                                                                        }}
-                                                                        className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
-                                                                        title="Vincular Novo Ativo/Garantia"
-                                                                    >
-                                                                        <Shield size={16} />
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            handleOpenHistory(law.id, 'lawsuit', law.case_title || 'Sem Título');
-                                                                        }}
-                                                                        className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
-                                                                        title="Ver Histórico de Auditoria"
-                                                                    >
-                                                                        <History size={16} />
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            setEditingLawsuit(law);
-                                                                            setEditingLawsuitDoc({
-                                                                                document_type: 'Petição Inicial',
-                                                                                event_date: new Date().toISOString()
-                                                                            });
-                                                                            setIsLawsuitDocModalOpen(true);
-                                                                        }}
-                                                                        className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
-                                                                        title="Upload Rápido de Documento"
-                                                                    >
-                                                                        <Upload size={16} />
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => { setEditingLawsuit(law); setIsLawsuitModalOpen(true); setActiveLawsuitTab('basic'); }}
-                                                                        className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
-                                                                        title={t('common.edit')}
-                                                                    >
-                                                                        <Pencil size={16} />
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={(e) => { e.stopPropagation(); handleSoftDeleteLawsuit(law.id); }}
-                                                                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
-                                                                        title={t('common.delete')}
-                                                                    >
-                                                                        <Trash2 size={16} />
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-                            </div>
-                        </div>
-                    </div>
+                    <LawsuitsTab 
+                        t={t}
+                        locale={t('locale')}
+                        lawsuits={lawsuits}
+                        filteredLawsuits={filteredLawsuits}
+                        processViewStyle={processViewStyle}
+                        setProcessViewStyle={setProcessViewStyle}
+                        lawsuitSearch={lawsuitSearch}
+                        setLawsuitSearch={setLawsuitSearch}
+                        lawsuitStatusFilter={lawsuitStatusFilter}
+                        setLawsuitStatusFilter={setLawsuitStatusFilter}
+                        lawsuitLawyerFilter={lawsuitLawyerFilter}
+                        setLawsuitLawyerFilter={setLawsuitLawyerFilter}
+                        team={team}
+                        persons={persons}
+                        loading={loading}
+                        LAWSUIT_STATUSES={LAWSUIT_STATUSES}
+                        handleDropLawsuit={handleDropLawsuit}
+                        handleDragStartLawsuit={handleDragStartLawsuit}
+                        handleOpenHistory={handleOpenHistory}
+                        handleSoftDeleteLawsuit={handleSoftDeleteLawsuit}
+                        handleOpenNexoVisual={handleOpenNexoVisual}
+                        renderStatusBadge={renderStatusBadge}
+                        setEditingLawsuit={setEditingLawsuit}
+                        setPendingLawsuitDocuments={setPendingLawsuitDocuments}
+                        setIsLawsuitModalOpen={setIsLawsuitModalOpen}
+                        setActiveLawsuitTab={setActiveLawsuitTab}
+                        setActiveTab={setActiveTab}
+                        setEditingTask={setEditingTask}
+                        setIsTaskModalOpen={setIsTaskModalOpen}
+                        setActiveTaskTab={setActiveTaskTab}
+                        setEditingAsset={setEditingAsset}
+                        setIsAssetModalOpen={setIsAssetModalOpen}
+                        setEditingLawsuitDoc={setEditingLawsuitDoc}
+                        setIsLawsuitDocModalOpen={setIsLawsuitDocModalOpen}
+                    />
                 )}
 
                 {activeTab === 'tarefas' && (
-                    <div className="flex-1 flex flex-col overflow-hidden">
-                        <div className="px-8 pt-8">
-                            <div className="flex items-center justify-between mb-8">
-                                <div className="flex items-center gap-6">
-                                    <div>
-                                        <h1 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">{t('modules.nexus.tabs.tasks')}</h1>
-                                        <p className="text-slate-500 font-bold">{t('modules.nexus.description')}</p>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <button
-                                            onClick={() => { setEditingTask({ status: 'A Fazer' }); setIsTaskModalOpen(true); setActiveTaskTab('basic'); }}
-                                            className="bg-slate-800 text-white px-6 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-slate-900 transition-all shadow-lg active:scale-95"
-                                        >
-                                            <Plus size={14} /> {t('modules.nexus.newTask')}
-                                        </button>
-                                        <div className="flex w-72 bg-slate-100 dark:bg-slate-900 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-inner">
-                                            <button
-                                                onClick={() => setView('kanban')}
-                                                className={`flex-1 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${view === 'kanban' ? 'bg-white dark:bg-indigo-600 text-indigo-600 dark:text-white shadow-md scale-[1.02]' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                                            >
-                                                Kanban
-                                            </button>
-                                            <button
-                                                onClick={() => setView('list')}
-                                                className={`flex-1 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${view === 'list' ? 'bg-white dark:bg-indigo-600 text-indigo-600 dark:text-white shadow-md scale-[1.02]' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                                            >
-                                                Lista
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <IntelligenceWidget credentials={credentials} moduleContext="Operacional / Nexus" limit={3} />
-                        </div>
-
-                        <div className="px-8 mt-4">
-                            {renderFilterBar()}
-                        </div>
-
-                        {/* KPIs Top Area */}
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-8 animate-in fade-in slide-in-from-top-4 duration-500">
-                            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                                <div>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.metrics.active')}</p>
-                                    <p className="text-2xl font-black text-slate-800 dark:text-white">{lawsuits.filter(l => l.status === 'Ativo').length}</p>
-                                </div>
-                                <div className="p-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 rounded-lg"><Scale size={20} /></div>
-                            </div>
-                            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                                <div>
-                                    <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest">{t('modules.nexus.metrics.deadlines')}</p>
-                                    <p className="text-2xl font-black text-rose-600">{filteredTasks.filter(t => t.status !== 'Concluído' && (new Date(t.due_date).getTime() - new Date().getTime()) < 86400000).length}</p>
-                                </div>
-                                <div className="p-2 bg-rose-50 dark:bg-rose-900/20 text-rose-600 rounded-lg"><Clock size={20} /></div>
-                            </div>
-                            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                                <div>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.metrics.pending')}</p>
-                                    <p className="text-2xl font-black text-slate-800 dark:text-white">{filteredTasks.filter(t => t.status !== 'Concluído').length}</p>
-                                </div>
-                                <div className="p-2 bg-slate-50 dark:bg-slate-800 text-slate-400 rounded-lg"><CheckCircle2 size={20} /></div>
-                            </div>
-                            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                                <div>
-                                    <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">{t('modules.nexus.metrics.completion')}</p>
-                                    <p className="text-2xl font-black text-emerald-600">
-                                        {filteredTasks.length > 0 ? Math.round((filteredTasks.filter(t => t.status === 'Concluído').length / filteredTasks.length) * 100) : 0}%
-                                    </p>
-                                </div>
-                                <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-lg"><TrendingUp size={20} /></div>
-                            </div>
-                        </div>
-
-                        {/* Main Content */}
-                        {view === 'kanban' ? (
-                            <div className="flex-1 flex gap-6 overflow-x-auto p-8 pt-0 no-scrollbar animate-in fade-in slide-in-from-bottom-4 duration-700">
-                                {columns.map((column) => (
-                                    <div
-                                        key={column}
-                                        className="flex-shrink-0 w-80 bg-slate-100/40 dark:bg-slate-950/40 rounded-[2rem] p-4 border border-slate-200 dark:border-slate-900 flex flex-col gap-4"
-                                        onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('bg-indigo-50/50', 'dark:bg-indigo-900/10', 'border-indigo-300', 'dark:border-indigo-800/50'); }}
-                                        onDragLeave={(e) => { e.currentTarget.classList.remove('bg-indigo-50/50', 'dark:bg-indigo-900/10', 'border-indigo-300', 'dark:border-indigo-800/50'); }}
-                                        onDrop={(e) => { e.preventDefault(); e.currentTarget.classList.remove('bg-indigo-50/50', 'dark:bg-indigo-900/10', 'border-indigo-300', 'dark:border-indigo-800/50'); handleDropTask(e, column); }}
-                                    >
-                                        <div className="flex items-center justify-between px-2 mb-2">
-                                            <h3 className="font-black text-xs text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                                <div className={`w-2 h-2 rounded-full ${column === 'Atrasado' ? 'bg-rose-500' :
-                                                    column === 'Concluído' ? 'bg-emerald-500' : 'bg-slate-400'
-                                                    }`} />
-                                                {getColumnTranslation(column)}
-                                                <span className="ml-2 px-2 py-0.5 bg-white dark:bg-slate-800 rounded-lg text-[10px] border border-slate-200 dark:border-slate-800 font-bold">
-                                                    {filteredTasks.filter(t => t.status === column).length}
-                                                </span>
-                                            </h3>
-                                        </div>
-
-                                        <div className="flex-1 space-y-4 overflow-y-auto no-scrollbar pb-6 rounded-xl">
-                                            {loading ? (
-                                                <div className="py-8 text-center text-slate-400 text-xs font-bold animate-pulse">{t('modules.nexus.empty.syncing')}</div>
-                                            ) : filteredTasks.filter(t => t.status === column).map((task) => {
-                                                const law = lawsuits.find(l => l.id === task.lawsuit_id);
-                                                const resp = team.find(t_ => t_.id === task.responsible_id);
-                                                const urgency = getTaskUrgencyInfo(task.due_date, task.status);
-
-                                                return (
-                                                    <motion.div
-                                                        key={task.id}
-                                                        draggable
-                                                        onDragStart={(e) => {
-                                                            handleDragStartTask(e as any, task.id);
-                                                            (e.currentTarget as any).classList.add('opacity-50');
-                                                        }}
-                                                        onDragEnd={(e) => {
-                                                            (e.currentTarget as any).classList.remove('opacity-50');
-                                                        }}
-                                                        animate={urgency.isToday ? { 
-                                                            borderColor: ["#ef4444", "#fda4af", "#ef4444"],
-                                                            boxShadow: ["0 0 0px rgba(239, 68, 68, 0)", "0 0 10px rgba(239, 68, 68, 0.3)", "0 0 0px rgba(239, 68, 68, 0)"]
-                                                        } : {}}
-                                                        transition={urgency.isToday ? { duration: 2, repeat: Infinity } : { duration: 0.2 }}
-                                                        className={`bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-sm border ${urgency.isToday ? 'border-rose-500' : 'border-slate-200 dark:border-slate-800'} hover:shadow-lg hover:border-indigo-300 dark:hover:border-indigo-700 transition-all cursor-grab active:cursor-grabbing group`}
-                                                    >
-                                                        <div className="flex justify-between items-start mb-3">
-                                                            <span className={`text-[9px] font-black uppercase px-2 py-1 rounded-md border ${getSeverityColor(task.due_date, task.status)}`}>
-                                                                {getPriorityTranslation(task.priority || 'Média')}
-                                                            </span>
-                                                            <div className="flex gap-1.5 transition-all">
-                                                                <button
-                                                                    onClick={(e) => { e.stopPropagation(); handleOpenNexoVisual('task', task); }}
-                                                                    className="p-1 px-1.5 text-indigo-600 bg-indigo-50 dark:bg-indigo-900/40 rounded-lg hover:bg-indigo-100 hover:scale-110 active:scale-95 transition-all shadow-sm border border-indigo-100 dark:border-indigo-800/50"
-                                                                    title="Ver Mapa Mental (Nexo Visual)"
-                                                                >
-                                                                    <Network size={12} />
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => { setEditingTask(task); setIsTaskModalOpen(true); setActiveTaskTab('basic'); }}
-                                                                    className="p-1 text-slate-400 hover:text-indigo-600 bg-slate-50 dark:bg-slate-800 rounded cursor-pointer"
-                                                                >
-                                                                    <Pencil size={12} />
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                        <h4 className="font-bold text-slate-800 dark:text-white text-sm leading-tight mb-3">{task.title}</h4>
-                                                        {law && <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 mb-4 flex items-center gap-1"><Scale size={10} /> {law.cnj_number}</p>}
-
-                                                        <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-50 dark:border-slate-800/50">
-                                                            <div className="flex items-center gap-2">
-                                                                <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[8px] font-black border border-slate-200 dark:border-slate-700" title={resp?.full_name}>
-                                                                    {resp?.full_name?.charAt(0) || <UserIcon size={10} />}
-                                                                </div>
-                                                                <span className="text-[10px] font-bold text-slate-400 truncate max-w-[80px]">{resp?.full_name?.split(' ')[0]}</span>
-                                                            </div>
-                                                            <div className="flex flex-col items-end">
-                                                                <div className="flex items-center gap-1 text-slate-400">
-                                                                    <Calendar size={10} />
-                                                                    <span className="text-[10px] font-bold">{new Date(task.due_date).toLocaleDateString(t('locale') === 'en' ? 'en-US' : 'pt-BR', { day: '2-digit', month: 'short' })}</span>
-                                                                </div>
-                                                                {task.status !== 'Concluído' && (
-                                                                    <span className={`text-[8px] font-black uppercase tracking-tighter mt-1 ${urgency.color === 'rose' ? 'text-rose-500 animate-pulse' : 'text-slate-400'}`}>
-                                                                        {urgency.label}
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    </motion.div>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="flex-1 flex flex-col p-8 pt-0 overflow-y-auto no-scrollbar animate-in fade-in slide-in-from-bottom-4 duration-700">
-                                <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden flex flex-col">
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full text-left border-collapse">
-                                            <thead>
-                                                <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
-                                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.modals.task.labelTitle')}</th>
-                                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('common.status')}</th>
-                                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Prioridade</th>
-                                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.modals.task.labelDueDate')}</th>
-                                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.modals.task.labelResponsible')}</th>
-                                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">{t('modules.nexus.table.headers.actions')}</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
-                                                {filteredTasks.length === 0 ? (
-                                                    <tr>
-                                                        <td colSpan={6} className="px-6 py-20 text-center text-slate-500 font-bold text-sm">Nenhuma tarefa encontrada.</td>
-                                                    </tr>
-                                                ) : filteredTasks.map((task) => {
-                                                    const resp = team.find(t_ => t_.id === task.responsible_id);
-                                                    const urgency = getTaskUrgencyInfo(task.due_date, task.status);
-                                                    return (
-                                                        <tr key={task.id} className={`hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors group ${urgency.isToday ? 'bg-rose-50/10' : ''}`}>
-                                                            <td className="px-6 py-4">
-                                                                <div className="font-bold text-slate-700 dark:text-slate-200 text-sm whitespace-nowrap">{task.title}</div>
-                                                                {urgency.isToday && <span className="text-[8px] font-black uppercase text-rose-500 animate-pulse tracking-widest">Atendimento Urgente / Hoje</span>}
-                                                            </td>
-                                                            <td className="px-6 py-4">
-                                                                <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-[10px] font-black uppercase text-slate-600 dark:text-slate-300">
-                                                                    {getColumnTranslation(task.status)}
-                                                                </span>
-                                                            </td>
-                                                            <td className="px-6 py-4">
-                                                                <span className={`px-2 py-0.5 rounded border text-[10px] font-black uppercase ${getSeverityColor(task.due_date, task.status)}`}>
-                                                                    {getPriorityTranslation(task.priority || 'Média')}
-                                                                </span>
-                                                            </td>
-                                                            <td className="px-6 py-4">
-                                                                <div className="flex flex-col">
-                                                                    <div className="text-xs font-bold text-slate-500">{new Date(task.due_date).toLocaleDateString()}</div>
-                                                                    {task.status !== 'Concluído' && (
-                                                                        <span className={`text-[9px] font-black uppercase tracking-tighter ${urgency.color === 'rose' ? 'text-rose-500' : 'text-slate-400'}`}>
-                                                                            {urgency.label}
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                            </td>
-                                                            <td className="px-6 py-4">
-                                                                <div className="flex items-center gap-2">
-                                                                    <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[8px] font-black border border-slate-200 dark:border-slate-700">
-                                                                        {resp?.full_name?.charAt(0) || <UserIcon size={10} />}
-                                                                    </div>
-                                                                    <span className="text-xs font-bold text-slate-600 dark:text-slate-300">{resp?.full_name || '-'}</span>
-                                                                </div>
-                                                            </td>
-                                                            <td className="px-6 py-4 text-right">
-                                                                <div className="flex items-center justify-end gap-1">
-                                                                    <button
-                                                                        onClick={(e) => { e.stopPropagation(); handleOpenNexoVisual('task', task); }}
-                                                                        className="p-2 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
-                                                                        title="Ver Mapa Mental (Nexo Visual)"
-                                                                    >
-                                                                        <Network size={18} />
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => { setEditingTask(task); setIsTaskModalOpen(true); setActiveTaskTab('basic'); }}
-                                                                        className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
-                                                                    >
-                                                                        <Pencil size={18} />
-                                                                    </button>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    )
-                                                })}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
+                    <TasksTab
+                        t={t}
+                        credentials={credentials}
+                        lawsuits={lawsuits}
+                        filteredTasks={filteredTasks}
+                        team={team}
+                        loading={loading}
+                        view={view}
+                        setView={setView}
+                        filterSearchTerm={filterSearchTerm}
+                        setFilterSearchTerm={setFilterSearchTerm}
+                        filterResponsibleId={filterResponsibleId}
+                        setFilterResponsibleId={setFilterResponsibleId}
+                        filterLawsuitId={filterLawsuitId}
+                        setFilterLawsuitId={setFilterLawsuitId}
+                        setEditingTask={setEditingTask}
+                        setIsTaskModalOpen={setIsTaskModalOpen}
+                        setActiveTaskTab={setActiveTaskTab}
+                        handleOpenNexoVisual={handleOpenNexoVisual}
+                        handleDropTask={handleDropTask}
+                        handleDragStartTask={handleDragStartTask}
+                    />
                 )}
 
                 {activeTab === 'agenda' && (
