@@ -510,14 +510,14 @@ export interface Asset {
     registration_number?: string; // Matrícula, Renavam, CNPJ, etc.
     person_id?: string;
     lawsuit_id?: string;
-    status: 'Ativo' | 'Bloqueado' | 'Vendido' | 'Em Garantia' | 'Alienado';
+    status: 'Ativo' | 'Bloqueado' | 'Vendido' | 'Em Garantia' | 'Alienado' | 'Inativo';
     created_at?: string;
     updated_at?: string;
 }
 
 // 🏢 Corporate / Societário Module Types
 export type EntityType = 'LTDA' | 'SA' | 'EIRELI' | 'MEI' | 'Holding' | 'Associação' | 'Outros';
-export type EntityStatus = 'Ativa' | 'Baixada' | 'Inativa' | 'Em Liquidação';
+export type EntityStatus = 'Ativa' | 'Baixada' | 'Inativa' | 'Em Liquidação' | 'Suspensa';
 export type TaxRegime = 'Simples Nacional' | 'Lucro Presumido' | 'Lucro Real' | 'Isenta';
 export type ShareType = 'Ordinária' | 'Preferencial' | 'Quotas';
 export type CorpDocType = 'Ata' | 'Estatuto' | 'Contrato Social' | 'Alteração Contratual' | 'Procuração' | 'Outros';

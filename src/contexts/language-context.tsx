@@ -51,7 +51,7 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
         localStorage.setItem('veritum-locale', newLocale);
     };
 
-    const t = (key: string, variables?: Record<string, any>): any => {
+    const t = React.useCallback((key: string, variables?: Record<string, any>): any => {
         const keys = key.split('.');
         let current: any = translations[locale];
 
@@ -83,15 +83,21 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
         }
 
         return current !== undefined && current !== null ? current : key;
-    };
+    }, [locale]);
 
     useEffect(() => {
         document.documentElement.lang = locale;
     }, [locale]);
 
+    const contextValue = React.useMemo(() => ({
+        locale,
+        setLocale,
+        t
+    }), [locale, setLocale, t]);
+
     // Prevent hydration flickers by waiting for locale to load from localStorage
     return (
-        <LanguageContext.Provider value={{ locale, setLocale, t }}>
+        <LanguageContext.Provider value={contextValue}>
             {isLoaded ? children : <div className="opacity-0">{children}</div>}
         </LanguageContext.Provider>
     );
