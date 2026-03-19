@@ -1850,8 +1850,29 @@ export const pt = {
                     },
                     actions: {
                         generate: 'Gerar Documento',
-                        download: 'Fazer Download (PDF)',
-                        preview: 'Visualizar Rascunho'
+                        download: 'Download (PDF)',
+                        preview: 'Visualizar Rascunho',
+                        back: 'Voltar',
+                        print: 'Imprimir / Gerar PDF desde Vista Previa'
+                    },
+                    tabs: {
+                        master: 'Modelos Padrão',
+                        office: 'Modelos do Escritório'
+                    },
+                    placeholders: {
+                        activePole: 'Polo Ativo',
+                        general: 'Geral',
+                        feeAgreement: 'Contrato de Honorários',
+                        indigency: 'Declaração de Indigência',
+                        dataProtection: 'Proteção de Dados',
+                        repasse: 'Substituição de Poder',
+                        qualification: 'Qualificação e Notas',
+                        residenceProof: 'Declaração de Residência',
+                        paymentReceipt: 'Recibo de Pagamento'
+                    },
+                    messages: {
+                        noCustomTemplates: 'No custom templates in this office.',
+                        autoFillData: 'The data for {{name}} ({{document}}) will be automatically inserted into the variable fields of the template.'
                     }
                 },
                 validations: {

@@ -25,6 +25,8 @@ import { CorporateEntityModal } from './nexus/modals/CorporateEntityModal';
 import { DocumentsTab } from './nexus/tabs/DocumentsTab';
 import { CrmTab } from './nexus/tabs/CrmTab';
 import { TasksTab } from './nexus/tabs/TasksTab';
+import { SocietarioTab } from './nexus/tabs/SocietarioTab';
+
 
 
 
@@ -143,7 +145,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             setHistoryData(prev => prev ? { ...prev, timeline: data || [], isLoading: false } : null);
         } catch (error) {
             console.error('Error fetching history:', error);
-            toast.error('Erro ao carregar histórico');
+            toast.error('Erro ao carregar histÃ³rico');
             setHistoryData(prev => prev ? { ...prev, isLoading: false } : null);
         }
     };
@@ -159,7 +161,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
 
     const LAWSUIT_STATUSES = ['Ativo', 'Suspenso', 'Arquivado', 'Encerrado'];
     const ASSET_STATUSES = ['Ativo', 'Bloqueado', 'Vendido', 'Em Garantia', 'Alienado'];
-    const ENTITY_STATUSES: EntityStatus[] = ['Ativa', 'Baixada', 'Inativa', 'Em Liquidação'];
+    const ENTITY_STATUSES: EntityStatus[] = ['Ativa', 'Baixada', 'Inativa', 'Em LiquidaÃ§Ã£o'];
 
     const handleQuickStatusUpdate = (id: string, type: 'lawsuit' | 'asset' | 'corporate', newStatus: string) => {
         const item = type === 'lawsuit' ? lawsuits.find(l => l.id === id) : type === 'asset' ? assets.find(a => a.id === id) : corporateEntities.find(e => e.id === id);
@@ -213,7 +215,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             if (currentStatus === 'Ativo' || currentStatus === 'Ativa') return 'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800/50';
             if (currentStatus === 'Encerrado' || currentStatus === 'Vendido' || currentStatus === 'Baixada' || currentStatus === 'Inativa' || currentStatus === 'Bloqueado') 
                 return 'bg-rose-50 text-rose-600 border-rose-100 dark:bg-rose-900/20 dark:border-rose-800/50';
-            if (currentStatus === 'Suspenso' || currentStatus === 'Em Manutenção' || currentStatus === 'Em Liquidação' || currentStatus === 'Em Garantia') 
+            if (currentStatus === 'Suspenso' || currentStatus === 'Em ManutenÃ§Ã£o' || currentStatus === 'Em LiquidaÃ§Ã£o' || currentStatus === 'Em Garantia') 
                 return 'bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-900/20 dark:border-amber-800/50';
             return 'bg-slate-50 text-slate-600 border-slate-100 dark:bg-slate-800/50 dark:border-slate-700/50';
         };
@@ -390,13 +392,13 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 (finStatsResult as any)?.error === 'TABLE_NOT_FOUND';
 
             if (hasTableError) {
-                toast.error(t('modules.nexus.errors.notMigrated') || 'O banco de dados do cliente selecionado ainda não foi migrado (tabelas Nexus/Team faltantes).');
+                toast.error(t('modules.nexus.errors.notMigrated') || 'O banco de dados do cliente selecionado ainda nÃ£o foi migrado (tabelas Nexus/Team faltantes).');
             }
 
         } catch (err: any) {
             console.error('Error loading Nexus data:', err);
             if (err.message?.includes('relation') && err.message?.includes('does not exist')) {
-                toast.error(t('modules.nexus.errors.notInitialized') || 'O banco de dados deste cliente ainda não foi inicializado (tabelas Nexus/Team faltantes).');
+                toast.error(t('modules.nexus.errors.notInitialized') || 'O banco de dados deste cliente ainda nÃ£o foi inicializado (tabelas Nexus/Team faltantes).');
             } else {
                 toast.error(t('modules.nexus.errors.loadError') || 'Erro ao carregar dados do Nexus.');
             }
@@ -410,11 +412,11 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         setIsAiSummarizing(true);
         setAiLawsuitSummary(null);
         
-        // Simulação de chamada para API de IA (ex: Gemini/OpenAI)
-        // Em produção, isso leria o conteúdo dos documentos e timeline
+        // SimulaÃ§Ã£o de chamada para API de IA (ex: Gemini/OpenAI)
+        // Em produÃ§Ã£o, isso leria o conteÃºdo dos documentos e timeline
         await new Promise(resolve => setTimeout(resolve, 3000));
         
-        const summary = `### ANÁLISE ESTRATÉGICA NEXUS\n\nEste processo (**${editingLawsuit.case_title}**) encontra-se em fase de **${editingLawsuit.status}**. \n\n**Pontos Chave:**\n- Atualmente possui **${lawsuitDocuments.length} documentos** anexados para revisão.\n- A probabilidade de êxito é avaliada como **${editingLawsuit.probability_of_success || 'Não Definida'}**.\n- Identificamos movimentações recentes na linha do tempo que sugerem atenção ao próximo prazo fatal.\n\n**Recomendação do Sistema:** Manter a provisão atual de **R$ ${(editingLawsuit.provision_amount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}** e prosseguir com a estratégia de conciliação, dado o histórico de decisões em tribunais similares (análise preditiva).`;
+        const summary = `### ANÃLISE ESTRATÃ‰GICA NEXUS\n\nEste processo (**${editingLawsuit.case_title}**) encontra-se em fase de **${editingLawsuit.status}**. \n\n**Pontos Chave:**\n- Atualmente possui **${lawsuitDocuments.length} documentos** anexados para revisÃ£o.\n- A probabilidade de Ãªxito Ã© avaliada como **${editingLawsuit.probability_of_success || 'NÃ£o Definida'}**.\n- Identificamos movimentaÃ§Ãµes recentes na linha do tempo que sugerem atenÃ§Ã£o ao prÃ³ximo prazo fatal.\n\n**RecomendaÃ§Ã£o do Sistema:** Manter a provisÃ£o atual de **R$ ${(editingLawsuit.provision_amount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}** e prosseguir com a estratÃ©gia de conciliaÃ§Ã£o, dado o histÃ³rico de decisÃµes em tribunais similares (anÃ¡lise preditiva).`;
         
         setAiLawsuitSummary(summary);
         setIsAiSummarizing(false);
@@ -422,12 +424,12 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
 
     const handleSummarizeDocument = async (doc: LawsuitDocument | AssetDocument | CorporateDocument | GlobalDocument) => {
         setIsAiSummarizing(true);
-        toast.info(`A IA está analisando: ${doc.title}...`);
+        toast.info(`A IA estÃ¡ analisando: ${doc.title}...`);
         
-        // Simulação de processamento de documento
+        // SimulaÃ§Ã£o de processamento de documento
         await new Promise(resolve => setTimeout(resolve, 3500));
         
-        const summary = `Este arquivo (**${doc.title}**) foi processado com sucesso. \n\n**Resumo Inteligente:**\nO documento refere-se a uma **${doc.document_type}** datada de **${doc.event_date ? new Date(doc.event_date).toLocaleDateString() : 'data não informada'}**. \n\nIdentificamos que o teor principal aborda uma manifestação sobre fatos novos do processo, sem impactos imediatos no valor da causa, mas relevante para a estratégia de defesa. \n\n**Pontos de Atenção:**\n- Verificar se o anexo está completo (páginas legíveis).\n- O teor coincide com a última atualização de jurisprudência cadastrada no Intelligence Center.`;
+        const summary = `Este arquivo (**${doc.title}**) foi processado com sucesso. \n\n**Resumo Inteligente:**\nO documento refere-se a uma **${doc.document_type}** datada de **${doc.event_date ? new Date(doc.event_date).toLocaleDateString() : 'data nÃ£o informada'}**. \n\nIdentificamos que o teor principal aborda uma manifestaÃ§Ã£o sobre fatos novos do processo, sem impactos imediatos no valor da causa, mas relevante para a estratÃ©gia de defesa. \n\n**Pontos de AtenÃ§Ã£o:**\n- Verificar se o anexo estÃ¡ completo (pÃ¡ginas legÃ­veis).\n- O teor coincide com a Ãºltima atualizaÃ§Ã£o de jurisprudÃªncia cadastrada no Intelligence Center.`;
         
         setAiInfoModal({ isOpen: true, title: `Resumo IA: ${doc.title}`, summary: summary });
         setIsAiSummarizing(false);
@@ -491,8 +493,8 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
 
                 // Common defaults if none exist
                 const defaults = editingLawsuit.sphere === 'Trabalhista'
-                    ? ['1ª VARA DO TRABALHO', '2ª VARA DO TRABALHO', '3ª VARA DO TRABALHO', '4ª VARA DO TRABALHO', '5ª VARA DO TRABALHO']
-                    : ['1ª VARA CÃVEL', '2ª VARA CÃVEL', '3ª VARA CÃVEL', '1ª VARA FEDERAL', '2ª VARA FEDERAL'];
+                    ? ['1Âª VARA DO TRABALHO', '2Âª VARA DO TRABALHO', '3Âª VARA DO TRABALHO', '4Âª VARA DO TRABALHO', '5Âª VARA DO TRABALHO']
+                    : ['1Âª VARA CÃƒÂVEL', '2Âª VARA CÃƒÂVEL', '3Âª VARA CÃƒÂVEL', '1Âª VARA FEDERAL', '2Âª VARA FEDERAL'];
 
                 setChambers(Array.from(new Set([...uniqueChambers, ...defaults])).sort());
                 setIsLoadingChambers(false);
@@ -516,8 +518,8 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             };
             fetchSubs();
         } else if (!editingEntity) {
-            // Só limpamos se o modal estiver fechado (editingEntity === null)
-            // Isso preserva os sócios "virtuais" injetados pelo CRM
+            // SÃ³ limpamos se o modal estiver fechado (editingEntity === null)
+            // Isso preserva os sÃ³cios "virtuais" injetados pelo CRM
             setShareholders([]);
             setCorporateDocuments([]);
         }
@@ -612,7 +614,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         // FALLBACK: If not found, try to find the first member who has a lawyer-related role
         const firstLawyer = team.find(m =>
             m.role?.toLowerCase().includes('advogado') ||
-            m.role?.toLowerCase().includes('sócio') ||
+            m.role?.toLowerCase().includes('sÃ³cio') ||
             m.role?.toLowerCase().includes('socio') ||
             m.specialty // If they have a specialty, they are likely a lawyer
         );
@@ -620,7 +622,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         setEditingLawsuit({
             author_id: personId,
             status: 'Ativo',
-            sphere: 'CÃ­vel', // Default
+            sphere: 'CÃƒÂ­vel', // Default
             responsible_lawyer_id: currentMember?.id || firstLawyer?.id || team[0]?.id || ''
         });
         // Open modal with a small delay to allow tab transition animation to feel smooth
@@ -644,7 +646,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             entity_type: isCNPJ ? 'LTDA' : 'MEI'
         });
 
-        // Se for CPF, guarda a pessoa na Ref e já popula a UI para visualização imediata
+        // Se for CPF, guarda a pessoa na Ref e jÃ¡ popula a UI para visualizaÃ§Ã£o imediata
         if (!isCNPJ) {
             personForQSARef.current = person;
             setShareholders([{
@@ -655,11 +657,11 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 shares_count: 100,
                 ownership_percentage: 100,
                 is_admin: true,
-                position: 'Sócio-Administrador',
+                position: 'SÃ³cio-Administrador',
                 shareholder_name: person.full_name,
                 shareholder_type: 'Person'
             } as Shareholder]);
-            console.log('[NEXUS] Sócio preparado e enviado para a UI:', person.full_name);
+            console.log('[NEXUS] SÃ³cio preparado e enviado para a UI:', person.full_name);
         } else {
             personForQSARef.current = null;
             setShareholders([]);
@@ -708,7 +710,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     const handleSaveFinancialTransaction = async (transaction: Partial<FinancialTransaction>) => {
         try {
             await saveFinancialTransaction(transaction, selectedUserId);
-            toast.success('Transação salva com sucesso');
+            toast.success('TransaÃ§Ã£o salva com sucesso');
             setIsEditingFinancial(false);
             setEditingFinancial(null);
             if (transaction.lawsuit_id) handleFetchLawsuitFinances(transaction.lawsuit_id);
@@ -717,21 +719,21 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             if (stats.data) setFinancialStats(stats.data);
         } catch (error) {
             console.error('Error saving transaction:', error);
-            toast.error('Erro ao salvar transação');
+            toast.error('Erro ao salvar transaÃ§Ã£o');
         }
     };
 
     const handleDeleteFinancialTransaction = async (id: string, lawsuitId?: string) => {
-        if (!confirm('Deseja realmente excluir esta transação?')) return;
+        if (!confirm('Deseja realmente excluir esta transaÃ§Ã£o?')) return;
         try {
             await deleteFinancialTransaction(id, selectedUserId);
-            toast.success('Transação excluída');
+            toast.success('TransaÃ§Ã£o excluÃ­da');
             if (lawsuitId) handleFetchLawsuitFinances(lawsuitId);
             const stats = await getFinancialStats(undefined, undefined, selectedUserId);
             if (stats.data) setFinancialStats(stats.data);
         } catch (error) {
             console.error('Error deleting transaction:', error);
-            toast.error('Erro ao excluir transação');
+            toast.error('Erro ao excluir transaÃ§Ã£o');
         }
     };
 
@@ -745,7 +747,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         setNexoData({
             origin_type: type,
             id: data.id,
-            title: title || 'Sem Título',
+            title: title || 'Sem TÃ­tulo',
             data: data
         });
         setIsNexoVisualOpen(true);
@@ -761,7 +763,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 setIsLawsuitModalOpen(true);
                 setActiveLawsuitTab('docs');
             } else {
-                toast.error('Processo não encontrado nos dados carregados.');
+                toast.error('Processo nÃ£o encontrado nos dados carregados.');
             }
         } else if (origin_type === 'asset') {
             const asset = assets.find(a => a.id === origin_id);
@@ -770,14 +772,14 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 setIsAssetModalOpen(true);
                 setActiveAssetTab('docs');
             } else {
-                toast.error('Ativo não encontrado nos dados carregados.');
+                toast.error('Ativo nÃ£o encontrado nos dados carregados.');
             }
         } else if (origin_type === 'corporate') {
             const entity = corporateEntities.find(e => e.id === origin_id);
             if (entity) {
                 handleEditEntity(entity, 'docs');
             } else {
-                toast.error('Entidade não encontrada nos dados carregados.');
+                toast.error('Entidade nÃ£o encontrada nos dados carregados.');
             }
         }
     };
@@ -788,7 +790,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         
         triggerConfirm(
             confirmTitle,
-            `Deseja realmente remover o documento "${title}"? Esta ação não pode ser desfeita.`,
+            `Deseja realmente remover o documento "${title}"? Esta aÃ§Ã£o nÃ£o pode ser desfeita.`,
             async () => {
                 try {
                     if (file_url) {
@@ -827,7 +829,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         // CNJ Strict Validation
         const cnjRegex = /^\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}$/;
         if (editingLawsuit?.cnj_number && !cnjRegex.test(editingLawsuit.cnj_number)) {
-            toast.error(t('modules.nexus.modals.lawsuit.validation.cnj') || 'Formato de CNJ inválido. Use 0000000-00.0000.0.00.0000');
+            toast.error(t('modules.nexus.modals.lawsuit.validation.cnj') || 'Formato de CNJ invÃ¡lido. Use 0000000-00.0000.0.00.0000');
             return;
         }
 
@@ -1030,10 +1032,10 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         try {
             const savedEntity = await saveCorporateEntity(editingEntity!, targetUserId, justificationText);
 
-            // VÃ­nculo automático de sócio se for criação via CRM
+            // VÃƒÂ­nculo automÃ¡tico de sÃ³cio se for criaÃ§Ã£o via CRM
             if (isNew && personToLink) {
                 try {
-                    console.log('[NEXUS-DEBUG] Criando vÃ­nculo societário para:', personToLink.full_name);
+                    console.log('[NEXUS-DEBUG] Criando vÃƒÂ­nculo societÃ¡rio para:', personToLink.full_name);
                     await saveShareholder({
                         entity_id: savedEntity.id,
                         person_shareholder_id: personToLink.id,
@@ -1041,13 +1043,13 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                         share_type: 'Quotas',
                         shares_count: 100,
                         is_admin: true,
-                        position: 'Sócio-Administrador',
+                        position: 'SÃ³cio-Administrador',
                     } as any, targetUserId);
                     
-                    toast.success(`${personToLink.full_name} vinculado como sócio 100%`);
+                    toast.success(`${personToLink.full_name} vinculado como sÃ³cio 100%`);
                 } catch (shErr: any) {
-                    console.error('[NEXUS-DEBUG] Erro ao vincular sócio:', shErr);
-                    toast.error(`Atenção: A empresa foi salva, mas o QSA falhou: ${shErr.message}`);
+                    console.error('[NEXUS-DEBUG] Erro ao vincular sÃ³cio:', shErr);
+                    toast.error(`AtenÃ§Ã£o: A empresa foi salva, mas o QSA falhou: ${shErr.message}`);
                 } finally {
                     personForQSARef.current = null;
                 }
@@ -1109,7 +1111,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             }
             setVisualRefreshTrigger(prev => prev + 1);
             
-            // Refresh geral para garantir que o QSA apareça na próxima abertura
+            // Refresh geral para garantir que o QSA apareÃ§a na prÃ³xima abertura
             if (isNew && personToLink) {
                 fetchAll();
             }
@@ -1134,7 +1136,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
 
             setIsShareholderModalOpen(false);
             setEditingShareholder(null);
-            toast.success('Sócio salvo com sucesso!');
+            toast.success('SÃ³cio salvo com sucesso!');
             
             if (editingShareholder?.id) {
                 setShareholders(prev => prev.map(s => s.id === savedShareholder.id ? savedShareholder : s));
@@ -1143,22 +1145,22 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             }
         } catch (err) {
             console.error('Error saving shareholder:', err);
-            toast.error('Erro ao salvar sócio');
+            toast.error('Erro ao salvar sÃ³cio');
         }
     };
 
     const handleDeleteShareholder = (id: string) => {
         triggerConfirm(
-            'Excluir Sócio',
-            'Tem certeza que deseja excluir este sócio? Esta ação removerá o vÃ­nculo com a entidade.',
+            'Excluir SÃ³cio',
+            'Tem certeza que deseja excluir este sÃ³cio? Esta aÃ§Ã£o removerÃ¡ o vÃƒÂ­nculo com a entidade.',
             async () => {
                 try {
                     await deleteShareholder(id, selectedUserId);
                     setShareholders(prev => prev.filter(s => s.id !== id));
-                    toast.success('Sócio removido');
+                    toast.success('SÃ³cio removido');
                 } catch (err) {
                     console.error('Error deleting shareholder:', err);
-                    toast.error('Erro ao remover sócio');
+                    toast.error('Erro ao remover sÃ³cio');
                 }
             }
         );
@@ -1186,7 +1188,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 setIsDocumentModalOpen(false);
                 setEditingDocument(null);
                 setCorporateDocFile(null);
-                toast.success('Documento adicionado Ã  fila. Ele será salvo após você clicar em "Criar Entidade".');
+                toast.success('Documento adicionado ÃƒÂ  fila. Ele serÃ¡ salvo apÃ³s vocÃª clicar em "Criar Entidade".');
                 return;
             }
 
@@ -1265,7 +1267,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 setIsLawsuitDocModalOpen(false);
                 setEditingLawsuitDoc(null);
                 setLawsuitDocFile(null);
-                toast.success('Documento adicionado Ã  fila. Ele será salvo após você clicar em "Criar Processo".');
+                toast.success('Documento adicionado ÃƒÂ  fila. Ele serÃ¡ salvo apÃ³s vocÃª clicar em "Criar Processo".');
                 return;
             }
 
@@ -1422,7 +1424,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 setIsAssetDocModalOpen(false);
                 setEditingAssetDoc(null);
                 setAssetDocFile(null);
-                toast.success('Documento adicionado Ã  fila. Ele será salvo após você clicar em "Criar Ativo".');
+                toast.success('Documento adicionado ÃƒÂ  fila. Ele serÃ¡ salvo apÃ³s vocÃª clicar em "Criar Ativo".');
                 return;
             }
 
@@ -1605,7 +1607,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 try {
                     const targetUserId = selectedUserId;
                     await deleteLawsuit(id, targetUserId);
-                    toast.success(t('modules.nexus.kanban.deleteSuccess') || 'Processo excluÃ­do corretamente');
+                    toast.success(t('modules.nexus.kanban.deleteSuccess') || 'Processo excluÃƒÂ­do corretamente');
                     setLawsuits(prev => prev.filter(l => l.id !== id));
                 } catch (err) {
                     console.error('Error deleting lawsuit:', err);
@@ -1651,13 +1653,13 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         );
     };
 
-    const columns = ['A Fazer', 'Em Andamento', 'Concluído', 'Atrasado'];
+    const columns = ['A Fazer', 'Em Andamento', 'ConcluÃ­do', 'Atrasado'];
 
     const getColumnTranslation = (col: string) => {
         switch (col) {
             case 'A Fazer': return t('modules.nexus.kanban.todo');
             case 'Em Andamento': return t('modules.nexus.kanban.doing');
-            case 'Concluído': return t('modules.nexus.kanban.done');
+            case 'ConcluÃ­do': return t('modules.nexus.kanban.done');
             case 'Atrasado': return t('modules.nexus.kanban.late');
             default: return col;
         }
@@ -1667,7 +1669,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         switch (priority) {
             case 'Baixa':
             case 'Low': return t('modules.nexus.modals.task.priorities.Low');
-            case 'Média':
+            case 'MÃ©dia':
             case 'Medium': return t('modules.nexus.modals.task.priorities.Medium');
             case 'Alta':
             case 'High': return t('modules.nexus.modals.task.priorities.High');
@@ -1678,7 +1680,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     };
 
     const getSeverityColor = (dueDate: string, status: string) => {
-        if (status === 'Concluído') return 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600';
+        if (status === 'ConcluÃ­do') return 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600';
         const now = new Date();
         const due = new Date(dueDate);
         const diffHours = (due.getTime() - now.getTime()) / (1000 * 60 * 60);
@@ -1690,7 +1692,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     };
 
     const getTaskUrgencyInfo = (dueDate: string, status: string) => {
-        if (status === 'Concluído') return { label: 'Concluído', color: 'emerald', days: 0, isToday: false };
+        if (status === 'ConcluÃ­do') return { label: 'ConcluÃ­do', color: 'emerald', days: 0, isToday: false };
         const now = new Date();
         now.setHours(0, 0, 0, 0);
         const due = new Date(dueDate);
@@ -1701,7 +1703,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
 
         if (diffDays < 0) return { label: 'Atrasado', color: 'rose', days: Math.abs(diffDays), isToday: false };
         if (diffDays === 0) return { label: 'Vence Hoje', color: 'rose', days: 0, isToday: true };
-        if (diffDays === 1) return { label: 'Vence Amanhã', color: 'amber', days: 1, isToday: false };
+        if (diffDays === 1) return { label: 'Vence AmanhÃ£', color: 'amber', days: 1, isToday: false };
         return { label: `Em ${diffDays} dias`, color: 'slate', days: diffDays, isToday: false };
     };
 
@@ -1726,12 +1728,12 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     // Cascading Constants (100% Brazilian Judicial Geography)
     const ESFERAS = [
         'Trabalhista',
-        'Cível',
+        'CÃ­vel',
         'Federal',
-        'Previdenciária',
-        'Tributária',
+        'PrevidenciÃ¡ria',
+        'TributÃ¡ria',
         'Criminal',
-        'Família & Sucessões',
+        'FamÃ­lia & SucessÃµes',
         'Eleitoral',
         'Militar'
     ];
@@ -1739,13 +1741,13 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
     const UFS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
 
     const RITOS = {
-        'Trabalhista': ['Ordinário', 'Sumaríssimo', 'Sumário (Alçada)', 'Execução Trabalhista'],
-        'Cível': ['Procedimento Comum', 'Sumaríssimo (Juizado Especial)', 'Execução de Título Extrajudicial', 'Monitória', 'Inventário/Arrolamento'],
-        'Federal': ['Procedimento Comum', 'Sumaríssimo (JEF)', 'Execução Fiscal'],
-        'Previdenciária': ['Procedimento Comum', 'Sumaríssimo (JEF)', 'Acidentário'],
-        'Tributária': ['Execução Fiscal', 'Anulatória', 'Mandado de Segurança', 'Repetição de Indébito'],
-        'Criminal': ['Ordinário', 'Sumário', 'Sumaríssimo', 'Tribunal do Júri', 'Execução Penal'],
-        'default': ['Procedimento Comum', 'Especial', 'Mandado de Segurança']
+        'Trabalhista': ['OrdinÃ¡rio', 'SumarÃ­ssimo', 'SumÃ¡rio (AlÃ§ada)', 'ExecuÃ§Ã£o Trabalhista'],
+        'CÃ­vel': ['Procedimento Comum', 'SumarÃ­ssimo (Juizado Especial)', 'ExecuÃ§Ã£o de TÃ­tulo Extrajudicial', 'MonitÃ³ria', 'InventÃ¡rio/Arrolamento'],
+        'Federal': ['Procedimento Comum', 'SumarÃ­ssimo (JEF)', 'ExecuÃ§Ã£o Fiscal'],
+        'PrevidenciÃ¡ria': ['Procedimento Comum', 'SumarÃ­ssimo (JEF)', 'AcidentÃ¡rio'],
+        'TributÃ¡ria': ['ExecuÃ§Ã£o Fiscal', 'AnulatÃ³ria', 'Mandado de SeguranÃ§a', 'RepetiÃ§Ã£o de IndÃ©bito'],
+        'Criminal': ['OrdinÃ¡rio', 'SumÃ¡rio', 'SumarÃ­ssimo', 'Tribunal do JÃºri', 'ExecuÃ§Ã£o Penal'],
+        'default': ['Procedimento Comum', 'Especial', 'Mandado de SeguranÃ§a']
     };
 
     const TAX_REGIMES: TaxRegime[] = ['Simples Nacional', 'Lucro Presumido', 'Lucro Real', 'Isenta'];
@@ -1770,9 +1772,9 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
             'PR': ['TRF-4'], 'PE': ['TRF-5'], 'PI': ['TRF-1'], 'RJ': ['TRF-2'], 'RN': ['TRF-5'],
             'RS': ['TRF-4'], 'RO': ['TRF-1'], 'RR': ['TRF-1'], 'SC': ['TRF-4'], 'SP': ['TRF-3'],
             'SE': ['TRF-5'], 'TO': ['TRF-1'],
-            'Superior': ['STJ - Superior Tribunal de Justiça', 'STF']
+            'Superior': ['STJ - Superior Tribunal de JustiÃ§a', 'STF']
         },
-        'Cível': {
+        'CÃ­vel': {
             'AC': ['TJAC'], 'AL': ['TJAL'], 'AP': ['TJAP'], 'AM': ['TJAM'], 'BA': ['TJBA'],
             'CE': ['TJCE'], 'DF': ['TJDFT'], 'ES': ['TJES'], 'GO': ['TJGO'], 'MA': ['TJMA'],
             'MT': ['TJMT'], 'MS': ['TJMS'], 'MG': ['TJMG'], 'PA': ['TJPA'], 'PB': ['TJPB'],
@@ -1783,11 +1785,11 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         }
     };
 
-    // Extension: Previdenciária and Tributária often share Cível/Federal courts
-    TRIBUNAIS['Previdenciária'] = TRIBUNAIS['Federal'];
-    TRIBUNAIS['Tributária'] = TRIBUNAIS['Federal'];
-    TRIBUNAIS['Criminal'] = TRIBUNAIS['Cível'];
-    TRIBUNAIS['Família & Sucessões'] = TRIBUNAIS['Cível'];
+    // Extension: PrevidenciÃ¡ria and TributÃ¡ria often share CÃ­vel/Federal courts
+    TRIBUNAIS['PrevidenciÃ¡ria'] = TRIBUNAIS['Federal'];
+    TRIBUNAIS['TributÃ¡ria'] = TRIBUNAIS['Federal'];
+    TRIBUNAIS['Criminal'] = TRIBUNAIS['CÃ­vel'];
+    TRIBUNAIS['FamÃ­lia & SucessÃµes'] = TRIBUNAIS['CÃ­vel'];
     TRIBUNAIS['Eleitoral'] = Object.fromEntries(UFS.map(uf => [uf, [`TRE-${uf}`]]));
     TRIBUNAIS['Militar'] = { 'default': ['STM - Superior Tribunal Militar', 'TJM (Estadual)'] };
 
@@ -1854,7 +1856,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                     onChange={e => setFilterResponsibleId(e.target.value)}
                     className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
                 >
-                    <option value="">👤 {t('common.filters.allMembers')}</option>
+                    <option value="">ðŸ‘¤ {t('common.filters.allMembers')}</option>
                     {team.map(t => <option key={t.id} value={t.id}>{t.full_name}</option>)}
                 </select>
             </div>
@@ -1864,7 +1866,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                     onChange={e => setFilterLawsuitId(e.target.value)}
                     className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
                 >
-                    <option value="">⚖️ {t('common.filters.allProcesses')}</option>
+                    <option value="">âš–ï¸ {t('common.filters.allProcesses')}</option>
                     {lawsuits.map(law => <option key={law.id} value={law.id}>{law.cnj_number || law.case_title}</option>)}
                 </select>
             </div>
@@ -1902,7 +1904,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                     onChange={e => setAssetStatusFilter(e.target.value)}
                     className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
                 >
-                    <option value="">🏢 {t('common.filters.allStatuses')}</option>
+                    <option value="">ðŸ¢ {t('common.filters.allStatuses')}</option>
                     {Object.entries(t('common.statuses.asset', { returnObjects: true }) as Record<string, string>).map(([key, val]) => <option key={key} value={val}>{val}</option>)}
                 </select>
             </div>
@@ -1912,7 +1914,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                     onChange={e => setAssetTypeFilter(e.target.value)}
                     className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
                 >
-                    <option value="">📦 {t('common.filters.allTypes')}</option>
+                    <option value="">ðŸ“¦ {t('common.filters.allTypes')}</option>
                     {Object.entries(t('common.types.asset', { returnObjects: true }) as Record<string, string>).map(([key, val]) => <option key={key} value={val}>{val}</option>)}
                 </select>
             </div>
@@ -1991,14 +1993,14 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                     }}
                                 >
                                     <option value="">--- {t('management.users.masterFilter.selectClient') || 'Selecione um Cliente'} ---</option>
-                                    <optgroup label={t('management.users.masterFilter.clients')?.toUpperCase() || 'CLIENTES (SÓCIOS ADM)'}>
+                                    <optgroup label={t('management.users.masterFilter.clients')?.toUpperCase() || 'CLIENTES (SÃ“CIOS ADM)'}>
                                         {allClients.filter(u => u.id !== user.id).map(c => {
                                             const rawName = typeof c.name === 'object' ? ((c.name as any).pt || (c.name as any).en || '') : (c.name || '');
                                             const formattedName = rawName.toLowerCase().split(' ').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
                                             const formattedEmail = (c.email || '').toLowerCase();
                                             return (
                                                 <option key={c.id} value={c.id}>
-                                                    ðŸ¢ {formattedName} ({formattedEmail})
+                                                    Ã°Å¸ÂÂ¢ {formattedName} ({formattedEmail})
                                                 </option>
                                             );
                                         })}
@@ -2011,7 +2013,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 </div>
             </div>
 
-            {/* 💎 MAIN CONTENT AREA - Nexus 2.0 Router */}
+            {/* ðŸ’Ž MAIN CONTENT AREA - Nexus 2.0 Router */}
             <div className="flex-1 flex flex-col overflow-hidden">
                 {activeTab === 'overview' && (
                     <div className="flex-1 flex flex-col pt-0 overflow-y-auto no-scrollbar animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -2049,7 +2051,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                     },
                                     { 
                                         label: t('modules.nexus.metrics.deadlines'), 
-                                        val: tasks.filter(t => t.status !== 'Concluído' && (new Date(t.due_date).getTime() - new Date().getTime()) < 86400000).length, 
+                                        val: tasks.filter(t => t.status !== 'ConcluÃ­do' && (new Date(t.due_date).getTime() - new Date().getTime()) < 86400000).length, 
                                         color: 'text-rose-600', 
                                         bg: 'bg-rose-50 dark:bg-rose-900/30',
                                         icon: Clock, 
@@ -2057,7 +2059,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                     },
                                     { 
                                         label: t('modules.nexus.metrics.pending'), 
-                                        val: tasks.filter(t => t.status !== 'Concluído').length, 
+                                        val: tasks.filter(t => t.status !== 'ConcluÃ­do').length, 
                                         color: 'text-amber-600', 
                                         bg: 'bg-amber-50 dark:bg-amber-900/30',
                                         icon: CheckCircle2, 
@@ -2065,7 +2067,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                     },
                                     { 
                                         label: t('modules.nexus.metrics.completion'), 
-                                        val: `${tasks.length > 0 ? Math.round((tasks.filter(t => t.status === 'Concluído').length / tasks.length) * 100) : 0}%`, 
+                                        val: `${tasks.length > 0 ? Math.round((tasks.filter(t => t.status === 'ConcluÃ­do').length / tasks.length) * 100) : 0}%`, 
                                         color: 'text-emerald-600', 
                                         bg: 'bg-emerald-50 dark:bg-emerald-900/30',
                                         icon: TrendingUp, 
@@ -2116,13 +2118,13 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                     </div>
                                     <div>
                                         <h3 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-tight">{t('modules.nexus.finance.filtersTitle') || 'Filtros Financeiros'}</h3>
-                                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-none mt-1">{t('modules.nexus.finance.filtersSubtitle') || 'Ajuste o período para análise de performance'}</p>
+                                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-none mt-1">{t('modules.nexus.finance.filtersSubtitle') || 'Ajuste o perÃ­odo para anÃ¡lise de performance'}</p>
                                     </div>
                                 </div>
                                 
                                 <div className="flex flex-wrap items-center gap-4">
                                     <div className="flex flex-col gap-1.5">
-                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">{t('common.dateRange.start') || 'Início'}</span>
+                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">{t('common.dateRange.start') || 'InÃ­cio'}</span>
                                         <input 
                                             type="date" 
                                             value={financeStartDate}
@@ -2221,7 +2223,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                                 {/* Insights AI - Premium Widget */}
                                 <div className="lg:col-span-2 space-y-6">
-                                    <IntelligenceWidget credentials={credentials} moduleContext="Estratégico / Nexus" limit={3} />
+                                    <IntelligenceWidget credentials={credentials} moduleContext="EstratÃ©gico / Nexus" limit={3} />
                                     
                                     <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl p-8">
                                         <div className="flex items-center justify-between mb-8">
@@ -2232,10 +2234,10 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         </div>
                                         
                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                            {['Imóvel', 'Veículo', 'Empresa / Quotas', 'Outros'].map((type, i) => {
+                                            {['ImÃ³vel', 'VeÃ­culo', 'Empresa / Quotas', 'Outros'].map((type, i) => {
                                                 const count = assets.filter(a => a.asset_type === type).length;
-                                                const typeLabel = type === 'Imóvel' ? t('modules.nexus.assets.types.RealEstate') :
-                                                                type === 'Veículo' ? t('modules.nexus.assets.types.Vehicle') :
+                                                const typeLabel = type === 'ImÃ³vel' ? t('modules.nexus.assets.types.RealEstate') :
+                                                                type === 'VeÃ­culo' ? t('modules.nexus.assets.types.Vehicle') :
                                                                 type === 'Empresa / Quotas' ? t('modules.nexus.assets.types.Corporate') :
                                                                 t('modules.nexus.assets.types.Others');
                                                 return (
@@ -2435,372 +2437,30 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 )}
 
                 {activeTab === 'societario' && (
-                    <div className="flex-1 flex flex-col pt-0 overflow-y-auto no-scrollbar animate-in fade-in slide-in-from-bottom-4 duration-700">
-                        <div className="flex flex-col h-full space-y-6">
-                            {/* Header Societário */}
-                            <div className="flex flex-col md:flex-row pb-6 mb-2 mt-4 px-8 border-b-4 border-slate-100 dark:border-slate-800">
-                                <div className="flex-1">
-                                    <h1 className="text-4xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">
-                                        {t('modules.nexus.corporate.title')}
-                                    </h1>
-                                    <p className="text-slate-500 font-bold tracking-wide mt-1">
-                                        {t('modules.nexus.corporate.subtitle')}
-                                    </p>
-                                </div>
-                                <div className="mt-4 md:mt-0 flex items-center gap-4">
-                                    <div className="relative group">
-                                        <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
-                                        <input
-                                            type="text"
-                                            placeholder={t('modules.nexus.corporate.searchPlaceholder')}
-                                            value={corporateSearchTerm}
-                                            onChange={(e) => setCorporateSearchTerm(e.target.value)}
-                                            className="pl-12 pr-6 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-64 outline-none focus:ring-4 focus:ring-indigo-600/10 font-bold transition-all shadow-sm"
-                                        />
-                                    </div>
-
-                                    <div className="flex bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl border border-slate-200 dark:border-slate-800">
-                                        <button
-                                            onClick={() => setCorporateViewStyle('grid')}
-                                            className={`p-2 rounded-lg transition-all ${corporateViewStyle === 'grid' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-                                            title={t('common.viewStyle.cards')}
-                                        >
-                                            <LayoutGrid size={18} />
-                                        </button>
-                                        <button
-                                            onClick={() => setCorporateViewStyle('list')}
-                                            className={`p-2 rounded-lg transition-all ${corporateViewStyle === 'list' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-                                            title={t('common.viewStyle.list')}
-                                        >
-                                            <List size={18} />
-                                        </button>
-                                        <button
-                                            onClick={() => setCorporateViewStyle('kanban')}
-                                            className={`p-2 rounded-lg transition-all ${corporateViewStyle === 'kanban' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-                                            title={t('common.viewStyle.kanban')}
-                                        >
-                                            <Trello size={18} />
-                                        </button>
-                                    </div>
-                                    <button
-                                        onClick={() => {
-                                            setEditingEntity({ status: 'Ativa', entity_type: 'LTDA' });
-                                            personForQSARef.current = null;
-                                            setShareholders([]); // Limpa manualmente para nova entidade em branco
-                                            setCorporateDocuments([]);
-                                            setIsEntityModalOpen(true);
-                                            setActiveEntityTab('basic');
-                                        }}
-                                        className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white font-black uppercase tracking-widest text-[10px] px-6 py-3 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-xl hover:shadow-indigo-500/30 hover:-translate-y-1"
-                                    >
-                                        <Plus size={14} /> {t('modules.nexus.corporate.newEntity')}
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Tabela/Grade Societário */}
-                            <div className="flex-1 px-8 pb-8 h-[calc(100vh-280px)]">
-                                <AnimatePresence mode="wait">
-                                    {corporateViewStyle === 'kanban' ? (
-                                        <motion.div
-                                            key="corporate-kanban"
-                                            initial={{ opacity: 0, x: 20 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            exit={{ opacity: 0, x: -20 }}
-                                            className="h-full flex gap-6 overflow-x-auto no-scrollbar pb-4"
-                                        >
-                                            {ENTITY_STATUSES.map(status => (
-                                                <div
-                                                    key={status}
-                                                    className="flex-shrink-0 w-80 bg-slate-100/40 dark:bg-slate-950/40 rounded-[2rem] p-4 border border-slate-200 dark:border-slate-900 flex flex-col gap-4"
-                                                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('bg-indigo-50/50', 'dark:bg-indigo-900/10', 'border-indigo-300', 'dark:border-indigo-800/50'); }}
-                                                    onDragLeave={(e) => { e.currentTarget.classList.remove('bg-indigo-50/50', 'dark:bg-indigo-900/10', 'border-indigo-300', 'dark:border-indigo-800/50'); }}
-                                                    onDrop={(e) => { e.preventDefault(); e.currentTarget.classList.remove('bg-indigo-50/50', 'dark:bg-indigo-900/10', 'border-indigo-300', 'dark:border-indigo-800/50'); handleDropEntity(e, status); }}
-                                                >
-                                                    <div className="flex items-center justify-between px-2 mb-2">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className={`w-2 h-2 rounded-full ${
-                                                                status === 'Ativa' ? 'bg-emerald-500' :
-                                                                status === 'Baixada' ? 'bg-rose-500' :
-                                                                status === 'Inativa' ? 'bg-slate-400' : 'bg-amber-500'
-                                                            }`} />
-                                                            <h3 className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">{status}</h3>
-                                                            <span className="ml-2 px-2 py-0.5 bg-white dark:bg-slate-900 rounded-lg text-[10px] border border-slate-200 dark:border-slate-800 font-bold">
-                                                                {filteredEntities.filter(e => e.status === status).length}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex-1 overflow-y-auto no-scrollbar space-y-4 px-1 pb-6">
-                                                        {filteredEntities.filter(e => e.status === status).length === 0 ? (
-                                                            <div className="py-20 text-center text-[10px] font-bold text-slate-300 italic uppercase tracking-widest">{t('common.empty')}</div>
-                                                        ) : (
-                                                            filteredEntities.filter(e => e.status === status).map(entity => (
-                                                                <div
-                                                                    key={entity.id}
-                                                                    draggable
-                                                                    onDragStart={(e) => {
-                                                                        handleDragStartEntity(e, entity.id);
-                                                                        e.currentTarget.classList.add('opacity-50');
-                                                                    }}
-                                                                    onDragEnd={(e) => {
-                                                                        e.currentTarget.classList.remove('opacity-50');
-                                                                    }}
-                                                                    className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group cursor-pointer"
-                                                                    onClick={() => handleEditEntity(entity)}
-                                                                >
-                                                                    <div className="flex justify-between items-start mb-2">
-                                                                        <div className="text-[8px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest truncate">{entity.entity_type}</div>
-                                                                        <div className="flex items-center gap-2">
-                                                                            <button
-                                                                                onClick={(e) => { e.stopPropagation(); handleOpenNexoVisual('corporate', entity); }}
-                                                                                className="p-1.5 text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg hover:bg-indigo-100 hover:scale-110 active:scale-95 transition-all shadow-sm border border-indigo-100 dark:border-indigo-800/50"
-                                                                                title="Ver Mapa Mental (Nexo Visual)"
-                                                                            >
-                                                                                <Network size={12} />
-                                                                            </button>
-                                                                            <div className="flex gap-1 transition-all">
-                                                                                <button
-                                                                                    onClick={(e) => { e.stopPropagation(); handleOpenHistory(entity.id, 'corporate', entity.legal_name || 'Sem Título'); }}
-                                                                                    className="p-1 text-slate-400 hover:text-indigo-600 bg-slate-50 dark:bg-slate-800 rounded cursor-pointer"
-                                                                                    title={t('modules.nexus.processes.historyAnalysis')}
-                                                                                >
-                                                                                    <History size={12} />
-                                                                                </button>
-                                                                                <button
-                                                                                    onClick={(e) => { e.stopPropagation(); handleEditEntity(entity); }}
-                                                                                    className="p-1 text-slate-400 hover:text-indigo-600 bg-slate-50 dark:bg-slate-800 rounded cursor-pointer"
-                                                                                >
-                                                                                    <Pencil size={12} />
-                                                                                </button>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                    <h4 className="font-bold text-slate-800 dark:text-white text-xs mb-3 line-clamp-2 leading-snug uppercase tracking-tight">{entity.legal_name}</h4>
-
-                                                                    <div className="flex flex-col gap-2 mb-4">
-                                                                        <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                                                                            {entity.cnpj || t('common.notApplicable')}
-                                                                        </div>
-                                                                    </div>
-
-                                                                    <div className="flex items-center justify-between pt-3 border-t border-slate-50 dark:border-slate-800">
-                                                                        <div className="text-[10px] font-black text-emerald-600 dark:text-emerald-400">
-                                                                            {entity.total_capital ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(entity.total_capital) : '-'}
-                                                                        </div>
-                                                                        <div className="flex items-center gap-1">
-                                                                            {renderStatusBadge(entity.id, entity.status, 'corporate', ENTITY_STATUSES)}
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            ))
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </motion.div>
-                                    ) : corporateViewStyle === 'list' ? (
-                                        <motion.div 
-                                            key="corporate-list"
-                                            initial={{ opacity: 0, scale: 0.98 }}
-                                            animate={{ opacity: 1, scale: 1 }}
-                                            exit={{ opacity: 0, scale: 0.98 }}
-                                            className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden"
-                                        >
-                                            <table className="w-full text-left border-collapse">
-                                                <thead>
-                                                    <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
-                                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('common.client')}</th>
-                                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.corporate.table.headers.cnpj')}</th>
-                                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.corporate.labels.type')}</th>
-                                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.corporate.table.headers.capital')}</th>
-                                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('common.status')}</th>
-                                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">{t('common.actions')}</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
-                                                    {filteredEntities.length === 0 ? (
-                                                        <tr>
-                                                            <td colSpan={6} className="px-6 py-20 text-center text-slate-500 font-bold text-sm">{t('modules.nexus.corporate.empty')}</td>
-                                                        </tr>
-                                                    ) : filteredEntities.map((entity: any) => (
-                                                        <tr key={entity.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors group">
-                                                            <td className="px-6 py-4">
-                                                                <div className="font-bold text-slate-700 dark:text-slate-200 text-sm whitespace-nowrap">{entity.legal_name}</div>
-                                                                <div className="text-[10px] text-slate-400 font-bold">{entity.trading_name || t('modules.nexus.corporate.labels.noTradingName')}</div>
-                                                            </td>
-                                                            <td className="px-6 py-4 text-xs font-bold text-slate-500">{entity.cnpj || t('common.notApplicable')}</td>
-                                                            <td className="px-6 py-4">
-                                                                <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg text-[10px] font-black uppercase">
-                                                                    {entity.entity_type}
-                                                                </span>
-                                                            </td>
-                                                            <td className="px-6 py-4 font-bold text-slate-600 dark:text-slate-300">
-                                                                {entity.total_capital ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(entity.total_capital) : '-'}
-                                                            </td>
-                                                            <td className="px-6 py-4">
-                                                                {renderStatusBadge(entity.id, entity.status, 'corporate', ENTITY_STATUSES)}
-                                                            </td>
-                                                            <td className="px-6 py-4 text-right">
-                                                                <div className="flex items-center justify-end gap-1 opacity-100">
-                                                                    <button
-                                                                        title={t('modules.nexus.processes.viewMindMap')}
-                                                                    >
-                                                                        <Network size={18} />
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={(e) => { e.stopPropagation(); handleOpenHistory(entity.id, 'corporate', entity.legal_name || t('common.veritumPro')); }}
-                                                                        className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
-                                                                        title={t('modules.nexus.processes.historyAnalysis')}
-                                                                    >
-                                                                        <History size={18} />
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={(e) => { 
-                                                                            e.stopPropagation(); 
-                                                                            setEditingEntity(entity); 
-                                                                            setEditingDocument({ 
-                                                                                document_type: 'Contrato Social', 
-                                                                                event_date: new Date().toISOString() 
-                                                                            });
-                                                                            setIsDocumentModalOpen(true); 
-                                                                        }}
-                                                                        className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
-                                                                        title={t('modules.nexus.modals.document.title')}
-
-                                                                    >
-                                                                        <Upload size={18} />
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => handleEditEntity(entity)}
-                                                                        className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
-                                                                                                                                                 title={t('common.actions')}
-
-                                                                    >
-                                                                        <Pencil size={18} />
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => { setEditingEntity(entity); setIsEntityModalOpen(true); setActiveEntityTab('qsa'); }}
-                                                                        className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-all"
-                                                                        title={t('modules.nexus.corporate.actions.manageQSA')}
-                                                                    >
-                                                                        <Users size={18} />
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => handleSoftDeleteEntity(entity.id)}
-                                                                        className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-all"
-                                                                        title={t('common.delete')}
-                                                                    >
-                                                                        <Trash2 size={18} />
-                                                                    </button>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </motion.div>
-                                    ) : (
-                                        <motion.div
-                                            key="corporate-grid"
-                                            initial={{ opacity: 0, scale: 0.98 }}
-                                            animate={{ opacity: 1, scale: 1 }}
-                                            exit={{ opacity: 0, scale: 0.98 }}
-                                            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                                        >
-                                            {filteredEntities.length === 0 ? (
-                                                <div className="col-span-full py-20 text-center text-slate-400 font-bold italic">{t('modules.nexus.corporate.empty')}</div>
-                                             ) : filteredEntities.map((entity: any) => (
-
-
-                                                <div key={entity.id} className="bg-white dark:bg-slate-900 p-8 rounded-[3rem] border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-2xl transition-all group relative overflow-hidden flex flex-col h-[400px] border-b-8 border-b-indigo-500">
-                                                    <div className="flex justify-between items-start mb-6">
-                                                        <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 rounded-3xl group-hover:scale-110 transition-transform">
-                                                            <Building2 size={24} />
-                                                        </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <button
-                                                                onClick={(e) => { e.stopPropagation(); handleOpenNexoVisual('corporate', entity); }}
-                                                                className="p-1.5 text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg hover:bg-indigo-100 hover:scale-110 active:scale-95 transition-all shadow-sm border border-indigo-100 dark:border-indigo-800/50"
-                                                                title={t('modules.nexus.processes.viewMindMap')}
-                                                            >
-                                                                <Network size={12} />
-                                                            </button>
-                                                            {renderStatusBadge(entity.id, entity.status, 'corporate', ENTITY_STATUSES)}
-                                                        </div>
-                                                    </div>
-
-                                                    <h3 className="font-black text-slate-800 dark:text-white text-xl mb-1 line-clamp-1 truncate uppercase tracking-tighter leading-tight">
-                                                        {entity.legal_name}
-                                                    </h3>
-                                                    <p className="text-xs font-bold text-slate-400 mb-6 uppercase tracking-widest">{entity.cnpj || t('common.notApplicable')}</p>
-
-                                                    <div className="grid grid-cols-2 gap-3 mb-8">
-                                                        <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl">
-                                                            <span className="text-[9px] font-black text-slate-400 uppercase block mb-1">{t('modules.nexus.corporate.labels.type')}</span>
-                                                            <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200">{entity.entity_type}</span>
-                                                        </div>
-                                                        <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl">
-                                                            <span className="text-[9px] font-black text-slate-400 uppercase block mb-1">{t('modules.nexus.corporate.labels.regime')}</span>
-                                                            <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200 truncate">{entity.tax_regime || t('common.notApplicable')}</span>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="bg-indigo-50/50 dark:bg-indigo-900/10 p-4 rounded-[2rem] mb-6 flex items-center justify-between border border-indigo-100 dark:border-indigo-800/50">
-                                                        <div>
-                                                            <span className="text-[8px] font-black text-indigo-600 uppercase block mb-0.5">{t('modules.nexus.corporate.labels.capital')}</span>
-                                                            <span className="text-sm font-black text-slate-800 dark:text-white">
-                                                                {entity.total_capital ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(entity.total_capital) : 'R$ 0,00'}
-                                                            </span>
-                                                        </div>
-                                                        <div className="w-10 h-10 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-sm">
-                                                            <PieChart size={18} className="text-indigo-600" />
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="mt-auto flex items-center gap-2">
-                                                        <button 
-                                                            onClick={() => handleEditEntity(entity, 'qsa')}
-                                                            className="flex-1 bg-slate-900 dark:bg-white dark:text-slate-900 text-white py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-slate-100 transition-all active:scale-95 shadow-lg"
-                                                        >
-                                                            {t('modules.nexus.corporate.actions.manageQSA')}
-                                                        </button>
-                                                        <button 
-                                                            onClick={(e) => { e.stopPropagation(); handleOpenHistory(entity.id, 'corporate', entity.legal_name || t('common.veritumPro')); }}
-                                                            className="p-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-2xl hover:bg-indigo-600 hover:text-white transition-all active:scale-95"
-                                                            title={t('modules.nexus.processes.historyAnalysis')}
-                                                        >
-                                                            <History size={18} />
-                                                        </button>
-                                                        <button 
-                                                            onClick={(e) => { 
-                                                                e.stopPropagation(); 
-                                                                setEditingEntity(entity); 
-                                                                setEditingDocument({ 
-                                                                    document_type: 'Contrato Social', 
-                                                                    event_date: new Date().toISOString() 
-                                                                });
-                                                                setIsDocumentModalOpen(true); 
-                                                            }}
-                                                            className="p-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-2xl hover:bg-indigo-600 hover:text-white transition-all active:scale-95"
-                                                            title={t('modules.nexus.modals.document.title')}
-                                                        >
-                                                            <Upload size={18} />
-                                                        </button>
-                                                        <button 
-                                                            onClick={() => handleEditEntity(entity)}
-                                                            className="p-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-2xl hover:bg-indigo-600 hover:text-white transition-all active:scale-95"
-                                                        >
-                                                            <Pencil size={18} />
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-                            </div>
-                        </div>
-                    </div>
+                    <SocietarioTab
+                        t={t}
+                        corporateSearchTerm={corporateSearchTerm}
+                        setCorporateSearchTerm={setCorporateSearchTerm}
+                        corporateViewStyle={corporateViewStyle}
+                        setCorporateViewStyle={setCorporateViewStyle}
+                        filteredEntities={filteredEntities}
+                        ENTITY_STATUSES={ENTITY_STATUSES}
+                        handleDropEntity={handleDropEntity}
+                        handleDragStartEntity={handleDragStartEntity}
+                        handleOpenNexoVisual={handleOpenNexoVisual}
+                        handleOpenHistory={handleOpenHistory}
+                        handleEditEntity={handleEditEntity}
+                        handleSoftDeleteEntity={handleSoftDeleteEntity}
+                        setEditingEntity={setEditingEntity}
+                        setShareholders={setShareholders}
+                        setCorporateDocuments={setCorporateDocuments}
+                        setIsEntityModalOpen={setIsEntityModalOpen}
+                        setActiveEntityTab={setActiveEntityTab}
+                        setEditingDocument={setEditingDocument}
+                        setIsDocumentModalOpen={setIsDocumentModalOpen}
+                        personForQSARef={personForQSARef}
+                        renderStatusBadge={renderStatusBadge}
+                    />
                 )}
 
                 {activeTab === 'documentos' && (
@@ -2950,7 +2610,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                 onChange={e => setEditingEvent({ ...editingEvent, event_type: e.target.value as any })}
                                                 className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white font-bold"
                                             >
-                                                {['Audiência', 'Reunião', 'Despacho', 'Diligência', 'Outro'].map(t => <option key={t} value={t}>{t}</option>)}
+                                                {['AudiÃªncia', 'ReuniÃ£o', 'Despacho', 'DiligÃªncia', 'Outro'].map(t => <option key={t} value={t}>{t}</option>)}
                                             </select>
                                         </div>
 
@@ -2967,7 +2627,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
 
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
-                                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">InÃ­cio</label>
+                                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">InÃƒÂ­cio</label>
                                                 <input
                                                     required
                                                     type="datetime-local"
@@ -2988,12 +2648,12 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         </div>
 
                                         <div>
-                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Localização (FÃ­sica ou Link)</label>
+                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">LocalizaÃ§Ã£o (FÃƒÂ­sica ou Link)</label>
                                             <input
                                                 value={editingEvent?.location || ''}
                                                 onChange={e => setEditingEvent({ ...editingEvent, location: e.target.value })}
                                                 className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white font-bold"
-                                                placeholder="Ex: Fórum Central ou Zoom Link"
+                                                placeholder="Ex: FÃ³rum Central ou Zoom Link"
                                             />
                                         </div>
 
@@ -3293,7 +2953,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                     </div>
                                     <div>
                                         <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">{t('modules.nexus.modals.lawsuit.ai.title')}</h3>
-                                        <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest leading-none mt-1">Cognição Artificial Veritum</p>
+                                        <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest leading-none mt-1">CogniÃ§Ã£o Artificial Veritum</p>
                                     </div>
                                 </div>
                                 <button
@@ -3319,7 +2979,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                 <div className="flex items-center gap-4 bg-amber-50 dark:bg-amber-900/20 p-4 rounded-2xl border border-amber-100 dark:border-amber-800/50">
                                     <AlertTriangle className="text-amber-500 shrink-0" size={20} />
                                     <p className="text-[10px] font-bold text-amber-700 dark:text-amber-400 italic">
-                                        As informações apresentadas são geradas por inteligência artificial e devem ser validadas por um profissional jurídico antes de qualquer tomada de decisão.
+                                        As informaÃ§Ãµes apresentadas sÃ£o geradas por inteligÃªncia artificial e devem ser validadas por um profissional jurÃ­dico antes de qualquer tomada de decisÃ£o.
                                     </p>
                                 </div>
                             </div>
@@ -3376,7 +3036,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                         <div className="w-20 h-20 mx-auto bg-slate-100 dark:bg-slate-800 rounded-[2rem] flex items-center justify-center mb-6 text-slate-300">
                                             <History size={40} />
                                         </div>
-                                        <p className="text-sm font-bold text-slate-400">Nenhum registro de histórico encontrado para este item.</p>
+                                        <p className="text-sm font-bold text-slate-400">Nenhum registro de histÃ³rico encontrado para este item.</p>
                                     </div>
                                 ) : (
                                     <div className="relative">
@@ -3405,7 +3065,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                                                 {team.find(t => t.id === entry.user_id)?.full_name?.charAt(0) || 'U'}
                                                             </div>
                                                             <div className="flex flex-col">
-                                                                <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Responsável</span>
+                                                                <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">ResponsÃ¡vel</span>
                                                                 <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{team.find(t => t.id === entry.user_id)?.full_name || 'Sistema'}</span>
                                                             </div>
                                                         </div>
@@ -3441,7 +3101,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                     corporateEntities={corporateEntities}
                     onEdit={(type, data, category) => {
                         // 1. Logic for Roles: "Opening the modal to which they belong"
-                        if (category && ['Autor', 'Réu', 'Responsável', 'Proprietário', 'Sócio', 'Gestão', 'Origem'].includes(category)) {
+                        if (category && ['Autor', 'RÃ©u', 'ResponsÃ¡vel', 'ProprietÃ¡rio', 'SÃ³cio', 'GestÃ£o', 'Origem'].includes(category)) {
                              if (nexoData?.origin_type === 'lawsuit') { 
                                  setEditingLawsuit(nexoData.data); 
                                  setIsLawsuitModalOpen(true); 

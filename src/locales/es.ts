@@ -1819,10 +1819,31 @@ export const es = {
                         "residencia": "Certificado de Residencia",
                         "recibo": "Recibo de Honorarios"
                     },
-                    "actions": {
-                        "generate": "Generar Documento",
-                        "download": "Descargar (PDF)",
-                        "preview": "Visualizar Borrador"
+                    actions: {
+                        generate: 'Generar Documento',
+                        download: 'Descargar PDF',
+                        preview: 'Vista Previa',
+                        back: 'Volver',
+                        print: 'Imprimir / Generar PDF desde Vista Previa'
+                    },
+                    tabs: {
+                        master: 'Plantillas Maestras',
+                        office: 'Plantillas de Oficina'
+                    },
+                    placeholders: {
+                        activePole: 'Polo Activo',
+                        general: 'General',
+                        feeAgreement: 'Contrato de Honorarios',
+                        indigency: 'Declaración de Indigencia',
+                        dataProtection: 'Protección de Datos',
+                        repasse: 'Substitución de Poder',
+                        qualification: 'Calificación y Notas',
+                        residenceProof: 'Bajo Fe de Juramento',
+                        paymentReceipt: 'Recibo de Pago'
+                    },
+                    messages: {
+                        noCustomTemplates: 'No hay plantillas personalizadas en esta oficina.',
+                        autoFillData: 'Los datos de {{name}} ({{document}}) se insertarán automáticamente en los campos variables de la plantilla.'
                     }
                 },
                 "actions": {
