@@ -18,12 +18,13 @@ interface OverviewTabProps {
     setFinanceEndDate: (val: string) => void;
     fetchAll: () => void;
     credentials: any;
+    targetUserId?: string;
 }
 
 export const OverviewTab: React.FC<OverviewTabProps> = ({
     t, locale, loading, lawsuits, tasks, assets, financialStats,
     financeStartDate, setFinanceStartDate, financeEndDate, setFinanceEndDate,
-    fetchAll, credentials
+    fetchAll, credentials, targetUserId
 }) => {
     return (
         <div className="flex-1 flex flex-col pt-0 overflow-y-auto no-scrollbar animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -233,7 +234,13 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Insights AI - Premium Widget */}
                     <div className="lg:col-span-2 space-y-6">
-                        <IntelligenceWidget credentials={credentials} moduleContext="Estratégico / Nexus" limit={3} />
+                        <IntelligenceWidget 
+                            credentials={credentials} 
+                            moduleContext="Estratégico / Nexus" 
+                            limit={3} 
+                            targetUserId={targetUserId} 
+                            onActionComplete={fetchAll}
+                        />
                         
                         <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl p-8">
                             <div className="flex items-center justify-between mb-8">

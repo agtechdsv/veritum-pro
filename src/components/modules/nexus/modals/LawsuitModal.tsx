@@ -2,10 +2,11 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Save, XCircle, Calendar, AlertTriangle, Network, Shield, FileText, Zap, DollarSign, History, Sparkles, Brain, Loader2, Plus, Download, Trash2, Check, User as UserIcon, Clock, Search, TrendingUp, TrendingDown, CheckCircle2 } from 'lucide-react';
 import { PremiumCombobox, BlockedTabOverlay, PremiumFileUpload } from '../nexus-components';
+import { MovementsTab } from './MovementsTab';
 import { useTranslation } from '@/contexts/language-context';
 
 
-import { Lawsuit, Person, TeamMember, LawsuitDocument, TimelineEntry, FinancialTransaction } from '@/types';
+import { Lawsuit, Person, TeamMember, LawsuitDocument, TimelineEntry, FinancialTransaction, Movement } from '@/types';
 
 interface LawsuitModalProps {
     isLawsuitModalOpen: boolean;
@@ -56,6 +57,8 @@ interface LawsuitModalProps {
     lawsuitDocUploadRef: React.RefObject<any>;
     lawsuitDocFile: File | null;
     setLawsuitDocFile: (file: File | null) => void;
+    movements: Movement[];
+    isMovementsLoading: boolean;
 }
 
 export const LawsuitModal = (props: LawsuitModalProps) => {
@@ -74,7 +77,7 @@ const {
     handleSaveFinancialTransaction, handleDeleteFinancialTransaction, 
     isLawsuitTimelineLoading, setAiLawsuitSummary, isLawsuitDocModalOpen,
     editingLawsuitDoc, handleSaveLawsuitDocument, lawsuitDocUploadRef,
-    lawsuitDocFile, setLawsuitDocFile
+    lawsuitDocFile, setLawsuitDocFile, movements, isMovementsLoading
 } = props;
 
     const [authorSearch, setAuthorSearch] = React.useState('');
@@ -196,6 +199,14 @@ return (
                                     >
                                         <History size={14} /> Histórico {!editingLawsuit?.id && '🔒'}
                                     </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveLawsuitTab('movements')}
+                                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-[11px] font-black transition-all whitespace-nowrap ${activeLawsuitTab === 'movements' ? 'bg-white dark:bg-slate-900 text-indigo-600 shadow-xl shadow-indigo-600/10' : 'text-slate-500 hover:text-slate-700'} ${!editingLawsuit?.id ? 'opacity-50' : ''}`}
+                                    >
+                                        <TrendingUp size={14} /> {t('modules.nexus.tabs.movements') || 'Andamentos'} {!editingLawsuit?.id && '🔒'}
+                                    </button>
+
                                     <button
                                         type="button"
                                         onClick={() => setActiveLawsuitTab('ai')}
@@ -790,6 +801,9 @@ return (
                                                     ))}
                                                 </div>
                                             </div>
+                                        ) : activeLawsuitTab === 'movements' ? (
+                                            <MovementsTab movements={movements} isLoading={isMovementsLoading} lawsuitId={editingLawsuit?.id} t={t} />
+
                                         ) : activeLawsuitTab === 'ai' ? (
                                             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
                                                 <div className="flex items-center justify-between mb-8">

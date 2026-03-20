@@ -99,7 +99,8 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         cities, setCities, isLoadingCities, setIsLoadingCities, chambers, setChambers, isLoadingChambers, setIsLoadingChambers,
         confirmModal, setConfirmModal, justificationText, setJustificationText, historyData, setHistoryData,
         statusPopover, setStatusPopover, financeStartDate, setFinanceStartDate, financeEndDate, setFinanceEndDate,
-        pendingStatusChange, setPendingStatusChange
+        pendingStatusChange, setPendingStatusChange,
+        movements, isMovementsLoading
     } = nx;
 
     // Handlers
@@ -251,6 +252,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                         financialStats={financialStats} financeStartDate={financeStartDate} 
                         setFinanceStartDate={setFinanceStartDate} financeEndDate={financeEndDate} 
                         setFinanceEndDate={setFinanceEndDate} fetchAll={() => fetchAll()} credentials={credentials}
+                        targetUserId={selectedUserId}
                     />
                 )}
                 {activeTab === 'pessoas' && (
@@ -508,6 +510,8 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 lawsuitDocUploadRef={lawsuitDocUploadRef}
                 lawsuitDocFile={lawsuitDocFile}
                 setLawsuitDocFile={setLawsuitDocFile}
+                movements={movements}
+                isMovementsLoading={isMovementsLoading}
             />
 
             <CrmModal

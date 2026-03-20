@@ -46,7 +46,7 @@ export const useNexusUI = () => {
     // Sub-Tab States
     const [activeCrmTab, setActiveCrmTab] = useState<'basic' | 'advanced'>('basic');
     const [activeAssetTab, setActiveAssetTab] = useState<'basic' | 'advanced' | 'docs' | 'timeline'>('basic');
-    const [activeLawsuitTab, setActiveLawsuitTab] = useState<'basic' | 'advanced' | 'docs' | 'timeline' | 'financeiro' | 'ai'>('basic');
+    const [activeLawsuitTab, setActiveLawsuitTab] = useState<'basic' | 'advanced' | 'docs' | 'timeline' | 'financeiro' | 'ai' | 'movements'>('basic');
     const [activeEntityTab, setActiveEntityTab] = useState<'basic' | 'qsa' | 'docs' | 'timeline'>('basic');
     const [activeTaskTab, setActiveTaskTab] = useState<'basic' | 'advanced'>('basic');
 

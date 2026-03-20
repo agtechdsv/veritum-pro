@@ -366,7 +366,8 @@ export const pt = {
                 calendar: 'Agenda',
                 assets: 'Ativos',
                 corporate: 'Societário',
-                documents: 'Documentos'
+                documents: 'Documentos',
+                movements: 'Andamentos'
             },
             overview: {
                 subtitle: 'Monitoramento em tempo real do ecossistema Nexus',
@@ -512,6 +513,15 @@ export const pt = {
                     paid: 'Pago',
                     pending: 'Pendente'
                 }
+            },
+            movements: {
+                title: 'Andamentos do Processo',
+                subtitle: 'Movimentações e publicações capturadas via Sentinel PRO',
+                loading: 'Consultando andamentos...',
+                empty: 'Nenhuma movimentação externa vinculada.',
+                source: 'Fonte',
+                sentiment: 'Sentimento IA',
+                show_original: 'Ver Texto Original'
             },
             kanban: {
                 todo: 'A Fazer',

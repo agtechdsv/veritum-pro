@@ -1,6 +1,6 @@
 'use server';
 
-import { Lawsuit, Task, CalendarEvent, Credentials, UserPreferences, Asset, CorporateEntity, Shareholder, CorporateDocument, LawsuitDocument, AssetDocument, TimelineEntry, GlobalDocument, FinancialTransaction } from '@/types';
+import { Lawsuit, Task, CalendarEvent, Credentials, UserPreferences, Asset, CorporateEntity, Shareholder, CorporateDocument, LawsuitDocument, AssetDocument, TimelineEntry, GlobalDocument, FinancialTransaction, Movement } from '@/types';
 import { RepositoryFactory } from '@/lib/db/repositories/repository-factory';
 import { createMasterServerClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -1017,6 +1017,26 @@ export async function listPersonParticipations(personId: string, targetUserId?: 
         return { data };
     } catch (error: any) {
         console.error('Server Action Error (listPersonParticipations):', error);
+        throw error;
+    }
+}
+
+export async function listMovements(lawsuitId: string, targetUserId?: string) {
+    try {
+        const { credentials, preferences } = await resolveSecurityContext(targetUserId);
+        const supabase = DatabaseService.getClient(credentials);
+        
+        const { data, error } = await supabase
+            .from('movements')
+            .select('*')
+            .eq('lawsuit_id', lawsuitId)
+            .is('deleted_at', null)
+            .order('created_at', { ascending: false });
+            
+        if (error) throw error;
+        return { data: data as Movement[] };
+    } catch (error: any) {
+        console.error('Server Action Error (listMovements):', error);
         throw error;
     }
 }

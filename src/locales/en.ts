@@ -480,6 +480,25 @@ export const en = {
                     pending: 'Pending'
                 }
             },
+            movements: {
+                title: 'Movements',
+                subtitle: 'Process update history',
+                loading: 'Loading movements...',
+                empty: 'No movements recorded.',
+                addMovement: 'Record Movement',
+                editMovement: 'Edit Movement',
+                description: 'Description',
+                placeholderDescription: 'Ex: Hearing held',
+                date: 'Date',
+                confirm: 'Confirm Record',
+                deleteConfirm: 'Are you sure you want to delete this movement?',
+                deleteConfirmTitle: 'Delete Movement',
+                deleteSuccess: 'Movement deleted successfully',
+                deleteError: 'Error deleting movement',
+                source: 'Source',
+                sentiment: 'AI Sentiment',
+                show_original: 'View Original Text'
+            },
             kanban: {
                 todo: 'To Do',
                 doing: 'In Progress',

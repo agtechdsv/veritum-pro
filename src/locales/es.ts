@@ -467,6 +467,25 @@ export const es = {
                     "pending": "Pendiente"
                 }
             },
+            "movements": {
+                "title": "Movimientos",
+                "subtitle": "Historial de actualizaciones del proceso",
+                "loading": "Cargando movimientos...",
+                "empty": "No hay movimientos registrados.",
+                "addMovement": "Registrar Movimiento",
+                "editMovement": "Editar Movimiento",
+                "description": "Descripción",
+                "placeholderDescription": "Ej: Audiencia realizada",
+                "date": "Fecha",
+                "confirm": "Confirmar Registro",
+                "deleteConfirm": "¿Está seguro de que desea eliminar este movimiento?",
+                "deleteConfirmTitle": "Eliminar Movimiento",
+                "deleteSuccess": "Movimiento eliminado correctamente",
+                "deleteError": "Error al eliminar movimiento",
+                "source": "Fuente",
+                "sentiment": "Sentimiento IA",
+                "show_original": "Ver Texto Original"
+            },
             "kanban": {
                 "todo": "Por Hacer",
                 "doing": "En Curso",

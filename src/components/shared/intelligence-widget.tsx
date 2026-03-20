@@ -1,51 +1,49 @@
 
 import React, { useState, useEffect } from 'react';
-import { createDynamicClient } from '@/utils/supabase/client';
 import { Credentials, GoldenAlert, Clipping, KnowledgeArticle } from '@/types';
 import {
     Zap, Sparkles, Brain, ChevronDown, ChevronUp,
     AlertCircle, Info, TrendingUp, ArrowRight,
     Scale, BookOpen, Clock
 } from 'lucide-react';
-
 import { useTranslation } from '@/contexts/language-context';
+import { listGoldenAlerts } from '@/app/actions/intelligence-actions';
+import GoldenDetailModal from './golden-detail-modal';
 
 interface Props {
     credentials: Credentials;
     limit?: number;
     moduleContext?: string;
+    targetUserId?: string;
+    onActionComplete?: () => void;
 }
 
-const IntelligenceWidget: React.FC<Props> = ({ credentials, limit = 3, moduleContext }) => {
+const IntelligenceWidget: React.FC<Props> = ({ credentials, limit = 3, moduleContext, targetUserId, onActionComplete }) => {
     const { t } = useTranslation();
     const [alerts, setAlerts] = useState<(GoldenAlert & { clipping?: Clipping, knowledge?: KnowledgeArticle })[]>([]);
     const [loading, setLoading] = useState(true);
     const [expandedAlertaId, setExpandedAlertaId] = useState<string | null>(null);
+    const [selectedDetailAlert, setSelectedDetailAlert] = useState<(GoldenAlert & { clipping?: Clipping, knowledge?: KnowledgeArticle }) | null>(null);
 
     // Defensive check: If no credentials provided (BYODB not set), don't crash
     if (!credentials?.supabaseUrl) return null;
 
-    const supabase = createDynamicClient(credentials.supabaseUrl, credentials.supabaseAnonKey);
-
     useEffect(() => {
         fetchTopAlerts();
-    }, []);
+    }, [targetUserId]);
 
     const fetchTopAlerts = async () => {
         setLoading(true);
         try {
-            const { data, error } = await supabase
-                .from('golden_alerts')
-                .select('*, clipping:clippings(*), knowledge:knowledge_articles(*)')
-                .eq('status', 'unread')
-                .order('priority', { ascending: true }) // High starts with H, but we want High first. 
-                // Actually Postgres sorting: High, Low, Medium. 
-                // Let's just order by score descending for now or created_at.
-                .order('match_score', { ascending: false })
-                .limit(limit);
+            const { data, error } = await listGoldenAlerts({
+                status: 'unread',
+                limit,
+                targetUserId
+            });
 
-            if (error) throw error;
+            if (error) throw new Error(error);
             setAlerts(data || []);
+            setLoading(false);
         } catch (err: any) {
             console.warn('Intelligence Module not fully initialized for this database (tables might be missing).', err.message || err.code || '');
             setLoading(false);
@@ -53,26 +51,30 @@ const IntelligenceWidget: React.FC<Props> = ({ credentials, limit = 3, moduleCon
     };
 
     const getPriorityStyles = (priority: string | undefined, type: string) => {
-        if (priority === 'High' || type === 'Risk') return {
+        // Natureza do Alerta (Cor)
+        if (type === 'Risk') return {
             bg: 'bg-rose-50 dark:bg-rose-900/20',
             border: 'border-rose-200 dark:border-rose-800',
             text: 'text-rose-600 dark:text-rose-400',
             icon: <AlertCircle className="text-rose-500" size={18} />,
-            label: t('common.intelligenceWidget.urgencyRisk')
+            label: t('common.intelligenceWidget.urgencyRisk') || 'URGÊNCIA / RISCO'
         };
-        if (priority === 'Medium') return {
-            bg: 'bg-amber-50 dark:bg-amber-900/20',
-            border: 'border-amber-200 dark:border-amber-800',
-            text: 'text-amber-600 dark:text-amber-400',
-            icon: <Info className="text-amber-500" size={18} />,
-            label: t('common.intelligenceWidget.attention')
-        };
-        return {
+
+        if (type === 'Opportunity') return {
             bg: 'bg-indigo-50 dark:bg-indigo-900/20',
             border: 'border-indigo-200 dark:border-indigo-800',
             text: 'text-indigo-600 dark:text-indigo-400',
             icon: <TrendingUp className="text-indigo-500" size={18} />,
-            label: t('common.intelligenceWidget.trendOpportunity')
+            label: t('common.intelligenceWidget.trendOpportunity') || 'TENDÊNCIA / OPORTUNIDADE'
+        };
+
+        // Fallback for others (Similar Success, etc.)
+        return {
+            bg: 'bg-amber-50 dark:bg-amber-900/20',
+            border: 'border-amber-200 dark:border-amber-800',
+            text: 'text-amber-600 dark:text-amber-400',
+            icon: <Zap className="text-amber-500" size={18} />,
+            label: t('common.intelligenceWidget.attention') || 'INSIGHT ESTRATÉGICO'
         };
     };
 
@@ -161,8 +163,11 @@ const IntelligenceWidget: React.FC<Props> = ({ credentials, limit = 3, moduleCon
 
                                 {/* Action Bar */}
                                 <div className="flex items-center gap-2 pt-2 border-t border-slate-50 dark:border-slate-800">
-                                    <button className="flex-1 bg-slate-900 text-white dark:bg-white dark:text-slate-900 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest hover:scale-105 transition-all flex items-center justify-center gap-1.5 shadow-lg">
-                                        {t('common.intelligenceWidget.explore')} <ArrowRight size={14} />
+                                    <button 
+                                        onClick={() => setSelectedDetailAlert(alert)}
+                                        className="flex-1 bg-slate-900 text-white dark:bg-white dark:text-slate-900 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest hover:scale-105 transition-all flex items-center justify-center gap-1.5 shadow-lg"
+                                    >
+                                        {t('common.intelligenceWidget.explore') || 'Explorar'} <ArrowRight size={14} />
                                     </button>
                                 </div>
                             </div>
@@ -175,6 +180,18 @@ const IntelligenceWidget: React.FC<Props> = ({ credentials, limit = 3, moduleCon
                     );
                 })}
             </div>
+
+            {selectedDetailAlert && (
+                <GoldenDetailModal 
+                    isOpen={!!selectedDetailAlert}
+                    onClose={() => setSelectedDetailAlert(null)}
+                    alert={selectedDetailAlert}
+                    onActionComplete={() => {
+                        fetchTopAlerts();
+                        if (onActionComplete) onActionComplete();
+                    }}
+                />
+            )}
         </div>
     );
 };

@@ -368,6 +368,7 @@ export interface Clipping {
     url?: string;
     lawsuit_id?: string;
     captured_at?: string;
+    user_id?: string;
 }
 
 export interface DocumentTemplate {
@@ -607,4 +608,16 @@ export interface GlobalDocument {
     origin_type: 'lawsuit' | 'corporate' | 'asset';
     origin_id: string;
     origin_name: string;
+}
+
+export interface Movement {
+    id: string;
+    lawsuit_id: string;
+    original_text?: string;
+    translated_text?: string;
+    sentiment_score?: number;
+    source: string;
+    is_notified: boolean;
+    created_at?: string;
+    deleted_at?: string;
 }

@@ -13,6 +13,8 @@ import { createClient } from '@supabase/supabase-js';
 import { createMasterClient } from '@/lib/supabase/master';
 import IntelligenceWidget from '../shared/intelligence-widget';
 import { useTranslation } from '@/contexts/language-context';
+import { upsertKnowledgeArticle } from '@/app/actions/cognitio-actions';
+import { toast } from '@/components/ui/toast';
 
 const Cognitio: React.FC<{ credentials: Credentials; user: User; permissions: any }> = ({ credentials, user, permissions }) => {
     const { t, locale } = useTranslation();
@@ -122,16 +124,16 @@ const Cognitio: React.FC<{ credentials: Credentials; user: User; permissions: an
     const handleSaveArticle = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            if (editingArticle?.id) {
-                await supabase.from('knowledge_articles').update(editingArticle).eq('id', editingArticle.id);
-            } else {
-                await supabase.from('knowledge_articles').insert([editingArticle]);
-            }
+            const res = await upsertKnowledgeArticle(editingArticle || {}, user.id);
+            if (res.error) throw new Error(res.error);
+            
+            toast.success('Tese jurídica salva com inteligência aprendida!');
             setIsArticleModalOpen(false);
             setEditingArticle(null);
             fetchData();
-        } catch (err) {
+        } catch (err: any) {
             console.error('Error saving article:', err);
+            toast.error('Erro ao salvar tese jurídica');
         }
     };
 

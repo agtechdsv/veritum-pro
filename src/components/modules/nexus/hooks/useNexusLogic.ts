@@ -10,13 +10,14 @@ import {
     saveLawsuitDocument, deleteLawsuitDocument, saveAssetDocument,
     deleteAssetDocument, deleteLawsuit, deleteAsset, deleteEvent,
     deleteCorporateEntity, listFinancialTransactions, saveFinancialTransaction,
-    deleteFinancialTransaction, getFinancialStats, listAllGlobalDocuments
+    deleteFinancialTransaction, getFinancialStats, listAllGlobalDocuments,
+    listMovements
 } from '@/app/actions/nexus-actions';
 import { listPersons } from '@/app/actions/crm-actions';
 import { listTeam, getCitiesByState } from '@/app/actions/nexus-actions';
 import { createDynamicClient } from '@/utils/supabase/client';
 import { toast } from '@/components/ui/toast';
-import { Person, CorporateEntity, Shareholder, CorporateDocument, LawsuitDocument, AssetDocument, Lawsuit, GlobalDocument, FinancialTransaction, TimelineEntry, TeamMember } from '@/types';
+import { Person, CorporateEntity, Shareholder, CorporateDocument, LawsuitDocument, AssetDocument, Lawsuit, GlobalDocument, FinancialTransaction, TimelineEntry, TeamMember, Movement } from '@/types';
 import { extractStoragePath } from './useNexusUtility';
 
 export const useNexusLogic = (props: any) => {
@@ -70,6 +71,10 @@ export const useNexusLogic = (props: any) => {
     const [lawsuitFinances, setLawsuitFinances] = useState<FinancialTransaction[]>([]);
     const [isEditingFinancial, setIsEditingFinancial] = useState(false);
     const [editingFinancial, setEditingFinancial] = useState<Partial<FinancialTransaction> | null>(null);
+    
+    // Movements States
+    const [movements, setMovements] = useState<Movement[]>([]);
+    const [isMovementsLoading, setIsMovementsLoading] = useState(false);
 
     // Document Files
     const [lawsuitDocFile, setLawsuitDocFile] = useState<File | null>(null);
@@ -655,6 +660,14 @@ export const useNexusLogic = (props: any) => {
             if (res.data) setLawsuitFinances(res.data);
         } finally { setIsFinancialLoading(false); }
     };
+    
+    const handleFetchMovements = useCallback(async (lawsuitId: string) => {
+        setIsMovementsLoading(true);
+        try {
+            const res = await listMovements(lawsuitId, core.selectedUserId);
+            if (res.data) setMovements(res.data);
+        } finally { setIsMovementsLoading(false); }
+    }, [core.selectedUserId]);
 
     // --------------------------------------------------------------------------
     // EFFECTS
@@ -706,6 +719,9 @@ export const useNexusLogic = (props: any) => {
             if (ui.activeLawsuitTab === 'financeiro') {
                 handleFetchLawsuitFinances(ui.editingLawsuit.id);
             }
+            if (ui.activeLawsuitTab === 'movements') {
+                handleFetchMovements(ui.editingLawsuit.id);
+            }
         } else { core.setLawsuitDocuments([]); setLawsuitTimeline([]); }
     }, [ui.editingLawsuit?.id, core.selectedUserId, ui.activeLawsuitTab, core.setLawsuitDocuments]);
 
@@ -720,6 +736,8 @@ export const useNexusLogic = (props: any) => {
         isLawsuitTimelineLoading, setIsLawsuitTimelineLoading,
         isAssetTimelineLoading, setIsAssetTimelineLoading,
         isCorporateTimelineLoading, setIsCorporateTimelineLoading,
+        movements, setMovements,
+        isMovementsLoading, setIsMovementsLoading,
         aiLawsuitSummary, setAiLawsuitSummary,
         isAiSummarizing, setIsAiSummarizing,
         aiInfoModal, setAiInfoModal,
@@ -761,6 +779,7 @@ export const useNexusLogic = (props: any) => {
         handleDropLawsuit, handleDragStartLawsuit, handleDropTask, handleDragStartTask,
         handleDropAsset, handleDragStartAsset, handleDropEntity, handleDragStartEntity,
         handleEditGlobalDocumentOrigin, handleDeleteGlobalDocument, handleFetchLawsuitFinances,
+        handleFetchMovements,
         isMaster, selectedClientId, user, onSelectClient, allClients, credentials, t
     };
 };

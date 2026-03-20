@@ -7,11 +7,22 @@ import {
     CheckCircle2, XCircle, Clock, Database, Brain, Sparkles, Pencil,
     ToggleLeft, ToggleRight, Trash2, Link as LinkIcon, ArrowRight, AlertTriangle
 } from 'lucide-react';
-import { createDynamicClient } from '@/utils/supabase/client';
-import { GeminiService } from '@/services/gemini';
 import { useTranslation } from '@/contexts/language-context';
 import { useModule } from '@/app/veritumpro/layout';
 import { ChevronDown } from 'lucide-react';
+import { 
+    listMonitoringAlerts, 
+    upsertMonitoringAlert, 
+    toggleMonitoringAlert, 
+    listClippings, 
+    analyzeClippingSentiment, 
+    linkClippingToNexus,
+    runGoldenIntelligenceAction,
+    simulateNewCapture,
+    generateKnowledgeEmbeddings
+} from '@/app/actions/sentinel-actions';
+import { listLawsuits } from '@/app/actions/nexus-actions';
+import { toast } from '@/components/ui/toast';
 
 const Sentinel: React.FC<{ credentials: Credentials; user: User; permissions: any }> = ({ credentials, user, permissions }) => {
     const { t } = useTranslation();
@@ -19,6 +30,8 @@ const Sentinel: React.FC<{ credentials: Credentials; user: User; permissions: an
     const [clippings, setClippings] = useState<Clipping[]>([]);
     const [lawsuits, setLawsuits] = useState<Lawsuit[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isMockAlerts, setIsMockAlerts] = useState(false);
+    const [isMockClippings, setIsMockClippings] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
 
     const { preferences, allClients, selectedClientId, onSelectClient, credentials: contextCreds, user: contextUser } = useModule();
@@ -36,6 +49,7 @@ const Sentinel: React.FC<{ credentials: Credentials; user: User; permissions: an
     const [editingAlert, setEditingAlert] = useState<Partial<MonitoringAlert> | null>(null);
     const [analyzingId, setAnalyzingId] = useState<string | null>(null);
     const [matchingId, setMatchingId] = useState<string | null>(null);
+    const [isSimulating, setIsSimulating] = useState(false);
 
     // Sync with global selection
     useEffect(() => {
@@ -44,19 +58,12 @@ const Sentinel: React.FC<{ credentials: Credentials; user: User; permissions: an
         }
     }, [selectedClientId]);
 
-
-    // Stabilize Supabase instance
-    const supabase = React.useMemo(() => 
-        createDynamicClient(contextCreds.supabaseUrl, contextCreds.supabaseAnonKey),
-        [contextCreds.supabaseUrl, contextCreds.supabaseAnonKey]
-    );
-
     useEffect(() => {
         fetchData();
-    }, [supabase]);
+    }, [localSelectedUserId]);
 
     const fetchData = async () => {
-        if (isMaster && !selectedClientId) {
+        if (isMaster && !localSelectedUserId) {
             setAlerts([]);
             setClippings([]);
             setLawsuits([]);
@@ -66,28 +73,16 @@ const Sentinel: React.FC<{ credentials: Credentials; user: User; permissions: an
 
         setLoading(true);
         try {
-            const safeQuery = async (query: any) => {
-                try {
-                    const res = await query;
-                    return res;
-                } catch (err) {
-                    return { data: [], error: err as any };
-                }
-            };
-
             const [alertsRes, clippingsRes, lawsuitsRes] = await Promise.all([
-                safeQuery(supabase.from('monitoring_alerts').select('*').order('created_at', { ascending: false })),
-                safeQuery(supabase.from('clippings').select('*').order('captured_at', { ascending: false })),
-                safeQuery(supabase.from('lawsuits').select('*'))
+                listMonitoringAlerts(localSelectedUserId),
+                listClippings({ targetUserId: localSelectedUserId }),
+                listLawsuits('', localSelectedUserId)
             ]);
 
-            // Silently handle errors for missing tables (common before BYODB setup)
-            if (alertsRes.error && alertsRes.error.code !== 'PGRST116') console.warn('Alerts fetch error:', alertsRes.error);
-            if (clippingsRes.error && clippingsRes.error.code !== 'PGRST116') console.warn('Clippings fetch error:', clippingsRes.error);
-            if (lawsuitsRes.error && lawsuitsRes.error.code !== 'PGRST116') console.warn('Lawsuits fetch error:', lawsuitsRes.error);
-
             setAlerts(alertsRes.data || []);
+            setIsMockAlerts(!!(alertsRes as any).isMock);
             setClippings(clippingsRes.data || []);
+            setIsMockClippings(!!(clippingsRes as any).isMock);
             setLawsuits(lawsuitsRes.data || []);
         } catch (err) {
             console.error('Error fetching Sentinel data:', err);
@@ -96,43 +91,55 @@ const Sentinel: React.FC<{ credentials: Credentials; user: User; permissions: an
         }
     };
 
+    const handleSimulateCapture = async () => {
+        setIsSimulating(true);
+        try {
+            const res = await simulateNewCapture(localSelectedUserId);
+            if (res.success) {
+                toast.success('Nova publicação capturada pelo Radar!');
+                // If it's a mock (not saved to DB), we manually add it to the state to show it.
+                if (res.isMock && res.data) {
+                    setClippings(prev => [res.data as Clipping, ...prev]);
+                    setIsMockClippings(true);
+                } else {
+                    fetchData();
+                }
+            } else {
+                toast.error('Falha na simulação');
+            }
+        } catch (err) {
+            toast.error('Erro ao simular captura');
+        } finally {
+            setIsSimulating(false);
+        }
+    };
+
+
+
     const handleSaveAlert = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            if (editingAlert?.id) {
-                const { error } = await supabase.from('monitoring_alerts').update(editingAlert).eq('id', editingAlert.id);
-                if (error) throw error;
-            } else {
-                const { error } = await supabase.from('monitoring_alerts').insert([editingAlert]);
-                if (error) throw error;
-            }
+            const res = await upsertMonitoringAlert(editingAlert || {}, localSelectedUserId);
+            if (res.error) throw new Error(res.error);
+            
+            toast.success('Monitoramento salvo com sucesso');
             setIsAlertModalOpen(false);
             setEditingAlert(null);
             fetchData();
         } catch (err) {
-            console.error('Error saving alert:', err);
+            toast.error('Erro ao salvar monitoramento');
         }
     };
 
     const handleRunAI = async (clipping: Clipping) => {
         setAnalyzingId(clipping.id);
         try {
-            const gemini = new GeminiService(contextCreds.geminiKey);
-            const result = await gemini.analyzeSentiment(clipping.content);
-
-            if (result.sentiment) {
-                const { error } = await supabase
-                    .from('clippings')
-                    .update({
-                        sentiment: result.sentiment.charAt(0).toUpperCase() + result.sentiment.slice(1).toLowerCase(),
-                        score: result.score
-                    })
-                    .eq('id', clipping.id);
-                if (error) throw error;
-                fetchData();
-            }
+            const res = await analyzeClippingSentiment(clipping.id, clipping.content, localSelectedUserId);
+            if (res.error) throw new Error(res.error);
+            toast.success('Análise de IA concluída');
+            fetchData();
         } catch (err) {
-            console.error('AI Analysis failed:', err);
+            toast.error('Análise de IA falhou');
         } finally {
             setAnalyzingId(null);
         }
@@ -141,12 +148,17 @@ const Sentinel: React.FC<{ credentials: Credentials; user: User; permissions: an
     const handleRunIntelligence = async (clipping: Clipping) => {
         setMatchingId(clipping.id);
         try {
-            const gemini = new GeminiService(credentials.geminiKey);
-            await gemini.runGoldenIntelligence(clipping.id);
-            // After matching, we can show a success toast or just refresh
-            fetchData();
-        } catch (err) {
-            console.error('Golden Intelligence failed:', err);
+            const res = await runGoldenIntelligenceAction(clipping.id, localSelectedUserId);
+            if (!res.success) throw new Error(res.error);
+            
+            if (res.count && res.count > 0) {
+                toast.success(`${res.count} Alerta(s) de Ouro gerado(s)!`);
+                fetchData();
+            } else {
+                toast.info(res.message || 'Nenhuma tese similar encontrada.');
+            }
+        } catch (err: any) {
+            toast.error('Falha na Inteligência Golden: ' + err.message);
         } finally {
             setMatchingId(null);
         }
@@ -155,41 +167,26 @@ const Sentinel: React.FC<{ credentials: Credentials; user: User; permissions: an
     const handleLinkToNexus = async (lawsuitId: string) => {
         if (!selectedClipping) return;
         try {
-            const { error: clipError } = await supabase
-                .from('clippings')
-                .update({ lawsuit_id: lawsuitId })
-                .eq('id', selectedClipping.id);
-            if (clipError) throw clipError;
+            const res = await linkClippingToNexus(selectedClipping, lawsuitId, localSelectedUserId);
+            if (res.error) throw new Error(res.error);
 
-            // Also create a movement in Nexus
-            const { error: moveError } = await supabase
-                .from('movements')
-                .insert([{
-                    lawsuit_id: lawsuitId,
-                    description: `[SENTINEL PRO] Nova publicação capturada: ${selectedClipping.source}`,
-                    content: selectedClipping.content,
-                    movement_date: new Date().toISOString()
-                }]);
-            if (moveError) throw moveError;
-
+            toast.success('Recorte vinculado ao processo');
             setIsLinkModalOpen(false);
             setSelectedClipping(null);
             fetchData();
         } catch (err) {
-            console.error('Error linking to Nexus:', err);
+            toast.error('Erro ao vincular ao Nexus');
         }
     };
 
     const toggleAlertStatus = async (alert: MonitoringAlert) => {
         try {
-            const { error } = await supabase
-                .from('monitoring_alerts')
-                .update({ is_active: !alert.is_active })
-                .eq('id', alert.id);
-            if (error) throw error;
+            const res = await toggleMonitoringAlert(alert.id, !alert.is_active, localSelectedUserId);
+            if (res.error) throw new Error(res.error);
+            toast.success(`Monitoramento ${!alert.is_active ? 'ativado' : 'desativado'}`);
             fetchData();
         } catch (err) {
-            console.error('Error toggling alert status:', err);
+            toast.error('Erro ao alterar status');
         }
     };
 
@@ -248,13 +245,15 @@ const Sentinel: React.FC<{ credentials: Credentials; user: User; permissions: an
                     )}
                 </div>
 
-                <button
-                    onClick={() => { setEditingAlert({ is_active: true, alert_type: 'Keyword' }); setIsAlertModalOpen(true); }}
-                    className="bg-rose-600 text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-rose-700 transition-all shadow-lg shadow-rose-600/20 active:scale-95"
-                >
-                    <Plus size={18} /> {t('modules.sentinel.newMonitor')}
-                </button>
-            </div>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => { setEditingAlert({ is_active: true, alert_type: 'Keyword' }); setIsAlertModalOpen(true); }}
+                            className="bg-rose-600 text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-rose-700 transition-all shadow-lg shadow-rose-600/20 active:scale-95"
+                        >
+                            <Plus size={18} /> {t('modules.sentinel.newMonitor')}
+                        </button>
+                    </div>
+                </div>
 
             {!isMaster && contextCreds.supabaseUrl.includes('rmcjxcxmzsinkjnolfek') && (
                 <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4 rounded-2xl flex items-start gap-3">
@@ -308,6 +307,7 @@ const Sentinel: React.FC<{ credentials: Credentials; user: User; permissions: an
                         <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
                             <Activity size={14} className="text-rose-500" />
                             {t('modules.sentinel.list.title')}
+                            {isMockAlerts && <span className="text-[8px] bg-amber-100 dark:bg-amber-900/40 text-amber-600 px-1.5 py-0.5 rounded-full border border-amber-200 ml-2 animate-pulse">DEMO / SIMULAÇÃO</span>}
                         </h3>
                     </div>
                     <div className="space-y-3">
@@ -353,6 +353,7 @@ const Sentinel: React.FC<{ credentials: Credentials; user: User; permissions: an
                         <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
                             <Database size={14} className="text-indigo-500" />
                             {t('modules.sentinel.table.title')}
+                            {isMockClippings && <span className="text-[8px] bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 px-1.5 py-0.5 rounded-full border border-indigo-200 ml-2 animate-pulse">RADAR SIMULADO</span>}
                         </h3>
                         <div className="flex items-center gap-2">
                             <div className="relative">
@@ -434,9 +435,8 @@ const Sentinel: React.FC<{ credentials: Credentials; user: User; permissions: an
                                                     </button>
                                                     <button
                                                         onClick={() => {
-                                                            if (clipping.sentiment === 'Neutro' || !clipping.sentiment) {
-                                                                handleRunAI(clipping);
-                                                            }
+                                                            console.log('Botão IA Cérebro clicado para:', clipping.id);
+                                                            handleRunAI(clipping);
                                                         }}
                                                         disabled={analyzingId === clipping.id}
                                                         title={t('modules.sentinel.table.tooltips.analyze')}

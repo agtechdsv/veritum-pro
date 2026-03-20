@@ -9,7 +9,16 @@ import {
 import { createClient } from '@supabase/supabase-js';
 import { useTranslation } from '@/contexts/language-context';
 
-const IntelligenceHub: React.FC<{ credentials: Credentials; user: User; permissions: any }> = ({ credentials, user, permissions }) => {
+import { listGoldenAlerts, updateGoldenAlertStatus } from '@/app/actions/intelligence-actions';
+
+interface IntelligenceHubProps {
+    credentials: Credentials;
+    user: User;
+    permissions: any;
+    targetUserId?: string | null;
+}
+
+const IntelligenceHub: React.FC<IntelligenceHubProps> = ({ credentials, user, permissions, targetUserId }) => {
     const { t, locale } = useTranslation();
     const [alerts, setAlerts] = useState<(GoldenAlert & { clipping?: Clipping, knowledge?: KnowledgeArticle })[]>([]);
     const [loading, setLoading] = useState(true);
@@ -30,21 +39,17 @@ const IntelligenceHub: React.FC<{ credentials: Credentials; user: User; permissi
         return () => {
             supabase.removeChannel(subscription);
         };
-    }, [filter]);
+    }, [filter, targetUserId]);
 
     const fetchAlerts = async () => {
         setLoading(true);
         try {
-            let query = supabase
-                .from('golden_alerts')
-                .select('*, clipping:clippings(*), knowledge:knowledge_articles(*)')
-                .order('created_at', { ascending: false });
+            const { data, error } = await listGoldenAlerts({
+                status: filter,
+                targetUserId: targetUserId || undefined
+            });
 
-            if (filter === 'unread') query = query.eq('status', 'unread');
-            if (filter === 'actioned') query = query.eq('status', 'actioned');
-
-            const { data, error } = await query;
-            if (error) throw error;
+            if (error) throw new Error(error);
             setAlerts(data || []);
         } catch (err: any) {
             console.warn('Intelligence Hub not fully initialized for this database (tables might be missing).', err.message || err.code || '');
@@ -53,9 +58,9 @@ const IntelligenceHub: React.FC<{ credentials: Credentials; user: User; permissi
         }
     };
 
-    const handleAction = async (alertId: string, status: 'actioned' | 'dismissed') => {
+    const handleAction = async (alertId: string, status: 'unread' | 'dismissed' | 'actioned') => {
         try {
-            await supabase.from('golden_alerts').update({ status }).eq('id', alertId);
+            await updateGoldenAlertStatus(alertId, status, targetUserId || undefined);
             fetchAlerts();
         } catch (err) {
             console.error('Error updating alert status:', err);

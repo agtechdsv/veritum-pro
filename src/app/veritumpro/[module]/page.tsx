@@ -33,7 +33,7 @@ export default function DynamicModulePage() {
     const { module } = useParams();
     const searchParams = useSearchParams();
     const tabParam = searchParams.get('tab') as 'org' | 'plan' | 'cancel' | null;
-    const { user, preferences, planPermissions, credentials, onUpdateUser, onUpdatePrefs, onModuleChange, activeSuites, groupPermissions, allFeatures } = useModule();
+    const { user, preferences, planPermissions, credentials, onUpdateUser, onUpdatePrefs, onModuleChange, activeSuites, groupPermissions, allFeatures, selectedClientId } = useModule();
     const { t, locale } = useTranslation();
 
     if (!user || !preferences) return null;
@@ -166,7 +166,7 @@ export default function DynamicModulePage() {
         case 'valorem': return <Valorem credentials={credentials} user={user} permissions={planPermissions.find(p => normalize(p.suite_key) === 'valorem')} />;
         case 'cognitio': return <Cognitio credentials={credentials} user={user} permissions={planPermissions.find(p => normalize(p.suite_key) === 'cognitio')} />;
         case 'vox': return <Vox credentials={credentials} user={user} permissions={planPermissions.find(p => normalize(p.suite_key) === 'vox')} />;
-        case 'intelligence': return <IntelligenceHub credentials={credentials} user={user} permissions={planPermissions.find(p => normalize(p.suite_key) === 'intelligence')} />;
+        case 'intelligence': return <IntelligenceHub credentials={credentials} user={user} permissions={planPermissions.find(p => normalize(p.suite_key) === 'intelligence')} targetUserId={selectedClientId} />;
         case 'settings': return <UserSettings user={user} preferences={preferences} onUpdateUser={onUpdateUser} onUpdatePrefs={onUpdatePrefs} initialTab={tabParam || undefined} />;
         case 'users': return <UserManagement currentUser={user} />;
         case 'suites': return <SuiteManagement credentials={credentials} />;
