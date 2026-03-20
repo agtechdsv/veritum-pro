@@ -601,7 +601,7 @@ export const NexoVisual: React.FC<NexoVisualProps> = ({
                                         <motion.line
                                             key={nodeKey}
                                             initial={{ pathLength: 0, opacity: 0 }}
-                                            animate={{ pathLength: 1, opacity: 0.15 }}
+                                            animate={{ pathLength: 1, opacity: 0.4 }}
                                             transition={{ duration: 1, delay: 0.2 + (i % 10) * 0.04 }}
                                             x1={x1} y1={y1}
                                             x2={x2} y2={y2}

@@ -64,12 +64,15 @@ export const useNexusCore = (selectedClientId: string, user: any, isMaster: bool
             const isFirstFetchForUser = !fetchedEntitiesRef.current.has(`${targetUserId}_core`) || force;
 
             if (isFirstFetchForUser) {
-                const [lawResult, taskResult, eventResult, teamResult, finStatsResult] = await Promise.all([
+                const [lawResult, taskResult, eventResult, teamResult, finStatsResult, assetResult, personResult, entityResult] = await Promise.all([
                     listLawsuits('', targetUserId),
                     listTasks('', targetUserId),
                     listEvents('', targetUserId),
                     listTeam(targetUserId),
-                    getFinancialStats(undefined, undefined, targetUserId, financeStartDate, financeEndDate)
+                    getFinancialStats(undefined, undefined, targetUserId, financeStartDate, financeEndDate),
+                    listAssets(undefined, undefined, targetUserId),
+                    listPersons('', targetUserId),
+                    listCorporateEntities('', targetUserId)
                 ]);
 
                 if (lawResult.data) setLawsuits(lawResult.data);
@@ -77,8 +80,16 @@ export const useNexusCore = (selectedClientId: string, user: any, isMaster: bool
                 if (eventResult.data) setEvents(eventResult.data);
                 if (teamResult?.data) setTeam(teamResult.data);
                 if (finStatsResult?.data) setFinancialStats(finStatsResult.data);
+                if (assetResult?.data) setAssets(assetResult.data);
+                if (personResult?.data) setPersons(personResult.data);
+                if (entityResult?.data) setCorporateEntities(entityResult.data);
                 
                 fetchedEntitiesRef.current.add(`${targetUserId}_core`);
+                // Mark these as fetched for their specific tabs too
+                fetchedEntitiesRef.current.add(`${targetUserId}_tab_ativos`);
+                fetchedEntitiesRef.current.add(`${targetUserId}_tab_pessoas`);
+                fetchedEntitiesRef.current.add(`${targetUserId}_tab_societario`);
+                
                 lastFetchParamsRef.current = currentParams;
             }
         } catch (err: any) {
