@@ -13,6 +13,7 @@ export const pt = {
         edit: 'Editar',
         error: 'Erro',
         success: 'Sucesso',
+        actions: 'Ações',
         veritumPro: 'VERITUM PRO',
         backToHome: 'Voltar ao Início',
         privacy: 'Privacidade',
@@ -39,6 +40,20 @@ export const pt = {
         event: 'Tarefa',
         processes: 'Processos',
         deleting: 'Excluindo...',
+        today: 'Hoje',
+        empty: 'Nenhum registro encontrado.',
+        clearFilters: 'Limpar Filtros',
+        filters: {
+            allMembers: 'Todos os Membros',
+            allProcesses: 'Todos os Processos',
+            allStatuses: 'Todos os Status',
+            allTypes: 'Todos os Tipos',
+            allOrigins: 'Todas as Origens',
+            allLawyers: 'Todos os Advogados'
+        },
+        placeholders: {
+            search: 'Buscar por título...'
+        },
         intelligenceWidget: {
             loading: 'Sincronizando Insight IA...',
             urgencyRisk: 'Urgência / Risco',
@@ -102,26 +117,17 @@ export const pt = {
                 others: 'Outros'
             }
         },
-        today: 'Hoje',
-        empty: 'Nenhum registro encontrado.',
-        clearFilters: 'Limpar Filtros',
-        filters: {
-            allMembers: 'Todos os Membros',
-            allProcesses: 'Todos os Processos',
-            allStatuses: 'Todos os Status',
-            allTypes: 'Todos os Tipos',
-            allOrigins: 'Todas as Origens',
-            allLawyers: 'Todos os Advogados'
-        },
-        placeholders: {
-            search: 'Buscar por título...'
-        },
         deleteConfirm: {
             title: 'Excluir {item}',
             message: 'Tem certeza que deseja excluir este {item}? Esta ação não pode ser desfeita.',
             success: '{item} excluído com sucesso!',
             error: 'Erro ao excluir {item}'
-        }
+        },
+        systemFallback: {
+            title: 'Configuração do Sistema',
+            description: 'Configuração do sistema',
+        },
+        noData: 'Nenhum dado disponível'
     },
     nav: {
         home: 'Início',
@@ -310,45 +316,6 @@ export const pt = {
                 newLabel: 'Novo'
             }
         },
-        cognitio: {
-            label: 'Cognitio',
-            title: 'COGNITIO PRO',
-            subtitle: 'Inteligência Jurídica & Base de Conhecimento',
-            description: 'Análise preditiva e dashboards para tomada de decisão',
-            newArticle: 'Nova Tese / Artigo',
-            predictionEngine: {
-                title: 'Motor de Análise Preditiva',
-                header: 'Antecipe o desfecho do processo com precisão.',
-                placeholder: 'Ex: Vara Cível de Curitiba, Magistrado Roberto Souza, Ação de Alimentos...',
-                button: 'Gerar Predição IA',
-                result: 'Resultado Estimado',
-                chanceLabel: 'de chance',
-                waiting: 'Aguardando dados de entrada...',
-                judgeHistory: 'Histórico do Magistrado'
-            },
-            library: {
-                title: 'Biblioteca de Teses & Jurisprudência',
-                items: 'Itens',
-                searchPlaceholder: 'Buscar por termo ou palavras-chave...',
-                empty: 'Nenhuma tese encontrada',
-                readFull: 'Ler Completo',
-                author: 'Equipe Veritum'
-            },
-            modal: {
-                title: 'Gestão de Conhecimento',
-                subtitle: 'Cadastre novas teses, jurisprudências e notas de estudo.',
-                labelTitle: 'Título da Tese / Artigo',
-                placeholderTitle: 'Título claro e objetivo...',
-                labelCategory: 'Categoria Jurídica',
-                placeholderCategory: 'Ex: Direito Civil',
-                labelTags: 'Tags (separadas por vírgula)',
-                placeholderTags: 'STF, Recurso, Civil...',
-                labelContent: 'Conteúdo Jurídico',
-                placeholderContent: 'Desenvolva o raciocínio jurídico aqui...',
-                discard: 'Descartar',
-                save: 'Salvar Conhecimento'
-            }
-        },
         nexus: {
             label: 'Nexus',
             title: 'NEXUS PRO',
@@ -399,6 +366,34 @@ export const pt = {
                 },
                 assetDistribution: 'Distribuição de Ativos'
             },
+            corporate: {
+                title: 'ENTIDADES E HOLDINGS',
+                subtitle: 'Gestão de entidades legais, ações e governança',
+                searchPlaceholder: 'Buscar entidade...',
+                newEntity: 'Nova Entidade',
+                empty: 'Nenhuma entidade encontrada.',
+                labels: {
+                    type: 'Tipo',
+                    regime: 'Regime',
+                    capital: 'Capital Social',
+                    noTradingName: 'Sem nome comercial'
+                },
+                actions: {
+                    manageQSA: 'Gerenciar QSA',
+                    uploadSocialContract: 'Upload Contrato Social',
+                    viewHistory: 'Análise de Histórico'
+                },
+                table: {
+                    headers: {
+                        entity: 'Entidade',
+                        cnpj: 'CNPJ',
+                        type: 'Tipo',
+                        capital: 'Capital',
+                        status: 'Status',
+                        actions: 'Ações'
+                    }
+                }
+            },
             newLawsuit: 'Novo Processo',
             newTask: 'Agendar Tarefa',
             metrics: {
@@ -448,39 +443,15 @@ export const pt = {
                 noEvents: 'Nenhum evento encontrado.',
                 defaultType: 'Audiência'
             },
-            corporate: {
-                title: 'ENTIDADES E HOLDINGS',
-                subtitle: 'Gestão de entidades legais, ações e governança',
-                searchPlaceholder: 'Buscar entidade...',
-                newEntity: 'Nova Entidade',
-                empty: 'Nenhuma entidade encontrada.',
-                labels: {
-                    type: 'Tipo',
-                    regime: 'Regime',
-                    capital: 'Capital Social',
-                    noTradingName: 'Sem nome comercial'
-                },
-                actions: {
-                    manageQSA: 'Gerenciar QSA',
-                    uploadSocialContract: 'Upload Contrato Social',
-                    viewHistory: 'Análise de Histórico'
-                },
-                table: {
-                    headers: {
-                        entity: 'Entidade',
-                        cnpj: 'CNPJ',
-                        type: 'Tipo',
-                        capital: 'Capital',
-                        status: 'Status',
-                        actions: 'Ações'
-                    }
-                }
-            },
             documents: {
                 title: 'DOCUMENTOS',
                 subtitle: 'Repositório centralizado de documentos',
                 searchPlaceholder: 'Buscar por nome, tipo ou origem (Processo/Ativo)...',
-                allOrigins: 'Todas as Origens'
+                allOrigins: 'Todas as Origens',
+                loading: 'Carregando documentos...',
+                empty: 'Nenhum documento encontrado.',
+                emptySubtitle: 'Nenhum documento encontrado.',
+                eventDate: 'Data do Evento',
             },
             empty: {
                 processes: 'Nenhum processo localizado.',
@@ -519,6 +490,16 @@ export const pt = {
                 subtitle: 'Movimentações e publicações capturadas via Sentinel PRO',
                 loading: 'Consultando andamentos...',
                 empty: 'Nenhuma movimentação externa vinculada.',
+                addMovement: 'Registrar Movimentação',
+                editMovement: 'Editar Movimentação',
+                description: 'Descrição',
+                placeholderDescription: 'Ex: Audiência realizada',
+                date: 'Data',
+                confirm: 'Confirmar Registro',
+                deleteConfirm: 'Tem certeza que deseja excluir esta movimentação?',
+                deleteConfirmTitle: 'Excluir Movimentação',
+                deleteSuccess: 'Movimentação excluída com sucesso',
+                deleteError: 'Erro ao excluir movimentação',
                 source: 'Fonte',
                 sentiment: 'Sentimento IA',
                 show_original: 'Ver Texto Original'
@@ -696,20 +677,24 @@ export const pt = {
                 },
                 document: {
                     title: 'Anexar Documento',
+                    newAssetTitle: 'Novo Documento',
+                    editAssetTitle: 'Editar Documento',
                     subtitle: 'Repositório de arquivos para este registro.',
+                    labelFile: 'Upload de Arquivo',
                     labelTitle: 'Título do Documento',
                     labelType: 'Tipo de Documento',
-                    placeholderType: 'Ex: Contrato Social, Procuração',
-                    labelFile: 'Upload de Arquivo',
-                    cancel: 'Cancelar',
-                    save: 'Salvar Documento'
-                },
-                justification: {
-                    title: 'Justificativa da Mudança',
-                    subtitle: 'Explique o motivo da alteração de status',
+                    placeholderTitle: 'Ex: Property Deed, Invoice...',
+                    placeholderType: 'Ex: Contract, Power of Attorney',
                     placeholder: 'Ex: Por falta de provas, Acordo realizado, Erro de cadastro...',
                     label: 'Justificativa da Mudança (Opcional)',
                     modalPlaceholder: 'Motivo da alteração de status...'
+                },
+                justification: {
+                    title: 'Change Justification',
+                    subtitle: 'Explain the reason for the status change',
+                    placeholder: 'Ex: Lack of evidence, Settlement reached, Registration error...',
+                    label: 'Change Justification (Optional)',
+                    modalPlaceholder: 'Reason for status change...'
                 }
             }
         },
@@ -791,6 +776,45 @@ export const pt = {
                     paid: 'Liquidado / Pago',
                     canceled: 'Cancelado / Estornado'
                 }
+            }
+        },
+        cognitio: {
+            label: 'Cognitio',
+            title: 'COGNITIO PRO',
+            subtitle: 'Legal Intelligence & Knowledge Base',
+            description: 'Fact-based decisions, not intuition. Analyze judicial trends, judge profiles, and success probabilities with structured data.',
+            newArticle: 'Nova Tese / Artigo',
+            predictionEngine: {
+                title: 'Motor de Análise Preditiva',
+                header: 'Antecipe o desfecho do processo com precisão.',
+                placeholder: 'Ex: Vara Cível de Curitiba, Magistrado Roberto Souza, Ação de Alimentos...',
+                button: 'Gerar Predição IA',
+                result: 'Resultado Estimado',
+                chanceLabel: 'de chance',
+                waiting: 'Aguardando dados de entrada...',
+                judgeHistory: 'Histórico do Magistrado'
+            },
+            library: {
+                title: 'Biblioteca de Teses & Jurisprudência',
+                items: 'Itens',
+                searchPlaceholder: 'Buscar por termo ou palavras-chave...',
+                empty: 'Nenhuma tese encontrada',
+                readFull: 'Ler Completo',
+                author: 'Equipe Veritum'
+            },
+            modal: {
+                title: 'Gestão de Conhecimento',
+                subtitle: 'Cadastre novas teses, jurisprudências e notas de estudo.',
+                labelTitle: 'Título da Tese / Artigo',
+                placeholderTitle: 'Título claro e objetivo...',
+                labelCategory: 'Categoria Jurídica',
+                placeholderCategory: 'Ex: Direito Civil',
+                labelTags: 'Tags (separadas por vírgula)',
+                placeholderTags: 'STF, Recurso, Civil...',
+                labelContent: 'Conteúdo Jurídico',
+                placeholderContent: 'Desenvolva o raciocínio jurídico aqui...',
+                discard: 'Descartar',
+                save: 'Salvar Conhecimento'
             }
         },
         vox: {
@@ -1037,8 +1061,11 @@ export const pt = {
                 subtitle: 'Configure os dados profissionais e acesso ao sistema.',
                 fullName: 'Nome Completo',
                 cpf: 'CPF (apenas números)',
+                name: 'Nome de Exibição',
                 email: 'E-mail Profissional',
                 phone: 'Telefone / WhatsApp',
+                password: 'Senha Inicial',
+                passwordEdit: 'Trocar Senha (Opcional)',
                 role: 'Cargo / Função',
                 specialty: 'Especialidade / Área',
                 oabNumber: 'Nº OAB',
@@ -1047,10 +1074,7 @@ export const pt = {
                 state: 'Estado (UF)',
                 pixKey: 'Chave PIX (Diligências)',
                 notes: 'Notas Internas / Qualidade',
-                name: 'Nome de Exibição',
                 emailUser: 'E-mail de Login',
-                password: 'Senha Inicial',
-                passwordEdit: 'Trocar Senha (Opcional)',
                 selectRole: 'Selecione um Cargo...',
                 inherited: 'Permissões herdadas do Grupo: {name}',
                 close: 'Fechar',
@@ -1706,7 +1730,8 @@ export const pt = {
                 },
                 langs: {
                     pt: 'Português (BR)',
-                    en: 'Inglês (US)'
+                    en: 'Inglês (US)',
+                    es: 'Espanhol (ES)'
                 },
                 toasts: {
                     loadError: 'Erro ao carregar configurações de e-mail',
@@ -1783,6 +1808,10 @@ export const pt = {
                 subtitle: 'Repositório central de dados estruturados para processos e IA.',
                 newEntry: 'Novo Cadastro CRM',
                 searchPlaceholder: 'Buscar por nome ou CPF/CNPJ...',
+                stats: {
+                    label: 'Base de Dados CRM',
+                    activeLawsuits: 'Processos Ativos'
+                },
                 table: {
                     member: 'Membro',
                     classification: 'Classificação',
@@ -1796,7 +1825,8 @@ export const pt = {
                     Reclamado: 'Reclamado',
                     Testemunha: 'Testemunha',
                     Preposto: 'Preposto',
-                    'Advogado Adverso': 'Advogado Adverso'
+                    'Advogado Adverso': 'Advogado Adverso',
+                    Geral: 'Geral'
                 },
                 modal: {
                     titles: {
@@ -1885,6 +1915,16 @@ export const pt = {
                         autoFillData: 'The data for {{name}} ({{document}}) will be automatically inserted into the variable fields of the template.'
                     }
                 },
+                actions: {
+                    whatsapp: 'WhatsApp',
+                    maps: 'Localização',
+                    email: 'E-mail',
+                    newLawsuit: 'Novo Processo',
+                    generateDocs: 'Gerar Documentos',
+                    viewLawsuits: 'Ver Processos',
+                    registerAsset: 'Cadastrar Ativo',
+                    registerCorporate: 'Cadastrar Empresa'
+                },
                 validations: {
                     invalidDocument: 'Formato de Documento Inválido! Use 000.000.000-00 ou 00.000.000/0000-00'
                 },
@@ -1897,20 +1937,6 @@ export const pt = {
                     saveError: 'Erro ao salvar: Verifique se o CPF/CNPJ já existe ou se os campos estão corretos.',
                     deleteSuccess: 'Registro excluído com sucesso!',
                     deleteError: 'Erro ao excluir registro.'
-                },
-                actions: {
-                    whatsapp: 'WhatsApp',
-                    maps: 'Localização',
-                    email: 'E-mail',
-                    newLawsuit: 'Novo Processo',
-                    generateDocs: 'Gerar Documentos',
-                    viewLawsuits: 'Ver Processos',
-                    registerAsset: 'Cadastrar Ativo',
-                    registerCorporate: 'Cadastrar Empresa'
-                },
-                stats: {
-                    label: 'Base de Dados CRM',
-                    activeLawsuits: 'Processos Ativos'
                 }
             }
         }
@@ -2061,7 +2087,6 @@ export const pt = {
                 }
             }
         },
-
         comparison: {
             label: 'Quer analisar cada detalhe técnico?',
             hide: 'Ocultar',
@@ -2867,66 +2892,73 @@ export const pt = {
             ctaActivate: 'Ativar Meu Perfil VIP',
             ctaLearn: 'Conhecer Benefícios'
         },
-        benefits: {
-            title: 'A sua Identidade Digital Exclusiva',
-            subtitle: 'Como membro VIP, você ganha acesso imediato a uma caixa postal blindada @veritumpro.com (exclusiva para assinantes dos planos Growth e Strategy nas modalidades semestral ou anual).',
-            description: 'Separe estrategicamente as notificações dos tribunais e do sistema da sua caixa de entrada pessoal. Além de organização absoluta, este é o seu canal de acesso antecipado: receba atualizações do mercado e recursos beta antes de todo mundo.',
-            items: [
-                'Separação Profissional / Pessoal',
-                'Filtro Automático de Intimações',
-                'Comunicação Oficial Veritum Beta'
-            ],
-            webmail: 'Webmail Blindado',
-            military: 'Proteção Nível Militar',
-            address: 'Seu Endereço Oficial',
-            smartFilter: 'Filtro Inteligente',
-            smartFilterDesc: 'Desvie notificações de tribunais automaticamente.',
-            earlyAccess: 'Acesso Antecipado',
-            earlyAccessDesc: 'Seja o primeiro a testar nossas novas IAs.'
+        earlyAccess: 'Acesso Antecipado',
+        earlyAccessDesc: 'Seja o primeiro a testar nossas novas IAs.'
+    },
+    engineer: {
+        title: 'Fale com um Engenheiro de Dados',
+        subtitle: 'Dúvidas sobre integração, segurança ou latência? Nossa equipe técnica está pronta para uma conversa técnica profunda.',
+        cta: 'Ver Planos e Preços'
+    },
+    benefits: {
+        title: 'A sua Identidade Digital Exclusiva',
+        subtitle: 'Como membro VIP, você ganha acesso imediato a uma caixa postal blindada @veritumpro.com (exclusiva para assinantes dos planos Growth e Strategy nas modalidades semestral ou anual).',
+        description: 'Separe estrategicamente as notificações dos tribunais e do sistema da sua caixa de entrada pessoal. Além de organização absoluta, este é o seu canal de acesso antecipado: receba atualizações do mercado e recursos beta antes de todo mundo.',
+        items: [
+            'Separação Profissional / Pessoal',
+            'Filtro Automático de Intimações',
+            'Comunicação Oficial Veritum Beta'
+        ],
+        webmail: 'Webmail Blindado',
+        military: 'Proteção Nível Militar',
+        address: 'Seu Endereço Oficial',
+        smartFilter: 'Filtro Inteligente',
+        smartFilterDesc: 'Desvie notificações de tribunais automaticamente.',
+        earlyAccess: 'Acesso Antecipado',
+        earlyAccessDesc: 'Seja o primeiro a testar nossas novas IAs.'
+    },
+    rewards: {
+        title: 'Expanda a rede. Acumule pontos. Zere a sua assinatura.',
+        subtitle: 'Bons advogados andam com bons advogados. No Clube VIP Veritum, a sua influência financia a tecnologia do seu escritório.',
+        detail: 'A cada colega que você trouxer para o nosso ecossistema, você acumula Pontos VIP que se transformam em descontos reais na sua próxima fatura (1 Ponto = 1% OFF).',
+        accelerators: 'Como acelerar seus ganhos:',
+        cycles: {
+            monthly: 'Mensal',
+            quarterly: 'Trimestral',
+            semiannually: 'Semestral',
+            annually: 'Anual',
+            point: 'Ponto',
+            points: 'Pontos'
         },
-        rewards: {
-            title: 'Expanda a rede. Acumule pontos. Zere a sua assinatura.',
-            subtitle: 'Bons advogados andam com bons advogados. No Clube VIP Veritum, a sua influência financia a tecnologia do seu escritório.',
-            detail: 'A cada colega que você trouxer para o nosso ecossistema, você acumula Pontos VIP que se transformam em descontos reais na sua próxima fatura (1 Ponto = 1% OFF).',
-            accelerators: 'Como acelerar seus ganhos:',
-            cycles: {
-                monthly: 'Mensal',
-                quarterly: 'Trimestral',
-                semiannually: 'Semestral',
-                annually: 'Anual',
-                point: 'Ponto',
-                points: 'Pontos'
+        plans: {
+            start: {
+                name: 'Plano START',
+                desc: 'Ideal para novos escritórios',
+                points: '1 a 5',
+                label: 'Pontos VIP'
             },
-            plans: {
-                start: {
-                    name: 'Plano START',
-                    desc: 'Ideal para novos escritórios',
-                    points: '1 a 5',
-                    label: 'Pontos VIP'
-                },
-                growth: {
-                    name: 'Plano GROWTH',
-                    desc: 'Crescimento acelerado',
-                    points: '2 a 10',
-                    label: 'Pontos VIP'
-                },
-                strategy: {
-                    name: 'Plano STRATEGY',
-                    desc: 'O seu atalho mais rápido',
-                    points: '3 a 15',
-                    label: 'Pontos VIP!'
-                }
+            growth: {
+                name: 'Plano GROWTH',
+                desc: 'Crescimento acelerado',
+                points: '2 a 10',
+                label: 'Pontos VIP'
+            },
+            strategy: {
+                name: 'Plano STRATEGY',
+                desc: 'O seu atalho mais rápido',
+                points: '3 a 15',
+                label: 'Pontos VIP!'
             }
-        },
-        store: {
-            title: 'Loja de',
-            accent: 'Prêmios',
-            subtitle: 'Troque seus pontos VIP por recompensas exclusivas, upgrades e benefícios automáticos.'
-        },
-        status: {
-            loading: 'Carregando Benefícios...',
-            empty: 'Nenhum benefício disponível no momento.'
         }
+    },
+    store: {
+        title: 'Loja de',
+        accent: 'Prêmios',
+        subtitle: 'Troque seus pontos VIP por recompensas exclusivas, upgrades e benefícios automáticos.'
+    },
+    status: {
+        loading: 'Carregando Benefícios...',
+        empty: 'Nenhum benefício disponível no momento.'
     },
     goal: {
         title: 'A Grande Meta (100% OFF)',

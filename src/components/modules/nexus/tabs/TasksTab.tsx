@@ -188,7 +188,7 @@ export const TasksTab = ({
                         </div>
                     </div>
                 </div>
-                <IntelligenceWidget credentials={credentials} moduleContext="Operacional / Nexus" limit={3} />
+                <IntelligenceWidget credentials={credentials} moduleContext="Operacional / Nexus" limit={5} />
             </div>
 
             <div className="px-8 mt-4">

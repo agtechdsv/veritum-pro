@@ -174,7 +174,7 @@ const Cognitio: React.FC<{ credentials: Credentials; user: User; permissions: an
             </div>
 
             {/* 💎 GOLDEN ALERTS (F-PATTERN) */}
-            <IntelligenceWidget credentials={credentials} moduleContext="Inteligência / Cognitio" limit={3} />
+            <IntelligenceWidget credentials={credentials} moduleContext="Inteligência / Cognitio" limit={5} />
 
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[calc(100vh-180px)]">
                 {/* Left Side: Prediction Engine */}

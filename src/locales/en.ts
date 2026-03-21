@@ -123,7 +123,10 @@ export const en = {
             success: '{item} deleted successfully!',
             error: 'Error deleting {item}'
         },
-        systemFallback: 'System',
+        systemFallback: {
+            title: 'System Configuration',
+            description: 'System Configuration',
+        },
         noData: 'No data'
     },
     nav: {
@@ -208,6 +211,7 @@ export const en = {
         sentinel: {
             title: 'SENTINEL PRO',
             subtitle: 'Strategic Monitoring & Data Intelligence',
+            description: 'Sentinel PRO is the risk sensor of the Veritum ecosystem. We process thousands of publications and procedural movements per day, filtering out the noise and delivering only what is strictly relevant to you and your clients.',
             newMonitor: 'New Monitoring',
             metrics: {
                 active: 'Active Alerts',
@@ -329,35 +333,8 @@ export const en = {
                 calendar: 'Calendar',
                 assets: 'Assets',
                 corporate: 'Corporate',
-                documents: 'Documents'
-            },
-            corporate: {
-                title: 'ENTITIES & HOLDINGS',
-                subtitle: 'Management of legal entities, shares and governance',
-                searchPlaceholder: 'Search entity...',
-                newEntity: 'New Entity',
-                empty: 'No entities found.',
-                labels: {
-                    type: 'Type',
-                    regime: 'Regime',
-                    capital: 'Social Capital',
-                    noTradingName: 'No trading name'
-                },
-                actions: {
-                    manageQSA: 'Manage QSA',
-                    uploadSocialContract: 'Upload Social Contract',
-                    viewHistory: 'History Analysis'
-                },
-                table: {
-                    headers: {
-                        entity: 'Entity',
-                        cnpj: 'Tax ID (CNPJ)',
-                        type: 'Type',
-                        capital: 'Capital',
-                        status: 'Status',
-                        actions: 'Actions'
-                    }
-                }
+                documents: 'Documents',
+                movements: 'Movements'
             },
             overview: {
                 subtitle: 'Real-time monitoring of the Nexus ecosystem',
@@ -388,6 +365,34 @@ export const en = {
                     performance: 'Performance'
                 },
                 assetDistribution: 'Asset Distribution'
+            },
+            corporate: {
+                title: 'ENTITIES & HOLDINGS',
+                subtitle: 'Management of legal entities, shares and governance',
+                searchPlaceholder: 'Search entity...',
+                newEntity: 'New Entity',
+                empty: 'No entities found.',
+                labels: {
+                    type: 'Type',
+                    regime: 'Regime',
+                    capital: 'Social Capital',
+                    noTradingName: 'No trading name'
+                },
+                actions: {
+                    manageQSA: 'Manage QSA',
+                    uploadSocialContract: 'Upload Social Contract',
+                    viewHistory: 'History Analysis'
+                },
+                table: {
+                    headers: {
+                        entity: 'Entity',
+                        cnpj: 'Tax ID (CNPJ)',
+                        type: 'Type',
+                        capital: 'Capital',
+                        status: 'Status',
+                        actions: 'Actions'
+                    }
+                }
             },
             newLawsuit: 'New Case',
             newTask: 'Schedule Task',
@@ -680,6 +685,7 @@ export const en = {
                     labelType: 'Document Type',
                     placeholderTitle: 'Ex: Property Deed, Invoice...',
                     placeholderType: 'Ex: Contract, Power of Attorney',
+                    placeholder: 'Ex: Property Deed, Invoice...',
                     cancel: 'Cancel',
                     save: 'Save Document'
                 },
@@ -848,6 +854,15 @@ export const en = {
                 desc: 'For corporate legal departments making decisions based on Jurimetrics and deep data.',
                 badge: 'Enterprise'
             }
+        },
+        infrastructure: {
+            title: 'Your infrastructure. Your rules.',
+            subtitle: 'In Veritum PRO, freedom goes beyond the contract: it reaches the root of your data. Choose the architecture model that best suits your firm’s reality.',
+            byodbTitle: 'Absolute Control (BYODB - Included)',
+            byodbDesc: 'Connect Veritum PRO directly to your firm’s database. Ideal for firms with their own IT infrastructure that require total sovereignty and local custody of information.',
+            cloudTitle: 'Technological Peace of Mind (Managed Veritum Cloud)',
+            cloudDesc: 'Want to focus only on practicing law? We take care of the servers for you. Dedicated database, automatic daily backups, cutting-edge encryption, and zero technical configuration. Your firm in the cloud in 5 minutes.',
+            cloudPriceLabel: '+ R$ 49,90/month'
         }
     },
     dashboard: {
@@ -988,6 +1003,7 @@ export const en = {
             roleLabel: 'Role/Level',
             statusLabel: 'Status',
             newUser: 'New User',
+            newMember: 'New Member',
             allPlans: 'All Plans',
             allRoles: 'All',
             active: 'Active',
@@ -1033,16 +1049,32 @@ export const en = {
                 coordinator: 'Coordinator',
                 paralegal: 'Paralegal',
                 financial: 'Financial',
+                correspondent: 'Correspondent',
+                founder: 'Founder',
+                consultant: 'Consultant'
             },
             modal: {
+                tabMembers: 'Members (Team)',
+                tabUsers: 'Users (Access)',
                 addTitle: 'New Member',
                 editTitle: 'Update Data',
                 subtitle: 'Configure credentials and access level.',
+                fullName: 'Full Name',
+                cpf: 'CPF (numbers only)',
                 name: 'Full Name',
                 email: 'Email / Login',
+                phone: 'Phone / WhatsApp',
                 password: 'Initial Password',
                 passwordEdit: 'Change Password (Optional)',
                 role: 'Role / Corporate Function',
+                specialty: 'Specialty / Area',
+                oabNumber: 'OAB Number',
+                oabUf: 'Bar Association (UF)',
+                city: 'City of Practice',
+                state: 'State (UF)',
+                pixKey: 'PIX Key (Diligences)',
+                notes: 'Internal Notes / Quality',
+                emailUser: 'Login Email',
                 selectRole: 'Select a Role...',
                 inherited: 'Permissions inherited from Group: {name}',
                 close: 'Close',
@@ -1698,7 +1730,8 @@ export const en = {
                 },
                 langs: {
                     pt: 'Portuguese (BR)',
-                    en: 'English (US)'
+                    en: 'English (US)',
+                    es: 'Spanish (ES)'
                 },
                 toasts: {
                     loadError: 'Error loading email settings',
@@ -2054,8 +2087,6 @@ export const en = {
                 }
             }
         },
-
-
         comparison: {
             label: 'Want to analyze every technical detail?',
             hide: 'Hide',
@@ -2097,10 +2128,10 @@ export const en = {
             titleAccent: 'ecosystem?',
             subtitle: 'Isolated tools create rework. We designed our plans to ensure the perfect Flow. One module feeds another, eliminating 100% of manual data entry.',
             items: [
-                { title: 'Sentinel Capture', desc: 'Identifies the case upon distribution.' },
-                { title: 'Nexus Delegate', desc: 'Creates the task for your team.' },
-                { title: 'Scriptor Draft', desc: 'AI generates the defense in minutes.' },
-                { title: 'Vox Notify', desc: 'Informs the client automatically.' }
+                { title: 'Total Flexibility', desc: 'Choose the payment cycle that best suits your cash flow: monthly, quarterly, semi-annual, or annual.' },
+                { title: 'Financial Predictability', desc: 'No interest or surprises. Plan your firm\'s future with total control over your technology investments.' },
+                { title: 'Progressive Discounts', desc: 'We reward your trust. The longer the cycle chosen, the greater the discount applied automatically.' },
+                { title: 'Guaranteed Peace of Mind', desc: 'Simple and fast cancellation. You stay with us for the clarity and efficiency we deliver, not because of a contract.' }
             ]
         },
         aLaCarte: {
@@ -2822,7 +2853,29 @@ export const en = {
             ]
         }
     },
-
+    managementCloud: {
+        title: 'Cloud Management / Add-Ons',
+        subtitle: 'Manage the Veritum Cloud packages (database, storage) displayed at checkout.',
+        editing: 'Editing in:',
+        unnamed: 'Unnamed',
+        translateAI: 'Translate AI',
+        baseInfo: 'Base Information',
+        monthlyPrice: 'Monthly Price (R$)',
+        codeName: 'Code Name',
+        translationsDisplay: 'Translations (Display)',
+        planName: 'Plan Name',
+        badge: 'Badge (Optional)',
+        subtitleLabel: 'Subtitle',
+        credits: 'Included Credits',
+        needMore: 'Call to Action (Need More)',
+        featuresTitle: 'Features Title',
+        featuresList: 'Features',
+        addFeature: 'Add Feature',
+        markSub: 'Sub-feature',
+        catPlaceholder: 'Category (ex: compute)',
+        descPlaceholder: 'Feature text...',
+        noFeatures: 'No features registered.'
+    },
     clubeVip: {
         exclusiveInvite: 'Exclusive Invitation: VIP Club',
         nav: {

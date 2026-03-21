@@ -13,6 +13,7 @@ export const es = {
         "edit": "Editar",
         "error": "Error",
         "success": "Éxito",
+        "actions": "Acciones",
         "veritumPro": "VERITUM PRO",
         "backToHome": "Volver al Inicio",
         "privacy": "Privacidad",
@@ -22,15 +23,7 @@ export const es = {
         "search": "Busca global...",
         "switchToLight": "Cambiar a tema claro",
         "switchToDark": "Cambiar a tema oscuro",
-        "daysShort": [
-            "Dom",
-            "Lun",
-            "Mar",
-            "Mie",
-            "Jue",
-            "Vie",
-            "Sáb"
-        ],
+        "daysShort": ["Dom", "Lun", "Mar", "Mie", "Jue", "Vie", "Sáb"],
         "notApplicable": "N/A",
         "user": "Usuario",
         "loadingEcosystem": "Cargando ecosistema...",
@@ -47,6 +40,20 @@ export const es = {
         "event": "Tarea",
         "processes": "Procesos",
         "deleting": "Eliminando...",
+        "today": "Hoy",
+        "empty": "No se encontraron registros.",
+        "clearFilters": "Limpiar Filtros",
+        "filters": {
+            "allMembers": "Todos los Miembros",
+            "allProcesses": "Todos los Procesos",
+            "allStatuses": "Todos los Estados",
+            "allTypes": "Todos los Tipos",
+            "allOrigins": "Todas las Orígenes",
+            "allLawyers": "Todos los Abogados"
+        },
+        "placeholders": {
+            "search": "Buscar por título..."
+        },
         "intelligenceWidget": {
             "loading": "Sincronizando Insight IA...",
             "urgencyRisk": "Urgencia / Riesgo",
@@ -115,7 +122,12 @@ export const es = {
             "message": "¿Está seguro de que desea eliminar este {item}? Esta acción no se puede deshacer.",
             "success": "¡{item} eliminado con éxito!",
             "error": "Error al eliminar {item}"
-        }
+        },
+        systemFallback: {
+            title: 'Configuración del Sistema',
+            description: 'Configuración del sistema',
+        },
+        noData: 'No hay datos disponibles'
     },
     "nav": {
         "home": "Inicio",
@@ -199,6 +211,7 @@ export const es = {
         "sentinel": {
             "title": "SENTINEL PRO",
             "subtitle": "Monitoreo e Inteligencia de Datos",
+            "description": "Sentinel PRO es el sensor de riesgos del ecosistema Veritum. Procesamos miles de publicaciones y movimientos procesales por día, filtrando el ruido y entregando solo lo estrictamente relevante para usted y sus clientes.",
             "newMonitor": "Nuevo Monitoreo",
             "metrics": {
                 "active": "Alertas Activos",
@@ -320,7 +333,8 @@ export const es = {
                 "calendar": "Agenda",
                 "assets": "Activos",
                 "corporate": "Societario",
-                "documents": "Documentos"
+                "documents": "Documentos",
+                "movements": "Movimientos"
             },
             "overview": {
                 "subtitle": "Monitoreo en tiempo real del ecosistema Nexus",
@@ -351,6 +365,34 @@ export const es = {
                     "performance": "Performance"
                 },
                 "assetDistribution": "Distribución de Activos"
+            },
+            corporate: {
+                title: 'ENTIDADES Y HOLDINGS',
+                subtitle: 'Gestión de entidades legales, acciones y gobernanza',
+                searchPlaceholder: 'Buscar entidad...',
+                newEntity: 'Nueva Entidad',
+                empty: 'No se encontraron entidades.',
+                labels: {
+                    type: 'Tipo',
+                    regime: 'Régimen',
+                    capital: 'Capital Social',
+                    noTradingName: 'Sin nombre comercial'
+                },
+                actions: {
+                    manageQSA: 'Gestionar QSA',
+                    uploadSocialContract: 'Subir Contrato Social',
+                    viewHistory: 'Análisis de Historial'
+                },
+                table: {
+                    headers: {
+                        entity: 'Entidad',
+                        cnpj: 'CNPJ',
+                        type: 'Tipo',
+                        capital: 'Capital',
+                        status: 'Estado',
+                        actions: 'Acciones'
+                    }
+                }
             },
             "newLawsuit": "Nuevo Proceso",
             "newTask": "Agendar Tarea",
@@ -401,39 +443,15 @@ export const es = {
                 "noEvents": "No se encontraron eventos.",
                 "defaultType": "Audiencia"
             },
-            corporate: {
-                title: 'ENTIDADES Y HOLDINGS',
-                subtitle: 'Gestión de entidades legales, acciones y gobernanza',
-                searchPlaceholder: 'Buscar entidad...',
-                newEntity: 'Nueva Entidad',
-                empty: 'No se encontraron entidades.',
-                labels: {
-                    type: 'Tipo',
-                    regime: 'Régimen',
-                    capital: 'Capital Social',
-                    noTradingName: 'Sin nombre comercial'
-                },
-                actions: {
-                    manageQSA: 'Gestionar QSA',
-                    uploadSocialContract: 'Subir Contrato Social',
-                    viewHistory: 'Análisis de Historial'
-                },
-                table: {
-                    headers: {
-                        entity: 'Entidad',
-                        cnpj: 'CNPJ',
-                        type: 'Tipo',
-                        capital: 'Capital',
-                        status: 'Estado',
-                        actions: 'Acciones'
-                    }
-                }
-            },
             "documents": {
                 "title": "DOCUMENTOS",
                 "subtitle": "Repositorio centralizado de documentos",
                 "searchPlaceholder": "Buscar por nombre, tipo o origen (Proceso/Activo)...",
-                "allOrigins": "Todos los Orígenes"
+                "allOrigins": "Todos los Orígenes",
+                "loading": "Cargando documentos...",
+                "empty": "No se encontraron documentos.",
+                "emptySubtitle": "No se encontraron documentos.",
+                "eventDate": "Fecha del Evento",
             },
             "empty": {
                 "processes": "No se encontraron procesos.",
@@ -659,41 +677,45 @@ export const es = {
                 },
                 "document": {
                     "title": "Adjuntar Documento",
-                    "subtitle": "Repositorio de archivos para este registro.",
-                    "labelTitle": "Título del Documento",
-                    "labelType": "Tipo de Documento",
-                    "placeholderType": "Ej: Contrato Social, Poder",
+                    newAssetTitle: 'Nuevo Documento',
+                    editAssetTitle: 'Editar Documento',
+                    subtitle: 'Repositorio de archivos para este registro.',
                     "labelFile": "Carga de Archivo",
-                    "cancel": "Cancelar",
-                    "save": "Guardar Documento"
-                },
-                "justification": {
-                    "title": "Justificación del Cambio",
-                    "subtitle": "Explique el motivo del cambio de estado",
+                    labelTitle: 'Título del Documento',
+                    labelType: 'Tipo de Documento',
+                    placeholderTitle: 'Ej: Escritura, Factura...',
+                    placeholderType: 'Ej: Contrato, Poder',
                     "placeholder": "Ej: Falta de pruebas, Acuerdo realizado, Error de registro...",
                     "label": "Justificación del Cambio (Opcional)",
                     "modalPlaceholder": "Motivo del cambio de estado..."
+                },
+                justification: {
+                    title: 'Change Justification',
+                    subtitle: 'Explain the reason for the status change',
+                    placeholder: 'Ex: Lack of evidence, Settlement reached, Registration error...',
+                    label: 'Change Justification (Optional)',
+                    modalPlaceholder: 'Reason for status change...'
                 }
             }
         },
-        "scriptor": {
-            "label": "Scriptor",
-            "title": "SCRIPTOR PRO",
-            "subtitle": "Redacción Jurídica Aumentada por IA",
-            "description": "Produzca peticiones, contratos y dictámenes en segundos con auxilio de IA Generativa entrenada en contexto jurídico.",
-            "saving": "Guardando...",
-            "synced": "Sincronizado",
-            "saveError": "Error al Guardar",
-            "newDocument": "Nuevo Documento",
-            "nexusContext": "Contexto del Nexus",
-            "noProcessLink": "Sin vínculo procesal",
-            "draftInstruction": "Instrucción de Redacción",
-            "draftPlaceholder": "Describa lo que desea redactar...",
-            "generateAI": "Generar vía IA",
-            "library": "Biblioteca",
-            "docTitlePlaceholder": "Título del Documento",
-            "editorPlaceholder": "La petición comienza aquí...",
-            "history": "Historial"
+        scriptor: {
+            label: 'Scriptor',
+            title: 'SCRIPTOR PRO',
+            subtitle: 'Escritura Jurídica Aumentada por IA',
+            description: 'Produce peticiones, contratos y dictámenes en segundos con GenAI entrenada en contexto jurídico.',
+            saving: 'Guardando...',
+            synced: 'Sincronizado',
+            saveError: 'Error al Guardar',
+            newDocument: 'Nuevo Documento',
+            nexusContext: 'Contexto del Nexus',
+            noProcessLink: 'Sin vínculo procesal',
+            draftInstruction: 'Instrucción de Redacción',
+            draftPlaceholder: 'Describe lo que quieres escribir...',
+            generateAI: 'Generar vía IA',
+            library: 'Biblioteca',
+            docTitlePlaceholder: 'Título del Documento',
+            editorPlaceholder: 'La petición comienza aquí...',
+            history: 'Historial'
         },
         "valorem": {
             "label": "Valorem",
@@ -832,6 +854,15 @@ export const es = {
                 "desc": "Para departamentos jurídicos corporativos que toman decisiones basadas en Jurimetría y datos profundos.",
                 "badge": "Enterprise"
             }
+        },
+        infrastructure: {
+            title: 'Su infraestructura. Sus reglas.',
+            subtitle: 'No Veritum PRO, la libertad va más allá del contrato: llega hasta la raíz de sus datos. Elija el modelo de arquitectura que mejor se adapte a la realidad de su despacho.',
+            byodbTitle: 'Control Absoluto (BYODB - Incluido)',
+            byodbDesc: 'Conecte el Veritum PRO directamente a la base de datos de su despacho. Ideal para bufetes con infraestructura de TI propia que exigen soberanía total y custodia local de la información.',
+            cloudTitle: 'Paz Mental Tecnológica (Veritum Cloud Gestionada)',
+            cloudDesc: '¿Quiere centrarse solo en ejercer la abogacía? Nosotros nos encargamos de los servidores. Base de datos dedicada, copias de seguridad diarias automáticas, encriptación de última generación y cero configuración técnica. Su despacho en la nube en 5 minutos.',
+            cloudPriceLabel: '+ R$ 49,90/mês'
         }
     },
     "dashboard": {
@@ -972,6 +1003,7 @@ export const es = {
             "roleLabel": "Rol/Nivel",
             "statusLabel": "Estado",
             "newUser": "Nuevo Usuario",
+            "newMember": "Nuevo Miembro",
             "allPlans": "Todos los Planes",
             "allRoles": "Todos",
             "active": "Activos",
@@ -1016,17 +1048,33 @@ export const es = {
                 "senior": "Senior",
                 "coordinator": "Coordinador",
                 "paralegal": "Paralegal",
-                "financial": "Financiero"
+                "financial": "Financiero",
+                correspondent: 'Corresponsal',
+                founder: 'Socio Fundador',
+                consultant: 'Consultor'
             },
             "modal": {
+                "tabMembers": "Miembros (Equipo)",
+                "tabUsers": "Usuarios (Acceso)",
                 "addTitle": "Nuevo Integrante",
                 "editTitle": "Actualizar Datos",
                 "subtitle": "Configure las credenciales y el nivel de acceso.",
+                "fullName": "Nombre Completo",
+                "cpf": "CPF (apenas números)",
                 "name": "Nombre Completo",
                 "email": "E-mail / Login",
+                "phone": "Teléfono / WhatsApp",
                 "password": "Contraseña Inicial",
                 "passwordEdit": "Cambiar Contraseña (Opcional)",
                 "role": "Cargo / Función Corporativa",
+                specialty: 'Especialidad / Área',
+                oabNumber: 'Nº OAB',
+                oabUf: 'Seccional (UF)',
+                city: 'Ciudad de Atuação',
+                state: 'Estado (UF)',
+                pixKey: 'Clave PIX (Diligencias)',
+                notes: 'Notas Internas / Calidad',
+                emailUser: 'E-mail de Login',
                 "selectRole": "Seleccione un Cargo...",
                 "inherited": "Permisos heredados del Grupo: {name}",
                 "close": "Cerrar",
@@ -1631,14 +1679,14 @@ export const es = {
                         "meetingLink": "Enlace de la Reunión (Zoom, Teams, etc)",
                         "meetingPlaceholder": "https://zoom.us/j/..."
                     },
-                    "actions": {
-                        "cancel": "Cancelar",
-                        "sending": "Enviando...",
-                        "sendInvite": "Enviar Invitación",
-                        "save": "Guardar Alteraciones"
+                    actions: {
+                        cancel: 'Cancelar',
+                        sending: 'Enviando...',
+                        sendInvite: 'Enviar Invitación',
+                        save: 'Guardar Alteraciones'
                     }
                 },
-                "toast": {
+                toast: {
                     "successConfirm": "¡Cita confirmada!",
                     "errorConfirm": "Error al confirmar cita.",
                     "errorTechnical": "Falla técnica en la cita.",
@@ -1682,7 +1730,8 @@ export const es = {
                 },
                 "langs": {
                     "pt": "Portugués (BR)",
-                    "en": "Inglés (US)"
+                    "en": "Inglés (US)",
+                    "es": "Español (ES)"
                 },
                 "toasts": {
                     "loadError": "Error al cargar configuraciones de e-mail",
@@ -1776,7 +1825,8 @@ export const es = {
                     "Reclamado": "Reclamado",
                     "Testemunha": "Testigo",
                     "Preposto": "Representante",
-                    "Advogado Adverso": "Abogado Adverso"
+                    "Advogado Adverso": "Abogado Adverso",
+                    "Geral": "Geral"
                 },
                 "modal": {
                     "titles": {
@@ -1814,10 +1864,10 @@ export const es = {
                         "ctps": "ID Laboral (CTPS)",
                         "pis": "ID Seguridad Social (PIS)",
                         "history": "Historial de Funciones / Notas",
+                        "historyPlaceholder": "Detalles relevantes para el proceso laboral/civil...",
                         "ufPlaceholder": "Seleccione una UF...",
                         "ctpsPlaceholder": "000.000 / Series 000-A",
-                        "pisPlaceholder": "000.000.000-00",
-                        "historyPlaceholder": "Detalles relevantes para el proceso laboral/civil..."
+                        "pisPlaceholder": "000.000.000-00"
                     },
                     "actions": {
                         "cancel": "Cancelar",
@@ -2077,23 +2127,11 @@ export const es = {
             "title": "¿Por qué elegir el",
             "titleAccent": "ecosistema?",
             "subtitle": "Las herramientas aisladas generan retrabajo. Diseñamos nuestros planes para garantizar el Flow perfecto. Un módulo alimenta al otro, eliminando el 100% de la digitación manual de datos.",
-            "items": [
-                {
-                    "title": "Sentinel Captura",
-                    "desc": "Identifica el proceso en la distribución."
-                },
-                {
-                    "title": "Nexus Delega",
-                    "desc": "Crea la tarea para su equipo."
-                },
-                {
-                    "title": "Scriptor Redacta",
-                    "desc": "La IA genera la defensa en minutos."
-                },
-                {
-                    "title": "Vox Notifica",
-                    "desc": "Avisa al cliente automáticamente."
-                }
+            items: [
+                { title: 'Flexibilidad Total', desc: 'Elija el ciclo de pago que mejor se adapta a su flujo de caja: mensual, trimestral, semestral o anual.' },
+                { title: 'Previsibilidad Financeira', desc: 'Sin intereses ni sorpresas. Planifique el futuro de su oficina con total control sobre sus inversiones en tecnología.' },
+                { title: 'Descuentos Progressivos', desc: 'Recompensamos su confianza. Cuanto mayor sea el ciclo elegido, mayor será el descuento aplicado automáticamente.' },
+                { title: 'Paz Mental Garantida', desc: 'Cancelación simple y rápida. Usted se queda con nosotros por la claridad y eficiencia que entregamos, no por un contrato.' }
             ]
         },
         "aLaCarte": {
@@ -2128,30 +2166,12 @@ export const es = {
         "faq": {
             "title": "Dudas frecuentes",
             "questions": [
-                {
-                    "q": "¿Qué pasa si quiero cancelar mi plan?",
-                    "a": "Cero llamadas largas o multas ocultas. Puedes cancelar con un solo clic directamente en tu panel. Sin períodos de carencia y sin permanencia. En Veritum PRO, no te atamos con contratos, te conquistamos con la excelencia del servicio. Si decides irte, podrás exportar libremente todos tus datos antes del cierre."
-                },
-                {
-                    "q": "¿Necesito tarjeta de crédito para la prueba gratis?",
-                    "a": "No. Creemos en nuestra tecnología. Usted prueba los planes Start o Growth por 14 dias con acceso total, sin burocracia."
-                },
-                {
-                    "q": "¿Cuál es la diferencia entre la Suscripción de Veritum PRO y una compra en cuotas?",
-                    "a": "A diferencia de una compra en cuotas, donde el valor total (ej: anual) bloquea el límite de su tarjeta de crédito, el modelo de suscripción de Veritum PRO realiza cobros periódicos (mensual, trimestral, etc.). Esto significa que solo se procesa el valor del ciclo actual, manteniendo su límite libre para otras necesidades del despacho. Además, las suscripciones se renuevan automáticamente, pero con la libertad de cancelar sin las burocracias de reembolsos de cuotas bancarias."
-                },
-                {
-                    "q": "¿Cómo funciona el límite de procesos?",
-                    "a": "El sistema no cobra por \"proceso archivado\". Nosotros tasamos basados en sus casos activos, garantizando que usted pague solo por lo que genera esfuerzo real."
-                },
-                {
-                    "q": "¿Puedo cambiar de plan después?",
-                    "a": "En cualquier momento. Veritum PRO tiene una arquitectura modular. Haga upgrade o downgrade con solo un clic desde sus configuraciones."
-                },
-                {
-                    "q": "¿Dónde se almacenarán mis procesos y documentos?",
-                    "a": "La elección es 100% suya. Fuimos pioneros en el mercado jurídico al adoptar la arquitectura BYODB (Bring Your Own Database), permitiéndole conectar el sistema a sus propios servidores para tener un control absoluto sobre su patrimonio digital. Sin embargo, si su oficina no cuenta con un equipo de TI, puede contratar Veritum Cloud Gestionada como un adicional en su suscripción. En este formato, le proporcionamos una base de datos de alto rendimiento exclusiva para su oficina, con rotinas automáticas de copia de seguridad y seguridad en la nube."
-                }
+                { "q": "¿Qué pasa si quiero cancelar mi plan?", "a": "Cero llamadas largas o multas ocultas. Puedes cancelar con un solo clic directamente en tu panel. Sin períodos de carencia y sin permanencia. En Veritum PRO, no te atamos con contratos, te conquistamos con la excelencia del servicio. Si decides irte, podrás exportar libremente todos tus datos antes del cierre." },
+                { "q": "¿Necesito tarjeta de crédito para la prueba gratis?", "a": "No. Creemos en nuestra tecnología. Usted prueba los planes Start o Growth por 14 dias con acceso total, sin burocracia." },
+                { "q": "¿Cuál es la diferencia entre la Suscripción de Veritum PRO y una compra en cuotas?", "a": "A diferencia de una compra en cuotas, donde el valor total (ej: anual) bloquea el límite de su tarjeta de crédito, el modelo de suscripción de Veritum PRO realiza cobros periódicos (mensual, trimestral, etc.). Esto significa que solo se procesa el valor del ciclo actual, manteniendo su límite libre para otras necesidades del despacho. Además, las suscripciones se renuevan automáticamente, pero con la libertad de cancelar sin las burocracias de reembolsos de cuotas bancarias." },
+                { "q": "¿Cómo funciona el límite de procesos?", "a": "El sistema no cobra por \"proceso archivado\". Nosotros tasamos basados en sus casos activos, garantizando que usted pague solo por lo que genera esfuerzo real." },
+                { "q": "¿Puedo cambiar de plan después?", "a": "En cualquier momento. Veritum PRO tiene una arquitectura modular. Haga upgrade o downgrade con solo un clic desde sus configuraciones." },
+                { "q": "¿Dónde se almacenarán mis procesos y documentos?", "a": "La elección es 100% suya. Fuimos pioneros en el mercado jurídico al adoptar la arquitectura BYODB (Bring Your Own Database), permitiéndole conectar el sistema a sus propios servidores para tener un control absoluto sobre su patrimonio digital. Sin embargo, si su oficina no cuenta con un equipo de TI, puede contratar Veritum Cloud Gestionada como un adicional en su suscripción. En este formato, le proporcionamos una base de datos de alto rendimiento exclusiva para su oficina, con rotinas automáticas de copia de seguridad y seguridad en la nube." }
             ]
         },
         "finalCta": {
@@ -2833,7 +2853,29 @@ export const es = {
             ]
         }
     },
-
+    managementCloud: {
+        title: 'Gestión de Cloud / Add-Ons',
+        subtitle: 'Gerencie os pacotes do Veritum Cloud (banco de dados, storage) exibidos no checkout.',
+        editing: 'Editando em:',
+        unnamed: 'Sem Nome',
+        translateAI: 'Traduzir IA',
+        baseInfo: 'Informações Base',
+        monthlyPrice: 'Preço Mensal (R$)',
+        codeName: 'Code Name',
+        translationsDisplay: 'Traduções (Display)',
+        planName: 'Nome do Plano',
+        badge: 'Badge (Opcional)',
+        subtitleLabel: 'Subtítulo',
+        credits: 'Créditos Inclusos',
+        needMore: 'Call to Action (Need More)',
+        featuresTitle: 'Título das Features',
+        featuresList: 'Features',
+        addFeature: 'Adicionar Feature',
+        markSub: 'Sub-feature',
+        catPlaceholder: 'Categoria (ex: compute)',
+        descPlaceholder: 'Texto da feature...',
+        noFeatures: 'Nenhuma feature cadastrada.'
+    },
     "clubeVip": {
         "exclusiveInvite": "Invitación Exclusiva: Club VIP",
         "nav": {
@@ -2850,81 +2892,88 @@ export const es = {
             "ctaActivate": "Activar Mi Perfil VIP",
             "ctaLearn": "Conocer Beneficios"
         },
-        "benefits": {
-            "title": "Su Identidad Digital Exclusiva",
-            "subtitle": "Como miembro VIP, obtiene acceso inmediato a un buzón protegido @veritumpro.com (exclusivo para suscriptores de los planes Growth y Strategy en modalidad semestral o anual).",
-            "description": "Separe estratégicamente las notificaciones de los tribunales y del sistema de su bandeja de entrada personal. Más allá de la organización absoluta, este es su canal de acceso anticipado: reciba actualizaciones del mercado y funciones beta antes que nadie.",
-            "items": [
-                "Separación Profesional / Personal",
-                "Filtro Automático de Notificaciones",
-                "Comunicación Oficial Veritum Beta"
-            ],
-            "webmail": "Correo Web Protegido",
-            "military": "Protección Nivel Militar",
-            "address": "Su Dirección Oficial",
-            "smartFilter": "Filtro Inteligente",
-            "smartFilterDesc": "Desvíe notificaciones de tribunales automáticamente.",
-            "earlyAccess": "Acceso Anticipado",
-            "earlyAccessDesc": "Sea el primero en probar nuestras nuevas IAs."
+        earlyAccess: 'Acceso Anticipado',
+        earlyAccessDesc: 'Sé el primero en probar nuestras nuevas IAs.'
+    },
+    engineer: {
+        title: 'Habla con un Ingeniero de Datos',
+        subtitle: '¿Dudas sobre integración, seguridad o latencia? Nuestro equipo técnico está listo para una conversación técnica profunda.',
+        cta: 'Ver Planes y Precios'
+    },
+    "benefits": {
+        "title": "Su Identidad Digital Exclusiva",
+        "subtitle": "Como miembro VIP, obtiene acceso inmediato a un buzón protegido @veritumpro.com (exclusivo para suscriptores de los planes Growth y Strategy en modalidad semestral o anual).",
+        "description": "Separe estratégicamente las notificaciones de los tribunales y del sistema de su bandeja de entrada personal. Más allá de la organización absoluta, este es su canal de acceso anticipado: reciba actualizaciones del mercado y funciones beta antes que nadie.",
+        "items": [
+            "Separación Profesional / Personal",
+            "Filtro Automático de Notificaciones",
+            "Comunicación Oficial Veritum Beta"
+        ],
+        "webmail": "Correo Web Protegido",
+        "military": "Protección Nivel Militar",
+        "address": "Su Dirección Oficial",
+        "smartFilter": "Filtro Inteligente",
+        "smartFilterDesc": "Desvíe notificaciones de tribunales automáticamente.",
+        "earlyAccess": "Acceso Anticipado",
+        "earlyAccessDesc": "Sea el primero en probar nuestras nuevas IAs."
+    },
+    "rewards": {
+        "title": "Expanda la red. Acumule puntos. Pague cero por su suscripción.",
+        "subtitle": "Buenos abogados van con buenos abogados. En el Club VIP Veritum, su influencia financia la tecnología de su despacho.",
+        "detail": "Por cada colega que traiga a nuestro ecosistema, acumula Puntos VIP que se transforman en descuentos reales en su próxima factura (1 Punto = 1% OFF).",
+        "accelerators": "Cómo acelerar sus ganancias:",
+        "cycles": {
+            "monthly": "Mensual",
+            "quarterly": "Trimestral",
+            "semiannually": "Semestral",
+            "annually": "Anual",
+            "point": "Punto",
+            "points": "Puntos"
         },
-        "rewards": {
-            "title": "Expanda la red. Acumule puntos. Pague cero por su suscripción.",
-            "subtitle": "Buenos abogados van con buenos abogados. En el Club VIP Veritum, su influencia financia la tecnología de su despacho.",
-            "detail": "Por cada colega que traiga a nuestro ecosistema, acumula Puntos VIP que se transforman en descuentos reales en su próxima factura (1 Punto = 1% OFF).",
-            "accelerators": "Cómo acelerar sus ganancias:",
-            "cycles": {
-                "monthly": "Mensual",
-                "quarterly": "Trimestral",
-                "semiannually": "Semestral",
-                "annually": "Anual",
-                "point": "Punto",
-                "points": "Puntos"
+        "plans": {
+            "start": {
+                "name": "Plan START",
+                "desc": "Ideal para nuevos despachos",
+                "points": "1 a 5",
+                "label": "Puntos VIP"
             },
-            "plans": {
-                "start": {
-                    "name": "Plan START",
-                    "desc": "Ideal para nuevos despachos",
-                    "points": "1 a 5",
-                    "label": "Puntos VIP"
-                },
-                "growth": {
-                    "name": "Plan GROWTH",
-                    "desc": "Crecimiento acelerado",
-                    "points": "2 a 10",
-                    "label": "Puntos VIP"
-                },
-                "strategy": {
-                    "name": "Plan STRATEGY",
-                    "desc": "Su atajo más rápido",
-                    "points": "3 a 15",
-                    "label": "¡Puntos VIP!"
-                }
+            "growth": {
+                "name": "Plan GROWTH",
+                "desc": "Crecimiento acelerado",
+                "points": "2 a 10",
+                "label": "Puntos VIP"
+            },
+            "strategy": {
+                "name": "Plan STRATEGY",
+                "desc": "Su atajo más rápido",
+                "points": "3 a 15",
+                "label": "¡Puntos VIP!"
             }
-        },
-        "store": {
-            "title": "Tienda de",
-            "accent": "Premios",
-            "subtitle": "Cambie sus puntos VIP por recompensas exclusivas, mejoras y beneficios automáticos."
-        },
-        "status": {
-            "loading": "Cargando Beneficios...",
-            "empty": "Ningún beneficio disponible en este momento."
-        },
-        "goal": {
-            "title": "La Gran Meta (100% OFF)",
-            "description": "Acumule 100 Puntos VIP y utilice el 100% de los módulos de Veritum PRO totalmente por nuestra cuenta en su próximo ciclo.",
-            "progress": "100% OFF Alcanzado",
-            "persistenceTitle": "Su esfuerzo nunca se pierde",
-            "persistenceDesc": "¿Superó la meta de 100 puntos? No se preocupe. Todos los puntos excedentes se contabilizan y transfieren automáticamente a su ciclo de facturación posterior. Mantenga su red activa y garantice la paz mental durante todo el año."
-        },
-        "ctaFinal": {
-            "title1": "Listo para asumir",
-            "title2": "¿Su lugar en el club?",
-            "button": "Activar Beneficios Ahora"
-        },
-        "footer": {
-            "copyright": "© {year} Veritum PRO - Todos los derechos reservados"
         }
+    },
+    "store": {
+        "title": "Tienda de",
+        "accent": "Premios",
+        "subtitle": "Cambie sus puntos VIP por recompensas exclusivas, mejoras y beneficios automáticos."
+    },
+    "status": {
+        "loading": "Cargando Beneficios...",
+        "empty": "Ningún beneficio disponible en este momento."
+    },
+    "goal": {
+        "title": "La Gran Meta (100% OFF)",
+        "description": "Acumule 100 Puntos VIP y utilice el 100% de los módulos de Veritum PRO totalmente por nuestra cuenta en su próximo ciclo.",
+        "progress": "100% OFF Alcanzado",
+        "persistenceTitle": "Su esfuerzo nunca se pierde",
+        "persistenceDesc": "¿Superó la meta de 100 puntos? No se preocupe. Todos los puntos excedentes se contabilizan y transfieren automáticamente a su ciclo de facturación posterior. Mantenga su red activa y garantice la paz mental durante todo el año."
+    },
+    "ctaFinal": {
+        "title1": "Listo para asumir",
+        "title2": "¿Su lugar en el club?",
+        "button": "Activar Beneficios Ahora"
+    },
+    "footer": {
+        "copyright": "© {year} Veritum PRO - Todos los derechos reservados"
     }
 };
 

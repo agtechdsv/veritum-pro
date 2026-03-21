@@ -233,11 +233,11 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Insights AI - Premium Widget */}
-                    <div className="lg:col-span-2 space-y-6">
+                    <div className="lg:col-span-3 space-y-6">
                         <IntelligenceWidget 
                             credentials={credentials} 
                             moduleContext="Estratégico / Nexus" 
-                            limit={3} 
+                            limit={5} 
                             targetUserId={targetUserId} 
                             onActionComplete={fetchAll}
                         />

@@ -18,7 +18,7 @@ interface Props {
     onActionComplete?: () => void;
 }
 
-const IntelligenceWidget: React.FC<Props> = ({ credentials, limit = 3, moduleContext, targetUserId, onActionComplete }) => {
+const IntelligenceWidget: React.FC<Props> = ({ credentials, limit = 5, moduleContext, targetUserId, onActionComplete }) => {
     const { t } = useTranslation();
     const [alerts, setAlerts] = useState<(GoldenAlert & { clipping?: Clipping, knowledge?: KnowledgeArticle })[]>([]);
     const [loading, setLoading] = useState(true);
@@ -102,7 +102,7 @@ const IntelligenceWidget: React.FC<Props> = ({ credentials, limit = 3, moduleCon
                 )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
                 {alerts.map((alert) => {
                     const styles = getPriorityStyles(alert.priority, alert.intelligence_type);
                     const isExpanded = expandedAlertaId === alert.id;
