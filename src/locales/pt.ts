@@ -1,6 +1,8 @@
 export const pt = {
     common: {
         apply: 'Aplicar',
+        type: 'Tipo',
+        referenceDate: 'Data de Referência',
         dateRange: {
             start: 'Data Inicial',
             end: 'Data Final'
@@ -687,7 +689,8 @@ export const pt = {
                     placeholderType: 'Ex: Contract, Power of Attorney',
                     placeholder: 'Ex: Por falta de provas, Acordo realizado, Erro de cadastro...',
                     label: 'Justificativa da Mudança (Opcional)',
-                    modalPlaceholder: 'Motivo da alteração de status...'
+                    modalPlaceholder: 'Motivo da alteração de status...',
+                    save: 'Salvar Documento'
                 },
                 justification: {
                     title: 'Change Justification',
@@ -755,7 +758,8 @@ export const pt = {
                     fees: 'Honorários',
                     operational: 'Operacional',
                     costs: 'Custas'
-                }
+                },
+                efficiencyWarning: 'Sua taxa de recebimento está abaixo da média do mercado (85%).'
             },
             drawer: {
                 title: 'Nova Subconta',

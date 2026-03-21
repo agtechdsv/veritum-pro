@@ -1,6 +1,8 @@
 export const en = {
     common: {
         apply: 'Apply',
+        type: 'Type',
+        referenceDate: 'Reference Date',
         dateRange: {
             start: 'Start Date',
             end: 'End Date'
@@ -755,7 +757,8 @@ export const en = {
                     fees: 'Fees',
                     operational: 'Operational',
                     costs: 'Costs'
-                }
+                },
+                efficiencyWarning: 'Your collection rate is below the market average (85%).'
             },
             drawer: {
                 title: 'New Subaccount',

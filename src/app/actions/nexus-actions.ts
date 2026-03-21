@@ -166,7 +166,7 @@ export async function getFinancialStats(lawsuitId?: string, personId?: string, t
         return { data, error: null };
     } catch (error: any) {
         console.error('Server Action Error (getFinancialStats):', error);
-        return { data: { totalCredits: 0, totalDebits: 0, balance: 0 }, error: error.code || error.message };
+        return { data: { totalCredits: 0, totalDebits: 0, balance: 0, efficiency: 0, categories: [] }, error: error.code || error.message };
     }
 }
 

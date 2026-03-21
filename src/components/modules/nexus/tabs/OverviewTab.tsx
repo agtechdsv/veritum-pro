@@ -191,12 +191,12 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                             trend: t('modules.nexus.overview.metricsTrends.net')
                         },
                         { 
-                            label: t('modules.nexus.finance.roi'), 
-                            val: financialStats.totalDebits > 0 ? `${((financialStats.balance / financialStats.totalDebits) * 100).toLocaleString(locale === 'pt' ? 'pt-BR' : locale === 'es' ? 'es-ES' : 'en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%` : '--%', 
+                            label: 'Eficiência de Créditos', 
+                            val: `${financialStats.efficiency.toFixed(1)}%`, 
                             color: 'text-amber-600', 
                             bg: 'bg-amber-50 dark:bg-amber-900/30',
-                            icon: BarChart3, 
-                            trend: t('modules.nexus.overview.metricsTrends.performance')
+                            icon: Zap, 
+                            trend: 'Taxa de Recebimento'
                         }
                     ].map((stat, i) => (
                         <div key={i} className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/20 dark:shadow-none hover:-translate-y-2 transition-all duration-500 group relative overflow-hidden">
@@ -229,6 +229,64 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                             </div>
                         </div>
                     ))}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl p-8">
+                        <div className="flex items-center justify-between mb-8">
+                            <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tight flex items-center gap-3">
+                                <BarChart3 className="text-indigo-600" size={20} /> Divisão por Categorias
+                            </h3>
+                        </div>
+                        <div className="space-y-4">
+                            {financialStats.categories.length > 0 ? financialStats.categories.map((cat: { name: string, value: number }, i: number) => (
+                                <div key={i}>
+                                    <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                                        <span>{cat.name}</span>
+                                        <span>{cat.value} transações</span>
+                                    </div>
+                                    <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                        <motion.div 
+                                            initial={{ width: 0 }}
+                                            animate={{ width: `${(cat.value / financialStats.categories.reduce((a: number, b: { value: number }) => a + b.value, 0)) * 100}%` }}
+                                            className={`h-full ${i === 0 ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-600'}`}
+                                        />
+                                    </div>
+                                </div>
+                            )) : (
+                                <p className="text-sm text-slate-400 italic">Nenhum dado de categoria disponível.</p>
+                            )}
+                        </div>
+                    </div>
+                    
+                    <div className="bg-indigo-600 rounded-[2.5rem] shadow-xl p-8 text-white relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 blur-3xl -mr-32 -mt-32 pointer-events-none group-hover:bg-white/20 transition-all duration-700" />
+                        <h3 className="text-xl font-black uppercase tracking-tight flex items-center gap-3 mb-2">
+                            <PieChart className="text-white" size={20} /> Saúde Financeira
+                        </h3>
+                        <p className="text-indigo-100 text-xs font-medium mb-6">Sua eficiência operacional baseada em pagamentos concluídos.</p>
+                        
+                        <div className="flex items-center gap-8">
+                            <div className="relative w-24 h-24 flex items-center justify-center">
+                                <svg className="w-full h-full transform -rotate-90">
+                                    <circle cx="48" cy="48" r="40" stroke="rgba(255,255,255,0.1)" strokeWidth="8" fill="none" />
+                                    <motion.circle 
+                                        cx="48" cy="48" r="40" 
+                                        stroke="white" strokeWidth="8" fill="none"
+                                        strokeDasharray={251}
+                                        initial={{ strokeDashoffset: 251 }}
+                                        animate={{ strokeDashoffset: 251 - (251 * financialStats.efficiency / 100) }}
+                                        transition={{ duration: 1.5, ease: "easeOut" }}
+                                    />
+                                </svg>
+                                <span className="absolute text-xl font-black">{Math.round(financialStats.efficiency)}%</span>
+                            </div>
+                            <div>
+                                <div className="text-2xl font-black mb-1">Status: {financialStats.efficiency > 80 ? 'Excelente' : financialStats.efficiency > 50 ? 'Bom' : 'Atenção'}</div>
+                                <div className="text-[10px] font-black text-indigo-200 uppercase tracking-widest leading-none">A IA Nexus recomenda priorizar a cobrança de transações pendentes para elevar sua liquidez.</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

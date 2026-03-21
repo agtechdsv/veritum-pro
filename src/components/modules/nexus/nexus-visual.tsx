@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Network, Shield, XCircle, Scale, Building2, User as UserIcon, 
     Briefcase, FileText, CheckCircle2, Users, Zap, Search, 
-    Maximize2, Minimize2, ChevronRight, Info, Pencil, AlertCircle
+    Maximize2, Minimize2, ChevronRight, Info, Pencil, AlertCircle,
+    Newspaper
 } from 'lucide-react';
 import { 
     Lawsuit, LawsuitDocument, Task, Person, TeamMember, Asset, 
@@ -26,7 +27,9 @@ interface NexoVisualProps {
     tasks: Task[];
     corporateEntities: CorporateEntity[];
     onEdit?: (type: string, data: any, category?: string) => void;
+    onViewClippings?: (data: any) => void;
     refreshTrigger?: number;
+    t: any;
 }
 
 export const NexoVisual: React.FC<NexoVisualProps> = ({
@@ -41,7 +44,9 @@ export const NexoVisual: React.FC<NexoVisualProps> = ({
     tasks,
     corporateEntities,
     onEdit,
-    refreshTrigger = 0
+    onViewClippings,
+    refreshTrigger = 0,
+    t
 }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [isExpanding, setIsExpanding] = useState(false);
@@ -657,9 +662,20 @@ export const NexoVisual: React.FC<NexoVisualProps> = ({
                                     {onEdit && (
                                         <button 
                                             onClick={(e) => { e.stopPropagation(); onEdit(nexoData.origin_type, nexoData.data, 'Foco Central'); }}
-                                            className="absolute -top-2 -right-2 p-3 bg-white dark:bg-slate-800 border-2 border-indigo-600 rounded-2xl text-indigo-600 shadow-xl opacity-0 group-hover:opacity-100 transition-all hover:scale-110 active:scale-95"
+                                            className="absolute -top-2 -right-2 p-3 bg-white dark:bg-slate-800 border-2 border-indigo-600 rounded-2xl text-indigo-600 shadow-xl opacity-0 group-hover:opacity-100 transition-all hover:scale-110 active:scale-95 z-50"
+                                            title="Editar Foco Central"
                                         >
                                             <Pencil size={18} />
+                                        </button>
+                                    )}
+
+                                    {nexoData.origin_type === 'lawsuit' && onViewClippings && (
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); onViewClippings(nexoData.data); }}
+                                            className="absolute top-12 -right-2 p-3 bg-white dark:bg-slate-800 border-2 border-amber-500 rounded-2xl text-amber-500 shadow-xl opacity-0 group-hover:opacity-100 transition-all hover:scale-110 active:scale-95 z-50"
+                                            title={t('modules.nexus.movements.title') || "Ver Recortes e Publicações"}
+                                        >
+                                            <Newspaper size={18} />
                                         </button>
                                     )}
                                 </motion.div>
@@ -706,8 +722,19 @@ export const NexoVisual: React.FC<NexoVisualProps> = ({
                                             <button 
                                                 onClick={(e) => { e.stopPropagation(); onEdit(n.type, n.data, n.cat); }}
                                                 className="absolute -top-2 -right-2 p-2 bg-indigo-600 text-white rounded-xl shadow-lg opacity-0 group-hover:opacity-100 transition-all hover:scale-110 active:scale-95 z-50 border border-white/20"
+                                                title="Editar Detalhes"
                                             >
                                                 <Pencil size={12} />
+                                            </button>
+                                        )}
+
+                                        {n.type === 'lawsuit' && onViewClippings && (
+                                            <button 
+                                                onClick={(e) => { e.stopPropagation(); onViewClippings(n.data); }}
+                                                className="absolute top-8 -right-2 p-2 bg-amber-500 text-white rounded-xl shadow-lg opacity-0 group-hover:opacity-100 transition-all hover:scale-110 active:scale-95 z-50 border border-white/20"
+                                                title={t('modules.nexus.movements.title') || "Ver Recortes e Publicações"}
+                                            >
+                                                <Newspaper size={12} />
                                             </button>
                                         )}
 

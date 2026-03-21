@@ -66,8 +66,10 @@ export class SupabaseFinancialRepository implements IFinancialRepository {
         if (error) throw error;
     }
 
-    async getStats(lawsuitId?: string, personId?: string, startDate?: string, endDate?: string): Promise<{ totalCredits: number; totalDebits: number; balance: number }> {
-        let query = this.client.from('financial_transactions').select('amount, entry_type');
+    async getStats(lawsuitId?: string, personId?: string, startDate?: string, endDate?: string): Promise<{ 
+        totalCredits: number; totalDebits: number; balance: number; efficiency: number; categories: { name: string; value: number }[];
+    }> {
+        let query = this.client.from('financial_transactions').select('amount, entry_type, status, category');
         
         if (lawsuitId) query = query.eq('lawsuit_id', lawsuitId);
         if (personId) query = query.eq('person_id', personId);
@@ -77,13 +79,30 @@ export class SupabaseFinancialRepository implements IFinancialRepository {
         const { data, error } = await query;
         if (error) throw error;
 
-        const totalCredits = data?.filter(t => t.entry_type === 'Credit').reduce((sum, t) => sum + (t.amount || 0), 0) || 0;
+        const credits = data?.filter(t => t.entry_type === 'Credit') || [];
+        const totalCredits = credits.reduce((sum, t) => sum + (t.amount || 0), 0);
         const totalDebits = data?.filter(t => t.entry_type === 'Debit').reduce((sum, t) => sum + (t.amount || 0), 0) || 0;
         
+        const paidCreditsCount = credits.filter(c => c.status === 'Pago').length;
+        const efficiency = credits.length > 0 ? (paidCreditsCount / credits.length) * 100 : 0;
+        
+        const catMap: Record<string, number> = {};
+        data?.forEach(t => {
+            const cat = t.category || 'Outros';
+            catMap[cat] = (catMap[cat] || 0) + 1;
+        });
+
+        const sortedCats = Object.entries(catMap)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5)
+            .map(([name, value]) => ({ name, value }));
+
         return {
             totalCredits,
             totalDebits,
-            balance: totalCredits - totalDebits
+            balance: totalCredits - totalDebits,
+            efficiency,
+            categories: sortedCats
         };
     }
 }

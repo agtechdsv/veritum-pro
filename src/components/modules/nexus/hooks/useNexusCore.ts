@@ -34,7 +34,7 @@ export const useNexusCore = (selectedClientId: string, user: any, isMaster: bool
     const [loading, setLoading] = useState(true);
     const [globalDocuments, setGlobalDocuments] = useState<GlobalDocument[]>([]);
     const [isGlobalDocsLoading, setIsGlobalDocsLoading] = useState(false);
-    const [financialStats, setFinancialStats] = useState({ totalCredits: 0, totalDebits: 0, balance: 0 });
+    const [financialStats, setFinancialStats] = useState({ totalCredits: 0, totalDebits: 0, balance: 0, efficiency: 0, categories: [] as { name: string, value: number }[] });
 
     // Track what has already been fetched for targetUserId - using Ref to avoid infinite loops in useCallback/useEffect
     const fetchedEntitiesRef = useRef<Set<string>>(new Set());

@@ -138,6 +138,54 @@ const Valorem: React.FC<{ credentials: Credentials; user: User; permissions: any
         t.category?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    // Dynamic Stats for Item 1
+    const creditTransactions = transactions.filter(t => t.entry_type === 'Credit');
+    const efficiency = creditTransactions.length > 0 
+        ? Math.round((creditTransactions.filter(t => t.status === 'Pago').length / creditTransactions.length) * 1000) / 10 
+        : 0;
+
+    const categoryCounts = transactions.reduce((acc, t) => {
+        const cat = t.category || 'Geral';
+        acc[cat] = (acc[cat] || 0) + 1;
+        return acc;
+    }, {} as Record<string, number>);
+
+    const dynamicCategories = Object.entries(categoryCounts)
+        .map(([label, count]) => ({
+            label,
+            val: Math.round((count / transactions.length) * 100),
+            color: label === 'Honorários' || label.includes('Fees') ? 'bg-indigo-500' : 
+                   label === 'Custos' || label.includes('Costs') ? 'bg-rose-500' : 
+                   'bg-emerald-500'
+        }))
+        .sort((a, b) => b.val - a.val)
+        .slice(0, 3);
+
+    // Export Function for Item 3
+    const handleExportCSV = () => {
+        if (transactions.length === 0) return;
+        const headers = ['Data', 'Titulo', 'Tipo', 'Valor', 'Categoria', 'Status'];
+        const rows = transactions.map(t => [
+            new Date(t.transaction_date).toLocaleDateString(),
+            t.title,
+            t.entry_type,
+            t.amount,
+            t.category || '',
+            t.status
+        ]);
+        const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `relatorio_financeiro_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success('Relatório exportado com sucesso');
+    };
+
     return (
         <div className="flex flex-col h-full space-y-6 high-density">
             {/* Header */}
@@ -235,7 +283,12 @@ const Valorem: React.FC<{ credentials: Credentials; user: User; permissions: any
                             <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
                                 <BarChart3 size={14} className="text-indigo-500" /> {t('modules.valorem.chart.title')}
                             </h3>
-                            <button className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 hover:scale-105 transition-transform">{t('modules.valorem.chart.fullReports')}</button>
+                            <button 
+                                onClick={handleExportCSV}
+                                className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 hover:scale-105 transition-transform bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1 rounded-full border border-indigo-100 dark:border-indigo-900/50"
+                            >
+                                {t('modules.valorem.chart.fullReports') || 'Exportar CSV'}
+                            </button>
                         </div>
                         <div className="h-48 w-full">
                             <ResponsiveContainer width="100%" height="100%">
@@ -319,14 +372,16 @@ const Valorem: React.FC<{ credentials: Credentials; user: User; permissions: any
                     <div className="bg-slate-900 text-white p-8 rounded-[2.5rem] shadow-xl relative overflow-hidden group">
                         <div className="relative z-10">
                             <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">{t('modules.valorem.sidebar.efficiency')}</p>
-                            <h2 className="text-4xl font-black mb-4">92.4%</h2>
+                            <h2 className="text-4xl font-black mb-4">{efficiency}%</h2>
                             <div className="flex items-center gap-2 mb-6">
                                 <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                                    <div className="h-full bg-emerald-500 w-[92.4%]" />
+                                    <div className="h-full bg-emerald-500" style={{ width: `${efficiency}%` }} />
                                 </div>
                             </div>
                             <p className="text-xs text-indigo-200 font-medium leading-relaxed">
-                                {t('modules.valorem.sidebar.efficiencyNote')}
+                                {efficiency > 80 
+                                    ? t('modules.valorem.sidebar.efficiencyNote') 
+                                    : (t('modules.valorem.sidebar.efficiencyWarning') || 'Taxa de recebimento abaixo do esperado. Verifique pendências.')}
                             </p>
                         </div>
                         <div className="absolute top-[-20px] right-[-20px] p-10 bg-indigo-500/20 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000" />
@@ -337,21 +392,21 @@ const Valorem: React.FC<{ credentials: Credentials; user: User; permissions: any
                             <PieChart size={14} className="text-indigo-500" /> {t('modules.valorem.sidebar.categoryDivision')}
                         </h3>
                         <div className="space-y-4">
-                            {[
-                                { label: t('modules.valorem.sidebar.categories.fees'), val: 65, color: 'bg-indigo-500' },
-                                { label: t('modules.valorem.sidebar.categories.operational'), val: 20, color: 'bg-emerald-500' },
-                                { label: t('modules.valorem.sidebar.categories.costs'), val: 15, color: 'bg-rose-500' },
-                            ].map((cat, i) => (
-                                <div key={i} className="space-y-1.5">
-                                    <div className="flex justify-between text-[10px] font-black uppercase tracking-tight">
-                                        <span className="text-slate-500">{cat.label}</span>
-                                        <span className="text-slate-800 dark:text-white">{cat.val}%</span>
+                            {transactions.length === 0 ? (
+                                <p className="text-[10px] font-bold text-slate-400 uppercase italic">{t('modules.valorem.list.empty')}</p>
+                            ) : (
+                                dynamicCategories.map((cat, i) => (
+                                    <div key={i} className="space-y-1.5">
+                                        <div className="flex justify-between text-[10px] font-black uppercase tracking-tight">
+                                            <span className="text-slate-500">{cat.label}</span>
+                                            <span className="text-slate-800 dark:text-white">{cat.val}%</span>
+                                        </div>
+                                        <div className="h-1 bg-slate-50 dark:bg-slate-800 rounded-full overflow-hidden">
+                                            <div className={`h-full ${cat.color} rounded-full`} style={{ width: `${cat.val}%` }} />
+                                        </div>
                                     </div>
-                                    <div className="h-1 bg-slate-50 dark:bg-slate-800 rounded-full overflow-hidden">
-                                        <div className={`h-full ${cat.color} rounded-full`} style={{ width: `${cat.val}%` }} />
-                                    </div>
-                                </div>
-                            ))}
+                                ))
+                            )}
                         </div>
                     </div>
                 </div>

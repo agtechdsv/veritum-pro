@@ -4,6 +4,7 @@ import { Save, XCircle, Calendar, AlertTriangle, Network, Shield, FileText, Zap,
 import { PremiumCombobox, BlockedTabOverlay, PremiumFileUpload } from '../nexus-components';
 import { MovementsTab } from './MovementsTab';
 import { useTranslation } from '@/contexts/language-context';
+import { toast } from '@/components/ui/toast';
 
 
 import { Lawsuit, Person, TeamMember, LawsuitDocument, TimelineEntry, FinancialTransaction, Movement } from '@/types';
@@ -87,6 +88,29 @@ const {
     const [justificationText, setJustificationText] = React.useState('');
     const [isEditingFinancial, setIsEditingFinancial] = React.useState(false);
     const [editingFinancial, setEditingFinancial] = React.useState<any>(null);
+
+    const handleExportCSV = () => {
+        if (lawsuitFinances.length === 0) return;
+        const headers = ['Data', 'Titulo', 'Tipo', 'Valor', 'Status'];
+        const rows = lawsuitFinances.map(t => [
+            new Date(t.transaction_date).toLocaleDateString(),
+            t.title,
+            t.entry_type,
+            t.amount,
+            t.status
+        ]);
+        const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `extrato_processo_${editingLawsuit?.cnj_number || 'financeiro'}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success('Extrato exportado com sucesso');
+    };
 return (
 <>
             {/* Lawsuit Drawer (Slide-over Pattern) */}
@@ -587,9 +611,18 @@ return (
 
                                                         <div className="flex items-center justify-between mb-8">
 
-                                                            <div>
-                                                                <h4 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">{t('modules.nexus.finance.title')}</h4>
-                                                                <p className="text-xs text-slate-500 font-bold">{t('modules.nexus.finance.subtitle')}</p>
+                                                            <div className="flex items-center gap-4">
+                                                                <div>
+                                                                    <h4 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">{t('modules.nexus.finance.title')}</h4>
+                                                                    <p className="text-xs text-slate-500 font-bold">{t('modules.nexus.finance.subtitle')}</p>
+                                                                </div>
+                                                                <button 
+                                                                    type="button"
+                                                                    onClick={handleExportCSV}
+                                                                    className="text-[10px] font-black text-indigo-600 hover:text-indigo-700 bg-indigo-50 dark:bg-indigo-900/20 px-3 py-1.5 rounded-xl border border-indigo-100 dark:border-indigo-800 transition-all flex items-center gap-2"
+                                                                >
+                                                                    <Download size={12} /> Exportar Extrato
+                                                                </button>
                                                             </div>
                                                             <div className="flex gap-2">
                                                                 <button
@@ -876,8 +909,7 @@ return (
                                                         <p className="text-xs text-slate-500 font-bold">Petições, Provas e Decisões</p>
                                                     </div>
                                                     <button
-                                                        type="button"
-                                                        onClick={() => { setEditingLawsuitDoc({ document_type: 'Petição Inicial', event_date: new Date().toISOString() }); setIsLawsuitDocModalOpen(true); }}
+                                                                                      onClick={() => { setEditingLawsuitDoc({ document_type: 'Petição Inicial', event_date: new Date().toISOString() }); setIsLawsuitDocModalOpen(true); }}
                                                         className="p-4 bg-indigo-600 text-white rounded-2xl flex items-center gap-2 hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20"
                                                     >
                                                         <Plus size={20} /> Novo Documento
@@ -1008,6 +1040,112 @@ return (
                                             <Save size={20} /> {editingLawsuit?.id ? t('modules.nexus.modals.lawsuit.save') : 'Criar Processo Agora'}
                                         </button>
                                     )}
+                                </div>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* Lawsuit Document Modal */}
+            <AnimatePresence>
+                {isLawsuitDocModalOpen && (
+                    <div key="lawsuit-doc-modal-overlay" className="fixed inset-0 z-[400] flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
+                            onClick={() => setIsLawsuitDocModalOpen(false)}
+                        />
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+                            className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800"
+                        >
+                            <form onSubmit={(e) => { e.preventDefault(); handleSaveLawsuitDocument(e); }}>
+                                <div className="p-8 border-b border-slate-100 dark:border-slate-800">
+                                    <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">
+                                        {editingLawsuitDoc?.id ? 'Editar Documento' : 'Novo Documento'}
+                                    </h3>
+                                </div>
+
+                                <div className="p-8 space-y-6">
+                                    <div>
+                                        <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Título do Documento *</label>
+                                        <input
+                                            required
+                                            value={editingLawsuitDoc?.title || ''}
+                                            onChange={e => setEditingLawsuitDoc({ ...editingLawsuitDoc, title: e.target.value })}
+                                            className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white font-bold"
+                                            placeholder="Ex: Petição Inicial, Procuração..."
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Tipo</label>
+                                            <select
+                                                value={editingLawsuitDoc?.document_type || 'Petição Inicial'}
+                                                onChange={e => setEditingLawsuitDoc({ ...editingLawsuitDoc, document_type: e.target.value })}
+                                                className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white font-bold"
+                                            >
+                                                <option value="Petição Inicial">Petição Inicial</option>
+                                                <option value="Procuração">Procuração</option>
+                                                <option value="Contestação">Contestação</option>
+                                                <option value="Sentença">Sentença</option>
+                                                <option value="Acórdão">Acórdão</option>
+                                                <option value="Prova">Prova / Evidência</option>
+                                                <option value="Outros">Outros</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Data de Referência</label>
+                                            <input
+                                                type="date"
+                                                value={editingLawsuitDoc?.event_date?.split('T')[0] || ''}
+                                                onChange={e => setEditingLawsuitDoc({ ...editingLawsuitDoc, event_date: e.target.value })}
+                                                className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-600 outline-none text-slate-800 dark:text-white font-bold"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Arquivo (PDF/Imagens)</label>
+                                        <PremiumFileUpload
+                                            ref={lawsuitDocUploadRef}
+                                            isManual={true}
+                                            onUploadComplete={(url: string) => setEditingLawsuitDoc({ ...editingLawsuitDoc, file_url: url })}
+                                            onFileSelect={(file: File | null) => {
+                                                setLawsuitDocFile(file);
+                                                if (file && !editingLawsuitDoc?.title) {
+                                                    setEditingLawsuitDoc({ ...editingLawsuitDoc, title: file.name.split('.')[0] });
+                                                }
+                                            }}
+                                            bucket="nexus-documents"
+                                            path={`lawsuits/${editingLawsuit?.id}`}
+                                            label="Anexar Arquivo"
+                                            accept="application/pdf,image/*"
+                                        />
+                                        {editingLawsuitDoc?.file_url && (
+                                            <div className="mt-2 flex items-center gap-2 text-emerald-600 font-bold text-xs bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-xl">
+                                                <CheckCircle2 size={16} /> Upload Concluído
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="p-8 bg-slate-50 dark:bg-slate-800/50 flex gap-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsLawsuitDocModalOpen(false)}
+                                        className="flex-1 px-8 py-4 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-100 transition-all text-xs"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="flex-[2] px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-600/30 transition-all text-xs"
+                                    >
+                                        Salvar Documento
+                                    </button>
                                 </div>
                             </form>
                         </motion.div>

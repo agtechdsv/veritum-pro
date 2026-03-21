@@ -1,6 +1,8 @@
 export const es = {
     "common": {
         "apply": 'Aplicar',
+        "type": 'Tipo',
+        "referenceDate": 'Fecha de Referencia',
         "dateRange": {
             "start": "Fecha Inicial",
             "end": "Fecha Final"
@@ -687,7 +689,8 @@ export const es = {
                     placeholderType: 'Ej: Contrato, Poder',
                     "placeholder": "Ej: Falta de pruebas, Acuerdo realizado, Error de registro...",
                     "label": "Justificación del Cambio (Opcional)",
-                    "modalPlaceholder": "Motivo del cambio de estado..."
+                    "modalPlaceholder": "Motivo del cambio de estado...",
+                    "save": "Guardar Documento"
                 },
                 justification: {
                     title: 'Change Justification',
@@ -755,7 +758,8 @@ export const es = {
                     "fees": "Honorarios",
                     "operational": "Operacional",
                     "costs": "Costas"
-                }
+                },
+                "efficiencyWarning": "Su tasa de cobro está por debajo de la media del mercado (85%)."
             },
             "drawer": {
                 "title": "Nueva Subcuenta",

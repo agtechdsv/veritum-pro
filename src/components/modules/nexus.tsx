@@ -487,6 +487,8 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 pendingLawsuitDocuments={pendingLawsuitDocuments}
                 setEditingLawsuitDoc={setEditingLawsuitDoc}
                 setIsLawsuitDocModalOpen={setIsLawsuitDocModalOpen}
+                isLawsuitDocModalOpen={isLawsuitDocModalOpen}
+                editingLawsuitDoc={editingLawsuitDoc}
                 handleSummarizeDocument={handleSummarizeDocument}
                 handleDeleteLawsuitDocument={handleDeleteLawsuitDocument}
                 setPendingLawsuitDocuments={setPendingLawsuitDocuments}
@@ -504,8 +506,6 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 isLawsuitTimelineLoading={isLawsuitTimelineLoading}
                 formatCurrency={formatCurrency}
                 setAiLawsuitSummary={setAiLawsuitSummary}
-                isLawsuitDocModalOpen={isLawsuitDocModalOpen}
-                editingLawsuitDoc={editingLawsuitDoc}
                 handleSaveLawsuitDocument={handleSaveLawsuitDocument}
                 lawsuitDocUploadRef={lawsuitDocUploadRef}
                 lawsuitDocFile={lawsuitDocFile}
@@ -951,7 +951,13 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                             }
                         }
                     }}
+                    onViewClippings={(data) => {
+                        setEditingLawsuit(data);
+                        setActiveLawsuitTab('movements');
+                        setIsLawsuitModalOpen(true);
+                    }}
                     refreshTrigger={visualRefreshTrigger}
+                    t={t}
                 />
         </div>
     );
