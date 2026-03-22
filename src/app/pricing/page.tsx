@@ -640,7 +640,8 @@ export default function PricingPage() {
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
                                 {dbPlans.filter(p => !p.is_combo).map((plan, i) => {
                                     const isCurrentPlan = currentUser?.profile?.plan_id === plan.id;
-                                    const isSocioAdmin = currentUser?.profile?.role === 'Master' || (currentUser?.profile?.access_groups && currentUser.profile.access_groups.name?.includes('Sócio-Administra'));
+                                    const groupName = currentUser?.profile?.access_groups?.name;
+                                    const isSocioAdmin = currentUser?.profile?.role === 'Master' || (groupName && typeof groupName === 'object' && ((groupName as any).pt?.includes('Sócio-Administra') || (groupName as any).en?.includes('Partner')));
 
                                     const basePrice = plan.monthly_price || 0;
                                     let months = 1;
