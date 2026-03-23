@@ -91,7 +91,16 @@ Deno.serve(async (req) => {
         const payload = await req.json().catch(() => null);
         if (!payload) return jsonResponse({ error: 'Invalid JSON body' }, 400);
 
-        const { to, subject, html, scenario = 'general', lang = 'pt', text } = payload;
+        const { 
+            to, 
+            subject, 
+            html, 
+            scenario = 'general', 
+            lang = 'pt', 
+            text, 
+            senderName: senderNameOverride, 
+            replyTo: replyToOverride 
+        } = payload;
 
         if (!to || !subject || (!html && !text)) {
             return jsonResponse({ error: 'Campos obrigatórios ausentes: to, subject, html/text.' }, 400);
@@ -112,12 +121,24 @@ Deno.serve(async (req) => {
 
         // 6. Deliverability Logic (SPF/DKIM Compliance)
         const providerUser = Deno.env.get('SMTP_USER') || '';
-        // FIX: Ensure aliasEmail is a valid email, not just the 'resend' username
+        
+        // Sender Name: Logic Priority
+        // 1. Override from Payload
+        // 2. Scenario Config
+        // 3. Brand Default
+        const senderName = senderNameOverride || langConfig?.name || 'Veritum PRO';
+
+        // Alias Email: Logic Priority (The 'From' visible address)
+        // 1. Scenario Config
+        // 2. Provider Default
         const aliasEmail = langConfig?.email || (providerUser.includes('@') ? providerUser : 'suporte@veritumpro.com');
-        const senderName = langConfig?.name || 'Veritum PRO';
+
+        // Reply To: Logic Priority
+        // 1. Override from Payload (The real Office Email)
+        // 2. Alias Email
+        const replyToHeader = replyToOverride || aliasEmail;
 
         const fromHeader = `"${senderName}" <${aliasEmail}>`;
-        const replyToHeader = aliasEmail;
 
         console.log(`Preparing to send email to ${to} from ${fromHeader} using scenario: ${scenario}`);
 
@@ -139,7 +160,6 @@ Deno.serve(async (req) => {
         // 8. Execute Send
         const info = await transporter.sendMail({
             from: fromHeader,
-            // sender: providerUser, // Removed as 'resend' is not a valid email address
             replyTo: replyToHeader,
             to,
             subject,

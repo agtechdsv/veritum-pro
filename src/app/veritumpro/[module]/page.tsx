@@ -33,7 +33,7 @@ export default function DynamicModulePage() {
     const { module } = useParams();
     const searchParams = useSearchParams();
     const tabParam = searchParams.get('tab') as 'org' | 'plan' | 'cancel' | null;
-    const { user, preferences, planPermissions, credentials, onUpdateUser, onUpdatePrefs, onModuleChange, activeSuites, groupPermissions, allFeatures, selectedClientId } = useModule();
+    const { user, preferences, planPermissions, credentials, onUpdateUser, onUpdatePrefs, onModuleChange, activeSuites, groupPermissions, allFeatures, selectedClientId, allClients, onSelectClient } = useModule();
     const { t, locale } = useTranslation();
 
     if (!user || !preferences) return null;
@@ -161,7 +161,7 @@ export default function DynamicModulePage() {
 
     switch (moduleToRender) {
         case 'sentinel': return <Sentinel credentials={credentials} user={user} permissions={planPermissions.find(p => normalize(p.suite_key) === 'sentinel')} />;
-        case 'nexus': return <Nexus credentials={credentials} user={user} permissions={planPermissions.find(p => normalize(p.suite_key) === 'nexus')} />;
+        case 'nexus': return <Nexus credentials={credentials} user={user} permissions={planPermissions.find(p => normalize(p.suite_key) === 'nexus')} selectedClientId={selectedClientId} allClients={allClients} onSelectClient={onSelectClient} />;
         case 'scriptor': return <Scriptor credentials={credentials} user={user} permissions={planPermissions.find(p => normalize(p.suite_key) === 'scriptor')} />;
         case 'valorem': return <Valorem credentials={credentials} user={user} permissions={planPermissions.find(p => normalize(p.suite_key) === 'valorem')} />;
         case 'cognitio': return <Cognitio credentials={credentials} user={user} permissions={planPermissions.find(p => normalize(p.suite_key) === 'cognitio')} />;

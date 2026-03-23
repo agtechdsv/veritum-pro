@@ -38,7 +38,7 @@ import { formatCNJ, formatCurrency, getSeverityColor, getTaskUrgencyInfo, extrac
 
 // Sub-components extracted to ./nexus/nexus-components.tsx
 
-const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }> = (props) => {
+const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any; selectedClientId: string | null; allClients: any[]; onSelectClient: (clientId: string) => Promise<void> }> = (props) => {
     const { t, locale } = useTranslation();
     const nx = useNexusLogic({ ...props, t, locale });
     const { core, ui, search } = nx;
@@ -100,7 +100,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         confirmModal, setConfirmModal, justificationText, setJustificationText, historyData, setHistoryData,
         statusPopover, setStatusPopover, financeStartDate, setFinanceStartDate, financeEndDate, setFinanceEndDate,
         pendingStatusChange, setPendingStatusChange,
-        movements, isMovementsLoading
+        movements, isMovementsLoading, isSendingEmail
     } = nx;
 
     // Handlers
@@ -115,6 +115,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
         handleSaveFinancialTransaction, handleDeleteFinancialTransaction,
         handleSaveLawsuitDocument, handleSaveAssetDocument, handleSaveShareholder,
         handleDeleteShareholder, handleSummarizeDocument, handleSoftDeleteLawsuit,
+        handleSendFinancialEmail,
         handleSoftDeleteAsset, handleSoftDeleteEvent, handleSoftDeleteEntity,
         handleDropLawsuit, handleDragStartLawsuit, handleDropTask, handleDragStartTask,
         handleDropAsset, handleDragStartAsset, handleDropEntity, handleDragStartEntity,
@@ -225,7 +226,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                                 >
                                     <option value="">--- {t('management.users.masterFilter.selectClient') || 'Selecione um Cliente'} ---</option>
                                     <optgroup label={t('management.users.masterFilter.clients')?.toUpperCase() || 'CLIENTES (SÓCIOS ADM)'}>
-                                        {allClients.filter((u: any) => u.id !== user.id).map((c: any) => {
+                                        {(allClients || []).filter((u: any) => u.id !== user.id).map((c: any) => {
                                             const rawName = typeof c.name === 'object' ? ((c.name as any).pt || (c.name as any).en || '') : (c.name || '');
                                             const formattedName = rawName.toLowerCase().split(' ').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
                                             const formattedEmail = (c.email || '').toLowerCase();
@@ -503,6 +504,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 isFinancialLoading={isFinancialLoading}
                 handleSaveFinancialTransaction={handleSaveFinancialTransaction}
                 handleDeleteFinancialTransaction={handleDeleteFinancialTransaction}
+                handleSendFinancialEmail={handleSendFinancialEmail}
                 isLawsuitTimelineLoading={isLawsuitTimelineLoading}
                 formatCurrency={formatCurrency}
                 setAiLawsuitSummary={setAiLawsuitSummary}
@@ -512,6 +514,7 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any }
                 setLawsuitDocFile={setLawsuitDocFile}
                 movements={movements}
                 isMovementsLoading={isMovementsLoading}
+                isSendingEmail={isSendingEmail}
             />
 
             <CrmModal

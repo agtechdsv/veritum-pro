@@ -6,6 +6,8 @@ export interface SendEmailPayload {
     html: string;
     fullName: string;
     scenario?: 'sales' | 'support' | 'general' | 'finance';
+    senderName?: string;
+    replyTo?: string;
 }
 
 /**

@@ -1,11 +1,13 @@
 'use server';
 
-import { Lawsuit, Task, CalendarEvent, Credentials, UserPreferences, Asset, CorporateEntity, Shareholder, CorporateDocument, LawsuitDocument, AssetDocument, TimelineEntry, GlobalDocument, FinancialTransaction, Movement } from '@/types';
+import { Lawsuit, Task, CalendarEvent, Credentials, UserPreferences, Asset, CorporateEntity, Shareholder, CorporateDocument, LawsuitDocument, AssetDocument, TimelineEntry, GlobalDocument, FinancialTransaction, Movement, Organization } from '@/types';
+
 import { RepositoryFactory } from '@/lib/db/repositories/repository-factory';
 import { createMasterServerClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { decrypt } from '@/lib/security';
 import { DatabaseService } from '@/services/database';
+import { sendEmail } from '@/lib/email';
 
 /**
  * Securesly resolves credentials for the target user (tenant)
@@ -1038,5 +1040,51 @@ export async function listMovements(lawsuitId: string, targetUserId?: string) {
     } catch (error: any) {
         console.error('Server Action Error (listMovements):', error);
         throw error;
+    }
+}
+
+export async function getOrganizationByAdmin(adminId: string) {
+    try {
+        const supabase = await createMasterServerClient();
+        const { data, error } = await supabase
+            .from('organizations')
+            .select('*')
+            .eq('admin_id', adminId)
+            .single();
+        if (error && error.code !== 'PGRST116') throw error;
+        return data as Organization | null;
+    } catch (error: any) {
+        console.error('Server Action Error (getOrganizationByAdmin):', error);
+        return null;
+    }
+}
+
+
+export async function sendPaymentEmailAction(payload: {
+    to: string;
+    fullName: string;
+    subject: string;
+    html: string;
+    senderName?: string;
+    replyTo?: string;
+}) {
+    try {
+        const adminClient = createAdminClient();
+        console.log('Server Action: Intiating send-email via admin client for', payload.to);
+        
+        const result = await sendEmail(adminClient, {
+            ...payload,
+            scenario: 'finance'
+        });
+
+        if (!result.success) {
+            console.error('Server Action Error (sendPaymentEmailAction):', result.error);
+            return { success: false, error: 'Falha na comunicação com o serviço de e-mail.' };
+        }
+
+        return { success: true };
+    } catch (error: any) {
+        console.error('Server Action Crash (sendPaymentEmailAction):', error);
+        return { success: false, error: 'Erro interno ao processar o envio.' };
     }
 }

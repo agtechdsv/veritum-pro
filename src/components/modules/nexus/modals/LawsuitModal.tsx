@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Save, XCircle, Calendar, AlertTriangle, Network, Shield, FileText, Zap, DollarSign, History, Sparkles, Brain, Loader2, Plus, Download, Trash2, Check, User as UserIcon, Clock, Search, TrendingUp, TrendingDown, CheckCircle2 } from 'lucide-react';
+import { Save, XCircle, Calendar, AlertTriangle, Network, Shield, FileText, Zap, DollarSign, History, Sparkles, Brain, Loader2, Plus, Download, Trash2, Check, User as UserIcon, Clock, Search, TrendingUp, TrendingDown, CheckCircle2, MessageCircle, Mail, Pencil, Link } from 'lucide-react';
 import { PremiumCombobox, BlockedTabOverlay, PremiumFileUpload } from '../nexus-components';
 import { MovementsTab } from './MovementsTab';
 import { useTranslation } from '@/contexts/language-context';
@@ -60,6 +60,8 @@ interface LawsuitModalProps {
     setLawsuitDocFile: (file: File | null) => void;
     movements: Movement[];
     isMovementsLoading: boolean;
+    handleSendFinancialEmail: (transaction: FinancialTransaction, lawsuitId?: string) => Promise<void>;
+    isSendingEmail: boolean;
 }
 
 export const LawsuitModal = (props: LawsuitModalProps) => {
@@ -78,7 +80,9 @@ const {
     handleSaveFinancialTransaction, handleDeleteFinancialTransaction, 
     isLawsuitTimelineLoading, setAiLawsuitSummary, isLawsuitDocModalOpen,
     editingLawsuitDoc, handleSaveLawsuitDocument, lawsuitDocUploadRef,
-    lawsuitDocFile, setLawsuitDocFile, movements, isMovementsLoading
+    lawsuitDocFile, setLawsuitDocFile, movements, isMovementsLoading,
+    handleSendFinancialEmail,
+    isSendingEmail
 } = props;
 
     const [authorSearch, setAuthorSearch] = React.useState('');
@@ -111,6 +115,33 @@ const {
         document.body.removeChild(link);
         toast.success('Extrato exportado com sucesso');
     };
+
+    const handleShareWhatsApp = (transaction: FinancialTransaction) => {
+        const client = persons.find(p => p.id === editingLawsuit?.author_id);
+        if (!client) {
+            toast.error("Cliente (Autor) não encontrado para este processo.");
+            return;
+        }
+        if (!client.phone) {
+            toast.error("O cliente associado não possui telefone/WhatsApp cadastrado.");
+            return;
+        }
+
+        let phone = client.phone.replace(/\D/g, '');
+        if (phone.length <= 11 && !phone.startsWith('55')) {
+            phone = '55' + phone;
+        }
+
+        const message = `Olá ${client.full_name}, segue o link para pagamento referente ao processo ${editingLawsuit?.cnj_number || ''} (${transaction.title}): ${transaction.invoice_url || 'Link não gerado'}`;
+        const encoded = encodeURIComponent(message);
+        window.open(`https://wa.me/${phone}?text=${encoded}`, '_blank');
+    };
+
+    const handleShareEmail = (transaction: FinancialTransaction) => {
+        if (!editingLawsuit?.id) return;
+        handleSendFinancialEmail(transaction, editingLawsuit.id);
+    };
+
 return (
 <>
             {/* Lawsuit Drawer (Slide-over Pattern) */}
@@ -279,6 +310,7 @@ return (
                                                             <span className="truncate">
                                                                 {persons.find(p => p.id === editingLawsuit?.author_id)?.full_name || t('modules.nexus.modals.lawsuit.selectCrm')}
                                                             </span>
+
                                                             <Search size={16} className="text-slate-400 group-hover:text-indigo-600 transition-colors" />
                                                         </div>
 
@@ -660,6 +692,29 @@ return (
                                                             </div>
                                                         </div>
 
+                                                        {/* Valor da Causa Info Box */}
+                                                        <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl flex items-center justify-between border border-slate-100 dark:border-slate-800 mb-6 group/vc">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 flex items-center justify-center group-hover/vc:scale-110 transition-transform">
+                                                                    <DollarSign size={16} />
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Valor da Causa</p>
+                                                                    <p className="font-black text-slate-800 dark:text-white text-base leading-none">
+                                                                        {editingLawsuit?.value ? formatCurrency(editingLawsuit.value) : 'R$ 0,00'}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                            <button 
+                                                                type="button" 
+                                                                onClick={() => setActiveLawsuitTab('basic')} 
+                                                                className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-white dark:hover:bg-slate-800 rounded-xl transition-all shadow-sm border border-transparent hover:border-slate-100"
+                                                                title="Editar Valor da Causa"
+                                                            >
+                                                                <Pencil size={14} />
+                                                            </button>
+                                                        </div>
+
                                                         {isEditingFinancial && editingFinancial && (
                                                             <div className="bg-slate-50 dark:bg-slate-900/80 p-6 rounded-[2.5rem] border-2 border-indigo-200 dark:border-indigo-900/40 mb-8 animate-in zoom-in-95 duration-300">
                                                                 <div className="flex items-center justify-between mb-6">
@@ -702,6 +757,20 @@ return (
                                                                             className="w-full px-4 py-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl font-bold text-sm"
                                                                         />
                                                                     </div>
+                                                                    {editingFinancial.entry_type === 'Credit' && (
+                                                                        <div className="col-span-2">
+                                                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 px-1">Link de Pagamento (URL)</label>
+                                                                            <div className="relative">
+                                                                                <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400 text-xs text-indigo-500"><Link size={14} /></span>
+                                                                                <input 
+                                                                                    value={editingFinancial.invoice_url || ''}
+                                                                                    onChange={e => setEditingFinancial({...editingFinancial, invoice_url: e.target.value})}
+                                                                                    className="w-full pl-10 pr-4 py-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl font-bold text-sm outline-none focus:ring-2 focus:ring-indigo-600 transition-all placeholder:italic"
+                                                                                    placeholder="https://pay.veritum.com/..."
+                                                                                />
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
                                                                     <div className="col-span-2 flex gap-4 pt-2">
                                                                         <button 
                                                                             type="button"
@@ -739,17 +808,52 @@ return (
                                                                                 <p className="text-[10px] text-slate-400 font-bold">{transaction.transaction_date ? new Date(transaction.transaction_date).toLocaleDateString() : '-'}</p>
                                                                             </div>
                                                                         </div>
-                                                                        <div className="flex items-center gap-6">
-                                                                            <div className={`text-right font-black ${transaction.entry_type === 'Credit' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                                                        <div className="flex items-center gap-4">
+                                                                            <div className="flex items-center gap-1">
+                                                                                {transaction.invoice_url && (
+                                                                                    <>
+                                                                                        <button 
+                                                                                            type="button"
+                                                                                            onClick={() => handleShareWhatsApp(transaction)}
+                                                                                            className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-all"
+                                                                                            title="Enviar WhatsApp"
+                                                                                        >
+                                                                                            <MessageCircle size={16} />
+                                                                                        </button>
+                                                                                        <button 
+                                                                                            type="button"
+                                                                                            onClick={() => handleShareEmail(transaction)}
+                                                                                            disabled={isSendingEmail}
+                                                                                            className={`p-2 rounded-lg transition-all ${isSendingEmail ? 'bg-indigo-50 text-indigo-600' : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'}`}
+                                                                                            title={isSendingEmail ? "Enviando..." : "Enviar E-mail"}
+                                                                                        >
+                                                                                            {isSendingEmail ? <Loader2 size={16} className="animate-spin" /> : <Mail size={16} />}
+                                                                                        </button>
+                                                                                    </>
+                                                                                )}
+                                                                                <button 
+                                                                                    type="button"
+                                                                                    onClick={() => {
+                                                                                        setEditingFinancial({...transaction});
+                                                                                        setIsEditingFinancial(true);
+                                                                                    }}
+                                                                                    className="p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-all"
+                                                                                    title="Editar"
+                                                                                >
+                                                                                    <Pencil size={16} />
+                                                                                </button>
+                                                                                <button 
+                                                                                    type="button"
+                                                                                    onClick={() => handleDeleteFinancialTransaction(transaction.id, editingLawsuit.id)}
+                                                                                    className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-all"
+                                                                                    title="Excluir"
+                                                                                >
+                                                                                    <Trash2 size={16} />
+                                                                                </button>
+                                                                            </div>
+                                                                            <div className={`text-right font-black min-w-[120px] ${transaction.entry_type === 'Credit' ? 'text-emerald-600' : 'text-rose-600'}`}>
                                                                                 {transaction.entry_type === 'Credit' ? '+' : '-'} R$ {transaction.amount ? formatCurrency(transaction.amount) : '0,00'}
                                                                             </div>
-                                                                            <button 
-                                                                                type="button" 
-                                                                                onClick={() => handleDeleteFinancialTransaction(transaction.id, editingLawsuit.id)}
-                                                                                className="p-2 text-slate-300 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100"
-                                                                            >
-                                                                                <Trash2 size={16} />
-                                                                            </button>
                                                                         </div>
                                                                     </div>
                                                                 ))
@@ -759,84 +863,57 @@ return (
                                                 )}
                                             </div>
                                         ) : activeLawsuitTab === 'timeline' ? (
-                                            <div className="space-y-2 animate-in fade-in slide-in-from-right-4 duration-500">
-                                                <div className="flex items-center justify-between mb-8">
-                                                    <div>
-                                                        <h4 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">{t('modules.nexus.modals.lawsuit.timeline.title')}</h4>
-                                                        <p className="text-xs text-slate-500 font-bold">{t('modules.nexus.modals.lawsuit.timeline.auditDesc')}</p>
+                                            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500 relative">
+                                                {!editingLawsuit?.id ? (
+                                                    <BlockedTabOverlay message={t('modules.nexus.modals.lawsuit.timeline.emptyAudit')} />
+                                                ) : isLawsuitTimelineLoading ? (
+                                                    <div className="py-20 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[2.5rem] bg-slate-50/50 dark:bg-slate-900/50">
+                                                        <Loader2 size={48} className="text-indigo-500 mb-4 animate-spin" />
+                                                        <p className="text-slate-500 font-black uppercase tracking-widest text-[10px]">{t('modules.nexus.modals.lawsuit.timeline.loadingAudit')}</p>
                                                     </div>
-                                                    <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 rounded-2xl">
-                                                        <History size={24} />
+                                                ) : lawsuitTimeline.length === 0 ? (
+                                                    <div className="py-20 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[2.5rem] bg-slate-50/50 dark:bg-slate-900/50">
+                                                        <Clock size={48} className="text-slate-300 mb-4" />
+                                                        <p className="text-slate-400 font-bold italic">{t('modules.nexus.modals.lawsuit.timeline.noEvents')}</p>
                                                     </div>
-                                                </div>
-
-                                                <div className="relative">
-                                                    {!editingLawsuit?.id ? (
-                                                        <BlockedTabOverlay message={t('modules.nexus.modals.lawsuit.timeline.emptyAudit')} />
-                                                    ) : isLawsuitTimelineLoading ? (
-                                                        <div className="py-20 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[2.5rem] bg-slate-50/50 dark:bg-slate-900/50">
-                                                            <Loader2 size={48} className="text-indigo-500 mb-4 animate-spin" />
-                                                            <p className="text-slate-500 font-black uppercase tracking-widest text-[10px]">{t('modules.nexus.modals.lawsuit.timeline.loadingAudit')}</p>
-                                                        </div>
-                                                    ) : lawsuitTimeline.length === 0 ? (
-                                                        <div className="py-20 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[2.5rem] bg-slate-50/50 dark:bg-slate-900/50">
-                                                            <Clock size={48} className="text-slate-300 mb-4" />
-                                                            <p className="text-slate-400 font-bold italic">{t('modules.nexus.modals.lawsuit.timeline.noEvents')}</p>
-                                                        </div>
-                                                    ) : lawsuitTimeline.map((entry, idx) => (
-                                                        <div key={entry.id} className="relative pl-10 pb-10 group">
-                                                            {/* Thread Line */}
-                                                            {idx < lawsuitTimeline.length - 1 && (
-                                                                <div className="absolute left-[15px] top-8 bottom-0 w-[2px] bg-slate-100 dark:bg-slate-800 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/30 transition-colors" />
-                                                            )}
-                                                            
-                                                            {/* Icon Circle */}
-                                                            <div className={`absolute left-0 top-0 w-8 h-8 rounded-2xl z-10 flex items-center justify-center shadow-sm border ${
-                                                                entry.action === 'STATUS_CHANGE' 
-                                                                    ? 'bg-amber-50 border-amber-200 text-amber-600 dark:bg-amber-900/20 dark:border-amber-800' 
-                                                                    : entry.action === 'CREATE'
-                                                                    ? 'bg-emerald-50 border-emerald-200 text-emerald-600 dark:bg-emerald-900/20 dark:border-emerald-800'
-                                                                    : 'bg-indigo-50 border-indigo-200 text-indigo-600 dark:bg-indigo-900/20 dark:border-indigo-800'
-                                                            }`}>
-                                                                {entry.action === 'STATUS_CHANGE' ? <Zap size={14} /> : entry.action === 'CREATE' ? <Plus size={14} /> : <Clock size={14} />}
-                                                            </div>
-
-                                                            <div className="bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 p-6 rounded-[2rem] shadow-sm hover:shadow-md transition-all hover:border-indigo-200 dark:hover:border-indigo-900/40">
-                                                                <div className="flex justify-between items-center mb-3">
-                                                                    <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${
-                                                                        entry.action === 'STATUS_CHANGE' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'
-                                                                    }`}>
-                                                                        {entry.action}
-                                                                    </span>
-                                                                    <span className="text-[10px] font-bold text-slate-400">
-                                                                        {entry.created_at ? new Date(entry.created_at).toLocaleString('pt-BR') : 'Agora'}
-                                                                    </span>
+                                                ) : (
+                                                    <div className="space-y-4">
+                                                        {lawsuitTimeline.map((entry, idx) => (
+                                                            <div key={entry.id} className="relative pl-10 pb-10 group">
+                                                                {idx < lawsuitTimeline.length - 1 && (
+                                                                    <div className="absolute left-[15px] top-8 bottom-0 w-[2px] bg-slate-100 dark:bg-slate-800 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/30 transition-colors" />
+                                                                )}
+                                                                <div className={`absolute left-0 top-0 w-8 h-8 rounded-2xl z-10 flex items-center justify-center shadow-sm border ${
+                                                                    entry.action === 'STATUS_CHANGE' 
+                                                                        ? 'bg-amber-50 border-amber-200 text-amber-600 dark:bg-amber-900/20 dark:border-amber-800' 
+                                                                        : entry.action === 'CREATE'
+                                                                        ? 'bg-emerald-50 border-emerald-200 text-emerald-600 dark:bg-emerald-900/20 dark:border-amber-800'
+                                                                        : 'bg-indigo-50 border-indigo-200 text-indigo-600 dark:bg-indigo-900/20 dark:border-indigo-800'
+                                                                }`}>
+                                                                    {entry.action === 'STATUS_CHANGE' ? <Zap size={14} /> : entry.action === 'CREATE' ? <Plus size={14} /> : <Clock size={14} />}
                                                                 </div>
-                                                                <p className="text-sm font-bold text-slate-700 dark:text-slate-200 leading-relaxed uppercase tracking-tight">
-                                                                    {entry.description}
-                                                                </p>
-                                                                <div className="mt-4 flex items-center gap-2">
-                                                                    <div className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
-                                                                        <UserIcon size={10} className="text-slate-500" />
+                                                                <div className="bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 p-6 rounded-[2rem] shadow-sm hover:shadow-md transition-all hover:border-indigo-200 dark:hover:border-indigo-900/40">
+                                                                    <div className="flex justify-between items-center mb-3">
+                                                                        <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${entry.action === 'STATUS_CHANGE' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}`}>
+                                                                            {entry.action}
+                                                                        </span>
+                                                                        <span className="text-[10px] font-bold text-slate-400">
+                                                                            {entry.created_at ? new Date(entry.created_at).toLocaleString('pt-BR') : 'Agora'}
+                                                                        </span>
                                                                     </div>
-                                                                    <span className="text-[10px] text-slate-500 font-bold">Por: <span className="text-indigo-600 dark:text-indigo-400">
-                                                                        {(() => {
-                                                                            if (!entry.user_id) return entry.user_name || 'Sistema';
-                                                                            const member = team.find(m => m.id === entry.user_id);
-                                                                            if (member) return member.full_name;
-                                                                            if (entry.user_id === user.id) return user.name;
-                                                                            return entry.user_name || 'Sistema';
-                                                                        })()}
-                                                                    </span></span>
+                                                                    <p className="text-sm font-bold text-slate-700 dark:text-slate-200 leading-relaxed uppercase tracking-tight">
+                                                                        {entry.description}
+                                                                    </p>
                                                                 </div>
                                                             </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
+                                                        ))}
+                                                    </div>
+                                                )}
                                             </div>
                                         ) : activeLawsuitTab === 'movements' ? (
-                                            <MovementsTab movements={movements} isLoading={isMovementsLoading} lawsuitId={editingLawsuit?.id} t={t} />
-
+                                            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
+                                                <MovementsTab movements={movements} isLoading={isMovementsLoading} lawsuitId={editingLawsuit?.id} t={t} />
+                                            </div>
                                         ) : activeLawsuitTab === 'ai' ? (
                                             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
                                                 <div className="flex items-center justify-between mb-8">
@@ -848,7 +925,6 @@ return (
                                                         <Sparkles size={24} className="animate-pulse" />
                                                     </div>
                                                 </div>
-
                                                 <div className="bg-slate-50 dark:bg-slate-900/50 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 flex flex-col items-center text-center">
                                                     {!aiLawsuitSummary && !isAiSummarizing ? (
                                                         <div className="py-10">
@@ -856,52 +932,52 @@ return (
                                                                 <Brain size={40} className="text-slate-300" />
                                                             </div>
                                                             <h5 className="font-black text-slate-800 dark:text-white uppercase tracking-tight mb-2">{t('modules.nexus.modals.lawsuit.ai.empty')}</h5>
-                                                                <p className="text-sm text-slate-500 font-bold mb-8 max-w-[320px]">Deseja que a nossa IA processe todos os dados deste processo e gere um resumo executivo para você?</p>
+                                                            <p className="text-sm text-slate-500 font-bold mb-8 max-w-[320px]">Deseja que a nossa IA processe todos os dados deste processo e gere um resumo executivo para você?</p>
+                                                            <button 
+                                                                type="button"
+                                                                onClick={handleSummarizeWithAI}
+                                                                className="px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-indigo-600/20 flex items-center gap-3 mx-auto"
+                                                            >
+                                                                <Zap size={16} /> Gerar Resumo Agora
+                                                            </button>
+                                                        </div>
+                                                    ) : isAiSummarizing ? (
+                                                        <div className="py-20 flex flex-col items-center">
+                                                            <div className="relative mb-8">
+                                                                <div className="absolute inset-0 bg-indigo-500/20 blur-3xl animate-pulse rounded-full" />
+                                                                <Loader2 size={64} className="text-indigo-600 animate-spin relative z-10" />
+                                                            </div>
+                                                            <h5 className="font-black text-slate-800 dark:text-white uppercase tracking-widest text-sm animate-pulse">{t('modules.nexus.modals.lawsuit.ai.loading')}</h5>
+                                                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-2">{t('modules.nexus.modals.lawsuit.ai.subtitle')}</p>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="w-full text-left">
+                                                            <div className="p-8 bg-white dark:bg-slate-950 rounded-3xl border border-indigo-100 dark:border-indigo-900/40 shadow-inner relative overflow-hidden group">
+                                                                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
+                                                                    <Brain size={120} />
+                                                                </div>
+                                                                <div className="prose prose-sm dark:prose-invert max-w-none text-slate-600 dark:text-slate-300 font-medium leading-relaxed whitespace-pre-line relative z-10">
+                                                                    {aiLawsuitSummary}
+                                                                </div>
+                                                            </div>
+                                                            <div className="mt-8 flex items-center justify-between gap-4">
                                                                 <button 
                                                                     type="button"
-                                                                    onClick={handleSummarizeWithAI}
-                                                                    className="px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-indigo-600/20 flex items-center gap-3 mx-auto"
+                                                                    onClick={() => setAiLawsuitSummary(null)}
+                                                                    className="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-indigo-600 transition-colors"
                                                                 >
-                                                                    <Zap size={16} /> Gerar Resumo Agora
+                                                                    {t('modules.nexus.modals.shareholder.cancel') || 'Limpar e Refazer'}
                                                                 </button>
-                                                            </div>
-                                                        ) : isAiSummarizing ? (
-                                                            <div className="py-20 flex flex-col items-center">
-                                                                <div className="relative mb-8">
-                                                                    <div className="absolute inset-0 bg-indigo-500/20 blur-3xl animate-pulse rounded-full" />
-                                                                    <Loader2 size={64} className="text-indigo-600 animate-spin relative z-10" />
-                                                                </div>
-                                                                <h5 className="font-black text-slate-800 dark:text-white uppercase tracking-widest text-sm animate-pulse">{t('modules.nexus.modals.lawsuit.ai.loading')}</h5>
-                                                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-2">{t('modules.nexus.modals.lawsuit.ai.subtitle')}</p>
-                                                            </div>
-                                                        ) : (
-                                                            <div className="w-full text-left">
-                                                                <div className="p-8 bg-white dark:bg-slate-950 rounded-3xl border border-indigo-100 dark:border-indigo-900/40 shadow-inner relative overflow-hidden group">
-                                                                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
-                                                                        <Brain size={120} />
-                                                                    </div>
-                                                                    <div className="prose prose-sm dark:prose-invert max-w-none text-slate-600 dark:text-slate-300 font-medium leading-relaxed whitespace-pre-line relative z-10">
-                                                                        {aiLawsuitSummary}
-                                                                    </div>
-                                                                </div>
-                                                                <div className="mt-8 flex items-center justify-between gap-4">
-                                                                    <button 
-                                                                        type="button"
-                                                                        onClick={() => setAiLawsuitSummary(null)}
-                                                                        className="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-indigo-600 transition-colors"
-                                                                    >
-                                                                        {t('modules.nexus.modals.shareholder.cancel') || 'Limpar e Refazer'}
-                                                                    </button>
-                                                                    <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-xl border border-emerald-100/50">
-                                                                        <Check size={14} />
-                                                                        <span className="text-[10px] font-black uppercase tracking-widest">{t('common.confirm') || 'Análise Concluída'}</span>
-                                                                    </div>
+                                                                <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-xl border border-emerald-100/50">
+                                                                    <Check size={14} />
+                                                                    <span className="text-[10px] font-black uppercase tracking-widest">{t('common.confirm') || 'Análise Concluída'}</span>
                                                                 </div>
                                                             </div>
-                                                        )}
-                                                    </div>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            ) : (
+                                            </div>
+                                        ) : (
                                             <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
                                                 <div className="flex items-center justify-between">
                                                     <div>
@@ -909,7 +985,8 @@ return (
                                                         <p className="text-xs text-slate-500 font-bold">Petições, Provas e Decisões</p>
                                                     </div>
                                                     <button
-                                                                                      onClick={() => { setEditingLawsuitDoc({ document_type: 'Petição Inicial', event_date: new Date().toISOString() }); setIsLawsuitDocModalOpen(true); }}
+                                                        type="button"
+                                                        onClick={() => { setEditingLawsuitDoc({ document_type: 'Petição Inicial', event_date: new Date().toISOString() }); setIsLawsuitDocModalOpen(true); }}
                                                         className="p-4 bg-indigo-600 text-white rounded-2xl flex items-center gap-2 hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20"
                                                     >
                                                         <Plus size={20} /> Novo Documento
@@ -1014,12 +1091,10 @@ return (
                                                         </>
                                                     )}
                                                 </div>
-                                        </div>
-                                    )}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
-
-                                {/* Footer Buttons */}
                                 <div className="p-8 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0 flex gap-4">
                                     <button
                                         type="button"
@@ -1046,11 +1121,9 @@ return (
                     </div>
                 )}
             </AnimatePresence>
-
-            {/* Lawsuit Document Modal */}
             <AnimatePresence>
                 {isLawsuitDocModalOpen && (
-                    <div key="lawsuit-doc-modal-overlay" className="fixed inset-0 z-[400] flex items-center justify-center p-4">
+                    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
                         <motion.div
                             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                             className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
@@ -1152,6 +1225,6 @@ return (
                     </div>
                 )}
             </AnimatePresence>
-</>
-);
+        </>
+    );
 };

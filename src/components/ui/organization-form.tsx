@@ -122,12 +122,16 @@ const OrganizationForm: React.FC<OrganizationFormProps> = ({ adminId }) => {
                 .upsert({
                     ...org,
                     updated_at: new Date().toISOString()
-                });
+                }, { onConflict: 'admin_id' });
 
             if (error) throw error;
             toast.success(t('management.organization.toast.saveSuccess'));
-        } catch (err) {
+        } catch (err: any) {
             console.error('Error saving organization:', err);
+            // Better serialization for debugging
+            if (err && (typeof err === 'object')) {
+                console.error('Full Error Object:', JSON.stringify(err, null, 2));
+            }
             toast.error(t('management.organization.toast.saveError'));
         } finally {
             setSaving(false);

@@ -406,6 +406,8 @@ export interface FinancialTransaction {
     lawsuit_id?: string;
     person_id?: string;
     status: 'Pago' | 'Pendente' | 'Cancelado';
+    invoice_url?: string;
+    asaas_payment_id?: string;
     created_at?: string;
 }
 

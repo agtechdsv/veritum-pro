@@ -5,7 +5,8 @@ import {
     TrendingUp, TrendingDown, Clock, CreditCard, PieChart, Plus,
     Search, Filter, Calendar, MoreHorizontal, DollarSign,
     CheckCircle2, XCircle, AlertCircle, ArrowUpRight, ArrowDownRight,
-    Wallet, Receipt, Landmark, BarChart3, ChevronRight, Scale, User as UserIcon, ChevronDown
+    Wallet, Receipt, Landmark, BarChart3, ChevronRight, Scale, User as UserIcon, ChevronDown, 
+    Pencil, Trash2, Mail, MessageCircle, FileText, ExternalLink, Link
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, AreaChart, Area } from 'recharts';
 import { createClient } from '@supabase/supabase-js';
@@ -13,6 +14,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from '@/contexts/language-context';
 import { toast } from '@/components/ui/toast';
 import { createMasterClient } from '@/lib/supabase/master';
+import { sendPaymentEmailAction, getOrganizationByAdmin } from '@/app/actions/nexus-actions';
+import { generatePaymentLinkEmailHtml } from '@/lib/email-templates';
 
 const Valorem: React.FC<{ credentials: Credentials; user: User; permissions: any }> = ({ credentials, user, permissions }) => {
     // Data State
@@ -31,6 +34,7 @@ const Valorem: React.FC<{ credentials: Credentials; user: User; permissions: any
     const isMaster = user.role === 'Master';
     const [selectedUserId, setSelectedUserId] = useState<string>(isMaster ? '' : user.id);
     const [allUsers, setAllUsers] = useState<any[]>([]);
+    const [officeData, setOfficeData] = useState<any>(null);
 
     const supabase = createClient(credentials.supabaseUrl, credentials.supabaseAnonKey);
 
@@ -43,6 +47,17 @@ const Valorem: React.FC<{ credentials: Credentials; user: User; permissions: any
     useEffect(() => {
         fetchData();
     }, [selectedUserId]);
+
+    useEffect(() => {
+        const fetchOffice = async () => {
+            const adminId = selectedUserId || user.id;
+            if (adminId) {
+                const data = await getOrganizationByAdmin(adminId);
+                if (data) setOfficeData(data);
+            }
+        };
+        fetchOffice();
+    }, [selectedUserId, user.id]);
 
     const fetchClients = async () => {
         const supMaster = createMasterClient();
@@ -107,6 +122,65 @@ const Valorem: React.FC<{ credentials: Credentials; user: User; permissions: any
         } catch (err) {
             console.error('Error saving transaction:', err);
         }
+    };
+
+    const handleShareEmail = async (transaction: FinancialTransaction) => {
+        if (!transaction.invoice_url) {
+            toast.error("Link de pagamento não gerado para esta transação.");
+            return;
+        }
+
+        const person = persons.find(p => p.id === transaction.person_id);
+        if (!person || !person.email) {
+            toast.error("O cliente desta transação não possui e-mail cadastrado.");
+            return;
+        }
+
+        try {
+            const amountStr = new Intl.NumberFormat(locale === 'en' ? 'en-US' : 'pt-BR', {
+                style: 'currency',
+                currency: locale === 'en' ? 'USD' : 'BRL'
+            }).format(transaction.amount);
+
+            const emailHtml = generatePaymentLinkEmailHtml({
+                officeName: officeData?.company_name || 'Veritum PRO',
+                clientName: person.full_name,
+                amount: amountStr,
+                paymentLink: transaction.invoice_url,
+                description: transaction.title
+            });
+
+            const res = await sendPaymentEmailAction({
+                to: person.email,
+                fullName: person.full_name,
+                subject: `Link para Pagamento - ${officeData?.company_name || 'Veritum PRO'}`,
+                html: emailHtml,
+                senderName: officeData?.company_name || 'Veritum PRO Financeiro',
+                replyTo: officeData?.email || user.email
+            });
+
+            if (res.success) toast.success("E-mail enviado com sucesso!");
+            else toast.error("Falha ao enviar: " + (res.error || 'Erro interno'));
+        } catch (err) { toast.error("Falha ao enviar e-mail."); }
+    };
+
+    const handleShareWhatsApp = (transaction: FinancialTransaction) => {
+        if (!transaction.invoice_url) return;
+        const person = persons.find(p => p.id === transaction.person_id);
+        const text = `Olá${person ? ` ${person.full_name}` : ''}, segue link para pagamento referente a ${transaction.title}: ${transaction.invoice_url}`;
+        window.open(`https://wa.me/${person?.phone?.replace(/\D/g, '') || ''}?text=${encodeURIComponent(text)}`, '_blank');
+    };
+
+    const handleDeleteTransaction = async (id: string) => {
+        if (!confirm('Deseja realmente excluir esta transação?')) return;
+        setLoading(true);
+        try {
+            const { error } = await supabase.from('financial_transactions').delete().eq('id', id);
+            if (error) throw error;
+            setTransactions(prev => prev.filter(t => t.id !== id));
+            toast.success('Transação excluída');
+        } catch (err) { toast.error('Erro ao excluir transação'); }
+        finally { setLoading(false); }
     };
 
     const formatCurrency = (val: number) => {
@@ -330,13 +404,14 @@ const Valorem: React.FC<{ credentials: Credentials; user: User; permissions: any
                                         <th className="px-6 py-4">{t('modules.valorem.list.description')}</th>
                                         <th className="px-6 py-4">{t('modules.valorem.list.status')}</th>
                                         <th className="px-6 py-4 text-right">{t('modules.valorem.list.value')}</th>
+                                        <th className="px-6 py-4 text-right">Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
                                     {loading ? (
-                                        <tr><td colSpan={4} className="p-8 text-center text-xs font-bold text-slate-400 uppercase tracking-widest">{t('modules.valorem.list.loading')}</td></tr>
+                                        <tr><td colSpan={5} className="p-8 text-center text-xs font-bold text-slate-400 uppercase tracking-widest">{t('modules.valorem.list.loading')}</td></tr>
                                     ) : filteredTransactions.length === 0 ? (
-                                        <tr><td colSpan={4} className="p-8 text-center text-xs font-bold text-slate-400 uppercase tracking-widest">{t('modules.valorem.list.empty')}</td></tr>
+                                        <tr><td colSpan={5} className="p-8 text-center text-xs font-bold text-slate-400 uppercase tracking-widest">{t('modules.valorem.list.empty')}</td></tr>
                                     ) : filteredTransactions.map(tx => (
                                         <tr key={tx.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
                                             <td className="px-6 py-4 text-[10px] font-bold text-slate-400 font-mono whitespace-nowrap uppercase">
@@ -358,6 +433,42 @@ const Valorem: React.FC<{ credentials: Credentials; user: User; permissions: any
                                                 <p className={`text-xs font-black ${tx.entry_type === 'Credit' ? 'text-emerald-600' : 'text-slate-700 dark:text-slate-200'}`}>
                                                     {tx.entry_type === 'Credit' ? '+' : '-'} {formatCurrency(tx.amount)}
                                                 </p>
+                                            </td>
+                                            <td className="px-6 py-4 text-right whitespace-nowrap">
+                                                <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    {tx.invoice_url && (
+                                                        <>
+                                                            <button 
+                                                                onClick={() => handleShareWhatsApp(tx)}
+                                                                className="p-1.5 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-all"
+                                                                title="Compartilhar WhatsApp"
+                                                            >
+                                                                <MessageCircle size={14} />
+                                                            </button>
+                                                            <button 
+                                                                onClick={() => handleShareEmail(tx)}
+                                                                className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
+                                                                title="Enviar E-mail"
+                                                            >
+                                                                <Mail size={14} />
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                    <button 
+                                                        onClick={() => { setEditingTx({...tx}); setIsModalOpen(true); }}
+                                                        className="p-1.5 text-slate-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-all"
+                                                        title="Editar"
+                                                    >
+                                                        <Pencil size={14} />
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleDeleteTransaction(tx.id)}
+                                                        className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-all"
+                                                        title="Excluir"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
@@ -526,6 +637,22 @@ const Valorem: React.FC<{ credentials: Credentials; user: User; permissions: any
                                                         <option key={p.id} value={p.id}>{p.full_name}</option>
                                                     ))}
                                                 </select>
+                                            </div>
+                                        </div>
+
+                                        <div className="pt-2">
+                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Link de Pagamento (URL)</label>
+                                            <div className="relative">
+                                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                                                    <Link size={16} />
+                                                </div>
+                                                <input 
+                                                    type="text" 
+                                                    value={editingTx?.invoice_url || ''} 
+                                                    onChange={e => setEditingTx({ ...editingTx, invoice_url: e.target.value })}
+                                                    className="w-full pl-12 pr-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all dark:text-white font-bold text-sm"
+                                                    placeholder="https://pay.veritum.com/..."
+                                                />
                                             </div>
                                         </div>
                                     </div>

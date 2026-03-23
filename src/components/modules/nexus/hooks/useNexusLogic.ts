@@ -11,18 +11,22 @@ import {
     deleteAssetDocument, deleteLawsuit, deleteAsset, deleteEvent,
     deleteCorporateEntity, listFinancialTransactions, saveFinancialTransaction,
     deleteFinancialTransaction, getFinancialStats, listAllGlobalDocuments,
-    listMovements
+    listMovements, getOrganizationByAdmin, sendPaymentEmailAction
 } from '@/app/actions/nexus-actions';
 import { listPersons } from '@/app/actions/crm-actions';
 import { listTeam, getCitiesByState } from '@/app/actions/nexus-actions';
 import { createDynamicClient } from '@/utils/supabase/client';
+import { createMasterClient } from '@/lib/supabase/master';
 import { toast } from '@/components/ui/toast';
-import { Person, CorporateEntity, Shareholder, CorporateDocument, LawsuitDocument, AssetDocument, Lawsuit, GlobalDocument, FinancialTransaction, TimelineEntry, TeamMember, Movement } from '@/types';
+import { Person, CorporateEntity, Shareholder, CorporateDocument, LawsuitDocument, AssetDocument, Lawsuit, GlobalDocument, FinancialTransaction, TimelineEntry, TeamMember, Movement, Organization } from '@/types';
 import { extractStoragePath } from './useNexusUtility';
+import { sendEmail } from '@/lib/email';
+import { generatePaymentLinkEmailHtml } from '@/lib/email-templates';
 
 export const useNexusLogic = (props: any) => {
     const { user, selectedClientId, onSelectClient, allClients, credentials, t } = props;
     const isMaster = user.role === 'Master';
+    const [officeData, setOfficeData] = useState<Organization | null>(null);
 
     // Filters Date for Finance
     const [financeStartDate, setFinanceStartDate] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]);
@@ -75,6 +79,7 @@ export const useNexusLogic = (props: any) => {
     // Movements States
     const [movements, setMovements] = useState<Movement[]>([]);
     const [isMovementsLoading, setIsMovementsLoading] = useState(false);
+    const [isSendingEmail, setIsSendingEmail] = useState(false);
 
     // Document Files
     const [lawsuitDocFile, setLawsuitDocFile] = useState<File | null>(null);
@@ -128,6 +133,87 @@ export const useNexusLogic = (props: any) => {
     // --------------------------------------------------------------------------
     // HANDLERS
     // --------------------------------------------------------------------------
+
+    // Fetch Office Data
+    const fetchOffice = useCallback(async () => {
+        const targetId = selectedClientId || user.id;
+        if (!targetId) return;
+        try {
+            const org = await getOrganizationByAdmin(targetId);
+            if (org) setOfficeData(org);
+        } catch (err) {
+            console.error('Error fetching office data:', err);
+        }
+    }, [selectedClientId, user.id]);
+
+    useEffect(() => {
+        fetchOffice();
+    }, [fetchOffice]);
+
+    
+    
+    
+    const handleSendFinancialEmail = async (transaction: FinancialTransaction, lawsuitId?: string) => {
+        if (!transaction.invoice_url) {
+            toast.error("Link de pagamento não gerado para esta transação.");
+            return;
+        }
+
+        // Identify person ID
+        let personId = transaction.person_id;
+        if (!personId && lawsuitId) {
+            const lawsuit = core.lawsuits.find((l: any) => l.id === lawsuitId);
+            if (lawsuit) personId = lawsuit.author_id;
+        }
+
+        const person = core.persons.find(p => p.id === personId);
+        if (!person || !person.email) {
+            toast.error("O cliente desta transação não possui e-mail cadastrado ou não foi identificado.");
+            return;
+        }
+
+        setIsSendingEmail(true);
+        try {
+            const amountStr = new Intl.NumberFormat(props.locale === 'en' ? 'en-US' : 'pt-BR', {
+                style: 'currency',
+                currency: props.locale === 'en' ? 'USD' : 'BRL'
+            }).format(transaction.amount);
+
+            const emailHtml = generatePaymentLinkEmailHtml({
+                officeName: officeData?.company_name || 'Veritum PRO',
+                clientName: person.full_name,
+                amount: amountStr,
+                paymentLink: transaction.invoice_url,
+                description: transaction.title
+            });
+
+            console.log('Dispatching request to sendPaymentEmailAction for', person.email);
+
+            const res = await sendPaymentEmailAction({
+                to: person.email,
+                fullName: person.full_name,
+                subject: `Link para Pagamento - ${officeData?.company_name || 'Veritum PRO'}`,
+                html: emailHtml,
+                senderName: 'Veritum PRO Financeiro',
+                replyTo: 'financeiro@veritumpro.com'
+            });
+
+            if (res.success) {
+                toast.success("E-mail enviado com sucesso!");
+            } else {
+                console.error("Server Action Failed:", res.error);
+                toast.error("Falha ao enviar: " + (res.error || 'Erro interno'));
+            }
+        } catch (err) {
+            console.error("Unexpected sending crash:", err);
+            toast.error("Falha ao preparar o envio do e-mail.");
+        } finally {
+            setIsSendingEmail(false);
+        }
+    };
+
+
+
 
     const triggerConfirm = useCallback((title: string, message: string, onConfirm: () => void, type: 'danger' | 'warning' | 'info' = 'danger') => {
         setConfirmModal({ isOpen: true, title, message, onConfirm, type });
@@ -671,6 +757,17 @@ export const useNexusLogic = (props: any) => {
 
     // --------------------------------------------------------------------------
     // EFFECTS
+
+    useEffect(() => {
+        if (user?.id) {
+            const fetchOffice = async () => {
+                const data = await getOrganizationByAdmin(user.id);
+                if (data) setOfficeData(data);
+            };
+            fetchOffice();
+        }
+    }, [user?.id]);
+
     // --------------------------------------------------------------------------
 
     const { setEditingPerson, setActiveCrmTab, setIsCrmModalOpen } = ui;
@@ -727,6 +824,7 @@ export const useNexusLogic = (props: any) => {
 
     return {
         core, ui, search,
+        officeData,
         visualRefreshTrigger, setVisualRefreshTrigger,
         nexoData, setNexoData,
         nexoLoading, setNexoLoading,
@@ -738,6 +836,7 @@ export const useNexusLogic = (props: any) => {
         isCorporateTimelineLoading, setIsCorporateTimelineLoading,
         movements, setMovements,
         isMovementsLoading, setIsMovementsLoading,
+        isSendingEmail, setIsSendingEmail,
         aiLawsuitSummary, setAiLawsuitSummary,
         isAiSummarizing, setIsAiSummarizing,
         aiInfoModal, setAiInfoModal,
@@ -775,6 +874,7 @@ export const useNexusLogic = (props: any) => {
         handleSaveFinancialTransaction, handleDeleteFinancialTransaction,
         handleSaveLawsuitDocument, handleSaveAssetDocument, handleSaveShareholder,
         handleDeleteShareholder, handleSummarizeDocument, handleSoftDeleteLawsuit,
+        handleSendFinancialEmail,
         handleSoftDeleteAsset, handleSoftDeleteEvent, handleSoftDeleteEntity,
         handleDropLawsuit, handleDragStartLawsuit, handleDropTask, handleDragStartTask,
         handleDropAsset, handleDragStartAsset, handleDropEntity, handleDragStartEntity,
