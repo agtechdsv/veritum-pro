@@ -25,6 +25,7 @@ export default function FintechPage() {
     const [allUsers, setAllUsers] = useState<User[]>([])
     const [selectedUserId, setSelectedUserId] = useState<string>('')
     const [currentUser, setCurrentUser] = useState<User | null>(null)
+    const [selectedOrg, setSelectedOrg] = useState<any>(null)
 
     useEffect(() => {
         fetchInitialData()
@@ -33,6 +34,7 @@ export default function FintechPage() {
     useEffect(() => {
         if (selectedUserId) {
             fetchSubAccounts(selectedUserId)
+            fetchOrganization(selectedUserId)
         }
     }, [selectedUserId])
 
@@ -59,6 +61,20 @@ export default function FintechPage() {
 
                 if (clients) setAllUsers(clients)
             }
+        }
+    }
+
+    async function fetchOrganization(userId: string) {
+        const { data } = await supabase
+            .from('organizations')
+            .select('*')
+            .eq('admin_id', userId)
+            .single()
+
+        if (data) {
+            setSelectedOrg(data)
+        } else {
+            setSelectedOrg(null)
         }
     }
 
@@ -96,6 +112,12 @@ export default function FintechPage() {
     }
 
     const isMaster = currentUser?.role === 'Master'
+
+    const getFormattedName = (name: any) => {
+        if (!name) return '';
+        const rawName = typeof name === 'object' ? (name.pt || name.en || '') : (name || '');
+        return rawName.toLowerCase().split(' ').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    };
 
     return (
         <div className="flex flex-col gap-8 p-8 animate-in fade-in duration-700 max-w-[1600px] mx-auto">
@@ -273,6 +295,8 @@ export default function FintechPage() {
                                             <Input
                                                 id="brandingName"
                                                 name="brandingName"
+                                                key={`branding-${selectedUserId}-${selectedOrg?.id}`}
+                                                defaultValue={selectedOrg?.company_name || ''}
                                                 placeholder={t('management.master.fintech.brandingPlaceholder') || 'Como aparecerá no boleto'}
                                                 required
                                                 className="h-14 px-6 bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-bold"
@@ -285,6 +309,8 @@ export default function FintechPage() {
                                                 id="email"
                                                 name="email"
                                                 type="email"
+                                                key={`email-${selectedUserId}-${selectedOrg?.id}`}
+                                                defaultValue={selectedOrg?.email || ''}
                                                 placeholder={t('management.master.fintech.emailPlaceholder') || 'financeiro@empresa.com'}
                                                 required
                                                 className="h-14 px-6 bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-bold"
@@ -297,6 +323,8 @@ export default function FintechPage() {
                                                 <Input
                                                     id="cpfCnpj"
                                                     name="cpfCnpj"
+                                                    key={`doc-${selectedUserId}-${selectedOrg?.id}`}
+                                                    defaultValue={selectedOrg?.cnpj || ''}
                                                     placeholder="00.000.000/0000-00"
                                                     required
                                                     className="h-14 px-6 bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-bold"
@@ -322,6 +350,8 @@ export default function FintechPage() {
                                             <Input
                                                 id="phone"
                                                 name="phone"
+                                                key={`phone-${selectedUserId}-${selectedOrg?.id}`}
+                                                defaultValue={selectedOrg?.phone || ''}
                                                 placeholder={t('management.master.fintech.phonePlaceholder') || '(11) 99999-9999'}
                                                 className="h-14 px-6 bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-bold"
                                             />
