@@ -72,6 +72,7 @@ const Logo = () => (
 export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModule, activeSuites = [], planPermissions = [], groupPermissions = [], allFeatures = [], onModuleChange, onLogout, onUpdateUser, onUpdatePrefs, children }) => {
     const { t, locale } = useTranslation();
     const router = useRouter();
+    const { allClients, selectedClientId, onSelectClient } = useModule();
     const lastProvisioned = React.useRef<string>('');
 
     // BYODB Shadow Provisioning: Ensure user exists in Tenant DB
@@ -316,7 +317,7 @@ export const DashboardLayout: React.FC<Props> = ({ user, preferences, activeModu
 
         switch (moduleToRender) {
             case 'sentinel': return <Sentinel credentials={creds} user={user} permissions={planPermissions.find(p => normalize(p.suite_key) === 'sentinel')} />;
-            case 'nexus': return <Nexus credentials={creds} user={user} permissions={planPermissions.find(p => normalize(p.suite_key) === 'nexus')} />;
+            case 'nexus': return <Nexus credentials={creds} user={user} permissions={planPermissions.find(p => normalize(p.suite_key) === 'nexus')} selectedClientId={selectedClientId} allClients={allClients} onSelectClient={onSelectClient} />;
             case 'scriptor': return <Scriptor credentials={creds} user={user} permissions={planPermissions.find(p => normalize(p.suite_key) === 'scriptor')} />;
             case 'valorem': return <Valorem credentials={creds} user={user} permissions={planPermissions.find(p => normalize(p.suite_key) === 'valorem')} />;
             case 'cognitio': return <Cognitio credentials={creds} user={user} permissions={planPermissions.find(p => normalize(p.suite_key) === 'cognitio')} />;
