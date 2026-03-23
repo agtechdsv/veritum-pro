@@ -36,6 +36,33 @@ export interface AsaasSubAccount {
     account_type: 'product' | 'user';
     branding_name: string;
     status: string;
+    
+    // Status and Onboarding
+    onboarding_url?: string;
+    onboarding_status?: string;
+    commercial_info_status?: string;
+    documentation_status?: string;
+    bank_account_info_status?: string;
+    general_status?: string;
+    
+    // Detailed Info
+    person_type?: string;
+    company_type?: string;
+    birth_date?: string;
+    postal_code?: string;
+    address?: string;
+    address_number?: string;
+    complement?: string;
+    province?: string;
+    city?: string;
+    state?: string;
+    mobile_phone?: string;
+    
+    // Banking Details
+    agency?: string;
+    account_number?: string;
+    account_digit?: string;
+
     created_at?: string;
     updated_at?: string;
 }

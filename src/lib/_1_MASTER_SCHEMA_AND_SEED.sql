@@ -268,6 +268,28 @@ CREATE TABLE IF NOT EXISTS public.asaas_sub_accounts (
     account_type TEXT CHECK (account_type IN ('product', 'user')),
     branding_name TEXT NOT NULL,                    -- Nome no boleto/pix
     status TEXT DEFAULT 'active',
+    
+    -- Campos Adicionais para Onboarding & Compliance
+    onboarding_url TEXT,
+    onboarding_status TEXT DEFAULT 'PENDING',
+    commercial_info_status TEXT DEFAULT 'PENDING',
+    documentation_status TEXT DEFAULT 'PENDING',
+    bank_account_info_status TEXT DEFAULT 'PENDING',
+    general_status TEXT DEFAULT 'PENDING',
+    
+    -- Dados Cadastrais/Comerciais
+    person_type TEXT,
+    company_type TEXT,
+    birth_date DATE,
+    postal_code TEXT,
+    address TEXT,
+    address_number TEXT,
+    complement TEXT,
+    province TEXT,
+    city TEXT,
+    state TEXT,
+    mobile_phone TEXT,
+
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );

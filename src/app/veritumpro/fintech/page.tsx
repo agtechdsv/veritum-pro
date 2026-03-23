@@ -1,13 +1,13 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import { Plus, CreditCard, Shield, Settings2, Trash2, Key, Info, XCircle, Filter, ChevronDown } from 'lucide-react'
+import React, { useState, useEffect } from 'react';
+import { Plus, Calendar, Scale, Search, Filter, LayoutDashboard, ArrowRight, AlertTriangle, CheckCircle2, Clock, Zap, Lock as LockIcon, List, PieChart, FileText, Check, Loader2, Sparkles, History as HistoryIcon, XCircle, Users, Shield, ChevronRight, ChevronDown, CreditCard, Key, Settings2, Trash2, ExternalLink, AlertCircle, Info, Landmark, Building2, FileCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { createMasterClient } from '@/lib/supabase/master'
-import { createFintechSubAccount } from './actions'
+import { createFintechSubAccount, deleteFintechSubAccount } from './actions'
 import { useTranslation } from '@/contexts/language-context'
 import { toast } from '@/components/ui/toast'
 import { AsaasSubAccount, User } from '@/types'
@@ -18,6 +18,7 @@ export default function FintechPage() {
     const [loading, setLoading] = useState(true)
     const [isCreating, setIsCreating] = useState(false)
     const [isDrawerOpen, setIsDrawerOpen] = useState(false)
+    const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
     const { t } = useTranslation()
     const supabase = createMasterClient()
 
@@ -46,7 +47,7 @@ export default function FintechPage() {
             .from('users')
             .select('*')
             .eq('id', authUser.id)
-            .single()
+            .maybeSingle()
 
         if (profile) {
             setCurrentUser(profile)
@@ -69,7 +70,7 @@ export default function FintechPage() {
             .from('organizations')
             .select('*')
             .eq('admin_id', userId)
-            .single()
+            .maybeSingle()
 
         if (data) {
             setSelectedOrg(data)
@@ -94,6 +95,22 @@ export default function FintechPage() {
         setLoading(false)
     }
 
+    async function handleDelete(id: string) {
+        try {
+            const res = await deleteFintechSubAccount(id)
+            if (res.success) {
+                toast.success('Subconta removida com sucesso.')
+                setSubAccounts(prev => prev.filter(s => s.id !== id))
+            } else {
+                toast.error(res.error || 'Erro ao remover.')
+            }
+        } catch (err) {
+            toast.error('Ocorreu um erro ao processar a deleção.')
+        } finally {
+            setDeleteConfirmId(null)
+        }
+    }
+
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault()
         setIsCreating(true)
@@ -111,6 +128,24 @@ export default function FintechPage() {
         setIsCreating(false)
     }
 
+    const getStatusStyle = (status: string | undefined) => {
+        switch (status) {
+            case 'APPROVED': return 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20';
+            case 'REJECTED': return 'text-rose-500 bg-rose-500/10 border-rose-500/20';
+            case 'AWAITING_APPROVAL': return 'text-amber-500 bg-amber-500/10 border-amber-500/20';
+            default: return 'text-slate-400 bg-slate-400/10 border-slate-400/20';
+        }
+    };
+
+    const getStatusText = (status: string | undefined) => {
+        switch (status) {
+            case 'APPROVED': return t('common.approved') || 'Aprovado';
+            case 'REJECTED': return t('common.rejected') || 'Rejeitado';
+            case 'AWAITING_APPROVAL': return t('common.analyzing') || 'Em Análise';
+            default: return t('common.pending') || 'Pendente';
+        }
+    };
+
     const isMaster = currentUser?.role === 'Master'
 
     const getFormattedName = (name: any) => {
@@ -121,58 +156,61 @@ export default function FintechPage() {
 
     return (
         <div className="flex flex-col gap-8 p-8 animate-in fade-in duration-700 max-w-[1600px] mx-auto">
-            <div className="flex justify-between items-center">
-                <div className="flex items-center gap-6">
-                    <div className="flex items-center gap-4">
-                        <div className="bg-indigo-600 text-white p-3 rounded-2xl shadow-lg shadow-indigo-200 dark:shadow-indigo-900/40">
-                            <CreditCard size={24} />
-                        </div>
-                        <div>
-                            <h1 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">{t('management.master.fintech.title') || 'Gerenciamento Fintech'}</h1>
-                            <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-1">{t('management.master.fintech.subtitle') || 'Subcontas e Identidades Asaas'}</p>
-                        </div>
-                    </div>
-
-                    <button
-                        onClick={() => setIsDrawerOpen(true)}
-                        className="bg-indigo-600 text-white px-8 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest flex items-center gap-2 hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-600/30 active:scale-95"
-                    >
-                        <Plus size={16} /> {t('management.master.fintech.newSubAccount') || 'Nova Subconta'}
-                    </button>
+            <div className="flex justify-between items-center mb-10">
+                <div className="space-y-1">
+                    <h1 className="text-4xl font-black text-slate-800 dark:text-white uppercase tracking-tighter flex items-center gap-3">
+                        <Sparkles className="w-8 h-8 text-indigo-500" />
+                        Identidade Fintech
+                    </h1>
+                    <p className="text-slate-500 font-medium">{t('modules.management.master.fintech.desc') || 'Central de gerenciamento de subcontas e split de pagamentos Veritum PRO.'}</p>
                 </div>
 
-                {/* Master Context Selector */}
-                {isMaster && (
-                    <div className="flex items-center gap-4 bg-white dark:bg-slate-900 p-2 pl-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-xl">
-                        <div className="flex flex-col items-end">
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none mb-1">{t('management.master.fintech.masterContext') || 'Contexto Master'}</span>
-                            <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 leading-none">{t('management.master.fintech.selectClientTitle') || 'Selecione o Cliente'}</span>
+                <div className="flex items-center gap-6">
+                    {/* Master Context Selector */}
+                    {isMaster && (
+                        <div className="flex items-center gap-4 bg-white dark:bg-slate-900 p-2 pl-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-xl">
+                            <div className="flex flex-col items-end">
+                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none mb-1">{t('management.master.fintech.masterContext') || 'Contexto Master'}</span>
+                                <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 leading-none">{t('management.master.fintech.selectClientTitle') || 'Selecione o Cliente'}</span>
+                            </div>
+                            <div className="relative">
+                                <select
+                                    value={selectedUserId}
+                                    onChange={(e) => setSelectedUserId(e.target.value)}
+                                    className="bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-6 py-3 text-xs font-black tracking-widest text-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-600 outline-none transition-all cursor-pointer min-w-[260px] appearance-none pr-10"
+                                >
+                                    <option value="">--- {t('management.master.fintech.selectClientTitle') || 'Selecione um Cliente'} ---</option>
+                                    <option value={currentUser?.id}>{t('management.master.fintech.myContext') || 'Meu Contexto Mestre'}</option>
+                                    <optgroup label={t('management.master.fintech.clientsGroup') || 'CLIENTES (SÓCIOS ADM)'}>
+                                        {allUsers.map(u => {
+                                            const rawName = typeof u.name === 'object' ? ((u.name as any).pt || (u.name as any).en || '') : (u.name || '');
+                                            const formattedName = rawName.toLowerCase().split(' ').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+                                            const formattedEmail = (u.email || '').toLowerCase();
+                                            return (
+                                                <option key={u.id} value={u.id}>
+                                                    🏢 {formattedName} ({formattedEmail})
+                                                </option>
+                                            );
+                                        })}
+                                    </optgroup>
+                                </select>
+                                <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
+                            </div>
                         </div>
-                        <div className="relative">
-                            <select
-                                value={selectedUserId}
-                                onChange={(e) => setSelectedUserId(e.target.value)}
-                                className="bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-6 py-3 text-xs font-black tracking-widest text-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-600 outline-none transition-all cursor-pointer min-w-[260px] appearance-none pr-10"
-                            >
-                                <option value="">--- {t('management.master.fintech.selectClientTitle') || 'Selecione um Cliente'} ---</option>
-                                <option value={currentUser?.id}>{t('management.master.fintech.myContext') || 'Meu Contexto Mestre'}</option>
-                                <optgroup label={t('management.master.fintech.clientsGroup') || 'CLIENTES (SÓCIOS ADM)'}>
-                                    {allUsers.map(u => {
-                                        const rawName = typeof u.name === 'object' ? ((u.name as any).pt || (u.name as any).en || '') : (u.name || '');
-                                        const formattedName = rawName.toLowerCase().split(' ').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-                                        const formattedEmail = (u.email || '').toLowerCase();
-                                        return (
-                                            <option key={u.id} value={u.id}>
-                                                🏢 {formattedName} ({formattedEmail})
-                                            </option>
-                                        );
-                                    })}
-                                </optgroup>
-                            </select>
-                            <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
-                        </div>
+                    )}
+
+                    <div className="flex gap-4">
+                        <Button
+                            onClick={() => setIsDrawerOpen(true)}
+                            className="h-14 bg-indigo-600 hover:bg-white border-2 border-indigo-600 dark:bg-indigo-600 dark:hover:bg-slate-900 text-white hover:text-indigo-600 rounded-3xl flex items-center gap-3 px-8 shadow-2xl shadow-indigo-600/20 active:scale-95 transition-all text-xs font-black uppercase tracking-widest group font-black"
+                        >
+                            <div className="bg-white/20 p-1.5 rounded-lg group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                                <Plus size={18} strokeWidth={3} />
+                            </div>
+                            {t('modules.management.master.fintech.newSubaccount') || 'Nova Configuração'}
+                        </Button>
                     </div>
-                )}
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -193,20 +231,64 @@ export default function FintechPage() {
                         </CardContent>
                     </Card>
                 ) : subAccounts.map((account) => (
-                    <Card key={account.id} className="overflow-hidden border-slate-200 dark:border-slate-800 hover:shadow-2xl hover:shadow-indigo-500/10 transition-all duration-500 group rounded-[2.5rem] bg-white dark:bg-slate-900">
-                        <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
-                            <Button variant="ghost" size="icon" className="text-slate-400 hover:text-red-500 bg-slate-50 dark:bg-slate-800 rounded-xl">
-                                <Trash2 className="w-4 h-4" />
-                            </Button>
-                        </div>
+                    <Card key={account.id} className="overflow-hidden border-slate-200 dark:border-slate-800 hover:shadow-2xl hover:shadow-indigo-500/10 transition-all duration-500 group rounded-[2.5rem] bg-white dark:bg-slate-900 relative">
                         <CardHeader className="p-8 pb-4">
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
-                                    <Shield className="w-5 h-5" />
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                                        <Shield className="w-5 h-5" />
+                                    </div>
+                                    <span className={`text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest ${account.account_type === 'product' ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400'}`}>
+                                        {account.account_type === 'product' ? (t('management.master.fintech.accountTypeInternal') || 'Unidade Interna') : (t('management.master.fintech.accountTypeMarketplace') || 'Marketplace')}
+                                    </span>
                                 </div>
-                                <span className={`text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest ${account.account_type === 'product' ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400'}`}>
-                                    {account.account_type === 'product' ? (t('management.master.fintech.accountTypeInternal') || 'Unidade Interna') : (t('management.master.fintech.accountTypeMarketplace') || 'Marketplace')}
-                                </span>
+                                <div className="flex items-center gap-2">
+                                    <AnimatePresence mode="wait">
+                                        {deleteConfirmId === account.id ? (
+                                            <motion.div
+                                                initial={{ opacity: 0, x: 20 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                exit={{ opacity: 0, x: -20 }}
+                                                className="flex items-center gap-2 bg-red-500/10 p-1 rounded-xl border border-red-500/20"
+                                            >
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    className="h-8 text-[10px] font-black uppercase text-red-500 hover:bg-red-500 hover:text-white px-3 rounded-lg"
+                                                    onClick={() => handleDelete(account.id)}
+                                                >
+                                                    Confirmar
+                                                </Button>
+                                                <Button
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    className="w-8 h-8 text-slate-400 hover:text-slate-600 rounded-lg"
+                                                    onClick={() => setDeleteConfirmId(null)}
+                                                >
+                                                    <XCircle className="w-4 h-4" />
+                                                </Button>
+                                            </motion.div>
+                                        ) : (
+                                            <motion.div
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1 }}
+                                                exit={{ opacity: 0 }}
+                                            >
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="text-slate-400 hover:text-red-500 bg-slate-50 dark:bg-slate-800 rounded-xl w-9 h-9 active:scale-95 transition-all"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setDeleteConfirmId(account.id);
+                                                    }}
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </Button>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
                             </div>
                             <CardTitle className="text-2xl font-black text-slate-800 dark:text-white line-clamp-1 uppercase tracking-tighter">{account.branding_name}</CardTitle>
                             <CardDescription className="flex items-center gap-2 mt-2">
@@ -215,24 +297,64 @@ export default function FintechPage() {
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="p-8 pt-0 space-y-6">
-                            <div className="p-5 bg-slate-50 dark:bg-slate-950/50 rounded-2xl border border-slate-100 dark:border-slate-800/50 space-y-4">
-                                <div className="flex justify-between items-center">
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Key className="w-4 h-4" /> {t('management.master.fintech.apiToken') || 'Token API'}</span>
-                                    <span className="text-slate-900 dark:text-white font-mono text-xs font-bold bg-white dark:bg-slate-900 px-3 py-1 rounded-lg border border-slate-100 dark:border-slate-800">••••••••••••{account.api_key.slice(-4)}</span>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className={`flex flex-col gap-1.5 p-3 rounded-2xl border ${getStatusStyle(account.commercial_info_status)}`}>
+                                    <span className="text-[8px] font-black uppercase tracking-widest flex items-center gap-1"><Building2 size={10} /> {t('modules.management.master.fintech.commercialInfo') || 'Comercial'}</span>
+                                    <span className="text-[10px] font-bold uppercase truncate">{getStatusText(account.commercial_info_status)}</span>
                                 </div>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Settings2 className="w-4 h-4" /> {t('management.master.fintech.quality') || 'Qualidade'}</span>
-                                    <span className="flex items-center gap-2 text-emerald-500 font-black uppercase text-[10px] tracking-widest">
-                                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                                        {account.status}
-                                    </span>
+                                <div className={`flex flex-col gap-1.5 p-3 rounded-2xl border ${getStatusStyle(account.documentation_status)}`}>
+                                    <span className="text-[8px] font-black uppercase tracking-widest flex items-center gap-1"><FileCheck size={10} /> {t('modules.management.master.fintech.docs') || 'Documentos'}</span>
+                                    <span className="text-[10px] font-bold uppercase truncate">{getStatusText(account.documentation_status)}</span>
+                                </div>
+                                <div className={`flex flex-col gap-1.5 p-3 rounded-2xl border ${getStatusStyle(account.bank_account_info_status)}`}>
+                                    <span className="text-[8px] font-black uppercase tracking-widest flex items-center gap-1"><Landmark size={10} /> {t('modules.management.master.fintech.bank') || 'Banco'}</span>
+                                    <span className="text-[10px] font-bold uppercase truncate">{getStatusText(account.bank_account_info_status)}</span>
+                                </div>
+                                <div className={`flex flex-col gap-1.5 p-3 rounded-2xl border ${getStatusStyle(account.general_status)}`}>
+                                    <span className="text-[8px] font-black uppercase tracking-widest flex items-center gap-1"><Shield size={10} /> {t('modules.management.master.fintech.general') || 'Geral'}</span>
+                                    <span className="text-[10px] font-bold uppercase truncate">{getStatusText(account.general_status)}</span>
                                 </div>
                             </div>
 
-                            <Button variant="outline" className="w-full h-14 border-slate-200 dark:border-slate-800 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/50 justify-between group/btn px-6 transition-all duration-300 border-2">
-                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300">{t('management.master.fintech.controlPanel') || 'Painel de Controle'}</span>
-                                <Settings2 className="w-5 h-5 text-slate-400 group-hover/btn:text-indigo-500 group-hover/btn:rotate-90 transition-all duration-500" />
-                            </Button>
+                            <div className="p-5 bg-slate-50 dark:bg-slate-950/50 rounded-2xl border border-slate-100 dark:border-slate-800/50 space-y-4">
+                                <div className="flex justify-between items-center group/key">
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Key className="w-4 h-4" /> {t('management.master.fintech.apiToken') || 'Token API'}</span>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-slate-900 dark:text-white font-mono text-xs font-bold bg-white dark:bg-slate-900 px-3 py-1 rounded-lg border border-slate-100 dark:border-slate-800 transition-all group-hover/key:border-indigo-400 font-mono">••••{account.api_key?.slice(-4)}</span>
+                                    </div>
+                                </div>
+
+                                {/* Dados Bancários */}
+                                {(account.agency || account.account_number) && (
+                                    <div className="pt-3 mt-3 border-t border-slate-200/50 dark:border-slate-800/50 flex justify-between items-center">
+                                        <div className="flex flex-col gap-0.5">
+                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Landmark size={12} className="text-blue-500" /> Agência e Conta</span>
+                                            <div className="text-xs font-mono font-bold text-slate-700 dark:text-slate-300">
+                                                {account.agency} / {account.account_number}-{account.account_digit}
+                                            </div>
+                                        </div>
+                                        <div className="text-[10px] font-black px-2 py-0.5 rounded bg-blue-500/10 text-blue-500 uppercase tracking-widest">Asaas Bank</div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {account.general_status !== 'APPROVED' && account.onboarding_url ? (
+                                <Button
+                                    onClick={() => window.open(account.onboarding_url, '_blank')}
+                                    className="w-full h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl flex items-center justify-between px-6 shadow-lg shadow-indigo-600/20 active:scale-[0.98] transition-all"
+                                >
+                                    <div className="flex flex-col items-start translate-y-[-1px]">
+                                        <span className="text-[10px] font-black uppercase tracking-widest leading-none mb-1">{t('management.master.fintech.actionOnboarding') || 'Finalizar Onboarding'}</span>
+                                        <span className="text-[8px] font-medium opacity-70 leading-none">{t('management.master.fintech.actionOnboardingDesc') || 'Envie os documentos via Asaas'}</span>
+                                    </div>
+                                    <ExternalLink size={18} className="animate-pulse" />
+                                </Button>
+                            ) : (
+                                <Button variant="outline" className="w-full h-14 border-slate-200 dark:border-slate-800 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/50 justify-between group/btn px-6 transition-all duration-300 border-2">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300">{t('management.master.fintech.controlPanel') || 'Painel de Controle'}</span>
+                                    <Settings2 className="w-5 h-5 text-slate-400 group-hover/btn:text-indigo-500 group-hover/btn:rotate-90 transition-all duration-500" />
+                                </Button>
+                            )}
                         </CardContent>
                     </Card>
                 ))}
@@ -288,6 +410,7 @@ export default function FintechPage() {
                             </div>
 
                             <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
+                                <input type="hidden" name="clientId" value={selectedUserId || ''} />
                                 <div className="flex-1 overflow-y-auto p-10 space-y-10 no-scrollbar">
                                     <div className="space-y-8">
                                         <div className="grid gap-4">

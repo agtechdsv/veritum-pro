@@ -129,7 +129,11 @@ export const en = {
             title: 'System Configuration',
             description: 'System Configuration',
         },
-        noData: 'No data'
+        noData: 'No data',
+        pending: 'Pending',
+        approved: 'Approved',
+        rejected: 'Rejected',
+        analyzing: 'Analyzing',
     },
     nav: {
         home: 'Home',
@@ -835,6 +839,43 @@ export const en = {
             voxLegal: 'VOX LEGAL (AI)',
             voxLegalNote: 'Vox Legal simplifies legalese for the client.',
             placeholder: 'Write your operational or legal message...'
+        },
+        management: {
+            master: {
+                fintech: {
+                    title: 'Fintech Identity',
+                    desc: 'Sub-account management center and Veritum PRO payment split.',
+                    newSubaccount: 'New Configuration',
+                    asaasId: 'Asaas ID',
+                    commercialInfo: 'Commercial Data',
+                    docs: 'Documentation',
+                    bank: 'Banking Details',
+                    general: 'General Status',
+                    apiToken: 'API Token',
+                    bankAndAccount: 'Agency and Account',
+                    actionOnboarding: 'Finish Onboarding',
+                    actionOnboardingDesc: 'Send documents via Asaas',
+                    controlPanel: 'Control Panel',
+                    automationTitle: 'Receivables Automation',
+                    automationDesc: 'Automatically move commissions from the main account to each business unit with Rule-Based Split.',
+                    splitGuide: 'Split Integration Guide',
+                    drawerTitle: 'Fintech Identity',
+                    drawerSubtitle: 'New Asaas Sub-account Configuration',
+                    brandingNameLabel: 'Branding Name (Ex: YOUR FIRM NAME)',
+                    brandingPlaceholder: 'How it will appear on the client invoice',
+                    notificationEmailLabel: 'Email for Financial Notifications',
+                    emailPlaceholder: 'finance@example.com',
+                    masterContext: 'Master Context',
+                    selectClientTitle: 'Select Target Client',
+                    myContext: 'My Master Context',
+                    clientsGroup: 'CLIENTES (ADMIN PARTNERS)',
+                    noAccounts: 'No active sub-accounts',
+                    noAccountsDesc: 'Start by creating a sub-account to automate your billing and payment split.',
+                    toast: {
+                        saveSuccess: 'Sub-account configured successfully!'
+                    }
+                }
+            }
         },
     },
     pricing: {

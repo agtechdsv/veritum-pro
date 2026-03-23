@@ -129,7 +129,11 @@ export const es = {
             title: 'Configuración del Sistema',
             description: 'Configuración del sistema',
         },
-        noData: 'No hay datos disponibles'
+        noData: 'No hay datos disponibles',
+        pending: 'Pendiente',
+        approved: 'Aprobado',
+        rejected: 'Rechazado',
+        analyzing: 'En Análisis',
     },
     "nav": {
         "home": "Inicio",
@@ -836,7 +840,46 @@ export const es = {
             "voxLegal": "VOX LEGAL (IA)",
             "voxLegalNote": "Vox Legal simplifica el lenguaje jurídico para el cliente.",
             "placeholder": "Escriba su mensaje operacional o jurídico..."
-        }
+        },
+        management: {
+            master: {
+                fintech: {
+                    title: 'Identidad Fintech',
+                    desc: 'Centro de gestión de subcuentas y división de pagos Veritum PRO.',
+                    newSubaccount: 'Nueva Configuración',
+                    asaasId: 'Asaas ID',
+                    commercialInfo: 'Datos Comerciales',
+                    docs: 'Documentación',
+                    bank: 'Datos Bancarios',
+                    general: 'Estado General',
+                    apiToken: 'API Token',
+                    bankAndAccount: 'Agencia y Cuenta',
+                    actionOnboarding: 'Finalizar Onboarding',
+                    actionOnboardingDesc: 'Envíe los documentos vía Asaas',
+                    controlPanel: 'Panel de Control',
+                    automationTitle: 'Automatización de Recaudos',
+                    automationDesc: 'Mueva comisiones automáticamente desde la cuenta principal a cada unidad de negocio con Split Rule-Based.',
+                    splitGuide: 'Guía de Integración Split',
+                    drawerTitle: 'Identidad Fintech',
+                    drawerSubtitle: 'Configuración de Nueva Subcuenta Asaas',
+                    brandingNameLabel: 'Nombre de Marca (Ej: NOMBRE DE SU DESPACHO)',
+                    brandingPlaceholder: 'Cómo aparecerá en la factura del cliente',
+                    notificationEmailLabel: 'Correo para Notificaciones Financieras',
+                    emailPlaceholder: 'financiero@ejemplo.com',
+                    masterContext: 'Contexto Maestro',
+                    selectClientTitle: 'Seleccione el Cliente Objetivo',
+                    myContext: 'Mi Contexto Maestro',
+                    clientsGroup: 'CLIENTES (SOCIOS ADM)',
+                    noAccounts: 'Ninguna subcuenta activa',
+                    noAccountsDesc: 'Empiece creando una subcuenta para automatizar su facturación y división de pagos.',
+                    accountTypeInternal: 'Unidad Interna',
+                    accountTypeMarketplace: 'Marketplace',
+                    toast: {
+                        saveSuccess: '¡Subcuenta configurada con éxito!'
+                    }
+                }
+            }
+        },
     },
     "pricing": {
         "title": "Planes que acompañan su crecimiento.",
