@@ -31,7 +31,7 @@ async function resolveSecurityContext(targetUserId?: string) {
     } else {
         // Se for Master, verifica se ele realmente é Master antes de permitir o acesso ao tenant de outro usuário
         const { data: profile } = await supabaseMaster.from('users').select('role').eq('id', user.id).single();
-        const isMaster = profile?.role === 'Master' || user.user_metadata?.role === 'Master';
+        const isMaster = profile?.role === 'Master';
 
         if (isMaster) {
             resolvedId = targetUserId;

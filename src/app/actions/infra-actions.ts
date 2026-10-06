@@ -52,7 +52,7 @@ export async function getTenantConfigByUserId(userId: string) {
     if (!user) throw new Error('Unauthorized');
 
     // Verificamos se é Master
-    let isMaster = user.user_metadata.role === 'Master';
+    let isMaster = false; // papel vem so do banco: user_metadata e editavel pelo proprio usuario
     if (!isMaster) {
         const { data: profile } = await supabase.from('users').select('role').eq('id', user.id).single();
         isMaster = profile?.role === 'Master';
@@ -84,7 +84,7 @@ export async function saveTenantConfig(formData: Partial<TenantConfig>) {
     if (!user) throw new Error('Unauthorized');
 
     // Verificamos se é Master
-    let isMaster = user.user_metadata.role === 'Master';
+    let isMaster = false; // papel vem so do banco: user_metadata e editavel pelo proprio usuario
     if (!isMaster) {
         const { data: profile } = await supabase.from('users').select('role').eq('id', user.id).single();
         isMaster = profile?.role === 'Master';
@@ -196,7 +196,7 @@ export async function deleteTenantConfig(userId: string) {
 
     if (!user) throw new Error('Unauthorized');
 
-    let isMaster = user.user_metadata.role === 'Master';
+    let isMaster = false; // papel vem so do banco: user_metadata e editavel pelo proprio usuario
     if (!isMaster) {
         const { data: profile } = await supabase.from('users').select('role').eq('id', user.id).single();
         isMaster = profile?.role === 'Master';
