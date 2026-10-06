@@ -525,7 +525,14 @@ const Nexus: React.FC<{ credentials: Credentials; user: User; permissions: any; 
                 activeCrmTab={activeCrmTab}
                 setActiveCrmTab={setActiveCrmTab}
                 selectedUserId={selectedUserId}
-                onSuccess={fetchAll}
+                onSuccess={(savedPerson) => {
+                    setPersons(prev => {
+                        const exists = prev.find(p => p.id === savedPerson.id);
+                        if (exists) return prev.map(p => p.id === savedPerson.id ? savedPerson : p);
+                        return [savedPerson, ...prev];
+                    });
+                    fetchAll();
+                }}
             />
 
             {/* Task Drawer (Slide-over Workflow Pattern) */}

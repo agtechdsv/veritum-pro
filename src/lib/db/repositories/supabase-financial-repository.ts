@@ -27,6 +27,16 @@ export class SupabaseFinancialRepository implements IFinancialRepository {
         return data || [];
     }
 
+    async listAll(): Promise<FinancialTransaction[]> {
+        const { data, error } = await this.client
+            .from('financial_transactions')
+            .select('*')
+            .order('transaction_date', { ascending: false });
+
+        if (error) throw error;
+        return data || [];
+    }
+
     async getById(id: string): Promise<FinancialTransaction | null> {
         const { data, error } = await this.client
             .from('financial_transactions')

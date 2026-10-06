@@ -260,6 +260,8 @@ CREATE TABLE public.financial_transactions (
   lawsuit_id UUID REFERENCES public.lawsuits(id) ON DELETE SET NULL,
   person_id UUID REFERENCES public.persons(id) ON DELETE SET NULL,
   status TEXT CHECK (status IN ('Pago', 'Pendente', 'Cancelado')) DEFAULT 'Pendente',
+  invoice_url TEXT,
+  asaas_payment_id TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );

@@ -3,6 +3,7 @@ import { FinancialTransaction } from '@/types';
 export interface IFinancialRepository {
     listByLawsuit(lawsuitId: string): Promise<FinancialTransaction[]>;
     listByPerson(personId: string): Promise<FinancialTransaction[]>;
+    listAll(): Promise<FinancialTransaction[]>;
     getById(id: string): Promise<FinancialTransaction | null>;
     save(transaction: Partial<FinancialTransaction>): Promise<FinancialTransaction>;
     delete(id: string): Promise<void>;

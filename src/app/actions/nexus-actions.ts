@@ -113,6 +113,8 @@ export async function listFinancialTransactions(lawsuitId?: string, personId?: s
             data = await repo.listByLawsuit(lawsuitId);
         } else if (personId) {
             data = await repo.listByPerson(personId);
+        } else {
+            data = await repo.listAll();
         }
         
         return { data };

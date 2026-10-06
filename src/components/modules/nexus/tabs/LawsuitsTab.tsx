@@ -91,7 +91,7 @@ export const LawsuitsTab = ({
                         placeholder={t('modules.nexus.processes.searchPlaceholder')}
                         value={lawsuitSearch}
                         onChange={e => setLawsuitSearch(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
+                        className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-base font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
                     />
                 </div>
             </div>
@@ -99,7 +99,7 @@ export const LawsuitsTab = ({
                 <select
                     value={lawsuitStatusFilter}
                     onChange={e => setLawsuitStatusFilter(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
+                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-base font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
                 >
                     <option value="">⚖️ {t('common.filters.allStatuses')}</option>
                     {Object.entries(t('common.statuses.lawsuit', { returnObjects: true }) as Record<string, string>).map(([key, val]) => <option key={key} value={val}>{val}</option>)}
@@ -109,7 +109,7 @@ export const LawsuitsTab = ({
                 <select
                     value={lawsuitLawyerFilter}
                     onChange={e => setLawsuitLawyerFilter(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
+                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-base font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
                 >
                     <option value="">👤 {t('common.filters.allLawyers')}</option>
                     {team.map(t_ => <option key={t_.id} value={t_.id}>{t_.full_name}</option>)}
@@ -172,7 +172,7 @@ export const LawsuitsTab = ({
                                 setIsLawsuitModalOpen(true); 
                                 setActiveLawsuitTab('basic'); 
                             }}
-                            className="bg-slate-800 hover:bg-indigo-600 dark:bg-white dark:hover:bg-indigo-500 dark:text-slate-900 text-white font-black uppercase tracking-widest text-[10px] px-6 py-3 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-xl hover:shadow-indigo-500/30 hover:-translate-y-1"
+                            className="bg-slate-800 hover:bg-indigo-600 dark:bg-white dark:hover:bg-indigo-500 dark:text-slate-900 text-white font-black uppercase tracking-widest text-base px-6 py-3 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-xl hover:shadow-indigo-500/30 hover:-translate-y-1"
                         >
                             <Plus size={14} /> Novo Processo
                         </button>
@@ -205,15 +205,15 @@ export const LawsuitsTab = ({
                                                     status === 'Encerrado' ? 'bg-rose-500' :
                                                     status === 'Arquivado' ? 'bg-slate-400' : 'bg-amber-500'
                                                 }`} />
-                                                <h3 className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">{status}</h3>
-                                                <span className="ml-2 px-2 py-0.5 bg-white dark:bg-slate-800 rounded-lg text-[10px] border border-slate-200 dark:border-slate-800 font-bold">
+                                                <h3 className="text-base font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">{status}</h3>
+                                                <span className="ml-2 px-2 py-0.5 bg-white dark:bg-slate-800 rounded-lg text-base border border-slate-200 dark:border-slate-800 font-bold">
                                                     {filteredLawsuits.filter(l => l.status === status).length}
                                                 </span>
                                             </div>
                                         </div>
                                         <div className="flex-1 overflow-y-auto no-scrollbar space-y-4 px-1 pb-6">
                                             {filteredLawsuits.filter(l => l.status === status).length === 0 ? (
-                                                <div className="py-20 text-center text-[10px] font-bold text-slate-300 italic uppercase tracking-widest">Vazio</div>
+                                                <div className="py-20 text-center text-base font-bold text-slate-300 italic uppercase tracking-widest">Vazio</div>
                                             ) : (
                                                 filteredLawsuits.filter(l => l.status === status).map(law => (
                                                     <div 
@@ -257,19 +257,19 @@ export const LawsuitsTab = ({
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        <h4 className="font-bold text-slate-800 dark:text-white text-xs mb-3 line-clamp-2 leading-snug uppercase tracking-tight">{law.case_title}</h4>
+                                                        <h4 className="font-bold text-slate-800 dark:text-white text-base mb-3 line-clamp-2 leading-snug uppercase tracking-tight">{law.case_title}</h4>
                                                         
                                                         <div className="flex items-center gap-2 mb-4">
-                                                            <div className="w-6 h-6 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 flex items-center justify-center font-black text-[9px]">
+                                                            <div className="w-6 h-6 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 flex items-center justify-center font-black text-[11px]">
                                                                 {persons.find(p => p.id === law.author_id)?.full_name?.charAt(0) || 'C'}
                                                             </div>
-                                                            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 truncate">
+                                                            <span className="text-base font-bold text-slate-500 dark:text-slate-400 truncate">
                                                                 {persons.find(p => p.id === law.author_id)?.full_name || 'Contestação'}
                                                             </span>
                                                         </div>
 
                                                         <div className="flex items-center justify-between pt-3 border-t border-slate-50 dark:border-slate-800">
-                                                            <div className="text-[9px] font-black text-emerald-600 dark:text-emerald-400">
+                                                            <div className="text-[11px] font-black text-emerald-600 dark:text-emerald-400">
                                                                 {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(law.value || 0)}
                                                             </div>
                                                             <div className="flex items-center gap-1.5">
@@ -303,12 +303,12 @@ export const LawsuitsTab = ({
                                     <table className="w-full text-left border-collapse">
                                         <thead>
                                             <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
-                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.table.headers.cnj')}</th>
-                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.modals.lawsuit.labelTitle')}</th>
-                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('common.client')}</th>
-                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('common.status')}</th>
-                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.modals.lawsuit.labelValue')}</th>
-                                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">{t('modules.nexus.table.headers.actions')}</th>
+                                                <th className="px-6 py-4 text-base font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.table.headers.cnj')}</th>
+                                                <th className="px-6 py-4 text-base font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.modals.lawsuit.labelTitle')}</th>
+                                                <th className="px-6 py-4 text-base font-black text-slate-400 uppercase tracking-widest">{t('common.client')}</th>
+                                                <th className="px-6 py-4 text-base font-black text-slate-400 uppercase tracking-widest">{t('common.status')}</th>
+                                                <th className="px-6 py-4 text-base font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.modals.lawsuit.labelValue')}</th>
+                                                <th className="px-6 py-4 text-base font-black text-slate-400 uppercase tracking-widest text-right">{t('modules.nexus.table.headers.actions')}</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
@@ -333,18 +333,18 @@ export const LawsuitsTab = ({
                                             ) : filteredLawsuits.map((law) => (
                                                 <tr key={law.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors group">
                                                     <td className="px-6 py-4">
-                                                        <div className="font-mono text-sm font-bold text-indigo-600 dark:text-indigo-400">{law.cnj_number}</div>
+                                                        <div className="font-mono text-base font-bold text-indigo-600 dark:text-indigo-400">{law.cnj_number}</div>
                                                     </td>
                                                     <td className="px-6 py-4">
                                                         <div className="font-bold text-slate-700 dark:text-slate-200">{law.case_title}</div>
-                                                        <div className="text-[10px] text-slate-400 font-bold uppercase">{law.sphere}</div>
+                                                        <div className="text-base text-slate-400 font-bold uppercase">{law.sphere}</div>
                                                     </td>
                                                     <td className="px-6 py-4">
                                                         <div className="flex items-center gap-2">
-                                                            <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 flex items-center justify-center font-black text-xs">
+                                                            <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 flex items-center justify-center font-black text-base">
                                                                 {persons.find(p => p.id === law.author_id)?.full_name?.charAt(0) || 'C'}
                                                             </div>
-                                                            <span className="font-bold text-slate-600 dark:text-slate-300 text-sm">
+                                                            <span className="font-bold text-slate-600 dark:text-slate-300 text-base">
                                                                 {persons.find(p => p.id === law.author_id)?.full_name || 'Contestação'}
                                                             </span>
                                                         </div>
@@ -473,8 +473,8 @@ export const LawsuitsTab = ({
                                             <div key={law.id} className="bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden flex flex-col h-full">
                                                 <div className="flex justify-between items-start mb-4">
                                                     <div className="flex flex-col">
-                                                        <span className="text-[10px] font-mono font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-tight">{law.cnj_number}</span>
-                                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">{law.sphere}</span>
+                                                        <span className="text-base font-mono font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-tight">{law.cnj_number}</span>
+                                                        <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest mt-1">{law.sphere}</span>
                                                     </div>
                                                     <div className="flex items-center gap-2">
                                                         <button
@@ -492,7 +492,7 @@ export const LawsuitsTab = ({
 
                                                 <div className="flex flex-col gap-2 mb-6">
                                                     {author && (
-                                                        <div className="flex items-center gap-2 text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-900/10 p-2 rounded-xl">
+                                                        <div className="flex items-center gap-2 text-base font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-900/10 p-2 rounded-xl">
                                                             <UserIcon size={12} /> <span className="truncate">{author.full_name}</span>
                                                         </div>
                                                     )}
@@ -500,8 +500,8 @@ export const LawsuitsTab = ({
 
                                                 <div className="mt-auto pt-4 border-t border-slate-50 dark:border-slate-800 flex items-center justify-between">
                                                     <div className="flex flex-col">
-                                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Valor da Causa</span>
-                                                        <span className="text-sm font-black text-slate-800 dark:text-white">
+                                                        <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Valor da Causa</span>
+                                                        <span className="text-base font-black text-slate-800 dark:text-white">
                                                             {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(law.value || 0)}
                                                         </span>
                                                     </div>

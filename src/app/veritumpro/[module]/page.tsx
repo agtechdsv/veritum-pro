@@ -163,7 +163,7 @@ export default function DynamicModulePage() {
         case 'sentinel': return <Sentinel credentials={credentials} user={user} permissions={planPermissions.find(p => normalize(p.suite_key) === 'sentinel')} />;
         case 'nexus': return <Nexus credentials={credentials} user={user} permissions={planPermissions.find(p => normalize(p.suite_key) === 'nexus')} selectedClientId={selectedClientId} allClients={allClients} onSelectClient={onSelectClient} />;
         case 'scriptor': return <Scriptor credentials={credentials} user={user} permissions={planPermissions.find(p => normalize(p.suite_key) === 'scriptor')} />;
-        case 'valorem': return <Valorem credentials={credentials} user={user} permissions={planPermissions.find(p => normalize(p.suite_key) === 'valorem')} />;
+        case 'valorem': return <Valorem credentials={credentials} user={user} permissions={planPermissions.find(p => normalize(p.suite_key) === 'valorem')} selectedClientId={selectedClientId} allClients={allClients} onSelectClient={onSelectClient} />;
         case 'cognitio': return <Cognitio credentials={credentials} user={user} permissions={planPermissions.find(p => normalize(p.suite_key) === 'cognitio')} />;
         case 'vox': return <Vox credentials={credentials} user={user} permissions={planPermissions.find(p => normalize(p.suite_key) === 'vox')} />;
         case 'intelligence': return <IntelligenceHub credentials={credentials} user={user} permissions={planPermissions.find(p => normalize(p.suite_key) === 'intelligence')} targetUserId={selectedClientId} />;

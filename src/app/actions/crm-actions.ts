@@ -5,6 +5,7 @@ import { RepositoryFactory } from '@/lib/db/repositories/repository-factory';
 import { createMasterServerClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { decrypt } from '@/lib/security';
+import { revalidatePath } from 'next/cache';
 
 /**
  * Helper to resolve credentials and preferences securely on the server.
@@ -133,7 +134,13 @@ export async function savePerson(person: Partial<Person>, targetUserId?: string)
         // Auto-inject workspace_id from the security context to guarantee data isolation
         const personWithContext = { ...person, workspace_id: preferences.user_id };
 
-        return await repo.save(personWithContext);
+        const saved = await repo.save(personWithContext);
+        
+        revalidatePath('/veritumpro/nexus');
+        revalidatePath('/veritumpro/pessoas');
+        revalidatePath('/veritumpro/valorem');
+        
+        return saved;
     } catch (error: any) {
         console.error('Server Action Error (savePerson):', error.message);
         throw new Error(error.message || 'Error saving person');
@@ -144,7 +151,13 @@ export async function deletePerson(id: string, targetUserId?: string) {
     try {
         const { credentials, preferences } = await resolveSecurityContext(targetUserId);
         const repo = RepositoryFactory.getPersonRepository(credentials, preferences);
-        return await repo.delete(id);
+        const result = await repo.delete(id);
+        
+        revalidatePath('/veritumpro/nexus');
+        revalidatePath('/veritumpro/pessoas');
+        revalidatePath('/veritumpro/valorem');
+        
+        return result;
     } catch (error: any) {
         console.error('Server Action Error (deletePerson):', error.message);
         throw new Error(error.message || 'Error deleting person');

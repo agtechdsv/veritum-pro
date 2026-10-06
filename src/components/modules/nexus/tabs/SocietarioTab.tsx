@@ -112,7 +112,7 @@ export const SocietarioTab: React.FC<SocietarioTabProps> = ({
                                 setIsEntityModalOpen(true);
                                 setActiveEntityTab('basic');
                             }}
-                            className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white font-black uppercase tracking-widest text-[10px] px-6 py-3 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-xl hover:shadow-indigo-500/30 hover:-translate-y-1"
+                            className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white font-black uppercase tracking-widest text-base px-6 py-3 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-xl hover:shadow-indigo-500/30 hover:-translate-y-1"
                         >
                             <Plus size={14} /> {t('modules.nexus.corporate.newEntity')}
                         </button>
@@ -145,15 +145,15 @@ export const SocietarioTab: React.FC<SocietarioTabProps> = ({
                                                     status === 'Baixada' ? 'bg-rose-500' :
                                                     status === 'Inativa' ? 'bg-slate-400' : 'bg-amber-500'
                                                 }`} />
-                                                <h3 className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">{status}</h3>
-                                                <span className="ml-2 px-2 py-0.5 bg-white dark:bg-slate-900 rounded-lg text-[10px] border border-slate-200 dark:border-slate-800 font-bold">
+                                                <h3 className="text-base font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">{status}</h3>
+                                                <span className="ml-2 px-2 py-0.5 bg-white dark:bg-slate-900 rounded-lg text-base border border-slate-200 dark:border-slate-800 font-bold">
                                                     {filteredEntities.filter(e => e.status === status).length}
                                                 </span>
                                             </div>
                                         </div>
                                         <div className="flex-1 overflow-y-auto no-scrollbar space-y-4 px-1 pb-6">
                                             {filteredEntities.filter(e => e.status === status).length === 0 ? (
-                                                <div className="py-20 text-center text-[10px] font-bold text-slate-300 italic uppercase tracking-widest">{t('common.empty')}</div>
+                                                <div className="py-20 text-center text-base font-bold text-slate-300 italic uppercase tracking-widest">{t('common.empty')}</div>
                                             ) : (
                                                 filteredEntities.filter(e => e.status === status).map(entity => (
                                                     <div
@@ -196,16 +196,16 @@ export const SocietarioTab: React.FC<SocietarioTabProps> = ({
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        <h4 className="font-bold text-slate-800 dark:text-white text-xs mb-3 line-clamp-2 leading-snug uppercase tracking-tight">{entity.legal_name}</h4>
+                                                        <h4 className="font-bold text-slate-800 dark:text-white text-base mb-3 line-clamp-2 leading-snug uppercase tracking-tight">{entity.legal_name}</h4>
 
                                                         <div className="flex flex-col gap-2 mb-4">
-                                                            <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                                                            <div className="text-base font-bold text-slate-500 dark:text-slate-400">
                                                                 {entity.cnpj || t('common.notApplicable')}
                                                             </div>
                                                         </div>
 
                                                         <div className="flex items-center justify-between pt-3 border-t border-slate-50 dark:border-slate-800">
-                                                            <div className="text-[10px] font-black text-emerald-600 dark:text-emerald-400">
+                                                            <div className="text-base font-black text-emerald-600 dark:text-emerald-400">
                                                                 {entity.total_capital ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(entity.total_capital) : '-'}
                                                             </div>
                                                             <div className="flex items-center gap-1">
@@ -230,28 +230,28 @@ export const SocietarioTab: React.FC<SocietarioTabProps> = ({
                                 <table className="w-full text-left border-collapse">
                                     <thead>
                                         <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
-                                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('common.client')}</th>
-                                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.corporate.table.headers.cnpj')}</th>
-                                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.corporate.labels.type')}</th>
-                                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.corporate.table.headers.capital')}</th>
-                                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('common.status')}</th>
-                                            <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">{t('common.actions')}</th>
+                                            <th className="px-6 py-4 text-base font-black text-slate-400 uppercase tracking-widest">{t('common.client')}</th>
+                                            <th className="px-6 py-4 text-base font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.corporate.table.headers.cnpj')}</th>
+                                            <th className="px-6 py-4 text-base font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.corporate.labels.type')}</th>
+                                            <th className="px-6 py-4 text-base font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.corporate.table.headers.capital')}</th>
+                                            <th className="px-6 py-4 text-base font-black text-slate-400 uppercase tracking-widest">{t('common.status')}</th>
+                                            <th className="px-6 py-4 text-base font-black text-slate-400 uppercase tracking-widest text-right">{t('common.actions')}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
                                         {filteredEntities.length === 0 ? (
                                             <tr>
-                                                <td colSpan={6} className="px-6 py-20 text-center text-slate-500 font-bold text-sm">{t('modules.nexus.corporate.empty')}</td>
+                                                <td colSpan={6} className="px-6 py-20 text-center text-slate-500 font-bold text-base">{t('modules.nexus.corporate.empty')}</td>
                                             </tr>
                                         ) : filteredEntities.map((entity: any) => (
                                             <tr key={entity.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors group">
                                                 <td className="px-6 py-4">
-                                                    <div className="font-bold text-slate-700 dark:text-slate-200 text-sm whitespace-nowrap">{entity.legal_name}</div>
-                                                    <div className="text-[10px] text-slate-400 font-bold">{entity.trading_name || t('modules.nexus.corporate.labels.noTradingName')}</div>
+                                                    <div className="font-bold text-slate-700 dark:text-slate-200 text-base whitespace-nowrap">{entity.legal_name}</div>
+                                                    <div className="text-base text-slate-400 font-bold">{entity.trading_name || t('modules.nexus.corporate.labels.noTradingName')}</div>
                                                 </td>
-                                                <td className="px-6 py-4 text-xs font-bold text-slate-500">{entity.cnpj || t('common.notApplicable')}</td>
+                                                <td className="px-6 py-4 text-base font-bold text-slate-500">{entity.cnpj || t('common.notApplicable')}</td>
                                                 <td className="px-6 py-4">
-                                                    <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg text-[10px] font-black uppercase">
+                                                    <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg text-base font-black uppercase">
                                                         {entity.entity_type}
                                                     </span>
                                                 </td>
@@ -353,23 +353,23 @@ export const SocietarioTab: React.FC<SocietarioTabProps> = ({
                                         <h3 className="font-black text-slate-800 dark:text-white text-xl mb-1 line-clamp-1 truncate uppercase tracking-tighter leading-tight">
                                             {entity.legal_name}
                                         </h3>
-                                        <p className="text-xs font-bold text-slate-400 mb-6 uppercase tracking-widest">{entity.cnpj || t('common.notApplicable')}</p>
+                                        <p className="text-base font-bold text-slate-400 mb-6 uppercase tracking-widest">{entity.cnpj || t('common.notApplicable')}</p>
 
                                         <div className="grid grid-cols-2 gap-3 mb-8">
                                             <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl">
-                                                <span className="text-[9px] font-black text-slate-400 uppercase block mb-1">{t('modules.nexus.corporate.labels.type')}</span>
-                                                <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200">{entity.entity_type}</span>
+                                                <span className="text-[11px] font-black text-slate-400 uppercase block mb-1">{t('modules.nexus.corporate.labels.type')}</span>
+                                                <span className="text-base font-bold text-slate-700 dark:text-slate-200">{entity.entity_type}</span>
                                             </div>
                                             <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl">
-                                                <span className="text-[9px] font-black text-slate-400 uppercase block mb-1">{t('modules.nexus.corporate.labels.regime')}</span>
-                                                <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200 truncate">{entity.tax_regime || t('common.notApplicable')}</span>
+                                                <span className="text-[11px] font-black text-slate-400 uppercase block mb-1">{t('modules.nexus.corporate.labels.regime')}</span>
+                                                <span className="text-base font-bold text-slate-700 dark:text-slate-200 truncate">{entity.tax_regime || t('common.notApplicable')}</span>
                                             </div>
                                         </div>
 
                                         <div className="bg-indigo-50/50 dark:bg-indigo-900/10 p-4 rounded-[2rem] mb-6 flex items-center justify-between border border-indigo-100 dark:border-indigo-800/50">
                                             <div>
                                                 <span className="text-[8px] font-black text-indigo-600 uppercase block mb-0.5">{t('modules.nexus.corporate.labels.capital')}</span>
-                                                <span className="text-sm font-black text-slate-800 dark:text-white">
+                                                <span className="text-base font-black text-slate-800 dark:text-white">
                                                     {entity.total_capital ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(entity.total_capital) : 'R$ 0,00'}
                                                 </span>
                                             </div>
@@ -381,7 +381,7 @@ export const SocietarioTab: React.FC<SocietarioTabProps> = ({
                                         <div className="mt-auto flex items-center gap-2">
                                             <button 
                                                 onClick={() => handleEditEntity(entity, 'qsa')}
-                                                className="flex-1 bg-slate-900 dark:bg-white dark:text-slate-900 text-white py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-slate-100 transition-all active:scale-95 shadow-lg"
+                                                className="flex-1 bg-slate-900 dark:bg-white dark:text-slate-900 text-white py-3 rounded-2xl text-base font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-slate-100 transition-all active:scale-95 shadow-lg"
                                             >
                                                 {t('modules.nexus.corporate.actions.manageQSA')}
                                             </button>

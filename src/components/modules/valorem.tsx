@@ -14,10 +14,23 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from '@/contexts/language-context';
 import { toast } from '@/components/ui/toast';
 import { createMasterClient } from '@/lib/supabase/master';
-import { sendPaymentEmailAction, getOrganizationByAdmin } from '@/app/actions/nexus-actions';
+import { sendPaymentEmailAction, getOrganizationByAdmin, listFinancialTransactions, saveFinancialTransaction, deleteFinancialTransaction, listLawsuits } from '@/app/actions/nexus-actions';
+import { listPersons } from '@/app/actions/crm-actions';
 import { generatePaymentLinkEmailHtml } from '@/lib/email-templates';
+import { FintechOnboarding } from './fintech-onboarding';
+import { generateClientInvoiceAction } from '@/app/veritumpro/fintech/actions';
+import { Loader2 } from 'lucide-react';
 
-const Valorem: React.FC<{ credentials: Credentials; user: User; permissions: any }> = ({ credentials, user, permissions }) => {
+interface ValoremProps {
+    credentials: Credentials;
+    user: User;
+    permissions: any;
+    selectedClientId?: string | null;
+    allClients?: any[];
+    onSelectClient?: (clientId: string) => Promise<void>;
+}
+
+const Valorem: React.FC<ValoremProps> = ({ credentials, user, permissions, selectedClientId, allClients = [], onSelectClient }) => {
     // Data State
     const [transactions, setTransactions] = useState<FinancialTransaction[]>([]);
     const [lawsuits, setLawsuits] = useState<Lawsuit[]>([]);
@@ -32,45 +45,50 @@ const Valorem: React.FC<{ credentials: Credentials; user: User; permissions: any
 
     // Master Selection States
     const isMaster = user.role === 'Master';
-    const [selectedUserId, setSelectedUserId] = useState<string>(isMaster ? '' : user.id);
-    const [allUsers, setAllUsers] = useState<any[]>([]);
+    const effectiveClientId = selectedClientId || (isMaster ? '' : user.id);
     const [officeData, setOfficeData] = useState<any>(null);
+    const [subAccount, setSubAccount] = useState<any>(null);
+    const [loadingFintech, setLoadingFintech] = useState(true);
+    const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
+    const [prevClientId, setPrevClientId] = useState(effectiveClientId);
 
-    const supabase = createClient(credentials.supabaseUrl, credentials.supabaseAnonKey);
+    if (effectiveClientId !== prevClientId) {
+        setPrevClientId(effectiveClientId);
+        setSubAccount(null);
+        setLoadingFintech(true);
+    }
 
-    useEffect(() => {
-        if (isMaster) {
-            fetchClients();
-        }
-    }, [isMaster]);
+    const supabase = React.useMemo(() => createClient(credentials.supabaseUrl, credentials.supabaseAnonKey), [credentials.supabaseUrl, credentials.supabaseAnonKey]);
 
     useEffect(() => {
         fetchData();
-    }, [selectedUserId]);
+    }, [effectiveClientId, credentials]); // Fetch when client or credentials change
 
     useEffect(() => {
-        const fetchOffice = async () => {
-            const adminId = selectedUserId || user.id;
+        const fetchOfficeAndFintech = async () => {
+            const adminId = effectiveClientId || user.id;
             if (adminId) {
+                setLoadingFintech(true);
                 const data = await getOrganizationByAdmin(adminId);
                 if (data) setOfficeData(data);
+                
+                const supMaster = createMasterClient();
+                const { data: fintechData } = await supMaster
+                    .from('asaas_sub_accounts')
+                    .select('*')
+                    .eq('admin_id', adminId)
+                    .maybeSingle();
+                setSubAccount(fintechData);
+                setLoadingFintech(false);
+            } else {
+                setLoadingFintech(false);
             }
         };
-        fetchOffice();
-    }, [selectedUserId, user.id]);
-
-    const fetchClients = async () => {
-        const supMaster = createMasterClient();
-        const { data } = await supMaster
-            .from('users')
-            .select('id, name, email, role')
-            .in('role', ['Sócio-Administrador', 'Sócio Administrador'])
-            .order('name');
-        if (data) setAllUsers(data);
-    };
+        fetchOfficeAndFintech();
+    }, [effectiveClientId, user.id]);
 
     const fetchData = async () => {
-        if (isMaster && !selectedUserId) {
+        if (isMaster && !effectiveClientId) {
             setTransactions([]);
             setLawsuits([]);
             setPersons([]);
@@ -85,19 +103,14 @@ const Valorem: React.FC<{ credentials: Credentials; user: User; permissions: any
         setPersons([]);
 
         try {
-            // Note: In a real multi-tenant BYODB setup, we would need to dynamically switch 
-            // the supabase client instance based on the selectedUserId's credentials.
-            // For now, we assume the current client has access or we filter by user_id if unified.
-            // If it's pure BYODB, this 'supabase' instance should be the client-specific one.
-
             const [txRes, lawRes, personRes] = await Promise.all([
-                supabase.from('financial_transactions').select('*').order('transaction_date', { ascending: false }),
-                supabase.from('lawsuits').select('*'),
-                supabase.from('persons').select('*')
+                listFinancialTransactions(undefined, undefined, effectiveClientId),
+                listLawsuits('', effectiveClientId),
+                listPersons('', effectiveClientId)
             ]);
-            setTransactions(txRes.data || []);
-            setLawsuits(lawRes.data || []);
-            setPersons(personRes.data || []);
+            setTransactions(txRes?.data || []);
+            setLawsuits(lawRes?.data || []);
+            setPersons(personRes?.data || []);
         } catch (err) {
             console.error('Error fetching financial data:', err);
             toast.error('Erro ao carregar dados financeiros');
@@ -109,18 +122,84 @@ const Valorem: React.FC<{ credentials: Credentials; user: User; permissions: any
     const handleSaveTransaction = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            if (editingTx?.id) {
-                const { error } = await supabase.from('financial_transactions').update(editingTx).eq('id', editingTx.id);
-                if (error) throw error;
-            } else {
-                const { error } = await supabase.from('financial_transactions').insert([editingTx]);
-                if (error) throw error;
-            }
+            if (!editingTx) return;
+            await saveFinancialTransaction(editingTx, effectiveClientId);
             setIsModalOpen(false);
             setEditingTx(null);
             fetchData();
         } catch (err) {
             console.error('Error saving transaction:', err);
+            toast.error('Erro ao salvar movimentação.');
+        }
+    };
+
+    const handleGenerateInvoice = async () => {
+        if (!editingTx?.person_id || !editingTx?.amount || !editingTx?.transaction_date) {
+            toast.error('Preencha Cliente, Valor e Data de Vencimento.');
+            return;
+        }
+
+        const person = persons.find(p => p.id === editingTx.person_id);
+        if (!person || !person.document) {
+            toast.error('O cliente precisa ter o documento cadastrado no Perfil para gerar boleto/Pix.');
+            return;
+        }
+
+        setIsGeneratingInvoice(true);
+        try {
+            const adminId = effectiveClientId || user.id;
+            const res = await generateClientInvoiceAction({
+                clientId: adminId,
+                payer: {
+                    name: person.full_name,
+                    cpfCnpj: person.document,
+                    email: person.email,
+                    phone: person.phone
+                },
+                amount: editingTx.amount,
+                description: editingTx.title || 'Cobrança de Serviços',
+                dueDate: editingTx.transaction_date.split('T')[0]
+            });
+
+            if (res.error) {
+                toast.error(res.error);
+            } else if (res.payment) {
+                const updatedTx = { 
+                    ...editingTx, 
+                    invoice_url: res.payment.invoiceUrl,
+                    asaas_payment_id: res.payment.id
+                };
+                setEditingTx(updatedTx);
+                
+                // Salvar automaticamente no banco de dados para não perder
+                let localTx = { ...editingTx };
+                if (editingTx.id) {
+                    localTx = await saveFinancialTransaction({
+                        id: editingTx.id,
+                        invoice_url: res.payment.invoiceUrl,
+                        asaas_payment_id: res.payment.id
+                    }, effectiveClientId) || localTx;
+                } else {
+                    const txToSave = {
+                        ...editingTx,
+                        invoice_url: res.payment.invoiceUrl,
+                        asaas_payment_id: res.payment.id
+                    };
+                    const savedTx = await saveFinancialTransaction(txToSave, effectiveClientId);
+                    if (savedTx) {
+                        localTx = savedTx;
+                        setEditingTx(savedTx);
+                    }
+                }
+                fetchData(); // Atualiza a lista por trás
+                
+                toast.success('Cobrança bancária gerada e salva com sucesso!');
+            }
+        } catch (err: any) {
+            console.error('Falha de conexão com a infraestrutura.', err);
+            toast.error('Falha na comunicação com a API de Pagamentos.');
+        } finally {
+            setIsGeneratingInvoice(false);
         }
     };
 
@@ -175,8 +254,7 @@ const Valorem: React.FC<{ credentials: Credentials; user: User; permissions: any
         if (!confirm('Deseja realmente excluir esta transação?')) return;
         setLoading(true);
         try {
-            const { error } = await supabase.from('financial_transactions').delete().eq('id', id);
-            if (error) throw error;
+            await deleteFinancialTransaction(id, effectiveClientId);
             setTransactions(prev => prev.filter(t => t.id !== id));
             toast.success('Transação excluída');
         } catch (err) { toast.error('Erro ao excluir transação'); }
@@ -292,13 +370,13 @@ const Valorem: React.FC<{ credentials: Credentials; user: User; permissions: any
                         </div>
                         <div className="relative">
                             <select
-                                value={selectedUserId}
-                                onChange={(e) => setSelectedUserId(e.target.value)}
+                                value={effectiveClientId}
+                                onChange={(e) => onSelectClient && onSelectClient(e.target.value)}
                                 className="bg-slate-50 dark:bg-slate-800 border-none rounded-2xl px-6 py-3 text-xs font-black tracking-widest text-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-600 outline-none transition-all cursor-pointer min-w-[260px] appearance-none pr-10"
                             >
                                 <option value="">{t('modules.valorem.clientPlaceholder')}</option>
                                 <optgroup label={t('modules.valorem.clientGroup')}>
-                                    {allUsers.map(u => {
+                                    {allClients.map(u => {
                                         const rawName = typeof u.name === 'object' ? ((u.name as any).pt || (u.name as any).en || '') : (u.name || '');
                                         const formattedName = rawName.toLowerCase().split(' ').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
                                         const formattedEmail = (u.email || '').toLowerCase();
@@ -316,8 +394,51 @@ const Valorem: React.FC<{ credentials: Credentials; user: User; permissions: any
                 )}
             </div>
 
-            {/* Quick Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* Content Conditional Rendering */}
+            {loadingFintech ? (
+                <div className="flex-1 flex items-center justify-center min-h-[400px]">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+                </div>
+            ) : !subAccount && (effectiveClientId || !isMaster) ? (
+                <div className="flex-1 mt-2">
+                    <FintechOnboarding 
+                        user={user} 
+                        officeData={officeData} 
+                        clientId={isMaster ? effectiveClientId : undefined}
+                        onSuccess={(data) => {
+                            setSubAccount(data);
+                            fetchData();
+                        }} 
+                    />
+                </div>
+            ) : (
+                <>
+                    {/* Banner Pendência KYC Asaas */}
+                    {subAccount && subAccount.general_status === 'PENDING' && (
+                        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-5 rounded-3xl mb-6 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm animate-in fade-in slide-in-from-top-2">
+                            <div className="flex items-center gap-4">
+                                <div className="p-3 bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 rounded-xl">
+                                    <AlertCircle size={24} />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-amber-800 dark:text-amber-300">Quase lá! Conta em Análise</h3>
+                                    <p className="text-sm font-medium text-amber-700 dark:text-amber-400 mt-1 max-w-xl">
+                                        Sua conta digital foi pré-aprovada. Para liberar o recebimento de cobranças e saques PIX, é necessário concluir o envio da documentação (KYC).
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => { if(subAccount.onboarding_url) window.open(subAccount.onboarding_url, '_blank') }}
+                                disabled={!subAccount.onboarding_url}
+                                className="bg-amber-500 hover:bg-amber-600 text-white font-black uppercase tracking-widest text-[11px] px-6 py-3 rounded-2xl transition-all shadow-lg hover:-translate-y-0.5 whitespace-nowrap disabled:opacity-50"
+                            >
+                                Enviar Documentos Seguro
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Quick Stats Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-sm">
                     <div>
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('modules.valorem.stats.balance')}</p>
@@ -584,7 +705,7 @@ const Valorem: React.FC<{ credentials: Credentials; user: User; permissions: any
                                             />
                                         </div>
 
-                                        <div className="grid grid-cols-2 gap-6">
+                                        <div className="grid grid-cols-3 gap-6">
                                             <div>
                                                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">{t('modules.valorem.drawer.labelAmount')}</label>
                                                 <input
@@ -598,11 +719,21 @@ const Valorem: React.FC<{ credentials: Credentials; user: User; permissions: any
                                                 />
                                             </div>
                                             <div>
+                                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Vencimento</label>
+                                                <input
+                                                    required
+                                                    type="date"
+                                                    value={editingTx?.transaction_date ? editingTx.transaction_date.split('T')[0] : ''}
+                                                    onChange={e => setEditingTx({ ...editingTx, transaction_date: new Date(e.target.value).toISOString() })}
+                                                    className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all dark:text-white font-bold text-xs uppercase"
+                                                />
+                                            </div>
+                                            <div>
                                                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">{t('modules.valorem.drawer.labelStatus')}</label>
                                                 <select
                                                     value={editingTx?.status || 'Pendente'}
                                                     onChange={e => setEditingTx({ ...editingTx, status: e.target.value as any })}
-                                                    className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all dark:text-white font-bold uppercase tracking-widest text-[10px]"
+                                                    className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all dark:text-white font-bold uppercase tracking-widest text-[10px]"
                                                 >
                                                     <option value="Pendente">{t('modules.valorem.drawer.statuses.pending')}</option>
                                                     <option value="Pago">{t('modules.valorem.drawer.statuses.paid')}</option>
@@ -641,19 +772,51 @@ const Valorem: React.FC<{ credentials: Credentials; user: User; permissions: any
                                         </div>
 
                                         <div className="pt-2">
-                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Link de Pagamento (URL)</label>
-                                            <div className="relative">
-                                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
-                                                    <Link size={16} />
+                                            {editingTx?.entry_type === 'Credit' && subAccount ? (
+                                                <div className="bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/30 rounded-2xl p-6 relative overflow-hidden">
+                                                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -mr-10 -mt-10" />
+                                                    <label className="block text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-3">Automatização Veritum Pay</label>
+                                                    {!editingTx.invoice_url ? (
+                                                        <div className="flex flex-col gap-3">
+                                                            <p className="text-xs text-slate-500 font-medium">Gere boletos e Pix automaticamente com repasse de liquidação.</p>
+                                                            <button 
+                                                                type="button" 
+                                                                onClick={handleGenerateInvoice}
+                                                                disabled={isGeneratingInvoice}
+                                                                className="py-3 px-6 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-emerald-600/20 flex gap-2 items-center justify-center disabled:opacity-50"
+                                                            >
+                                                                {isGeneratingInvoice ? <><Loader2 size={16} className="animate-spin" /> Gerando...</> : <><CreditCard size={16} /> Emitir Boleto / PIX</>}
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex flex-col gap-3">
+                                                            <p className="text-[10px] uppercase font-black tracking-widest text-emerald-600">Fatura Pronta para Envio</p>
+                                                            <input 
+                                                                type="text" 
+                                                                value={editingTx.invoice_url} 
+                                                                readOnly 
+                                                                className="w-full px-4 py-3 bg-white dark:bg-slate-950 border border-emerald-200 dark:border-emerald-800 rounded-xl focus:ring-0 outline-none transition-all dark:text-emerald-400 font-bold text-xs"
+                                                            />
+                                                        </div>
+                                                    )}
                                                 </div>
-                                                <input 
-                                                    type="text" 
-                                                    value={editingTx?.invoice_url || ''} 
-                                                    onChange={e => setEditingTx({ ...editingTx, invoice_url: e.target.value })}
-                                                    className="w-full pl-12 pr-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all dark:text-white font-bold text-sm"
-                                                    placeholder="https://pay.veritum.com/..."
-                                                />
-                                            </div>
+                                            ) : (
+                                                <>
+                                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Link de Pagamento (URL)</label>
+                                                    <div className="relative">
+                                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                                                            <Link size={16} />
+                                                        </div>
+                                                        <input 
+                                                            type="text" 
+                                                            value={editingTx?.invoice_url || ''} 
+                                                            onChange={e => setEditingTx({ ...editingTx, invoice_url: e.target.value })}
+                                                            className="w-full pl-12 pr-6 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all dark:text-white font-bold text-sm"
+                                                            placeholder="https://pay.veritum.com/..."
+                                                        />
+                                                    </div>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -669,6 +832,8 @@ const Valorem: React.FC<{ credentials: Credentials; user: User; permissions: any
                     </div>
                 )}
             </AnimatePresence>
+            </>
+            )}
 
         </div>
     );

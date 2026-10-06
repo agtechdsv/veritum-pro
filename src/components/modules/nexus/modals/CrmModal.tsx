@@ -17,7 +17,7 @@ interface CrmModalProps {
     activeCrmTab: 'basic' | 'advanced';
     setActiveCrmTab: (tab: 'basic' | 'advanced') => void;
     selectedUserId: string;
-    onSuccess?: () => void;
+    onSuccess?: (savedPerson: Person) => void;
 }
 
 export const CrmModal = (props: CrmModalProps) => {
@@ -119,12 +119,12 @@ export const CrmModal = (props: CrmModalProps) => {
 
         try {
             if (!editingPerson) return;
-            await savePerson(editingPerson as Person, selectedUserId);
+            const savedPerson = await savePerson(editingPerson as Person, selectedUserId);
             toast.success(t('management.master.persons.toasts.saveSuccess'));
             setIsCrmModalOpen(false);
             setEditingPerson(null);
             setActiveCrmTab('basic');
-            if (onSuccess) onSuccess();
+            if (onSuccess) onSuccess(savedPerson);
         } catch (error) {
             console.error('Error saving person:', error);
             toast.error(t('management.master.persons.toasts.saveError'));

@@ -149,3 +149,58 @@ export async function deleteFintechSubAccount(id: string) {
         return { error: 'Falha ao remover subconta.' }
     }
 }
+
+import { createAsaasPaymentWithSplit, getMasterWalletId } from '@/lib/asaas-billing-manager'
+
+export async function generateClientInvoiceAction(data: {
+    clientId: string; // ID do Admin (Master ou cliente logado)
+    payer: { name: string; cpfCnpj: string; email?: string; phone?: string; };
+    amount: number;
+    description: string;
+    dueDate: string;
+}) {
+    const masterSupabase = await createMasterServerClient()
+    
+    try {
+        // 1. Encontrar a subconta deste cliente
+        const { data: subAccount, error: subError } = await masterSupabase
+            .from('asaas_sub_accounts')
+            .select('*')
+            .eq('admin_id', data.clientId)
+            .single()
+
+        if (subError || !subAccount?.api_key) {
+            return { error: 'Subconta (Identidade Fintech) não encontrada ou inativa.' }
+        }
+
+        // 2. Localizar Carteira Master
+        const masterWalletId = await getMasterWalletId();
+
+        // 3. O Lucro na emissão (Spread/Markup). Exemplo: R$ 0,50 
+        // O Asaas vai cobrar R$ 1,99. Se quisermos cobrar R$ 2,49 do cliente, a diferença é R$ 0,50
+        const markupVeritum = 0.50; 
+
+        // 4. Mandar para o Asaas!
+        const paymentResult = await createAsaasPaymentWithSplit({
+            subAccountApiKey: subAccount.api_key,
+            customerData: {
+                name: data.payer.name,
+                cpfCnpj: data.payer.cpfCnpj || '00000000000',
+                email: data.payer.email,
+                phone: data.payer.phone
+            },
+            value: data.amount,
+            description: data.description,
+            dueDate: data.dueDate,
+            billingType: 'UNDEFINED', // Deixa Asaas decidir (Boleto/Pix)
+            masterWalletId: masterWalletId,
+            masterMarkupValue: markupVeritum,
+            externalReference: data.clientId
+        });
+
+        return { success: true, payment: paymentResult };
+    } catch (err: any) {
+        console.error('Falha ao gerar cobrança com split:', err);
+        return { error: err.message || 'Falha na comunicação com o Asaas' };
+    }
+}

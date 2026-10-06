@@ -118,7 +118,7 @@ export const TasksTab = ({
                         placeholder={t('common.placeholders.search')}
                         value={filterSearchTerm}
                         onChange={e => setFilterSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
+                        className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-base font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
                     />
                 </div>
             </div>
@@ -126,7 +126,7 @@ export const TasksTab = ({
                 <select
                     value={filterResponsibleId}
                     onChange={e => setFilterResponsibleId(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
+                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-base font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
                 >
                     <option value="">👤 {t('common.filters.allMembers')}</option>
                     {team.map(t_ => <option key={t_.id} value={t_.id}>{t_.full_name}</option>)}
@@ -136,7 +136,7 @@ export const TasksTab = ({
                 <select
                     value={filterLawsuitId}
                     onChange={e => setFilterLawsuitId(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
+                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-base font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white"
                 >
                     <option value="">⚖️ {t('common.filters.allProcesses')}</option>
                     {lawsuits.map(law => <option key={law.id} value={law.id}>{law.cnj_number || law.case_title}</option>)}
@@ -167,20 +167,20 @@ export const TasksTab = ({
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={() => { setEditingTask({ status: 'A Fazer' }); setIsTaskModalOpen(true); setActiveTaskTab('basic'); }}
-                                className="bg-slate-800 text-white px-6 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-slate-900 transition-all shadow-lg active:scale-95"
+                                className="bg-slate-800 text-white px-6 py-1.5 rounded-xl text-base font-bold flex items-center gap-2 hover:bg-slate-900 transition-all shadow-lg active:scale-95"
                             >
                                 <Plus size={14} /> {t('modules.nexus.newTask')}
                             </button>
                             <div className="flex w-72 bg-slate-100 dark:bg-slate-900 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-inner">
                                 <button
                                     onClick={() => setView('kanban')}
-                                    className={`flex-1 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${view === 'kanban' ? 'bg-white dark:bg-indigo-600 text-indigo-600 dark:text-white shadow-md scale-[1.02]' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                    className={`flex-1 px-4 py-2.5 rounded-xl text-base font-black uppercase tracking-widest transition-all ${view === 'kanban' ? 'bg-white dark:bg-indigo-600 text-indigo-600 dark:text-white shadow-md scale-[1.02]' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                                 >
                                     Kanban
                                 </button>
                                 <button
                                     onClick={() => setView('list')}
-                                    className={`flex-1 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${view === 'list' ? 'bg-white dark:bg-indigo-600 text-indigo-600 dark:text-white shadow-md scale-[1.02]' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                    className={`flex-1 px-4 py-2.5 rounded-xl text-base font-black uppercase tracking-widest transition-all ${view === 'list' ? 'bg-white dark:bg-indigo-600 text-indigo-600 dark:text-white shadow-md scale-[1.02]' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                                 >
                                     Lista
                                 </button>
@@ -199,28 +199,28 @@ export const TasksTab = ({
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-8 animate-in fade-in slide-in-from-top-4 duration-500">
                 <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
                     <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.metrics.active')}</p>
+                        <p className="text-base font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.metrics.active')}</p>
                         <p className="text-2xl font-black text-slate-800 dark:text-white">{lawsuits.filter(l => l.status === 'Ativo').length}</p>
                     </div>
                     <div className="p-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 rounded-lg"><Scale size={20} /></div>
                 </div>
                 <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
                     <div>
-                        <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest">{t('modules.nexus.metrics.deadlines')}</p>
+                        <p className="text-base font-black text-rose-500 uppercase tracking-widest">{t('modules.nexus.metrics.deadlines')}</p>
                         <p className="text-2xl font-black text-rose-600">{filteredTasks.filter(t_ => t_.status !== 'Concluído' && (new Date(t_.due_date).getTime() - new Date().getTime()) < 86400000).length}</p>
                     </div>
                     <div className="p-2 bg-rose-50 dark:bg-rose-900/20 text-rose-600 rounded-lg"><Clock size={20} /></div>
                 </div>
                 <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
                     <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.metrics.pending')}</p>
+                        <p className="text-base font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.metrics.pending')}</p>
                         <p className="text-2xl font-black text-slate-800 dark:text-white">{filteredTasks.filter(t_ => t_.status !== 'Concluído').length}</p>
                     </div>
                     <div className="p-2 bg-slate-50 dark:bg-slate-800 text-slate-400 rounded-lg"><CheckCircle2 size={20} /></div>
                 </div>
                 <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
                     <div>
-                        <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">{t('modules.nexus.metrics.completion')}</p>
+                        <p className="text-base font-black text-emerald-500 uppercase tracking-widest">{t('modules.nexus.metrics.completion')}</p>
                         <p className="text-2xl font-black text-emerald-600">
                             {filteredTasks.length > 0 ? Math.round((filteredTasks.filter(t_ => t_.status === 'Concluído').length / filteredTasks.length) * 100) : 0}%
                         </p>
@@ -241,12 +241,12 @@ export const TasksTab = ({
                             onDrop={(e) => { e.preventDefault(); e.currentTarget.classList.remove('bg-indigo-50/50', 'dark:bg-indigo-900/10', 'border-indigo-300', 'dark:border-indigo-800/50'); handleDropTask(e, column); }}
                         >
                             <div className="flex items-center justify-between px-2 mb-2">
-                                <h3 className="font-black text-xs text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                <h3 className="font-black text-base text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
                                     <div className={`w-2 h-2 rounded-full ${column === 'Atrasado' ? 'bg-rose-500' :
                                         column === 'Concluído' ? 'bg-emerald-500' : 'bg-slate-400'
                                         }`} />
                                     {getColumnTranslation(column)}
-                                    <span className="ml-2 px-2 py-0.5 bg-white dark:bg-slate-800 rounded-lg text-[10px] border border-slate-200 dark:border-slate-800 font-bold">
+                                    <span className="ml-2 px-2 py-0.5 bg-white dark:bg-slate-800 rounded-lg text-base border border-slate-200 dark:border-slate-800 font-bold">
                                         {filteredTasks.filter(t_ => t_.status === column).length}
                                     </span>
                                 </h3>
@@ -254,7 +254,7 @@ export const TasksTab = ({
 
                             <div className="flex-1 space-y-4 overflow-y-auto no-scrollbar pb-6 rounded-xl">
                                 {loading ? (
-                                    <div className="py-8 text-center text-slate-400 text-xs font-bold animate-pulse">{t('modules.nexus.empty.syncing')}</div>
+                                    <div className="py-8 text-center text-slate-400 text-base font-bold animate-pulse">{t('modules.nexus.empty.syncing')}</div>
                                 ) : filteredTasks.filter(t_ => t_.status === column).map((task) => {
                                     const law = lawsuits.find(l => l.id === task.lawsuit_id);
                                     const resp = team.find(t_ => t_.id === task.responsible_id);
@@ -280,7 +280,7 @@ export const TasksTab = ({
                                             onClick={() => { setEditingTask(task); setIsTaskModalOpen(true); setActiveTaskTab('basic'); }}
                                         >
                                             <div className="flex justify-between items-start mb-3">
-                                                <span className={`text-[9px] font-black uppercase px-2 py-1 rounded-md border ${getSeverityColor(task.due_date, task.status)}`}>
+                                                <span className={`text-[11px] font-black uppercase px-2 py-1 rounded-md border ${getSeverityColor(task.due_date, task.status)}`}>
                                                     {getPriorityTranslation(task.priority || 'Média')}
                                                 </span>
                                                 <div className="flex gap-1.5 transition-all">
@@ -299,20 +299,20 @@ export const TasksTab = ({
                                                     </button>
                                                 </div>
                                             </div>
-                                            <h4 className="font-bold text-slate-800 dark:text-white text-sm leading-tight mb-3">{task.title}</h4>
-                                            {law && <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 mb-4 flex items-center gap-1"><Scale size={10} /> {law.cnj_number}</p>}
+                                            <h4 className="font-bold text-slate-800 dark:text-white text-base leading-tight mb-3">{task.title}</h4>
+                                            {law && <p className="text-base font-bold text-indigo-600 dark:text-indigo-400 mb-4 flex items-center gap-1"><Scale size={10} /> {law.cnj_number}</p>}
 
                                             <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-50 dark:border-slate-800/50">
                                                 <div className="flex items-center gap-2">
                                                     <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[8px] font-black border border-slate-200 dark:border-slate-700" title={resp?.full_name}>
                                                         {resp?.full_name?.charAt(0) || <UserIcon size={10} />}
                                                     </div>
-                                                    <span className="text-[10px] font-bold text-slate-400 truncate max-w-[80px]">{resp?.full_name?.split(' ')[0]}</span>
+                                                    <span className="text-base font-bold text-slate-400 truncate max-w-[80px]">{resp?.full_name?.split(' ')[0]}</span>
                                                 </div>
                                                 <div className="flex flex-col items-end">
                                                     <div className="flex items-center gap-1 text-slate-400">
                                                         <Calendar size={10} />
-                                                        <span className="text-[10px] font-bold">{new Date(task.due_date).toLocaleDateString(t('locale') === 'en' ? 'en-US' : 'pt-BR', { day: '2-digit', month: 'short' })}</span>
+                                                        <span className="text-base font-bold">{new Date(task.due_date).toLocaleDateString(t('locale') === 'en' ? 'en-US' : 'pt-BR', { day: '2-digit', month: 'short' })}</span>
                                                     </div>
                                                     {task.status !== 'Concluído' && (
                                                         <span className={`text-[8px] font-black uppercase tracking-tighter mt-1 ${urgency.color === 'rose' ? 'text-rose-500 animate-pulse' : 'text-slate-400'}`}>
@@ -335,18 +335,18 @@ export const TasksTab = ({
                             <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
-                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.modals.task.labelTitle')}</th>
-                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('common.status')}</th>
-                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Prioridade</th>
-                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.modals.task.labelDueDate')}</th>
-                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.modals.task.labelResponsible')}</th>
-                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">{t('modules.nexus.table.headers.actions')}</th>
+                                        <th className="px-6 py-4 text-base font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.modals.task.labelTitle')}</th>
+                                        <th className="px-6 py-4 text-base font-black text-slate-400 uppercase tracking-widest">{t('common.status')}</th>
+                                        <th className="px-6 py-4 text-base font-black text-slate-400 uppercase tracking-widest">Prioridade</th>
+                                        <th className="px-6 py-4 text-base font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.modals.task.labelDueDate')}</th>
+                                        <th className="px-6 py-4 text-base font-black text-slate-400 uppercase tracking-widest">{t('modules.nexus.modals.task.labelResponsible')}</th>
+                                        <th className="px-6 py-4 text-base font-black text-slate-400 uppercase tracking-widest text-right">{t('modules.nexus.table.headers.actions')}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
                                     {filteredTasks.length === 0 ? (
                                         <tr>
-                                            <td colSpan={6} className="px-6 py-20 text-center text-slate-500 font-bold text-sm">Nenhuma tarefa encontrada.</td>
+                                            <td colSpan={6} className="px-6 py-20 text-center text-slate-500 font-bold text-base">Nenhuma tarefa encontrada.</td>
                                         </tr>
                                     ) : filteredTasks.map((task) => {
                                         const resp = team.find(t_ => t_.id === task.responsible_id);
@@ -356,13 +356,13 @@ export const TasksTab = ({
                                                 <td className="px-6 py-4">
                                                     <div className="font-bold text-slate-700 dark:text-slate-200">{task.title}</div>
                                                     {lawsuits.find(l => l.id === task.lawsuit_id) && (
-                                                        <div className="text-[10px] text-indigo-500 font-bold uppercase mt-1">
+                                                        <div className="text-base text-indigo-500 font-bold uppercase mt-1">
                                                             ⚖️ {lawsuits.find(l => l.id === task.lawsuit_id)?.cnj_number}
                                                         </div>
                                                     )}
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    <span className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase border ${
+                                                    <span className={`px-2 py-1 rounded-lg text-[11px] font-black uppercase border ${
                                                         task.status === 'Concluído' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
                                                         task.status === 'Atrasado' ? 'bg-rose-50 text-rose-600 border-rose-100' :
                                                         'bg-slate-50 text-slate-600 border-slate-100'
@@ -371,7 +371,7 @@ export const TasksTab = ({
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    <span className={`text-[10px] font-bold ${
+                                                    <span className={`text-base font-bold ${
                                                         task.priority === 'Urgente' ? 'text-rose-600' :
                                                         task.priority === 'Alta' ? 'text-amber-600' :
                                                         'text-slate-500'
@@ -381,20 +381,20 @@ export const TasksTab = ({
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <div className="flex flex-col">
-                                                        <div className="text-sm font-bold text-slate-600 dark:text-slate-300">
+                                                        <div className="text-base font-bold text-slate-600 dark:text-slate-300">
                                                             {new Date(task.due_date).toLocaleDateString('pt-BR')}
                                                         </div>
-                                                        <span className={`text-[10px] font-bold ${urgency.color === 'rose' ? 'text-rose-500' : 'text-slate-400'}`}>
+                                                        <span className={`text-base font-bold ${urgency.color === 'rose' ? 'text-rose-500' : 'text-slate-400'}`}>
                                                             {urgency.label}
                                                         </span>
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <div className="flex items-center gap-2">
-                                                        <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 flex items-center justify-center font-black text-xs">
+                                                        <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 flex items-center justify-center font-black text-base">
                                                             {resp?.full_name?.charAt(0) || <UserIcon size={14} />}
                                                         </div>
-                                                        <span className="font-bold text-slate-600 dark:text-slate-300 text-sm">{resp?.full_name || 'Não atribuída'}</span>
+                                                        <span className="font-bold text-slate-600 dark:text-slate-300 text-base">{resp?.full_name || 'Não atribuída'}</span>
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4">
