@@ -40,7 +40,7 @@ export async function proxy(request: NextRequest) {
     const isPublicPath = path === '/' || path === '/login' || path === '/pricing' || path === '/history' ||
         path === '/privacy' || path === '/terms' || path === '/sitemap.xml' || path === '/robots.txt' ||
         path === '/infrastructure' || path === '/clube-vip' || path.startsWith('/invite') ||
-        path.startsWith('/auth') ||
+        path.startsWith('/auth') || path.startsWith('/api/webhooks/') ||
         ['/sentinel', '/nexus', '/scriptor', '/valorem', '/cognitio', '/vox', '/history', '/intelligence'].includes(path)
     const isSetupPath = path === '/setup'
 

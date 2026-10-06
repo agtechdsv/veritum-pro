@@ -66,8 +66,6 @@ export async function requestPasswordReset(email: string) {
         // We continue because the metadata update might have succeeded, but we log the error
     }
 
-    console.log('--- TEMPORARY PASSWORD GENERATED FOR', email, 'IS', tempPassword, '---')
-
     // 4. Send Email via Edge Function
     const appUrl = (await headers()).get('origin') || 'https://www.veritumpro.com'
     const emailHtml = `
