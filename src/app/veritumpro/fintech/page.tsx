@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { createMasterClient } from '@/lib/supabase/master'
-import { createFintechSubAccount, deleteFintechSubAccount } from './actions'
+import { createFintechSubAccount, deleteFintechSubAccount, repairFintechWebhook } from './actions'
 import { useTranslation } from '@/contexts/language-context'
 import { toast } from '@/components/ui/toast'
 import { AsaasSubAccount, User } from '@/types'
@@ -19,6 +19,7 @@ export default function FintechPage() {
     const [isCreating, setIsCreating] = useState(false)
     const [isDrawerOpen, setIsDrawerOpen] = useState(false)
     const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
+    const [repairingId, setRepairingId] = useState<string | null>(null)
     const { t } = useTranslation()
     const supabase = createMasterClient()
 
@@ -108,6 +109,22 @@ export default function FintechPage() {
             toast.error('Ocorreu um erro ao processar a deleção.')
         } finally {
             setDeleteConfirmId(null)
+        }
+    }
+
+    async function handleRepairWebhook(id: string) {
+        setRepairingId(id)
+        try {
+            const res = await repairFintechWebhook(id)
+            if (res.success) {
+                toast.success(res.status === 'exists' ? 'Webhook já estava configurado.' : 'Webhook registrado com sucesso.')
+            } else {
+                toast.error(res.error || 'Erro ao registrar webhook.')
+            }
+        } catch (err) {
+            toast.error('Ocorreu um erro ao registrar o webhook.')
+        } finally {
+            setRepairingId(null)
         }
     }
 
@@ -273,7 +290,21 @@ export default function FintechPage() {
                                                 initial={{ opacity: 0 }}
                                                 animate={{ opacity: 1 }}
                                                 exit={{ opacity: 0 }}
+                                                className="flex items-center gap-2"
                                             >
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    title="Registrar/reparar webhook de pagamentos"
+                                                    disabled={repairingId === account.id}
+                                                    className="text-slate-400 hover:text-indigo-500 bg-slate-50 dark:bg-slate-800 rounded-xl w-9 h-9 active:scale-95 transition-all"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleRepairWebhook(account.id);
+                                                    }}
+                                                >
+                                                    {repairingId === account.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+                                                </Button>
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"

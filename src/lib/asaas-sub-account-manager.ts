@@ -143,6 +143,63 @@ export async function createAsaasSubAccount(profile: SubAccountProfile) {
   }
 }
 
+const WEBHOOK_EVENTS = ['PAYMENT_RECEIVED', 'PAYMENT_CONFIRMED', 'PAYMENT_REFUNDED', 'PAYMENT_DELETED'];
+
+/**
+ * Garante que a subconta tenha o webhook do Veritum PRO registrado (idempotente).
+ * Os pagamentos do Valorem acontecem na subconta, entao o webhook precisa existir nela
+ * (o webhook da conta mestre nao recebe esses eventos).
+ * Nunca lanca: devolve { ok, status, error? } para nao travar a criacao da subconta.
+ */
+export async function ensureSubAccountWebhook(subAccountApiKey: string, notificationEmail: string) {
+  const rawUrl = process.env.ASAAS_URL || "https://api.asaas.com/v3";
+  const apiUrl = rawUrl.endsWith('/') ? rawUrl.slice(0, -1) : rawUrl;
+  const webhookUrl = process.env.ASAAS_WEBHOOK_URL || 'https://www.veritumpro.com/api/webhooks/asaas';
+  const authToken = process.env.ASAAS_WEBHOOK_TOKEN;
+
+  if (!authToken || authToken.length < 32) {
+    return { ok: false, status: 'error' as const, error: 'ASAAS_WEBHOOK_TOKEN ausente ou menor que 32 caracteres.' };
+  }
+
+  const headers = { "Content-Type": "application/json", "access_token": subAccountApiKey };
+
+  try {
+    // 1. Ja existe um webhook apontando para a nossa URL?
+    const listRes = await fetch(`${apiUrl}/webhooks`, { method: "GET", headers });
+    if (listRes.ok) {
+      const list = await listRes.json();
+      if (list.data?.some((w: any) => w.url === webhookUrl)) {
+        return { ok: true, status: 'exists' as const };
+      }
+    }
+
+    // 2. Criar
+    const res = await fetch(`${apiUrl}/webhooks`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        name: "Veritum PRO",
+        url: webhookUrl,
+        email: notificationEmail,
+        enabled: true,
+        interrupted: false,
+        apiVersion: 3,
+        authToken,
+        sendType: "SEQUENTIALLY",
+        events: WEBHOOK_EVENTS,
+      }),
+    });
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      return { ok: false, status: 'error' as const, error: body.errors?.[0]?.description || `HTTP ${res.status}` };
+    }
+    return { ok: true, status: 'created' as const };
+  } catch (err: any) {
+    return { ok: false, status: 'error' as const, error: err?.message || 'Falha de rede ao registrar webhook.' };
+  }
+}
+
 /**
  * Exemplo de uso para criar o VERITUM PRO
  */

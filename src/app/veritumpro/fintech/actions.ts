@@ -1,7 +1,7 @@
 'use server'
 
 import { createMasterServerClient } from '@/lib/supabase/server'
-import { createAsaasSubAccount, deleteAsaasSubAccountKey } from '@/lib/asaas-sub-account-manager'
+import { createAsaasSubAccount, deleteAsaasSubAccountKey, ensureSubAccountWebhook } from '@/lib/asaas-sub-account-manager'
 import { generateFintechOnboardingEmailHtml } from '@/lib/email-templates'
 import { sendPaymentEmailAction } from '@/app/actions/nexus-actions'
 import { revalidatePath } from 'next/cache'
@@ -81,6 +81,14 @@ export async function createFintechSubAccount(formData: FormData) {
             return { error: 'Subconta criada no Asaas, mas falhou ao salvar no banco local.' }
         }
 
+        // 4. Registrar o webhook na subconta (nao trava a criacao se falhar; ha o botao "reparar")
+        const webhook = asaasResult.apiKey
+            ? await ensureSubAccountWebhook(asaasResult.apiKey, email)
+            : { ok: false, status: 'error' as const, error: 'Subconta sem API key.' }
+        if (!webhook.ok) {
+            console.error('Falha ao registrar webhook na subconta:', webhook.error)
+        }
+
         // 5. Send Onboarding Email
         if (asaasResult.onboardingUrl) {
             try {
@@ -106,11 +114,45 @@ export async function createFintechSubAccount(formData: FormData) {
         }
 
         revalidatePath('/veritumpro/fintech')
-        return { success: true, data: asaasResult }
+        // Nao devolver a apiKey da subconta ao client
+        const { apiKey: _apiKey, ...safeResult } = asaasResult
+        return { success: true, data: safeResult, webhookRegistered: webhook.ok }
     } catch (err: any) {
         console.error('Erro no checkout process:', err)
         return { error: err.message || 'Falha ao processar solicitação.' }
     }
+}
+
+export async function repairFintechWebhook(id: string) {
+    const masterSupabase = await createMasterServerClient()
+    const { data: { user } } = await masterSupabase.auth.getUser()
+
+    if (!user) {
+        return { error: 'Não autorizado' }
+    }
+
+    // A leitura passa pelo RLS do master: so enxerga subcontas que o usuario pode acessar
+    const { data: subAccount } = await masterSupabase
+        .from('asaas_sub_accounts')
+        .select('api_key, admin_id')
+        .eq('id', id)
+        .single()
+
+    if (!subAccount?.api_key) {
+        return { error: 'Subconta não encontrada ou sem API key.' }
+    }
+
+    const { data: owner } = await masterSupabase
+        .from('users')
+        .select('email')
+        .eq('id', subAccount.admin_id)
+        .maybeSingle()
+
+    const result = await ensureSubAccountWebhook(subAccount.api_key, owner?.email || user.email || '')
+    if (!result.ok) {
+        return { error: result.error || 'Falha ao registrar webhook.' }
+    }
+    return { success: true, status: result.status }
 }
 
 export async function deleteFintechSubAccount(id: string) {
