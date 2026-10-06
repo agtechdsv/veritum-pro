@@ -5,22 +5,23 @@
 -- Responsável por: Processos, Tarefas, Inteligência, IA e Dados Operacionais.
 
 -- ============================================================================
--- 0. RESET NUCLEAR (LIMPEZA TOTAL DO SCHEMA PUBLIC PRIVACIVO)
+-- 0. RESET (DESATIVADO POR PADRAO)
 -- ============================================================================
--- ATENÇÃO: Os comandos abaixo apagam ABSOLUTAMENTE TUDO no schema public do Tenant.
-
-DROP SCHEMA IF EXISTS public CASCADE;
-CREATE SCHEMA public;
-
--- Restaura Permissões do Supabase (Essencial para funcionamento no DB Privado)
-GRANT USAGE ON SCHEMA public TO postgres, anon, authenticated, service_role;
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO postgres, anon, authenticated, service_role;
-GRANT ALL PRIVILEGES ON ALL ROUTINES IN SCHEMA public TO postgres, anon, authenticated, service_role;
-GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO postgres, anon, authenticated, service_role;
-
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO postgres, anon, authenticated, service_role;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON ROUTINES TO postgres, anon, authenticated, service_role;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO postgres, anon, authenticated, service_role;
+-- ATENCAO: ESTE SCRIPT E SOMENTE PARA UM BANCO DE CLIENTE (TENANT) DEDICADO E VAZIO.
+-- NUNCA execute no projeto "Veritum PRO" (master): o schema public dele guarda
+-- users, plans, suites, tenant_configs, payments etc.
+--
+-- Para recriar um banco de cliente do zero (APAGA TUDO no schema public), descomente:
+--
+-- DROP SCHEMA IF EXISTS public CASCADE;
+-- CREATE SCHEMA public;
+-- GRANT USAGE ON SCHEMA public TO postgres, anon, authenticated, service_role;
+-- GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO postgres, anon, authenticated, service_role;
+-- GRANT ALL PRIVILEGES ON ALL ROUTINES IN SCHEMA public TO postgres, anon, authenticated, service_role;
+-- GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO postgres, anon, authenticated, service_role;
+-- ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO postgres, anon, authenticated, service_role;
+-- ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON ROUTINES TO postgres, anon, authenticated, service_role;
+-- ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO postgres, anon, authenticated, service_role;
 
 -- ============================================================================
 -- 1. INFRAESTRUTURA & EXTENSÕES
@@ -361,20 +362,18 @@ CREATE POLICY "Tenant Session: Full Access" ON public.document_embeddings FOR AL
 CREATE POLICY "Tenant Session: Full Access" ON public.historical_outcomes FOR ALL USING (TRUE);
 
 -- CONFIGURAÇÃO DE REALTIME (TABELAS QUE PRECISAM DE ATUALIZAÇÃO AO VIVO)
-DROP PUBLICATION IF EXISTS supabase_realtime;
-CREATE PUBLICATION supabase_realtime FOR TABLE 
-    public.tasks, 
+-- (assets e corporate_entities sao adicionadas nas secoes 9 e 10, apos serem criadas)
+ALTER PUBLICATION supabase_realtime ADD TABLE
+    public.tasks,
     public.events,
-    public.lawsuits, 
-    public.financial_transactions, 
+    public.lawsuits,
+    public.financial_transactions,
     public.golden_alerts,
     public.monitoring_alerts,
     public.movements,
     public.chat_messages,
     public.team_members,
-    public.persons,
-    public.assets,
-    public.corporate_entities;
+    public.persons;
 
 
 -- ----------------------------------------------------------------------------
