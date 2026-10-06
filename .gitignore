@@ -53,3 +53,11 @@ ts_errors.txt
 .vscode/
 .idea/
 Thumbs.db
+
+# dados locais/diagnostico (nao versionar)
+user_meta.json
+tmp*.json
+tsc-error*.txt
+tsc_output.txt
+temp_out.txt
+webhook_output.txt
