@@ -1,5 +1,7 @@
 # Veritum PRO - Regras do Agente
 
+> Ao iniciar uma sessao, leia `docs/HANDOFF.md` (estado atual, mapa dos bancos, problemas conhecidos e proxima tarefa).
+
 Ecossistema juridico modular (SaaS para escritorios de advocacia), parte da familia PRO da AGTech.
 Projeto INDEPENDENTE do MetaBuilder PRO: nao compartilhar codigo, `.env`, banco Supabase nem memoria com ele.
 
